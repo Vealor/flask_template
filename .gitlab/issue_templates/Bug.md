@@ -32,5 +32,3 @@ ___
 
 
 /label ~"Stage 1: Backlog" ~"Type: Bug"
-/cc @project-manager
-/assign @qa-tester
