@@ -22,5 +22,4 @@ ___
 (Include any necessary documentation or graphics to ensure accurate creation of the feature.)
 
 
-
-/label ~"Stage 1: Backlog" ~"Type: Feature"
+<!-- INCLUDE ALL REQUIRED LABELS! Also include a milestone if required. -->

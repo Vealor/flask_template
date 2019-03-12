@@ -31,4 +31,4 @@ ___
 (If you can, provide any suggestions for a solution to the issue)
 
 
-/label ~"Stage 1: Backlog"
+<!-- INCLUDE ALL REQUIRED LABELS! Also include a milestone if required. -->
