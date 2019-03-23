@@ -30,5 +30,9 @@ ___
 
 (If you can, link to the line of code that might be responsible for the problem)
 
+___
+><strong>Definition of ready:</strong> ??
+><strong>Definition of done:</strong> ??
 
+/estimate 0
 <!-- INCLUDE ALL REQUIRED LABELS! Also include a milestone if required. -->
