@@ -1,5 +1,5 @@
-# (Client Name) - (Project Type)
-<strong>Engagement Code:</strong> xxxxx
+# ITRA - API Backend
+<!-- <strong>Engagement Code:</strong> xxxxx
 <strong>Data Connection:</strong> xxxx:xxxx
 ___
 
@@ -24,4 +24,19 @@ ___
 
 ___
 #### Client Contact Information
-(How to contact client and their information)
+(How to contact client and their information) -->
+
+
+___
+## Application Setup
+
+### Init
+```
+./init.sh
+```
+
+### Development
+```
+source activate
+python manage.py runserver
+```
