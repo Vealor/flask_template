@@ -33,12 +33,10 @@ ___
 ### Init
 ```
 ./init.sh
-python manage.py migrate
-python manage.py createsuperuser --email admin@example.com --username admin
 ```
 
 ### Development
 ```
 source activate
-python manage.py runserver
+python app.py dev
 ```
