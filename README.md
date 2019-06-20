@@ -40,3 +40,21 @@ ___
 source activate
 python app.py dev
 ```
+
+Dev with SSL:
+```
+source activate
+python app.py dev ssl
+```
+
+Prod test:
+```
+source activate
+python app.py
+```
+
+Prod test with ssl:
+```
+source activate
+python app.py ssl
+```
