@@ -58,3 +58,14 @@ Prod test with ssl:
 source activate
 python app.py ssl
 ```
+
+## DB Stuff
+```
+flask db init
+```
+```
+flask db migrate
+```
+```
+flask db --help
+```

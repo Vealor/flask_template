@@ -115,3 +115,4 @@ dmypy.json
 .pyre/
 
 activate
+sqlite3.db
