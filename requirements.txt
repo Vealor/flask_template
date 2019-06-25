@@ -5,6 +5,7 @@ Click==7.0
 cryptography==2.7
 Flask==1.0.3
 Flask-Cors==3.0.8
+Flask-JWT-Extended==3.18.2
 Flask-Login==0.4.1
 flask-marshmallow==0.10.1
 Flask-Migrate==2.5.2
@@ -16,8 +17,10 @@ Mako==1.0.12
 MarkupSafe==1.1.1
 marshmallow==2.19.5
 marshmallow-sqlalchemy==0.16.4
+passlib==1.7.1
 psycopg2==2.8.3
 pycparser==2.19
+PyJWT==1.7.1
 pyOpenSSL==19.0.0
 python-dateutil==2.8.0
 python-editor==1.0.4
