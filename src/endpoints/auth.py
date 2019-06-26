@@ -43,14 +43,11 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
-        print(data['username'])
         user = UserModel.find_by_username(data['username'])
 
         if not user:
-            print("fail no exist")
             return login_failure(response)
         elif UserModel.verify_hash(data['password'], user.password):
-            print('verifying hash')
             response['status'] = 'ok'
             response['access_token'] = create_access_token(identity = data['username'])
             response['refresh_token'] = create_refresh_token(identity = data['username'])
@@ -71,7 +68,6 @@ def refresh():
     user = get_jwt_identity()
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['access_token'] = create_access_token(identity = user)
-    print(response)
     # add_token_to_database(access_token, app.config['JWT_IDENTITY_CLAIM'])
     return jsonify(response), 201
 
