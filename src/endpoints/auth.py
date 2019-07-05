@@ -5,7 +5,7 @@ import json
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
-from src.models import UserModel, BlacklistTokenModel
+from src.models import Users, BlacklistTokens
 
 auth = Blueprint('auth', __name__)
 #===============================================================================
@@ -17,14 +17,14 @@ def register():
     data = request.get_json()
     print(data)
     if request.method == 'POST':
-        if UserModel.find_by_username(data['username']):
+        if Users.find_by_username(data['username']):
             response['status'] = 'error'
             response['message'] = 'Username {} already exists.'.format(data['username'])
         else:
             response['status'] = 'ok'
-            new_user = UserModel(
+            new_user = Users(
                 username = data['username'],
-                password = UserModel.generate_hash(data['password'])
+                password = Users.generate_hash(data['password'])
             )
             new_user.save_to_db()
             response['access_token'] = create_access_token(identity = data['username'])
@@ -43,11 +43,11 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
-        user = UserModel.find_by_username(data['username'])
+        user = Users.find_by_username(data['username'])
 
         if not user:
             return login_failure(response)
-        elif UserModel.verify_hash(data['password'], user.password):
+        elif Users.verify_hash(data['password'], user.password):
             response['status'] = 'ok'
             response['access_token'] = create_access_token(identity = data['username'])
             response['refresh_token'] = create_refresh_token(identity = data['username'])
