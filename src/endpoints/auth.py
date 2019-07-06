@@ -15,6 +15,11 @@ def createadminsuperuseraccount():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
+        for key in ['username', 'password', 'email']:
+            if key not in data.keys():
+                response['status'] = 'error'
+                response['message'] = 'Information improperly supplied.'
+                return jsonify(response), 400
         if User.find_by_username(data['username']) or User.superuser_exists():
             response['status'] = 'error'
             response['message'] = 'Username {} already exists or there already is a system superuser.'.format(data['username'])
@@ -44,7 +49,11 @@ def register():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
-        if Users.find_by_username(data['username']):
+        if [(i) for i in ['username', 'password', 'email'] if key not in data.keys()]:
+            response['status'] = 'error'
+            response['message'] = 'Information improperly supplied.'
+            return jsonify(response), 400
+        elif Users.find_by_username(data['username']):
             response['status'] = 'error'
             response['message'] = 'Username {} already exists.'.format(data['username'])
             return jsonify(response), 400
@@ -73,6 +82,10 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
+        if [(i) for i in ['username', 'password'] if key not in data.keys()]:
+            response['status'] = 'error'
+            response['message'] = 'Information improperly supplied.'
+            return jsonify(response), 400
         user = User.find_by_username(data['username'])
 
         if not user:
