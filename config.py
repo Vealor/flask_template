@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 
 class Config(object):
-    VERSION = '0.1.0'
+    VERSION = '0.0.3'
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
