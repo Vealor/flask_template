@@ -2,8 +2,8 @@ import enum
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
-from sqlalchemy.sql import func
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql import func
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -33,41 +33,42 @@ class CDM_Label(enum.Enum):
 
 user_global_permissions = db.Table('user_permissions',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False),
-    db.Column('globalpermission', db.Enum(GlobalPermissions), nullable=False)
+    db.Column('global_permissions', db.Enum(GlobalPermissions), nullable=False)
 )
 
 user_project_permissions = db.Table('user_projects',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False),
     db.Column('project_id', db.Integer, db.ForeignKey('projects.id'), nullable=False),
-    db.Column('projectpermission', db.Enum(ProjectPermissions), nullable=False)
+    db.Column('project_permissions', db.Enum(ProjectPermissions), nullable=False)
 )
 
 ################################################################################
 # AUTH User and Token models
-class Users(db.Model):
+class User(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     username = db.Column(db.String(64), unique = True, index = True, nullable = False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), nullable=False)
+    is_superuser = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
-    logs = db.relationship('Logs', backref='users', lazy=True)
-    locked_transactions = db.relationship('Transactions', backref='users', lazy=True)
-    global_permissions = db.relationship('GlobalPermissions', secondary=user_global_permissions)
-    project_permissions = db.relationship('ProjectPermissions', secondary=user_project_permissions)
+    user_logs = db.relationship('Log', back_populates='log_user')
+    locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user')
+
+    # global_permissions = db.relationship('GlobalPermissions', secondary=user_global_permissions, back_populates='users')
+    user_projects = db.relationship('Project', secondary=user_project_permissions)
 
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
 
     @classmethod
-    def find_by_username(cls, username):
-        return cls.query.filter_by(username = username).first()
+    def superuser_exists(cls):
+        return cls.query.filter_by(is_superuser=True).all()
 
     @classmethod
-    def return_all(cls):
-        def to_json(x):
-            return
+    def find_by_username(cls, username):
+        return cls.query.filter_by(username = username).first()
 
     @staticmethod
     def generate_hash(password):
@@ -77,9 +78,9 @@ class Users(db.Model):
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
 
-class BlacklistTokens(db.Model):
+class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(120))
 
     def add(self):
@@ -94,77 +95,84 @@ class BlacklistTokens(db.Model):
 ################################################################################
 # DATA Models
 
-class Logs(db.Model):
+class Log(db.Model):
     __tablename__ = 'logs'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     action = db.Column(db.Enum(Actions), nullable=False)
     affected_entity = db.Column(db.String(256), nullable=False)
     details = db.Column(db.Text(), nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    log_user = db.relationship('User', back_populates='user_logs')
 
-class Industries(db.Model):
-    __tablename__ = 'industries'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-
-    clients = db.relationship('Clients', backref='industries', lazy=True)
-    paredown_rules = db.relationship('ParedownRules', backref='industries', lazy=True)
-    classification_rules = db.relationship('ClassificationRules', backref='industries', lazy=True)
-    industry_models = db.relationship('IndustryModel', backref='industries', lazy=True)
-
-class Clients(db.Model):
+class Client(db.Model):
     __tablename__ = 'clients'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
 
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'))
+    client_industry = db.relationship('Industry', back_populates='industry_clients')
 
-    classification_rules = db.relationship('ClassificationRules', backref='industries', lazy=True)
-    projects = db.relationship('Projects', backref='clients', lazy=True)
-    client_models = db.relationship('ClientModel', backref='clients', lazy=True)
+    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client')
+    client_projects = db.relationship('Project', back_populates='project_client')
+    client_client_model = db.relationship('ClientModel', back_populates='client_model_clients')
 
-class ParedownRules(db.Model):
+class Industry(db.Model):
+    __tablename__ = 'industries'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
+
+    industry_clients = db.relationship('Client', back_populates='client_industry')
+    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry')
+    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry')
+    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries')
+
+class ParedownRule(db.Model):
     # these rules are only either core, or for an industry
     # there are no project specific rules
     __tablename__ = 'paredown_rules'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'), nullable=True)
-    # add in rule saving data
+    paredown_rule_industry = db.relationship('Industry', back_populates='industry_paredown_rules')
+    #TODO add in rule saving data
 
-class ClassificationRules(db.Model):
+class ClassificationRule(db.Model):
     __tablename__ = 'classification_rules'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, nullable=False)
     weight = db.Column(db.Integer, nullable=False)
 
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'), nullable=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
-    # add in rule saving data
+    classification_rule_industry = db.relationship('Industry', back_populates='industry_classification_rules')
 
-class Projects(db.Model):
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=True)
+    classification_rule_client = db.relationship('Client', back_populates='client_classification_rules')
+    #TODO add in rule saving data
+
+class Project(db.Model):
     __tablename__ = 'projects'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
+    project_client = db.relationship('Client', back_populates='client_projects')
 
-    data_mappings = db.relationship('DataMappings', backref='projects', lazy=True)
-    transactions = db.relationship('Transactions', backref='projects', lazy=True)
+    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project')
+    project_transactions = db.relationship('Transaction', back_populates='transaction_project')
 
-class Vendors(db.Model):
+class Vendor(db.Model):
     __tablename__ = 'vendors'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), nullable=False)
 
-    transactions = db.relationship('Transactions', backref='vendors', lazy=True)
+    vendor_transactions = db.relationship('Transaction', back_populates='transaction_vendor')
 
-class DataMappings(db.Model):
+class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     cdm_label = db.Column(db.Enum(CDM_Label), nullable=False, primary_key=True)
     column_name = db.Column(db.String(256), nullable=False)
@@ -174,49 +182,55 @@ class DataMappings(db.Model):
     regex = db.Column(db.String(256), nullable=False)
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, primary_key=True)
-
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
 
 class ClientModel(db.Model):
-    __tablename__ = 'client_model'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    __tablename__ = 'client_models'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
     cliend_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
+    client_model_clients = db.relationship('Client', back_populates='client_client_model')
 
-    client_model_performance = db.relationship('ClientModelPerformance', backref='client_model', lazy=True)
+    client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model')
+    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model')
 
 class ClientModelPerformance(db.Model):
-    __tablename__ = 'client_model_performance'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    __tablename__ = 'client_model_performances'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    client_model_id = db.Column(db.Integer, db.ForeignKey('client_model.id'))
+    client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id'))
+    performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
 
 class IndustryModel(db.Model):
-    __tablename__ = 'industry_model'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    __tablename__ = 'industry_models'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'), nullable=False)
+    industry_model_industries = db.relationship('Industry', back_populates='industry_industry_model')
 
-    industry_model_performances = db.relationship('IndustryModelPerformance', backref='industry_model', lazy=True)
+    industry_model_transactions = db.relationship('Transaction', back_populates='transaction_industry_model')
+    industry_model_model_performances = db.relationship('IndustryModelPerformance', back_populates='performance_industry_model')
 
 class IndustryModelPerformance(db.Model):
-    __tablename__ = 'industry_model_performance'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    __tablename__ = 'industry_model_performances'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_model.id'), nullable=False)
+    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_models.id'), nullable=False)
+    performance_industry_model = db.relationship('IndustryModel', back_populates='industry_model_model_performances')
 
-class Transasctions(db.Model):
+class Transaction(db.Model):
     __tablename__ = 'transactions'
-    id = db.Column(db.Integer, primary_key = True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), nullable=True)
     is_required = db.Column(db.Boolean, unique=False, default=False, nullable=False)
     is_predicted = db.Column(db.Boolean, unique=False, default=False, nullable=False)
@@ -227,11 +241,19 @@ class Transasctions(db.Model):
     data = db.Column(postgresql.JSON, nullable=False)
 
     locked_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
-    client_model_id = db.Column(db.Integer, db.ForeignKey('client_model.id'), nullable=True)
-    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_model.id'), nullable=True)
+    locked_transaction_user = db.relationship('User', back_populates='locked_transactions')
 
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
+    transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions')
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
+    transaction_project = db.relationship('Project', back_populates='project_transactions')
+
+    client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id'), nullable=True)
+    transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions')
+
+    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_models.id'), nullable=True)
+    transaction_industry_model = db.relationship('IndustryModel', back_populates='industry_model_transactions')
 
 
 

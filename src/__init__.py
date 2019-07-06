@@ -36,8 +36,6 @@ def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
     return models.BlacklistTokenModel.is_blacklisted(jti)
 
-# TODO: https://github.com/vimalloc/flask-jwt-extended/blob/master/examples/loaders.py
-
 #===============================================================================
 # Routing
 from src import routes

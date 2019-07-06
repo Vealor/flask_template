@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 60c82d0ef36a
+Revision ID: 76f388fdacce
 Revises: 
-Create Date: 2019-07-04 13:50:26.242235
+Create Date: 2019-07-05 17:31:34.803680
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '60c82d0ef36a'
+revision = '76f388fdacce'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,6 +34,7 @@ def upgrade():
     sa.Column('username', sa.String(length=64), nullable=False),
     sa.Column('password', sa.String(length=128), nullable=False),
     sa.Column('email', sa.String(length=128), nullable=False),
+    sa.Column('is_superuser', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
@@ -50,7 +51,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
-    op.create_table('industry_model',
+    op.create_table('industry_models',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('pickle', sa.PickleType(), nullable=False),
@@ -79,7 +80,7 @@ def upgrade():
     )
     op.create_table('user_permissions',
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('globalpermission', sa.Enum('it_admin', name='globalpermissions'), nullable=False),
+    sa.Column('global_permissions', sa.Enum('it_admin', name='globalpermissions'), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
     )
     op.create_table('classification_rules',
@@ -92,7 +93,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('client_model',
+    op.create_table('client_models',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('pickle', sa.PickleType(), nullable=False),
@@ -102,11 +103,11 @@ def upgrade():
     sa.ForeignKeyConstraint(['cliend_id'], ['clients.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('industry_model_performance',
+    op.create_table('industry_model_performances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('industry_model_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_model.id'], ),
+    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('projects',
@@ -118,11 +119,11 @@ def upgrade():
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('client_model_performance',
+    op.create_table('client_model_performances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('client_model_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_model_id'], ['client_model.id'], ),
+    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('data_mappings',
@@ -151,8 +152,8 @@ def upgrade():
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('client_model_id', sa.Integer(), nullable=True),
     sa.Column('industry_model_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_model_id'], ['client_model.id'], ),
-    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_model.id'], ),
+    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ),
+    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ),
     sa.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
     sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id'], ),
@@ -161,7 +162,7 @@ def upgrade():
     op.create_table('user_projects',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.Column('projectpermission', sa.Enum('tax_admin', 'data_admin', 'tax_approver', name='projectpermissions'), nullable=False),
+    sa.Column('project_permissions', sa.Enum('tax_admin', 'data_admin', 'tax_approver', name='projectpermissions'), nullable=False),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
     )
@@ -173,15 +174,15 @@ def downgrade():
     op.drop_table('user_projects')
     op.drop_table('transactions')
     op.drop_table('data_mappings')
-    op.drop_table('client_model_performance')
+    op.drop_table('client_model_performances')
     op.drop_table('projects')
-    op.drop_table('industry_model_performance')
-    op.drop_table('client_model')
+    op.drop_table('industry_model_performances')
+    op.drop_table('client_models')
     op.drop_table('classification_rules')
     op.drop_table('user_permissions')
     op.drop_table('paredown_rules')
     op.drop_table('logs')
-    op.drop_table('industry_model')
+    op.drop_table('industry_models')
     op.drop_table('clients')
     op.drop_table('vendors')
     op.drop_index(op.f('ix_users_username'), table_name='users')
