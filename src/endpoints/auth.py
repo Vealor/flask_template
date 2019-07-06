@@ -73,11 +73,11 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
-        user = Users.find_by_username(data['username'])
+        user = User.find_by_username(data['username'])
 
         if not user:
             return login_failure(response)
-        elif Users.verify_hash(data['password'], user.password):
+        elif User.verify_hash(data['password'], user.password):
             response['status'] = 'ok'
             response['access_token'] = create_access_token(identity = data['username'])
             response['refresh_token'] = create_refresh_token(identity = data['username'])

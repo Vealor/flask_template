@@ -34,7 +34,7 @@ jwt = JWTManager(api)
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
-    return models.BlacklistTokenModel.is_blacklisted(jti)
+    return models.BlacklistToken.is_blacklisted(jti)
 
 #===============================================================================
 # Routing
