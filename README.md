@@ -93,3 +93,9 @@ In your body of post request make sure to have:
 { 'special_token': ''} # Look in the code for the special_token
 ```
 <strong>If you need help, ask about this.</strong>
+
+
+### Utility scripts
+<strong>upgrade_requirements.sh</strong>
+If new packages are added then run this script to add them using this script.  
+This script ALSO updates all existing packages.
