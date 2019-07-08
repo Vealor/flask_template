@@ -29,43 +29,73 @@ ___
 
 ___
 ## Application Setup
+<strong>NOTE: ALL INSTRUCTIONS IN HERE ARE INTENDED FOR BASH ON UBUNTU 16.04 LTS</strong>
 
 ### Init
+Initialize virtual environment
 ```
 ./init.sh
 ```
 
+### Database Setup
+Enter PSQL
+```
+sudo -i -u postgres psql
+```
+Create Database
+```
+CREATE DATABASE itra_db;
+```
+Create User
+```
+CREATE USER itra WITH ENCRYPTED PASSWORD 'LHDEV1234';
+```
+Grant User Access
+```
+GRANT ALL PRIVILEGES ON DATABASE itra_db TO itra;
+```
+Quit PSQL
+```
+\q
+```
+Apply migrations:
+```
+./db_dev.sh
+```
+
+___
+To get back to PSQL for that DB:
+```
+psql -h localhost -U itra itra_db
+```
+
+___
+Diagnostics:
+```
+flask db --help
+```
+
 ### Development
 ```
-source activate
-python app.py dev
+./dev_srv.sh
 ```
 
 Dev with SSL:
 ```
-source activate
-python app.py dev ssl
+./dev_srv.sh ssl
 ```
 
-Prod test:
+### Creating system test user
+<strong>You can only have one. If you forget the password, you must go into the DB and delete the user with is_superuser.</strong>  
+Use the ```/auth/createadminsuperuseraccount``` endpoint  
+In your body of post request make sure to have:
 ```
-source activate
-python app.py
+{ 'special_token': ''} # Look in the code for the special_token
 ```
+<strong>If you need help, ask about this.</strong>
 
-Prod test with ssl:
-```
-source activate
-python app.py ssl
-```
 
-## DB Stuff
-```
-flask db init
-```
-```
-flask db migrate
-```
-```
-flask db --help
-```
+### Utility scripts
+<strong>upgrade_requirements.sh</strong>
+If new packages are added then run this script to add them using this script.  
+This script ALSO updates all existing packages.
