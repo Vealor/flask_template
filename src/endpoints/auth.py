@@ -82,7 +82,7 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
     if request.method == 'POST':
-        if [(i) for i in ['username', 'password'] if key not in data.keys()]:
+        if [(i) for i in ['username', 'password'] if i not in data.keys()]:
             response['status'] = 'error'
             response['message'] = 'Information improperly supplied.'
             return jsonify(response), 400
