@@ -10,13 +10,14 @@ from src.models import *
 from src.recovery_identification import *
 
 train = Blueprint('train', __name__)
-input_config = json.load(open('src/recovery_identification/input_config.json'))   #Load the configuration info
-#===============================================================================
+
+input_config = json.load(open('src/recovery_identification/input_config.json'))
+# ==============================================================================
 # General
 @train.route('/', methods=['POST'])
-#@jwt_required
+# @jwt_required
 def do_train():
-    response = { 'status': '', 'message': '', 'payload': []}
+    response = {'status': '', 'message': '', 'payload': []}
     data = request.get_json()
     if request.method == 'POST':
         response['data'] = data
@@ -31,7 +32,8 @@ def do_train():
 
         # Check 2: Check if the input has the correct datatypes.
         dtypes = [input_config[key] for key in data.keys()]
-        is_input_correct = all([isinstance(key,eval(typ)) for (key,typ) in zip(data.values(),dtypes)])
+        is_input_correct = all([isinstance(key, eval(typ)) for (key, typ) in
+                zip(data.values(), dtypes)])
         if not is_input_correct:
             response['status'] = "error"
             response['message'] = 'Input field is incorrect type'
@@ -49,7 +51,8 @@ def do_train():
             test_end = get_date_obj_from_str(data["TEST_DATA_END"])
             if test_start >= test_end:
                 raise ValueError("Invalid Test Data date range.")
-            if ((train_start < test_start) and (test_start < train_end)) or ((test_start < train_start) and not (test_end < train_start)):
+            if ((train_start < test_start) and (test_start < train_end)) or \
+                    ((test_start < train_start) and not (test_end < train_start)):
                 raise ValueError("Train and test data ranges overlap.")
         except ValueError as e:
             response['status'] = "error"
@@ -61,7 +64,7 @@ def do_train():
     return jsonify(response), 202
 
 
-## ===== HELPERS ================================ ##
+# ====== HELPERS ================================ ##
 # RETURNS: datetime.datetime.date obj
 # Dates should be specified as "YYYY-MM-DD"
 def get_date_obj_from_str(date_str):
