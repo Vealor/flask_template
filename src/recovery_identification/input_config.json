@@ -1,7 +1,0 @@
-{
-  "IS_CLIENT_MODEL" : "bool",
-  "TRAIN_DATA_START" : "str",
-  "TRAIN_DATA_END" : "str",
-  "TEST_DATA_START" : "str",
-  "TEST_DATA_END" : "str"
-}

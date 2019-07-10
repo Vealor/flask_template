@@ -11,7 +11,18 @@ from src.recovery_identification import *
 
 train = Blueprint('train', __name__)
 
-input_config = json.load(open('src/recovery_identification/input_config.json'))
+# ==============================================================================
+# Specify the datatypes for the inputs to the train functionality
+input_config = {
+    "MODEL_TYPE": "str",
+    "MODEL_NAME": "str",
+    "MODEL_ID": "str",
+    "TRAIN_DATA_START_DATE": "str",
+    "TRAIN_DATA_END_DATE": "str",
+    "TEST_DATA_START_DATE": "str",
+    "TEST_DATA_END_DATE": "str"
+    }
+
 # ==============================================================================
 # General
 @train.route('/', methods=['POST'])
@@ -43,12 +54,12 @@ def do_train():
         dates = list(data.keys())
         dates.remove("IS_CLIENT_MODEL")
         try:
-            train_start = get_date_obj_from_str(data["TRAIN_DATA_START"])
-            train_end = get_date_obj_from_str(data["TRAIN_DATA_END"])
+            train_start = get_date_obj_from_str(data["TRAIN_DATA_START_DATE"])
+            train_end = get_date_obj_from_str(data["TRAIN_DATA_END_DATE"])
             if train_start >= train_end:
                 raise ValueError("Invalid Train Data date range.")
-            test_start = get_date_obj_from_str(data["TEST_DATA_START"])
-            test_end = get_date_obj_from_str(data["TEST_DATA_END"])
+            test_start = get_date_obj_from_str(data["TEST_DATA_START_DATE"])
+            test_end = get_date_obj_from_str(data["TEST_DATA_END_DATE"])
             if test_start >= test_end:
                 raise ValueError("Invalid Test Data date range.")
             if ((train_start < test_start) and (test_start < train_end)) or \
@@ -59,7 +70,12 @@ def do_train():
             response['message'] = str(e)
             return jsonify(response), 400
 
-        # Check if dates are correctly ordered
+            # At this point, all database independent checks have been perfrm'd
+            # Now, database dependent checks begin
+
+            # Check 4: Check connection to database
+            # try:
+            #    db_conn = .....S
 
     return jsonify(response), 202
 
