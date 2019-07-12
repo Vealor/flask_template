@@ -7,7 +7,6 @@ import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import *
-from src.recovery_identification import *
 
 train = Blueprint('train', __name__)
 
