@@ -4,9 +4,12 @@ Train Endpoints
 import datetime
 import json
 import random
+from config import DevelopmentConfig
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import *
+from sqlalchemy import create_engine
+
 
 train = Blueprint('train', __name__)
 
@@ -15,7 +18,7 @@ train = Blueprint('train', __name__)
 input_config = {
     "MODEL_TYPE": "str",
     "MODEL_NAME": "str",
-    "MODEL_ID": "str",
+    "MODEL_ID": "int",
     "TRAIN_DATA_START_DATE": "str",
     "TRAIN_DATA_END_DATE": "str",
     "TEST_DATA_START_DATE": "str",
@@ -30,7 +33,7 @@ def do_train():
     response = {'status': '', 'message': '', 'payload': []}
     data = request.get_json()
     if request.method == 'POST':
-        response['data'] = data
+        #response['data'] = data
 
         # Check 1: Check if fields are missing in the input.
         required_keys = input_config.keys()
@@ -49,9 +52,15 @@ def do_train():
             response['message'] = 'Input field is incorrect type'
             return jsonify(response), 400
 
-        # Check 3: Get the date objects. If fail, return an error:
-        dates = list(data.keys())
-        dates.remove("IS_CLIENT_MODEL")
+        # Check 3: Check that model type is valid;
+        model_type = data["MODEL_TYPE"]
+        if model_type not in ["client", "industry"]:
+            response['status'] = "error"
+            response['message'] = 'Specified model type `{}` is invalid'.format(model_type)
+            return jsonify(response), 400
+
+        # Check 4: Get the date objects. If fail, return an error:
+        dates = [key[-4:] == "DATE" for key in data.keys()]
         try:
             train_start = get_date_obj_from_str(data["TRAIN_DATA_START_DATE"])
             train_end = get_date_obj_from_str(data["TRAIN_DATA_END_DATE"])
@@ -69,14 +78,21 @@ def do_train():
             response['message'] = str(e)
             return jsonify(response), 400
 
-            # At this point, all database independent checks have been perfrm'd
-            # Now, database dependent checks begin
+        # At this point, all database independent checks have been perfrm'd
+        # Now, database dependent checks begin (TO BE COMPLETED)
 
-            # Check 4: Check connection to database
-            # try:
-            #    db_conn = .....S
+        # Check 5: Check connection to database
+        db_conn = create_engine(DevelopmentConfig.SQLALCHEMY_DATABASE_URI).connect()
+        quer = db_conn.execute("SELECT data FROM transactions;").fetchall()
+        response['payload'] = quer[0][0]
+        db_conn.close()
 
-    return jsonify(response), 202
+        # Now that all the database checks have been completed, we can submit
+        # our request to the compute server
+        response['message'] = "Input is valid. Request submitted to training server."
+        response['payload'] = data
+        response['status'] = 'ok'
+        return jsonify(response), 202
 
 
 # ====== HELPERS ================================ ##
