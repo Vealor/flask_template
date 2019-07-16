@@ -4,13 +4,21 @@ from src import api
 #===============================================================================
 ### Endpoint Imports
 
-# General Endpoints (eg. Help & Error Handling)
+# General Endpoints
 from src.endpoints.general import general
 api.register_blueprint(general, url_prefix='/')
 
-# General Endpoints (eg. Help & Error Handling)
+# Auth Endpoints
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
+
+# Train Endpoints
+from src.endpoints.train import train
+api.register_blueprint(train, url_prefix='/train')
+
+# Auth Endpoints
+from src.endpoints.predict import predict
+api.register_blueprint(predict, url_prefix='/predict')
 
 #===============================================================================
 # Error Handling
