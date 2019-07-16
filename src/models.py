@@ -197,7 +197,7 @@ class ClientModel(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
-    is_active = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
 
     cliend_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     client_model_clients = db.relationship('Client', back_populates='client_client_model')
@@ -219,7 +219,7 @@ class IndustryModel(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
-    is_active = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
 
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id', ondelete='CASCADE'), nullable=False)
     industry_model_industries = db.relationship('Industry', back_populates='industry_industry_model')
