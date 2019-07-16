@@ -9,6 +9,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import *
 from sqlalchemy import create_engine
+from src.util import get_date_obj_from_str
 
 
 train = Blueprint('train', __name__)
@@ -60,7 +61,6 @@ def do_train():
             return jsonify(response), 400
 
         # Check 4: Get the date objects. If fail, return an error:
-        dates = [key[-4:] == "DATE" for key in data.keys()]
         try:
             train_start = get_date_obj_from_str(data["TRAIN_DATA_START_DATE"])
             train_end = get_date_obj_from_str(data["TRAIN_DATA_END_DATE"])
@@ -79,13 +79,7 @@ def do_train():
             return jsonify(response), 400
 
         # At this point, all database independent checks have been perfrm'd
-        # Now, database dependent checks begin (TO BE COMPLETED)
-
-        # Check 5: Check connection to database
-        db_conn = create_engine(DevelopmentConfig.SQLALCHEMY_DATABASE_URI).connect()
-        quer = db_conn.execute("SELECT data FROM transactions;").fetchall()
-        response['payload'] = quer[0][0]
-        db_conn.close()
+        # Now, database dependent checks begin (TO BE COMPLETED LATER)
 
         # Now that all the database checks have been completed, we can submit
         # our request to the compute server
@@ -93,14 +87,3 @@ def do_train():
         response['payload'] = data
         response['status'] = 'ok'
         return jsonify(response), 202
-
-
-# ====== HELPERS ================================ ##
-# RETURNS: datetime.datetime.date obj
-# Dates should be specified as "YYYY-MM-DD"
-def get_date_obj_from_str(date_str):
-    try:
-        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        raise ValueError("Incorrect data format, should be YYYY-MM-DD")
-    return date_obj

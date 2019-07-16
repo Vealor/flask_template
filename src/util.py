@@ -13,3 +13,15 @@ class bcolours:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+#===============================================================================
+# Builds date object from date format "YYYY-MM-DD"
+#   RETURNS:
+#     - datetime object
+#     - ValueError on wrong format
+def get_date_obj_from_str(date_str):
+    try:
+        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+    return date_obj
