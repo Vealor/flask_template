@@ -92,6 +92,7 @@ In your body of post request make sure to have:
 ```
 { 'special_token': ''} # Look in the code for the special_token
 ```
+In the body you also need to include ```username```, ```password```, ```first_name```, and ```last_name```.
 <strong>If you need help, ask about this.</strong>
 
 
@@ -99,3 +100,6 @@ In your body of post request make sure to have:
 <strong>upgrade_requirements.sh</strong>
 If new packages are added then run this script to add them using this script.  
 This script ALSO updates all existing packages.
+
+### Updating models and creating a new migration
+```FLASK_ENV='development' flask db migrate```

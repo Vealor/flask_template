@@ -30,6 +30,8 @@ def createadminsuperuseraccount():
                 username = data['username'],
                 password = User.generate_hash(data['password']),
                 email = data['email'],
+                first_name = data['first_name'],
+                last_name = data['last_name'],
                 is_superuser = True
             )
             new_user.save_to_db()
@@ -53,16 +55,18 @@ def register():
             response['status'] = 'error'
             response['message'] = 'Information improperly supplied.'
             return jsonify(response), 400
-        elif Users.find_by_username(data['username']):
+        elif User.find_by_username(data['username']):
             response['status'] = 'error'
             response['message'] = 'Username {} already exists.'.format(data['username'])
             return jsonify(response), 400
         else:
             response['status'] = 'ok'
-            new_user = Users(
+            new_user = User(
                 username = data['username'],
-                password = Users.generate_hash(data['password']),
-                email = data['email']
+                password = User.generate_hash(data['password']),
+                email = data['email'],
+                first_name = data['first_name'],
+                last_name = data['last_name']
             )
             new_user.save_to_db()
             response['access_token'] = create_access_token(identity = data['username'])

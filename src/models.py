@@ -50,6 +50,8 @@ class User(db.Model):
     username = db.Column(db.String(64), unique = True, index = True, nullable = False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), nullable=False)
+    first_name = db.Column(db.String(128), nullable=False)
+    last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, nullable=False)
 
     user_logs = db.relationship('Log', back_populates='log_user')
