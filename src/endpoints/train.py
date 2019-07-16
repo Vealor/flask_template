@@ -8,7 +8,6 @@ from config import DevelopmentConfig
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import *
-from sqlalchemy import create_engine
 from src.util import get_date_obj_from_str
 
 
@@ -64,10 +63,10 @@ def do_train():
         try:
             train_start = get_date_obj_from_str(data["TRAIN_DATA_START_DATE"])
             train_end = get_date_obj_from_str(data["TRAIN_DATA_END_DATE"])
-            if train_start >= train_end:
-                raise ValueError("Invalid Train Data date range.")
             test_start = get_date_obj_from_str(data["TEST_DATA_START_DATE"])
             test_end = get_date_obj_from_str(data["TEST_DATA_END_DATE"])
+            if train_start >= train_end:
+                raise ValueError("Invalid Train Data date range.")
             if test_start >= test_end:
                 raise ValueError("Invalid Test Data date range.")
             if ((train_start < test_start) and (test_start < train_end)) or \
