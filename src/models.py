@@ -65,6 +65,17 @@ class User(db.Model):
 
     user_projects = db.relationship('Project', secondary=user_project_permissions)
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'project_permission_map': []
+        }
+
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
@@ -112,6 +123,19 @@ class Log(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     log_user = db.relationship('User', back_populates='user_logs')
+
+    @property
+    def serialize(self):
+        username = ((User.query.filter_by(id=self.user_id).one()).serialize)['username']
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.strftime("%Y-%m-%d_%H:%M:%S"),
+            'action': self.action.value,
+            'affected_entity': self.affected_entity,
+            'details': self.details,
+            'user_id': self.user_id,
+            'username': username
+        }
 
 class Client(db.Model):
     __tablename__ = 'clients'
