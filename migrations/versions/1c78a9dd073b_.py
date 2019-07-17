@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 76f388fdacce
+Revision ID: 1c78a9dd073b
 Revises: 
-Create Date: 2019-07-05 17:31:34.803680
+Create Date: 2019-07-16 15:24:06.818074
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '76f388fdacce'
+revision = '1c78a9dd073b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,7 +34,9 @@ def upgrade():
     sa.Column('username', sa.String(length=64), nullable=False),
     sa.Column('password', sa.String(length=128), nullable=False),
     sa.Column('email', sa.String(length=128), nullable=False),
-    sa.Column('is_superuser', sa.Boolean(), nullable=False),
+    sa.Column('first_name', sa.String(length=128), nullable=False),
+    sa.Column('last_name', sa.String(length=128), nullable=False),
+    sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
@@ -56,9 +58,9 @@ def upgrade():
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('pickle', sa.PickleType(), nullable=False),
     sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
     sa.Column('industry_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ),
+    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('logs',
@@ -73,24 +75,25 @@ def upgrade():
     )
     op.create_table('paredown_rules',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('is_core', sa.Boolean(), nullable=False),
+    sa.Column('is_core', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('industry_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ),
+    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_permissions',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('global_permissions', sa.Enum('it_admin', name='globalpermissions'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('user_id', 'global_permissions')
     )
     op.create_table('classification_rules',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('is_core', sa.Boolean(), nullable=False),
+    sa.Column('is_core', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('weight', sa.Integer(), nullable=False),
     sa.Column('industry_id', sa.Integer(), nullable=True),
     sa.Column('client_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
-    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['industry_id'], ['industries.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('client_models',
@@ -98,23 +101,23 @@ def upgrade():
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('pickle', sa.PickleType(), nullable=False),
     sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
     sa.Column('cliend_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['cliend_id'], ['clients.id'], ),
+    sa.ForeignKeyConstraint(['cliend_id'], ['clients.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('industry_model_performances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('industry_model_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ),
+    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('projects',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('is_approved', sa.Boolean(), nullable=False),
-    sa.Column('is_archived', sa.Boolean(), nullable=False),
+    sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -123,27 +126,27 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('client_model_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ),
+    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('data_mappings',
     sa.Column('cdm_label', sa.Enum('potato', name='cdm_label'), nullable=False),
     sa.Column('column_name', sa.String(length=256), nullable=False),
     sa.Column('table_name', sa.String(length=256), nullable=False),
-    sa.Column('is_required', sa.Boolean(), nullable=False),
-    sa.Column('is_unique', sa.Boolean(), nullable=False),
+    sa.Column('is_required', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_unique', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('regex', sa.String(length=256), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('cdm_label', 'project_id')
     )
     op.create_table('transactions',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('modified', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('is_required', sa.Boolean(), nullable=False),
-    sa.Column('is_predicted', sa.Boolean(), nullable=False),
+    sa.Column('modified', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('is_required', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_predicted', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('recovery_probability', sa.Float(), nullable=True),
-    sa.Column('rbc_predicted', sa.Boolean(), nullable=False),
+    sa.Column('rbc_predicted', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('rbc_recovery_probability', sa.Float(), nullable=True),
     sa.Column('image', sa.LargeBinary(), nullable=True),
     sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
@@ -152,10 +155,10 @@ def upgrade():
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('client_model_id', sa.Integer(), nullable=True),
     sa.Column('industry_model_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ),
-    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ),
-    sa.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
+    sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['industry_model_id'], ['industry_models.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -163,8 +166,9 @@ def upgrade():
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('project_permissions', sa.Enum('tax_admin', 'data_admin', 'tax_approver', name='projectpermissions'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('user_id', 'project_id', 'project_permissions')
     )
     # ### end Alembic commands ###
 
