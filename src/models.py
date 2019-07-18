@@ -218,8 +218,8 @@ class DataMapping(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
     cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_labels'), nullable=False, primary_key=True)
 
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
