@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
+from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -25,13 +26,20 @@ class Actions(enum.Enum):
     modify = "modify"
     approve = "approve"
 
-class CDM_Label(enum.Enum):
-    potato = "potato"
 
 class Activity(enum.Enum):
     active = "active"
     inactive = "inactive"
     pending = "pending"
+
+class Datatype(enum.Enum):
+    dt_boolean = Boolean
+    dt_date = Date
+    dt_datetime = DateTime
+    dt_varchar = VARCHAR
+    dt_float = Float
+    dt_int = Integer
+    dt_blob = BLOB
 
 
 ################################################################################
@@ -205,15 +213,26 @@ class Vendor(db.Model):
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
-    cdm_label = db.Column(db.Enum(CDM_Label), nullable=False, primary_key=True)
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
-    is_required = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    is_unique = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    cdm_label_id = db.Column(db.Integer, db.ForeignKey('cdm_labels.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
+    data_mapping_CDM_label = db.relationship('CDM_label', back_populates='CDM_label_data_mappings')
+
+class CDM_label(db.Model):
+    __tablename__ = 'cdm_labels'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    script_labels = db.Column(db.String(256), nullable=False)
+    english_labels = db.Column(db.String(256), nullable=False)
+    is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
+    is_required = db.Column(db.Boolean, unique=False, nullable=False)
+    is_unique = db.Column(db.Boolean, unique=False, nullable=False)
+    datatype = db.Column(db.Enum(Datatype), nullable=False)
     regex = db.Column(db.String(256), nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
+    CDM_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_CDM_label')
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
