@@ -6,6 +6,7 @@ import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
+from src.util import validate_post_request
 
 auth = Blueprint('auth', __name__)
 #===============================================================================
@@ -14,34 +15,47 @@ auth = Blueprint('auth', __name__)
 def createadminsuperuseraccount():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
+
     if request.method == 'POST':
-        for key in ['username', 'password', 'email']:
-            if key not in data.keys():
-                response['status'] = 'error'
-                response['message'] = 'Information improperly supplied.'
-                return jsonify(response), 400
+        request_types = {
+            'username': 'str',
+            'password': 'str',
+            'email': 'str',
+            'first_name': 'str',
+            'last_name': 'str',
+            'special_token': 'str'
+        }
+        try:
+            validate_post_request(data, request_types)
+        except ValueError as e:
+            response['status'] = 'error'
+            response['message'] = str(e)
+            return jsonify(response), 400
+
         if User.find_by_username(data['username']) or User.superuser_exists():
             response['status'] = 'error'
             response['message'] = 'Username {} already exists or there already is a system superuser.'.format(data['username'])
             return jsonify(response), 400
-        elif 'special_token' in data.keys() and data['special_token'] == 'lhsuperamazingawesometoken':
-            response['status'] = 'ok'
-            new_user = User(
-                username = data['username'],
-                password = User.generate_hash(data['password']),
-                email = data['email'],
-                first_name = data['first_name'],
-                last_name = data['last_name'],
-                is_superuser = True
-            )
-            new_user.save_to_db()
-            response['access_token'] = create_access_token(identity = data['username'])
-            response['refresh_token'] = create_refresh_token(identity = data['username'])
-            response['message'] = 'User {} was successfully created.'.format(data['username'])
-        else:
+
+        if data['special_token'] != 'lhsuperamazingawesometoken':
             response['status'] = 'error'
             response['message'] = 'Information improperly supplied.'
             return jsonify(response), 400
+
+        response['status'] = 'ok'
+        new_user = User(
+            username = data['username'],
+            password = User.generate_hash(data['password']),
+            email = data['email'],
+            first_name = data['first_name'],
+            last_name = data['last_name'],
+            is_superuser = True
+        )
+        new_user.save_to_db()
+        response['access_token'] = create_access_token(identity = data['username'])
+        response['refresh_token'] = create_refresh_token(identity = data['username'])
+        response['message'] = 'User {} was successfully created.'.format(data['username'])
+
     return jsonify(response), 201
 
 # registration
@@ -50,28 +64,40 @@ def createadminsuperuseraccount():
 def register():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
+
     if request.method == 'POST':
-        if [(i) for i in ['username', 'password', 'email'] if key not in data.keys()]:
+        request_types = {
+            'username': 'str',
+            'password': 'str',
+            'email': 'str',
+            'first_name': 'str',
+            'last_name': 'str',
+            'special_token': 'str'
+        }
+        try:
+            validate_post_request(data, request_types)
+        except ValueError as e:
             response['status'] = 'error'
-            response['message'] = 'Information improperly supplied.'
+            response['message'] = str(e)
             return jsonify(response), 400
-        elif User.find_by_username(data['username']):
+
+        if User.find_by_username(data['username']):
             response['status'] = 'error'
             response['message'] = 'Username {} already exists.'.format(data['username'])
             return jsonify(response), 400
-        else:
-            response['status'] = 'ok'
-            new_user = User(
-                username = data['username'],
-                password = User.generate_hash(data['password']),
-                email = data['email'],
-                first_name = data['first_name'],
-                last_name = data['last_name']
-            )
-            new_user.save_to_db()
-            response['access_token'] = create_access_token(identity = data['username'])
-            response['refresh_token'] = create_refresh_token(identity = data['username'])
-            response['message'] = 'User {} was successfully created.'.format(data['username'])
+
+        response['status'] = 'ok'
+        new_user = User(
+            username = data['username'],
+            password = User.generate_hash(data['password']),
+            email = data['email'],
+            first_name = data['first_name'],
+            last_name = data['last_name']
+        )
+        new_user.save_to_db()
+        response['access_token'] = create_access_token(identity = data['username'])
+        response['refresh_token'] = create_refresh_token(identity = data['username'])
+        response['message'] = 'User {} was successfully created.'.format(data['username'])
     return jsonify(response), 201
 
 # TODO:
@@ -83,13 +109,22 @@ def login():
         response['status'] = 'error'
         response['message'] = 'Wrong Credentials'
         return jsonify(response), 401
+
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
+
     if request.method == 'POST':
-        if [(i) for i in ['username', 'password'] if i not in data.keys()]:
+        request_types = {
+            'username': 'str',
+            'password': 'str',
+        }
+        try:
+            validate_post_request(data, request_types)
+        except ValueError as e:
             response['status'] = 'error'
-            response['message'] = 'Information improperly supplied.'
+            response['message'] = str(e)
             return jsonify(response), 400
+
         user = User.find_by_username(data['username'])
 
         if not user:
@@ -98,9 +133,6 @@ def login():
             response['status'] = 'ok'
             response['access_token'] = create_access_token(identity = data['username'])
             response['refresh_token'] = create_refresh_token(identity = data['username'])
-            # Store the tokens in our store with a status of not currently revoked.
-            # add_token_to_database(access_token, app.config['JWT_IDENTITY_CLAIM'])
-            # add_token_to_database(refresh_token, app.config['JWT_IDENTITY_CLAIM'])
             response['message'] = 'Logged in as {}'.format(data['username'])
         else:
             return login_failure(response)
