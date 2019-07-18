@@ -216,15 +216,14 @@ class DataMapping(db.Model):
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-    cdm_label_id = db.Column(db.Integer, db.ForeignKey('cdm_labels.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_labels'), nullable=False, primary_key=True)
 
     data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
-    data_mapping_CDM_label = db.relationship('CDM_label', back_populates='CDM_label_data_mappings')
+    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    script_labels = db.Column(db.String(256), nullable=False)
+    script_labels = db.Column(db.String(256), primary_key=True, nullable=False)
     english_labels = db.Column(db.String(256), nullable=False)
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_required = db.Column(db.Boolean, unique=False, nullable=False)
