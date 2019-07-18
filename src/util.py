@@ -1,6 +1,5 @@
 # ~~~ Utils:
-
-# bcolours
+import datetime
 
 #==============================================================================
 # prints text with specific colours if adding to print statements
@@ -25,3 +24,25 @@ def get_date_obj_from_str(date_str):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
     return date_obj
+
+#===============================================================================
+# Checks that keys and types are in JSON input
+def validate_post_request(data, validation):
+
+    # Ensures keys in validation are all in data. Data can have excess keys.
+    if [x for x in validation.keys() if not x in data.keys()]:
+        raise ValueError('Request is missing required keys.')
+
+    # Esures that the datatypes specified in validation match the types in data.
+    # Example Available types:
+    #   int, float, bool, str, list, tuple, dict, class, object
+    if [x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]:
+        raise ValueError('Request contains improper data types for keys.')
+
+#===============================================================================
+#
+
+
+
+
+#
