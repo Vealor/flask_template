@@ -231,7 +231,7 @@ class CDM_label(db.Model):
     datatype = db.Column(db.Enum(Datatype), nullable=False)
     regex = db.Column(db.String(256), nullable=False)
 
-    CDM_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_CDM_label')
+    cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label')
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
