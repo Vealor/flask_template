@@ -8,7 +8,7 @@ from config import DevelopmentConfig
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import *
-from src.util import get_date_obj_from_str, validate_post_request
+from src.util import get_date_obj_from_str, validate_request_data
 
 
 train = Blueprint('train', __name__)
@@ -37,7 +37,7 @@ def do_train():
             }
         try:
             # validate input
-            validate_post_request(data, request_types)
+            validate_request_data(data, request_types)
 
             # check model type
             if data['MODEL_TYPE'] not in ['client', 'industry']:
