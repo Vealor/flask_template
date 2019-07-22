@@ -21,13 +21,13 @@ class bcolours:
 def get_date_obj_from_str(date_str):
     try:
         date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
+    except:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
     return date_obj
 
 #===============================================================================
 # Checks that keys and types are in JSON input
-def validate_post_request(data, validation):
+def validate_request_data(data, validation):
 
     # Ensures keys in validation are all in data. Data can have excess keys.
     if [x for x in validation.keys() if not x in data.keys()]:
