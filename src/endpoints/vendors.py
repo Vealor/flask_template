@@ -55,6 +55,10 @@ def post_vendor():
         }
         validate_request_data(data, request_types)
 
+        query = Vendor.query.filter_by(name=data['name']).first()
+        if query:
+            raise ValueError('Vendor "{}" already exist.'.format(data['name']))
+
         # INSERT transaction
         Vendor(
             name = data['name']
