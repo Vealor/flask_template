@@ -121,8 +121,8 @@ def upgrade():
     sa.Column('pickle', sa.PickleType(), nullable=False),
     sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
     sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
-    sa.Column('cliend_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['cliend_id'], ['clients.id'], ondelete='CASCADE'),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('projects',
