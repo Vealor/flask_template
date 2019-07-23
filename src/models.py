@@ -355,8 +355,8 @@ class Transaction(db.Model):
     client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
     transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions')
 
-    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    transaction_industry_model = db.relationship('IndustryModel', back_populates='industry_model_transactions')
+    master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
+    transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions')
 
 
 
