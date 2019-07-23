@@ -24,6 +24,10 @@ api.register_blueprint(train, url_prefix='/train')
 from src.endpoints.predict import predict
 api.register_blueprint(predict, url_prefix='/predict')
 
+# SAP Caps Gen Endpoints
+from src.endpoints.sap_caps_gen import sap_caps_gen
+api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
+
 #===============================================================================
 # Error Handling
 

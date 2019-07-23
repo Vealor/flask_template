@@ -3,6 +3,7 @@ from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects import postgresql
+from marshmallow import Schema, fields, pprint
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB
 
@@ -221,6 +222,14 @@ class DataMapping(db.Model):
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
     data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
 
+    @property
+    def serialize(self):
+        return {
+            'column_name': self.column_name,
+            'table_name': self.table_name,
+            'cdm_label_script_label': self.cdm_label_script_label
+        }
+
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
     script_labels = db.Column(db.String(256), primary_key=True, nullable=False)
@@ -231,7 +240,25 @@ class CDM_label(db.Model):
     datatype = db.Column(db.Enum(Datatype), nullable=False)
     regex = db.Column(db.String(256), nullable=False)
 
-    cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label')
+    cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
+
+    @property
+    def serialize(self):
+        table_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['table_name']
+        column_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['column_name']
+        return {
+            'table_name': table_name,
+            'column_name': column_name,
+            'script_labels': self.script_labels,
+            'english_labels': self.english_labels,
+            'is_calculated': self.is_calculated,
+            'is_required': self.is_required,
+            'is_unique': self.is_unique,
+            'datatype': self.datatype.name,
+            'regex': self.regex
+        }
+
+
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
@@ -241,7 +268,7 @@ class ClientModel(db.Model):
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
 
-    cliend_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     client_model_clients = db.relationship('Client', back_populates='client_client_model')
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model')

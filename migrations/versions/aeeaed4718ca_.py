@@ -8,12 +8,43 @@ Create Date: 2019-07-18 16:54:15.429856
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+import pandas as pd
+import json
+
 
 # revision identifiers, used by Alembic.
 revision = 'aeeaed4718ca'
 down_revision = '1c78a9dd073b'
 branch_labels = None
 depends_on = None
+
+
+def seed_data():
+    print('seeding')
+    df = pd.read_csv('cdm_labels.csv')
+    df = df.loc[df['is_calculated'] == False]
+    json_entries = df.to_json(orient='records', lines=True).split('\n')
+    test_table = sa.sql.table('cdm_labels', sa.sql.column('script_labels', sa.String),
+                              sa.sql.column('english_labels', sa.String), sa.sql.column('is_calculated', sa.Boolean),
+                              sa.sql.column('is_required', sa.Boolean),
+                              sa.sql.column('is_unique', sa.Boolean), sa.sql.column('datatype', sa.Enum),
+                              sa.sql.column('regex', sa.String))
+    op.bulk_insert(
+        test_table,
+        [json.loads(entry) for entry in json_entries]
+    )
+    print('bulk_insert complete')
+    df = pd.read_csv('data_mappings.csv')
+    df = df.loc[df['is_calculated'] == False]
+    df = df.drop(['is_calculated'], axis=1)
+    json_entries = df.to_json(orient='records', lines=True).split('\n')
+    test_table = sa.sql.table('data_mappings', sa.sql.column('column_name', sa.String), sa.sql.column('table_name', sa.String), sa.sql.column('project_id', sa.Integer), sa.sql.column('cdm_label_script_label', sa.String))
+    op.bulk_insert(
+        test_table,
+        [json.loads(entry) for entry in json_entries]
+    )
+    print('bulk insert complete')
+
 
 
 def upgrade():
@@ -38,6 +69,7 @@ def upgrade():
     op.drop_column('data_mappings', 'regex')
     op.add_column('industry_models', sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False))
     op.drop_column('industry_models', 'is_active')
+    #seed_data()
     # ### end Alembic commands ###
 
 
