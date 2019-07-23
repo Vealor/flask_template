@@ -12,6 +12,10 @@ api.register_blueprint(general, url_prefix='/')
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
 
+# Client Endpoints
+from src.endpoints.clients import clients
+api.register_blueprint(clients, url_prefix='/clients')
+
 # Log Endpoints
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')

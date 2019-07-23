@@ -68,10 +68,9 @@ class User(db.Model):
     last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    user_logs = db.relationship('Log', back_populates='log_user')
-    locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user')
-
-    user_projects = db.relationship('Project', secondary=user_project_permissions)
+    user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
+    locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
+    user_projects = db.relationship('Project', secondary=user_project_permissions, lazy='dynamic')
 
     @property
     def serialize(self):
@@ -153,19 +152,47 @@ class Client(db.Model):
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'))
     client_industry = db.relationship('Industry', back_populates='industry_clients')
 
-    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update")
-    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update")
-    client_client_model = db.relationship('ClientModel', back_populates='client_model_clients', cascade="save-update")
+    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
+    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic')
+    client_client_model = db.relationship('ClientModel', back_populates='client_model_clients', cascade="save-update", lazy='dynamic')
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'industry_id': self.industry_id
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filter_by(name = name).first()
+
 
 class Industry(db.Model):
     __tablename__ = 'industries'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
 
-    industry_clients = db.relationship('Client', back_populates='client_industry')
-    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry')
-    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry')
-    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries')
+    industry_clients = db.relationship('Client', back_populates='client_industry', lazy='dynamic')
+    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry', lazy='dynamic')
+    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry', lazy='dynamic')
+    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries', lazy='dynamic')
 
 class ParedownRule(db.Model):
     # these rules are only either core, or for an industry
@@ -201,8 +228,8 @@ class Project(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
     project_client = db.relationship('Client', back_populates='client_projects')
 
-    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project')
-    project_transactions = db.relationship('Transaction', back_populates='transaction_project')
+    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
+    project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
 
 class Vendor(db.Model):
     __tablename__ = 'vendors'
@@ -218,8 +245,8 @@ class DataMapping(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
     cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_labels'), nullable=False, primary_key=True)
 
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
+    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings', lazy='dynamic')
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings', lazy='dynamic')
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
@@ -231,7 +258,7 @@ class CDM_label(db.Model):
     datatype = db.Column(db.Enum(Datatype), nullable=False)
     regex = db.Column(db.String(256), nullable=False)
 
-    cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label')
+    cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
@@ -244,8 +271,8 @@ class ClientModel(db.Model):
     cliend_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     client_model_clients = db.relationship('Client', back_populates='client_client_model')
 
-    client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model')
-    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model')
+    client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
+    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
 
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
@@ -266,8 +293,8 @@ class IndustryModel(db.Model):
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id', ondelete='CASCADE'), nullable=False)
     industry_model_industries = db.relationship('Industry', back_populates='industry_industry_model')
 
-    industry_model_transactions = db.relationship('Transaction', back_populates='transaction_industry_model')
-    industry_model_model_performances = db.relationship('IndustryModelPerformance', back_populates='performance_industry_model')
+    industry_model_transactions = db.relationship('Transaction', back_populates='transaction_industry_model', lazy='dynamic')
+    industry_model_model_performances = db.relationship('IndustryModelPerformance', back_populates='performance_industry_model', lazy='dynamic')
 
 class IndustryModelPerformance(db.Model):
     __tablename__ = 'industry_model_performances'
