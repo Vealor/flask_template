@@ -1,5 +1,5 @@
 '''
-Client Endpoints
+Project Endpoints
 '''
 import json
 import random
@@ -8,23 +8,27 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from src.models import *
 from src.util import validate_request_data
 
-clients = Blueprint('clients', __name__)
+projects = Blueprint('projects', __name__)
 #===============================================================================
 # GET ALL CLIENT
-@clients.route('/', defaults={'id':None}, methods=['GET'])
-@clients.route('/<path:id>', methods=['GET'])
+@projects.route('/', defaults={'id':None}, methods=['GET'])
+@projects.route('/<path:id>', methods=['GET'])
 # @jwt_required
-def get_clients(id):
+def get_projects(id):
     response = { 'status': '', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
-        query = Client.query
+        query = Project.query
 
         # ID filter
         query = query.filter_by(id=id) if id is not None else query
         # Set ORDER
         query = query.order_by('name')
+        # Query on is_approved (is_approved, 1 or 0)
+        query = query.filter_by(is_approved=bool(args['is_approved'])) if 'is_approved' in args.keys() and args['is_approved'].isdigit() else query
+        # Query on is_archived (is_archived, 1 or 0)
+        query = query.filter_by(is_archived=bool(args['is_archived'])) if 'is_archived' in args.keys() and args['is_archived'].isdigit() else query
         # Set LIMIT
         query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
         # Set OFFSET
@@ -42,37 +46,36 @@ def get_clients(id):
 
 #===============================================================================
 # POST NEW CLIENT
-@clients.route('/', methods=['POST'])
+@projects.route('/', methods=['POST'])
 # @jwt_required
-def post_client():
+def post_project():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
         # input validation
         request_types = {
-            'name': 'str',
-            'industry_id': 'int'
+            'name': 'str'
         }
         validate_request_data(data, request_types)
         # check if this name exists
-        query = Client.query.filter_by(name=data['name']).first()
+        query = Project.query.filter_by(name=data['name']).first()
         if query:
-            raise ValueError('Client "{}" already exist.'.format(data['name']))
+            raise ValueError('Project "{}" already exist.'.format(data['name']))
         # check if this industry exists
         query = Industry.query.filter_by(id=data['industry_id']).first()
         if not query:
             raise ValueError('Industry id does not exist.'.format(data['industry_id']))
 
         # INSERT transaction
-        Client(
+        Project(
             name = data['name'],
             industry_id = data['industry_id']
         ).save_to_db()
 
         response['status'] = 'ok'
-        response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_name(data['name']).serialize]
+        response['message'] = 'Created project {}'.format(data['name'])
+        response['payload'] = [Project.find_by_name(data['name']).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -82,9 +85,9 @@ def post_client():
 
 #===============================================================================
 # UPDATE A CLIENT
-@clients.route('/<path:id>', methods=['UPDATE'])
+@projects.route('/<path:id>', methods=['UPDATE'])
 # @jwt_required
-def update_client(id):
+def update_project(id):
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
 
@@ -92,31 +95,29 @@ def update_client(id):
         # input validation
         request_types = {
             'name': 'str',
-            'industry_id': 'int'
+            'is_approved': 'bool',
+            'is_archived': 'bool'
         }
         validate_request_data(data, request_types)
 
         # UPDATE transaction
-        query = Client.query.find_by_id(id)
+        query = Project.query.find_by_id(id)
         if not query:
-            raise ValueError('Client ID {} does not exist.'.format(id))
+            raise ValueError('Project ID {} does not exist.'.format(id))
 
         # check if this name exists
-        check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
+        check = Project.query.filter_by(name=data['name']).filter(Project.id != id).first()
         if check:
-            raise ValueError('Client name "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        check = Industry.query.filter_by(id=data['industry_id']).first()
-        if not check:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+            raise ValueError('Project name < {} > already exist.'.format(data['name']))
 
         query.name = data['name']
-        query.industry_id = data['industry_id']
+        query.is_approved = data['is_approved']
+        query.is_archived = data['is_archived']
         query.update_to_db()
 
         response['status'] = 'ok'
-        response['message'] = 'Updated client with id {}'.format(id)
-        response['payload'] = [Client.find_by_id(id).serialize]
+        response['message'] = 'Updated project with id {}'.format(id)
+        response['payload'] = [Project.find_by_id(id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -126,26 +127,22 @@ def update_client(id):
 
 #===============================================================================
 # DELETE A CLIENT
-@clients.route('/<path:id>', methods=['DELETE'])
+@projects.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
-def delete_client(id):
+def delete_project(id):
     response = { 'status': '', 'message': '', 'payload': [] }
 
     try:
-        query = Client.query.filter_by(id=id).first()
+        query = Project.query.filter_by(id=id).first()
         if not query:
-            raise ValueError('Client ID {} does not exist.'.format(id))
+            raise ValueError('Project ID {} does not exist.'.format(id))
 
-        # fail delete if has projects, models, or classification_rules
-        if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
-            raise Exception('Client not deleted. Client has active projects, models, or classification rules.')
-
-        client = query.serialize
+        project = query.serialize
         query.delete_from_db()
 
         response['status'] = 'ok'
-        response['message'] = 'Deleted client id {}'.format(client['id'])
-        response['payload'] = [client]
+        response['message'] = 'Deleted project id {}'.format(project['id'])
+        response['payload'] = [project]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
