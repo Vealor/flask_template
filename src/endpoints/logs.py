@@ -18,14 +18,21 @@ def default():
     args = request.args.to_dict()
 
     try:
-        limit = int(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else 10000
-        offset = int(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else 0
+        query = Log.query
+
+        # Set ORDER
+        query = query.order_by('timestamp')
+        # Set LIMIT
+        query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+        # Set OFFSET
+        query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
         response['status'] = 'ok'
-        response['message'] = 'Got first '+str(limit)+' logs.'
-        response['payload'] = [i.serialize for i in Log.query.order_by('timestamp').limit(limit).offset(offset).all()]
+        response['message'] = ''
+        response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:
         response['status'] = 'error'
-        response['message'] = e
+        response['message'] = str(e)
         response['payload'] = []
+        return jsonify(response), 400
     return jsonify(response)

@@ -153,19 +153,19 @@ class Client(db.Model):
     industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'))
     client_industry = db.relationship('Industry', back_populates='industry_clients')
 
-    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update")
-    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update")
-    client_client_model = db.relationship('ClientModel', back_populates='client_model_clients', cascade="save-update")
+    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
+    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic')
+    client_client_model = db.relationship('ClientModel', back_populates='client_model_clients', cascade="save-update", lazy='dynamic')
 
 class Industry(db.Model):
     __tablename__ = 'industries'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
 
-    industry_clients = db.relationship('Client', back_populates='client_industry')
-    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry')
-    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry')
-    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries')
+    industry_clients = db.relationship('Client', back_populates='client_industry', lazy='dynamic')
+    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry', lazy='dynamic')
+    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry', lazy='dynamic')
+    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries', lazy='dynamic')
 
 class ParedownRule(db.Model):
     # these rules are only either core, or for an industry
@@ -201,15 +201,42 @@ class Project(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
     project_client = db.relationship('Client', back_populates='client_projects')
 
-    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project')
-    project_transactions = db.relationship('Transaction', back_populates='transaction_project')
+    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
+    project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
 
 class Vendor(db.Model):
     __tablename__ = 'vendors'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
 
     vendor_transactions = db.relationship('Transaction', back_populates='transaction_vendor')
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filter_by(name = name).first()
+
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
