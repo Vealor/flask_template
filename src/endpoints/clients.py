@@ -72,13 +72,13 @@ def post_client():
 
         response['status'] = 'ok'
         response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_name(data['name']).serialize]
+        response['payload'] = [Client.find_by_name(id=data['name']).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response)
+    return jsonify(response), 201
 
 #===============================================================================
 # UPDATE A CLIENT
@@ -100,23 +100,23 @@ def update_client(id):
         query = Client.query.filter_by(id=id).first()
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
+
         # check if this name exists
-        query = Client.query.filter_by(name=data['name']).first()
-        if query:
+        check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
+        if check:
             raise ValueError('Client name "{}" already exist.'.format(data['name']))
         # check if this industry exists
-        query = Industry.query.filter_by(id=data['industry_id']).first()
-        if not query:
+        check = Industry.query.filter_by(id=data['industry_id']).first()
+        if not check:
             raise ValueError('Industry id does not exist.'.format(data['industry_id']))
-
 
         query.name = data['name']
         query.industry_id = data['industry_id']
         query.update_to_db()
 
         response['status'] = 'ok'
-        response['message'] = 'Updated client with id {}'.format(data['id'])
-        response['payload'] = [Client.find_by_id(data['id']).serialize]
+        response['message'] = 'Updated client with id {}'.format(id)
+        response['payload'] = [Client.find_by_id(id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
