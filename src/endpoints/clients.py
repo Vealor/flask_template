@@ -55,10 +55,14 @@ def post_client():
             'industry_id': 'int'
         }
         validate_request_data(data, request_types)
-
+        # check if this name exists
         query = Client.query.filter_by(name=data['name']).first()
         if query:
             raise ValueError('Client "{}" already exist.'.format(data['name']))
+        # check if this industry exists
+        query = Industry.query.filter_by(id=data['industry_id']).first()
+        if not query:
+            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
 
         # INSERT transaction
         Client(
@@ -96,6 +100,15 @@ def update_client(id):
         query = Client.query.filter_by(id=id).first()
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
+        # check if this name exists
+        query = Client.query.filter_by(name=data['name']).first()
+        if query:
+            raise ValueError('Client name "{}" already exist.'.format(data['name']))
+        # check if this industry exists
+        query = Industry.query.filter_by(id=data['industry_id']).first()
+        if not query:
+            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+
 
         query.name = data['name']
         query.industry_id = data['industry_id']
@@ -122,6 +135,11 @@ def delete_client(id):
         query = Client.query.filter_by(id=id).first()
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
+
+        # fail delete if has projects, models, or classification_rules
+        if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
+            raise Exception('Client not deleted. Client has active projects, models, or classification rules.')
+
         client = query.serialize
         query.delete_from_db()
 
@@ -133,5 +151,4 @@ def delete_client(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-
     return jsonify(response)
