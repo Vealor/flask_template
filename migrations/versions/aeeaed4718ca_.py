@@ -69,7 +69,7 @@ def upgrade():
     op.drop_column('data_mappings', 'regex')
     op.add_column('industry_models', sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False))
     op.drop_column('industry_models', 'is_active')
-    #seed_data()
+    seed_data()
     # ### end Alembic commands ###
 
 

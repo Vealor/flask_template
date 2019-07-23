@@ -21,16 +21,19 @@ from config import *
 
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
+
+def get_cwd(read_path):
+    current_directory = os.path.dirname(os.path.abspath('__file__'))
+    current_file_path = os.path.join(current_directory, read_path)
+    return current_file_path
+
+
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
     """
     This is a function that iterates through each folder in the directory, and recursively walks to the nth level of the folder, retrieving any zipped files.
     Example Payload: {"client" : "Repsol" ,"project": "Repsol-2019", "system" : "SAP", "file" : "sanic.png", "debug" : True}
     """
-    def get_cwd(read_path):
-        current_directory = os.path.dirname(os.path.abspath('__file__'))
-        current_file_path = os.path.join(current_directory, read_path)
-        return current_file_path
 
     def extract_nested_zip(zippedFile, toFolder):
         try:
@@ -98,53 +101,52 @@ def build_master_tables():
             "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
         }
     mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
-    print(list(set([table['mappings'][0]['table_name'] for table in mapping])))
-    return 'OK'
-    #todo: return a list of SAP tablenames
+    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+    response = {'status': '', 'message': {}, 'payload': []}
+    for table in list_tablenames:
+        list_of_files = []
+        basetable = {}
+        for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
+            if re.search(table, file):
+                if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
+                    list_of_files.append[file]
+        print(list_of_files)
+        return 'OK'
 
-    # response = {'status': '', 'message': {}, 'payload': []}
-    # #TODO: for table names in a column (distinctify first) + find all table names and retrieve their records
-    # list_of_files = []
-    # for table in List_tablenames:
-    #     basetable = pd.DataFrame()
-    #     for file in os.listdir('caps_gen_processing/caps_gen_unzipped'):
-    #         if re.search(table, file):
-    #             if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
-    #                 list_of_files.append[file]
-    #     #Reading Data
-    #     with open('{}_MASTER.txt'.format(table), 'wb') as wfd:
-    #         for f in listoffiles:
-    #             with open(f, 'rb') as fd:
-    #                 try:
-    #                     shutil.copyfileobj(fd, wfd)
-    #                 except Exception as e:
-    #                     response['message'].update('Unable to conatenate files for file {file} in table {table}'.format(file=f, table=table))
-    #                     return response
-    #         first_line = wfd.readline().rstrip().split(',')
-    #         try:
-    #             #todo: dictionary map to rename columns
-    #             for key in dictionary.keys()
-    #                 renamed_lines = [first_line.replace(key, dictionary[key]) for column in first_line]
-    #
-    #         except Exception as e:
-    #             response['message'].update('Unable to rename columns for master table {}').format(table)
-    #
-    #
-    #
-    #
-    #
-    #                 basetable = pd.concat([basetable, df])
-    #                 response['message'].update({'Table Upload successful' : table})
-    #                 print('Table Upload Successful {}'.format(table))
-    #         if len(basetable) == 0:
-    #             response['status'] = 'Not OK'
-    #             response['message'].update({'Missing Table' : table})
-    #     uniondict[table] = basetable
-    #     files_present = glob.glob('{}.csv'.format(table))
-    #     if not files_present:
-    #         print('Writing Master Table'.format(table))
-    #         basetable.to_csv('{}.csv'.format(table), index=False)
-    # return response, 200
+        #
+        # #Reading Data
+        # with open('{}_MASTER.txt'.format(table), 'wb') as wfd:
+        #     for f in listoffiles:
+        #         with open(f, 'rb') as fd:
+        #             try:
+        #                 shutil.copyfileobj(fd, wfd)
+        #             except Exception as e:
+        #                 response['message'].update('Unable to conatenate files for file {file} in table {table}'.format(file=f, table=table))
+        #                 return response
+        #     first_line = wfd.readline().rstrip().split(',')
+        #     try:
+        #         #todo: dictionary map to rename columns
+        #         for key in dictionary.keys()
+        #             renamed_lines = [first_line.replace(key, dictionary[key]) for column in first_line]
+        #
+        #     except Exception as e:
+        #         response['message'].update('Unable to rename columns for master table {}').format(table)
+        #
+        #
+        #
+        #
+        #
+        #             basetable = pd.concat([basetable, df])
+        #             response['message'].update({'Table Upload successful' : table})
+        #             print('Table Upload Successful {}'.format(table))
+        #     if len(basetable) == 0:
+        #         response['status'] = 'Not OK'
+        #         response['message'].update({'Missing Table' : table})
+        # uniondict[table] = basetable
+        # files_present = glob.glob('{}.csv'.format(table))
+        # if not files_present:
+        #     print('Writing Master Table'.format(table))
+        #     basetable.to_csv('{}.csv'.format(table), index=False)
 
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
