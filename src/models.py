@@ -326,7 +326,7 @@ class ClientModel(db.Model):
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
 
-    cliend_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     client_model_client = db.relationship('Client', back_populates='client_client_models')
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
@@ -336,6 +336,9 @@ class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    precision = db.Column(db.Float, nullable=False)
+    accuracy = db.Column(db.Float, nullable=False)
+    recall = db.Column(db.Float, nullable=False)
 
     client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='CASCADE'))
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
