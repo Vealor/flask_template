@@ -72,7 +72,7 @@ def post_client():
 
         response['status'] = 'ok'
         response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_name(id=data['name']).serialize]
+        response['payload'] = [Client.find_by_name(data['name']).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -97,7 +97,7 @@ def update_client(id):
         validate_request_data(data, request_types)
 
         # UPDATE transaction
-        query = Client.query.filter_by(id=id).first()
+        query = Client.query.find_by_id(id)
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
 
