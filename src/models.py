@@ -192,7 +192,6 @@ class Industry(db.Model):
     industry_clients = db.relationship('Client', back_populates='client_industry', lazy='dynamic')
     industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry', lazy='dynamic')
     industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry', lazy='dynamic')
-    industry_industry_model = db.relationship('IndustryModel', back_populates='industry_model_industries', lazy='dynamic')
 
 class ParedownRule(db.Model):
     # these rules are only either core, or for an industry
@@ -310,27 +309,27 @@ class ClientModelPerformance(db.Model):
     client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='CASCADE'))
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
 
-class IndustryModel(db.Model):
-    __tablename__ = 'industry_models'
+class MasterModel(db.Model):
+    __tablename__ = 'master_models'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
 
-    industry_id = db.Column(db.Integer, db.ForeignKey('industries.id', ondelete='CASCADE'), nullable=False)
-    industry_model_industries = db.relationship('Industry', back_populates='industry_industry_model')
+    master_model_transactions = db.relationship('Transaction', back_populates='transaction_master_model', lazy='dynamic')
+    master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic')
 
-    industry_model_transactions = db.relationship('Transaction', back_populates='transaction_industry_model', lazy='dynamic')
-    industry_model_model_performances = db.relationship('IndustryModelPerformance', back_populates='performance_industry_model', lazy='dynamic')
-
-class IndustryModelPerformance(db.Model):
-    __tablename__ = 'industry_model_performances'
+class MasterModelPerformance(db.Model):
+    __tablename__ = 'master_model_performances'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    precision = db.Column(db.Float, nullable=False)
+    accuracy = db.Column(db.Float, nullable=False)
+    recall = db.Column(db.Float, nullable=False)
 
-    industry_model_id = db.Column(db.Integer, db.ForeignKey('industry_models.id', ondelete='CASCADE'), nullable=False)
-    performance_industry_model = db.relationship('IndustryModel', back_populates='industry_model_model_performances')
+    master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='CASCADE'), nullable=False)
+    performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances')
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
