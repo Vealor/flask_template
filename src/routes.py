@@ -20,6 +20,10 @@ api.register_blueprint(clients, url_prefix='/clients')
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
+# Project Endpoints
+from src.endpoints.projects import projects
+api.register_blueprint(projects, url_prefix='/projects')
+
 # Vendor Endpoints
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')

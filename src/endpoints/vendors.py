@@ -72,7 +72,7 @@ def post_vendor():
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response)
+    return jsonify(response), 201
 
 #===============================================================================
 # UPDATE A VENDOR
