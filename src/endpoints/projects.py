@@ -55,22 +55,23 @@ def post_project():
     try:
         # input validation
         request_types = {
-            'name': 'str'
+            'name': 'str',
+            'client_id': 'int'
         }
         validate_request_data(data, request_types)
         # check if this name exists
         query = Project.query.filter_by(name=data['name']).first()
         if query:
             raise ValueError('Project "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        query = Industry.query.filter_by(id=data['industry_id']).first()
+        # check if this client exists
+        query = Client.query.filter_by(id=data['client_id']).first()
         if not query:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+            raise ValueError('Client id does not exist.'.format(data['client_id']))
 
         # INSERT transaction
         Project(
             name = data['name'],
-            industry_id = data['industry_id']
+            client_id = data['client_id']
         ).save_to_db()
 
         response['status'] = 'ok'
