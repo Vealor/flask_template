@@ -339,6 +339,8 @@ class ClientModelPerformance(db.Model):
     precision = db.Column(db.Float, nullable=False)
     accuracy = db.Column(db.Float, nullable=False)
     recall = db.Column(db.Float, nullable=False)
+    test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
+    test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
 
     client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='CASCADE'))
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
@@ -361,6 +363,8 @@ class MasterModelPerformance(db.Model):
     precision = db.Column(db.Float, nullable=False)
     accuracy = db.Column(db.Float, nullable=False)
     recall = db.Column(db.Float, nullable=False)
+    test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
+    test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
 
     master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='CASCADE'), nullable=False)
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances')
