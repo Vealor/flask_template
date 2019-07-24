@@ -325,6 +325,7 @@ class ClientModel(db.Model):
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     client_model_client = db.relationship('Client', back_populates='client_client_models')
@@ -352,6 +353,7 @@ class MasterModel(db.Model):
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
 
     master_model_transactions = db.relationship('Transaction', back_populates='transaction_master_model', lazy='dynamic')
     master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic')
