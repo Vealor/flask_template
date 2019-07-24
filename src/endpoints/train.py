@@ -28,8 +28,7 @@ def do_train():
     if request.method == 'POST':
         request_types = {
             'MODEL_TYPE': 'str',
-            'MODEL_NAME': 'str',
-            'MODEL_ID': 'int',
+            'CLIENT_ID': 'int',     #If MODEL_TYPE == 'master', assert equal to -1
             'TRAIN_DATA_START_DATE': 'str',
             'TRAIN_DATA_END_DATE': 'str',
             'TEST_DATA_START_DATE': 'str',
@@ -40,7 +39,7 @@ def do_train():
             validate_request_data(data, request_types)
 
             # check model type
-            if data['MODEL_TYPE'] not in ['client', 'industry']:
+            if data['MODEL_TYPE'] not in ['client', 'master']:
                 raise ValueError('Specified model type `{}` is invalid'.format(data['MODEL_TYPE']))
 
             # validate date ranges
