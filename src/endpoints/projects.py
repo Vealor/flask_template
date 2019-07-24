@@ -10,7 +10,7 @@ from src.util import validate_request_data
 
 projects = Blueprint('projects', __name__)
 #===============================================================================
-# GET ALL CLIENT
+# GET ALL PROJECT
 @projects.route('/', defaults={'id':None}, methods=['GET'])
 @projects.route('/<path:id>', methods=['GET'])
 # @jwt_required
@@ -45,7 +45,7 @@ def get_projects(id):
     return jsonify(response)
 
 #===============================================================================
-# POST NEW CLIENT
+# POST NEW PROJECT
 @projects.route('/', methods=['POST'])
 # @jwt_required
 def post_project():
@@ -60,12 +60,12 @@ def post_project():
         }
         validate_request_data(data, request_types)
         # check if this name exists
-        query = Project.query.filter_by(name=data['name']).first()
-        if query:
+        check = Project.query.filter_by(name=data['name']).first()
+        if check:
             raise ValueError('Project "{}" already exist.'.format(data['name']))
         # check if this client exists
-        query = Client.query.filter_by(id=data['client_id']).first()
-        if not query:
+        check = Client.query.filter_by(id=data['client_id']).first()
+        if not check:
             raise ValueError('Client id does not exist.'.format(data['client_id']))
 
         # INSERT transaction
@@ -85,7 +85,7 @@ def post_project():
     return jsonify(response), 201
 
 #===============================================================================
-# UPDATE A CLIENT
+# UPDATE A PROJECT
 @projects.route('/<path:id>', methods=['UPDATE'])
 # @jwt_required
 def update_project(id):
@@ -127,7 +127,7 @@ def update_project(id):
     return jsonify(response)
 
 #===============================================================================
-# DELETE A CLIENT
+# DELETE A PROJECT
 @projects.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_project(id):
