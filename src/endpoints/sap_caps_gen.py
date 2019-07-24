@@ -108,6 +108,7 @@ def build_master_tables():
         basetable = {}
         for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
             if re.search(table, file):
+                print(file)
                 if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
                     list_of_files.append[file]
         print(list_of_files)
