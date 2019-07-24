@@ -69,14 +69,14 @@ def post_project():
             raise ValueError('Client id does not exist.'.format(data['client_id']))
 
         # INSERT transaction
-        Project(
+        project_id = Project(
             name = data['name'],
             client_id = data['client_id']
         ).save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created project {}'.format(data['name'])
-        response['payload'] = [Project.find_by_name(data['name']).serialize]
+        response['payload'] = [Project.find_by_id(project_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)

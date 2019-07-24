@@ -65,14 +65,14 @@ def post_client():
             raise ValueError('Industry id does not exist.'.format(data['industry_id']))
 
         # INSERT transaction
-        Client(
+        client_id = Client(
             name = data['name'],
             industry_id = data['industry_id']
         ).save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_name(data['name']).serialize]
+        response['payload'] = [Client.find_by_id(client_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
