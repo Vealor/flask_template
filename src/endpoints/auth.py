@@ -58,84 +58,37 @@ def createadminsuperuseraccount():
 
     return jsonify(response), 201
 
-# registration
-@jwt_required
-@auth.route('/register', methods=['POST'])
-def register():
-    response = { 'status': '', 'message': '', 'payload': [] }
-    data = request.get_json()
-
-    if request.method == 'POST':
-        request_types = {
-            'username': 'str',
-            'password': 'str',
-            'email': 'str',
-            'first_name': 'str',
-            'last_name': 'str',
-            'special_token': 'str'
-        }
-        try:
-            validate_request_data(data, request_types)
-        except ValueError as e:
-            response['status'] = 'error'
-            response['message'] = str(e)
-            return jsonify(response), 400
-
-        if User.find_by_username(data['username']):
-            response['status'] = 'error'
-            response['message'] = 'Username {} already exists.'.format(data['username'])
-            return jsonify(response), 400
-
-        response['status'] = 'ok'
-        new_user = User(
-            username = data['username'],
-            password = User.generate_hash(data['password']),
-            email = data['email'],
-            first_name = data['first_name'],
-            last_name = data['last_name']
-        )
-        new_user.save_to_db()
-        response['access_token'] = create_access_token(identity = data['username'])
-        response['refresh_token'] = create_refresh_token(identity = data['username'])
-        response['message'] = 'User {} was successfully created.'.format(data['username'])
-    return jsonify(response), 201
-
 # TODO:
 #   Acquire roles and other details like this: https://github.com/vimalloc/flask-jwt-extended/blob/master/examples/tokens_from_complex_objects.py
 # login
 @auth.route('/login', methods=['POST'])
 def login():
-    def login_failure(response):
-        response['status'] = 'error'
-        response['message'] = 'Wrong Credentials'
-        return jsonify(response), 401
-
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
 
-    if request.method == 'POST':
+    try:
         request_types = {
             'username': 'str',
             'password': 'str',
         }
-        try:
-            validate_request_data(data, request_types)
-        except ValueError as e:
-            response['status'] = 'error'
-            response['message'] = str(e)
-            return jsonify(response), 400
+        validate_request_data(data, request_types)
 
         user = User.find_by_username(data['username'])
+        if not user or not User.verify_hash(data['password'], user.password):
+            response['status'] = 'error'
+            response['message'] = 'Wrong Credentials'
+            return jsonify(response), 401
 
-        if not user:
-            return login_failure(response)
-        elif User.verify_hash(data['password'], user.password):
-            response['status'] = 'ok'
-            response['access_token'] = create_access_token(identity = data['username'])
-            response['refresh_token'] = create_refresh_token(identity = data['username'])
-            response['message'] = 'Logged in as {}'.format(data['username'])
-        else:
-            return login_failure(response)
+        response['status'] = 'ok'
+        response['access_token'] = create_access_token(identity = data['username'])
+        response['refresh_token'] = create_refresh_token(identity = data['username'])
+        response['message'] = 'Logged in as {}'.format(data['username'])
+        response['payload'] = []
+    except ValueError as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 400
     return jsonify(response), 201
 
 # refresh access_token with refresh_token

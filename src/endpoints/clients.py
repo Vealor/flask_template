@@ -56,12 +56,12 @@ def post_client():
         }
         validate_request_data(data, request_types)
         # check if this name exists
-        query = Client.query.filter_by(name=data['name']).first()
-        if query:
+        check = Client.query.filter_by(name=data['name']).first()
+        if check:
             raise ValueError('Client "{}" already exist.'.format(data['name']))
         # check if this industry exists
-        query = Industry.query.filter_by(id=data['industry_id']).first()
-        if not query:
+        check = Industry.query.filter_by(id=data['industry_id']).first()
+        if not check:
             raise ValueError('Industry id does not exist.'.format(data['industry_id']))
 
         # INSERT transaction
