@@ -60,13 +60,13 @@ def post_vendor():
             raise ValueError('Vendor "{}" already exist.'.format(data['name']))
 
         # INSERT transaction
-        Vendor(
+        vendor_id = Vendor(
             name = data['name']
         ).save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created vendor {}'.format(data['name'])
-        response['payload'] = [Vendor.find_by_name(data['name']).serialize]
+        response['payload'] = [Vendor.find_by_id(vendor_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)

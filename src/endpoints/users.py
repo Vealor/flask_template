@@ -58,16 +58,17 @@ def post_user():
             'last_name': 'str'
         }
         validate_request_data(data, request_types)
-        # check if this name exists
-        check = User.query.filter_by(name=data['username']).first()
+        # check if this username exists
+        check = User.query.filter_by(username=data['username']).first()
         if check:
             raise ValueError('Username "{}" already exist.'.format(data['username']))
-        check = User.query.filter_by(name=data['email']).first()
+        # check if this email exists
+        check = User.query.filter_by(email=data['email']).first()
         if check:
             raise ValueError('User email "{}" already exist.'.format(data['email']))
 
         # INSERT transaction
-        User(
+        user_id = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
             email = data['email'],
@@ -77,7 +78,7 @@ def post_user():
 
         response['status'] = 'ok'
         response['message'] = 'Created user {}'.format(data['username'])
-        response['payload'] = [User.find_by_name(data['username']).serialize]
+        response['payload'] = [User.find_by_id(user_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)

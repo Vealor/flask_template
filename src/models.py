@@ -70,6 +70,7 @@ class User(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -189,6 +190,7 @@ class Client(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -264,6 +266,7 @@ class Project(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -302,6 +305,7 @@ class Vendor(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
