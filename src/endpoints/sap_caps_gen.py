@@ -176,7 +176,7 @@ def build_master_tables():
         db.session.bulk_insert_mappings(referenceclass, exampledump)
         db.session.commit()
         print('great success')
-    return 'OK' 
+    return 'OK'
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
