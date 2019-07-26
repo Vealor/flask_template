@@ -23,7 +23,6 @@ from config import *
 
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
-
 def get_cwd(read_path):
     current_directory = os.path.dirname(os.path.abspath('__file__'))
     current_file_path = os.path.join(current_directory, read_path)
@@ -177,7 +176,7 @@ def build_master_tables():
         db.session.bulk_insert_mappings(referenceclass, exampledump)
         db.session.commit()
         print('great success')
-    return 'OK'
+    return 'OK' 
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
