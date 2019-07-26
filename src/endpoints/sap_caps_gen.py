@@ -1,6 +1,7 @@
 '''
 sap_caps_gen endpoints
 '''
+import csv
 import decimal
 import datetime
 import json
@@ -10,6 +11,7 @@ import os
 import pandas as pd
 import random
 import re
+import shutil
 import zipfile
 import requests
 import sqlalchemy
@@ -27,6 +29,23 @@ def get_cwd(read_path):
     current_file_path = os.path.join(current_directory, read_path)
     return current_file_path
 
+def mapping_serializer(label):
+    return {
+        "script_label": label.script_labels,
+        "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
+    }
+
+def data_dictionary(mapping, table):
+    rename_dict = {}
+    for index, elem in enumerate(mapping):
+        if mapping[index]['mappings'][0]['table_name'] == table:
+            rename_dict.update({mapping[index]['script_label']: [
+                mapping[index]['is_calculated'],
+                mapping[index]['is_required'],
+                mapping[index]['is_unique'],
+                mapping[index]['regex']
+            ]})
+    return rename_dict
 
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
@@ -92,66 +111,77 @@ def unzipping():
 
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
 def build_master_tables():
-    # mapping = db.session.query(CDM_label, DataMapping).join(DataMapping).add_columns(CDM_label.script_labels, DataMapping.column_name, DataMapping.table_name).all()
-
-
-    def mapping_serializer(label):
-        return {
-            "script_label": label.script_labels,
-            "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
-        }
     mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
+
+    def rename_builder(table):
+        rename_dict = {}
+        for index, elem in enumerate(mapping):
+            if mapping[index]['mappings'][0]['table_name'] == table:
+                rename_dict.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
+        return rename_dict
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+    list_tablenames = ['SKAT']
+    print(list_tablenames)
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
+        print(table)
         list_of_files = []
         basetable = {}
         for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
             if re.search(table, file):
-                print(file)
                 if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
-                    list_of_files.append[file]
-        print(list_of_files)
-        return 'OK'
+                    list_of_files.append(file)
+        wfd = open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'wb')
+        for index, file in enumerate(list_of_files):
+            # for first file
+            if index == 0:
+                with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r' ,encoding='utf-8-sig') as fd:
+                    #   get first line
+                    #   change headers on first line to desired values
+                    first_line = fd.readline()
+                    renaming_scheme = rename_builder(table)
+                    for key in renaming_scheme.keys():
+                        print(key, renaming_scheme[key])
+                        first_line = first_line.replace(key, renaming_scheme[key])
+                    print(first_line)
+                    first_line = first_line.encode()
 
-        #
-        # #Reading Data
-        # with open('{}_MASTER.txt'.format(table), 'wb') as wfd:
-        #     for f in listoffiles:
-        #         with open(f, 'rb') as fd:
-        #             try:
-        #                 shutil.copyfileobj(fd, wfd)
-        #             except Exception as e:
-        #                 response['message'].update('Unable to conatenate files for file {file} in table {table}'.format(file=f, table=table))
-        #                 return response
-        #     first_line = wfd.readline().rstrip().split(',')
-        #     try:
-        #         #todo: dictionary map to rename columns
-        #         for key in dictionary.keys()
-        #             renamed_lines = [first_line.replace(key, dictionary[key]) for column in first_line]
-        #
-        #     except Exception as e:
-        #         response['message'].update('Unable to rename columns for master table {}').format(table)
-        #
-        #
-        #
-        #
-        #
-        #             basetable = pd.concat([basetable, df])
-        #             response['message'].update({'Table Upload successful' : table})
-        #             print('Table Upload Successful {}'.format(table))
-        #     if len(basetable) == 0:
-        #         response['status'] = 'Not OK'
-        #         response['message'].update({'Missing Table' : table})
-        # uniondict[table] = basetable
-        # files_present = glob.glob('{}.csv'.format(table))
-        # if not files_present:
-        #     print('Writing Master Table'.format(table))
-        #     basetable.to_csv('{}.csv'.format(table), index=False)
+                    #   add header to wfd
+                    wfd.write(first_line)
+        #     #   add rest of file to wfd
+                    wfd.write(fd.read().encode())
+            else:
+                # for all future files
+                with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r', encoding='utf-8-sig') as fd:
+                    #   strip header
+                    next(fd)
+                    wfd.write(fd.read().encode())
+        wfd.close()
+        print('table renamed to')
+        print(renaming_scheme.values())
+        referenceclass = eval('Sap' + str(table.lower().capitalize()))
+        print(referenceclass)
+        exampledump = []
 
+        with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
+            for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
+                try:
+                    dict_you_want = {your_key: line[your_key] for your_key in renaming_scheme.values()}
+                    print(dict_you_want)
+                except Exception as e:
+                    print('Missing column')
+                    continue
+                dict_you_want['project_id'] = 1
+                exampledump.append(dict_you_want)
+
+        db.session.bulk_insert_mappings(referenceclass, exampledump)
+        db.session.commit()
+        print('great success')
+    return 'OK'
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
+
     response = {
         "VERSION": current_app.config['VERSION']
     }
