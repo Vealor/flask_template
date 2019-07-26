@@ -180,8 +180,26 @@ def build_master_tables():
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
+    def retrieve_dq_serializer(label):
+        return {
+            "script_label": label.script_labels,
+            "is_required": label.is_required,
+            "regex": label.regex,
+            "is_unique": label.is_unique,
+            "is_calculated": label.is_calculated,
+            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in
+                         label.cdm_label_data_mappings.all()]
+        }
 
-    response = {
+    CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
+    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query]))
+    for table in list_tablenames:
+        print(table)
+        compiled_data_dictionary = data_dictionary(CDM_query, table)
+        print(compiled_data_dictionary)
+
+
+response = {
         "VERSION": current_app.config['VERSION']
     }
     return jsonify(response)
