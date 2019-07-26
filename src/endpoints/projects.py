@@ -10,7 +10,7 @@ from src.util import validate_request_data
 
 projects = Blueprint('projects', __name__)
 #===============================================================================
-# GET ALL CLIENT
+# GET ALL PROJECT
 @projects.route('/', defaults={'id':None}, methods=['GET'])
 @projects.route('/<path:id>', methods=['GET'])
 # @jwt_required
@@ -45,7 +45,7 @@ def get_projects(id):
     return jsonify(response)
 
 #===============================================================================
-# POST NEW CLIENT
+# POST NEW PROJECT
 @projects.route('/', methods=['POST'])
 # @jwt_required
 def post_project():
@@ -55,27 +55,28 @@ def post_project():
     try:
         # input validation
         request_types = {
-            'name': 'str'
+            'name': 'str',
+            'client_id': 'int'
         }
         validate_request_data(data, request_types)
         # check if this name exists
-        query = Project.query.filter_by(name=data['name']).first()
-        if query:
+        check = Project.query.filter_by(name=data['name']).first()
+        if check:
             raise ValueError('Project "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        query = Industry.query.filter_by(id=data['industry_id']).first()
-        if not query:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+        # check if this client exists
+        check = Client.query.filter_by(id=data['client_id']).first()
+        if not check:
+            raise ValueError('Client id does not exist.'.format(data['client_id']))
 
         # INSERT transaction
-        Project(
+        project_id = Project(
             name = data['name'],
-            industry_id = data['industry_id']
+            client_id = data['client_id']
         ).save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created project {}'.format(data['name'])
-        response['payload'] = [Project.find_by_name(data['name']).serialize]
+        response['payload'] = [Project.find_by_id(project_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -84,7 +85,7 @@ def post_project():
     return jsonify(response), 201
 
 #===============================================================================
-# UPDATE A CLIENT
+# UPDATE A PROJECT
 @projects.route('/<path:id>', methods=['UPDATE'])
 # @jwt_required
 def update_project(id):
@@ -126,7 +127,7 @@ def update_project(id):
     return jsonify(response)
 
 #===============================================================================
-# DELETE A CLIENT
+# DELETE A PROJECT
 @projects.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_project(id):

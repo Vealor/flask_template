@@ -50,12 +50,6 @@ user_global_permissions = db.Table('user_permissions',
     db.Column('global_permissions', db.Enum(GlobalPermissions), nullable=False, primary_key=True)
 )
 
-user_project_permissions = db.Table('user_projects',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('project_permissions', db.Enum(ProjectPermissions), nullable=False, primary_key=True)
-)
-
 ################################################################################
 # AUTH User and Token models
 class User(db.Model):
@@ -63,14 +57,27 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     username = db.Column(db.String(64), unique = True, index = True, nullable = False)
     password = db.Column(db.String(128), nullable = False)
-    email = db.Column(db.String(128), nullable=False)
+    email = db.Column(db.String(128), unique=True, nullable=False)
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    user_projects = db.relationship('Project', secondary=user_project_permissions, lazy='dynamic')
+    user_permission_assignments = db.relationship('PermissionAssignment', back_populates='permission_assignment_user', lazy='dynamic')
+
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
 
     @property
     def serialize(self):
@@ -80,16 +87,20 @@ class User(db.Model):
             'email': self.email,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'project_permission_map': []
+            'display_name': "{} {}".format(self.first_name, self.last_name),
+            'project_permission_map': [{
+                    'project': assignment.permission_assignment_project.name,
+                    'permissions': assignment.project_permission.value
+                } for assignment in self.user_permission_assignments]
         }
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
 
     @classmethod
     def superuser_exists(cls):
         return cls.query.filter_by(is_superuser=True).all()
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
     @classmethod
     def find_by_username(cls, username):
@@ -102,6 +113,26 @@ class User(db.Model):
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
+
+class PermissionAssignment(db.Model):
+    __tablename__ = 'permission_assignment'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, primary_key=True)
+    permission_assignment_user = db.relationship('User', back_populates='user_permission_assignments')
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, primary_key=True)
+    permission_assignment_project = db.relationship('Project', back_populates='project_permission_assignments')
+
+    project_permission = db.Column(db.Enum(ProjectPermissions), nullable=False, primary_key=True)
+
+    @property
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'user': self.permission_assignment_user.username,
+            'project_id': self.project_id,
+            'project': self.permission_assignment_project.name,
+            'project_permission': self.project_permission
+        }
 
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
@@ -159,6 +190,7 @@ class Client(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -220,7 +252,7 @@ class ClassificationRule(db.Model):
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
+    name = db.Column(db.String(128), nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
@@ -229,10 +261,12 @@ class Project(db.Model):
 
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
+    project_permission_assignments = db.relationship('PermissionAssignment', back_populates='permission_assignment_project', lazy='dynamic')
 
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -271,6 +305,7 @@ class Vendor(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
