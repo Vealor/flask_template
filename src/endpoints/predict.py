@@ -10,7 +10,7 @@ from src.util import get_date_obj_from_str, validate_request_data
 predict = Blueprint('predict', __name__)
 #===============================================================================
 # General
-@predict.route('/', methods=['GET','POST'])
+@predict.route('/', methods=['POST'])
 def do_predict():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
