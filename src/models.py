@@ -373,12 +373,11 @@ class ClientModel(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'created':self.created,
-            'pickle':self.pickle,
-            'hyper_p':self.hyper_p,
-            'status': self.status,
-            'train_data_start': self.train_data_start,
-            'train_data_end': self.train_data_end
+            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'hyper_p': self.hyper_p,
+            'status': self.status.value,
+            'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
+            'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
         }
 
 class ClientModelPerformance(db.Model):
@@ -411,12 +410,11 @@ class MasterModel(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'created':self.created,
-            'pickle':self.pickle,
-            'hyper_p':self.hyper_p,
-            'status': self.status,
-            'train_data_start': self.train_data_start,
-            'train_data_end': self.train_data_end
+            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'hyper_p': self.hyper_p,
+            'status': self.status.value,
+            'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
+            'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
         }
 
 class MasterModelPerformance(db.Model):

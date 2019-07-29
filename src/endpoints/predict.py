@@ -5,7 +5,7 @@ import json
 import random
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
-from src.util import get_date_obj_from_str, validate_request_data
+from src.util import validate_request_data
 
 predict = Blueprint('predict', __name__)
 #===============================================================================
@@ -40,22 +40,21 @@ def do_predict():
 
             # Check the database to see if there are issues.
             if data['MODEL_TYPE'] == 'client':
-                query = ClientModel.query.filter_by(id=data['CLIENT_ID'])
+                query = ClientModel.query.filter_by(client_id=data['CLIENT_ID'])
             else:
                 query =  MasterModel.query
             query = query.filter_by(status=Activity.pending.value)
             if len(query.all()) != 1:
                 raise ValueError("ERROR: Please specify one active model to be used for prediction.")
 
-        except ValueError as e:
+        except Exception as e:
             response['status'] = 'error'
             response['message'] = str(e)
             return jsonify(response), 400
 
 
-
     response['status'] = 'ok'
-    response['payload'] = str([i.serialize for i in query.all()])
+    response['payload'] = [i.serialize for i in query.all()]
     response['message'] = 'Prediction successful. Transactions have been marked.'
 
     return jsonify(response), 202
