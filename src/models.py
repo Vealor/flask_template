@@ -369,6 +369,17 @@ class ClientModel(db.Model):
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
     client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'hyper_p': self.hyper_p,
+            'status': self.status.value,
+            'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
+            'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
+        }
+
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -394,6 +405,17 @@ class MasterModel(db.Model):
 
     master_model_transactions = db.relationship('Transaction', back_populates='transaction_master_model', lazy='dynamic')
     master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic')
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'hyper_p': self.hyper_p,
+            'status': self.status.value,
+            'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
+            'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
+        }
 
 class MasterModelPerformance(db.Model):
     __tablename__ = 'master_model_performances'
