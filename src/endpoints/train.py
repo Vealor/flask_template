@@ -56,18 +56,31 @@ def do_train():
             # At this point, all database independent checks have been perfrm'd
             # Now, database dependent checks begin
             if data['MODEL_TYPE'] == 'client':
+
                 # Is the client id in the DATABASE?
-                if not Client.find_by_id(data['CLIENT_ID']):
-                    raise ValueError('Client id \'{}\' is not in the database.'.format(data['CLIENT_ID']))
+                cid = data['CLIENT_ID']
+                if not Client.find_by_id(cid):
+                    raise ValueError('Client id \'{}\' is not in the database.'.format(cid))
+
                 # Check if any projects exist for the client
-                client_projects = [p.id for p in Project.query.filter_by(client_id = data['CLIENT_ID']).distinct()]
+                client_projects = [p.id for p in Project.query.filter_by(client_id = cid).distinct()]
                 if len(client_projects) == 0:
-                    raise ValueError('Client id \'{}\' has no projects in the database.'.format(data['CLIENT_ID']))
+                    raise ValueError('Client id \'{}\' has no projects in the database.'.format(cid))
+
+                # Is there a pending client model? If so, STOP.
+                if ClientModel.query.filter_by(client_id = cid).filter_by(status=Activity.pending.value).all():
+                    raise Exception('There are pending models for this client.')
+
                 # Get transactions
                 transactions_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).count()
                 if transactions_count < 6000:
                     raise Exception('Not enough data to train a client model.')
             else:
+                # Is there a pending master model? If so, STOP.
+                if MasterModel.query.filter_by(status=Activity.pending.value).all():
+                    raise Exception('There are pending master models.')
+
+                # Are there sufficent transactions
                 if Transaction.query.count() < 10000:
                     raise Exception('Not enough data to train a master model.')
 
