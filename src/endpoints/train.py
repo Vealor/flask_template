@@ -71,18 +71,18 @@ def do_train():
                 if ClientModel.query.filter_by(client_id = cid).filter_by(status=Activity.pending.value).all():
                     raise Exception('There are pending models for this client.')
 
-                # Get transactions
-                transactions_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).count()
+                # Are there sufficent transactions for training?
+                transactions_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
                 if transactions_count < 6000:
-                    raise Exception('Not enough data to train a client model.')
+                    raise Exception('Not enough data to train a client model. Only {} approved transactions.'.format(transactions_count))
             else:
                 # Is there a pending master model? If so, STOP.
                 if MasterModel.query.filter_by(status=Activity.pending.value).all():
                     raise Exception('There are pending master models.')
 
-                # Are there sufficent transactions
-                if Transaction.query.count() < 10000:
-                    raise Exception('Not enough data to train a master model.')
+                # Are there sufficent transactions for training?
+                if Transaction.query.filter_by(is_approved=True).count() < 10000:
+                    raise Exception('Not enough data to train a master model. Only {} approved transactions.'.format(transactions_count))
 
 
         except Exception as e:
