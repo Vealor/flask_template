@@ -32,6 +32,9 @@ class DevelopmentConfig(Config):
     # JWT Secret Key
     JWT_SECRET_KEY = 'jwt-secret-string'
 
+    SENDGRID_API_KEY = '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'
+    OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
+
     # Define the database we are working with
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     POSTGRES = {

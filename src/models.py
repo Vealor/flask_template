@@ -1,5 +1,4 @@
 import enum
-from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects import postgresql
@@ -7,7 +6,6 @@ from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB
 
 db = SQLAlchemy()
-ma = Marshmallow()
 
 ################################################################################
 # ENUMS
@@ -61,6 +59,7 @@ class User(db.Model):
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
 
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
@@ -88,6 +87,7 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
+            'req_pass_reset': self.req_pass_reset,
             'project_permission_map': [{
                     'project': assignment.permission_assignment_project.name,
                     'permissions': assignment.project_permission.value
