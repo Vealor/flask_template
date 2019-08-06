@@ -2,7 +2,7 @@
 Main API Server
 '''
 #===============================================================================
-from src.models import db, ma
+from src.models import db
 from flask import Flask, request, jsonify, current_app
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -25,7 +25,6 @@ else:
 
 api.url_map.strict_slashes = False
 db.init_app(api)
-ma.init_app(api)
 migrate = Migrate(api, db)
 jwt = JWTManager(api)
 
