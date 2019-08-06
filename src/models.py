@@ -434,7 +434,7 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
-    is_required = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     rbc_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
