@@ -2,6 +2,7 @@
 Predict Endpoints
 '''
 import json
+import pickle
 import random
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
@@ -43,9 +44,13 @@ def do_predict():
                 query = ClientModel.query.filter_by(client_id=data['CLIENT_ID'])
             else:
                 query =  MasterModel.query
-            query = query.filter_by(status=Activity.pending.value)
+            query = query.filter_by(status=Activity.active.value)
             if len(query.all()) != 1:
                 raise ValueError("ERROR: Please specify one active model to be used for prediction.")
+
+            # Now apply the predictive model to generate the predictions
+            model = pickle.loads(query.first().pickle)
+            print("Model unpickled.")
 
         except Exception as e:
             response['status'] = 'error'
