@@ -18,7 +18,7 @@ import sqlalchemy
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy.sql import expression, functions
 from config import *
 
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
@@ -34,17 +34,6 @@ def mapping_serializer(label):
         "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
     }
 
-def data_dictionary(mapping, table):
-    rename_dict = {}
-    for index, elem in enumerate(mapping):
-        if mapping[index]['mappings'][0]['table_name'] == table:
-            rename_dict.update({mapping[index]['script_label']: [
-                mapping[index]['is_calculated'],
-                mapping[index]['is_required'],
-                mapping[index]['is_unique'],
-                mapping[index]['regex']
-            ]})
-    return rename_dict
 
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
@@ -111,7 +100,6 @@ def unzipping():
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
 def build_master_tables():
     mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
-
     def rename_builder(table):
         rename_dict = {}
         for index, elem in enumerate(mapping):
@@ -119,7 +107,7 @@ def build_master_tables():
                 rename_dict.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
         return rename_dict
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-    list_tablenames = ['SKAT']
+    list_tablenames = ['BKPF']
     print(list_tablenames)
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
@@ -179,7 +167,26 @@ def build_master_tables():
     return 'OK'
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
+
+
 def data_quality_check():
+
+    def get_count(q):
+        return q.query.with_entities(func.count()).scalar()
+
+
+    def data_dictionary(mapping, table):
+        rename_dict = {}
+        for index, elem in enumerate(mapping):
+            if mapping[index]['mappings'][0]['table_name'] == table:
+                rename_dict.update({mapping[index]['script_label']: {
+                    'is_calculated': mapping[index]['is_calculated'],
+                    'is_required': mapping[index]['is_required'],
+                    'is_unique': mapping[index]['is_unique'],
+                    'regex': mapping[index]['regex'],
+                }})
+        return rename_dict
+
     def retrieve_dq_serializer(label):
         return {
             "script_label": label.script_labels,
@@ -191,18 +198,52 @@ def data_quality_check():
                          label.cdm_label_data_mappings.all()]
         }
 
-    CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
-    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query]))
-    for table in list_tablenames:
-        print(table)
-        compiled_data_dictionary = data_dictionary(CDM_query, table)
-        print(compiled_data_dictionary)
+    def completeness_check(column):
+        completeness_response = {}
+        for index, elem in enumerate(column):
+            if '' == elem or elem.isspace():
+                completeness_response[str(index)] = elem
+        completeness_response['final_score'] = 100 - (len(completeness_response)/len(column))
+        return completeness_response
 
+    def validity_check(result, regex):
+        validity_response = {}
+        results = list(filter(re.compile(regex).match, result))
+        validity_response['results'] = results
+        validity_response['final_score'] = 100 - (len(validity_response['results'])/len(column))
+        return validity_response
 
-response = {
-        "VERSION": current_app.config['VERSION']
+    data_dictionary_results = {
     }
-    return jsonify(response)
+    CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
+    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
+    list_tablenames = ['BKPF']
+    for table in list_tablenames:
+        data_dictionary_results[table] = {}
+        print(table)
+        tableclass = eval('Sap' + str(table.lower().capitalize()))
+        print(tableclass)
+        compiled_data_dictionary = data_dictionary(CDM_query, table)
+        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
+        if unique_keys:
+            unique_results = list(list(zip(*tableclass.query.with_entities(getattr(tableclass, 'varapkey')).group_by(getattr(tableclass, 'varapkey')).having(func.count(getattr(tableclass, 'varapkey')) > 1).all()))[0])
+            if len(unique_results) > 1:
+                uniqueness_response = {}
+                uniqueness_response['results'] = unique_results
+                uniqueness_response['final_score'] = 100 - (len(unique_results)/tableclass.query.count())
+                data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
+        for column in compiled_data_dictionary.keys():
+            print(column)
+            query = tableclass.query
+            query = query.with_entities(getattr(tableclass, column))
+            query = query.order_by(getattr(tableclass, column))
+            result = list(list(zip(*query.all()))[0])
+            print(len(result))
+            if compiled_data_dictionary[column]['is_required']:
+                data_dictionary_results[table][column] = {'completeness' : completeness_check(result)}
+            if compiled_data_dictionary[column]['regex']:
+                data_dictionary_results[table][column] = {'regex': validity_check(result, compiled_data_dictionary[column]['regex'])}
+    return data_dictionary_results
 
 @sap_caps_gen.route('/j1', methods=['GET'])
 def j1():

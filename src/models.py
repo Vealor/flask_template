@@ -199,7 +199,6 @@ class Project(db.Model):
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
-
     project_client = db.relationship('Client', back_populates='client_projects')
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project')
@@ -393,7 +392,6 @@ class SapAufk(db.Model):
 class SapBkpf(db.Model):
     _tablename__ = 'sap_bkpf'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     obj_key = db.Column(db.String(256))
     ref_procedure = db.Column(db.String(256))
     doc_no = db.Column(db.String(256))
@@ -408,7 +406,11 @@ class SapBkpf(db.Model):
     reverse_document_number_flag_for_credit = db.Column(db.String(256))
     transaction_code = db.Column(db.String(256))
     currency = db.Column(db.String(256))
+    varapkey = db.column_property(doc_no + document_header_text)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapbkpf_project = db.relationship('Project', back_populates='project_sapbkpf')
+
 
 class SapRegup(db.Model):
     _tablename__ = 'sap_regup'
