@@ -27,7 +27,7 @@ train = Blueprint('train', __name__)
 @train.route('/', methods=['POST'])
 # @jwt_required
 def do_train():
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': '', 'message': '', 'payload': {}}
     data = request.get_json()
 
     if request.method == 'POST':
@@ -106,7 +106,7 @@ def do_train():
             'pickle': pickle.dumps(None),
             'hyper_p': {}
             }
-        if ["MODEL_TYPE"] == 'client':
+        if data["MODEL_TYPE"] == 'client':
             # Create a placeholder entry in the model database to avoid multiple training instances
             cid = data['CLIENT_ID']
             model_data_dict['client_id'] = cid

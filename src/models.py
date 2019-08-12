@@ -252,7 +252,7 @@ class ClassificationRule(db.Model):
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
