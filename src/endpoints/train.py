@@ -4,9 +4,15 @@ Train Endpoints
 import datetime
 import json
 import random
+import pandas as pd
+import pickle
+import src.prediction.model_client as client_model
+import src.prediction.model_master as master_model
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
+from sklearn.model_selection import train_test_split
 from src.models import *
+from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import get_date_obj_from_str, validate_request_data
 
 
@@ -73,7 +79,7 @@ def do_train():
 
                 # Are there sufficent transactions for training?
                 transactions_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
-                if transactions_count < 6000:
+                if transactions_count < 2000:
                     raise Exception('Not enough data to train a client model. Only {} approved transactions.'.format(transactions_count))
             else:
                 # Is there a pending master model? If so, STOP.
@@ -100,9 +106,9 @@ def do_train():
             'pickle': pickle.dumps(None),
             'hyper_p': {}
             }
-        if input["MODEL_TYPE"] == 'client':
+        if ["MODEL_TYPE"] == 'client':
             # Create a placeholder entry in the model database to avoid multiple training instances
-            cid = input['CLIENT_ID']
+            cid = data['CLIENT_ID']
             model_data_dict['client_id'] = cid
             model_id = ClientModel(**model_data_dict).save_to_db()
             entry = ClientModel.query.filter_by(id=model_id).first()
@@ -146,8 +152,8 @@ def do_train():
                 'accuracy': performance_metrics['accuracy'],
                 'precision': performance_metrics['precision'],
                 'recall': performance_metrics['recall'],
-                'test_data_start': get_date_obj_from_str(input['TEST_DATA_START_DATE']),
-                'test_data_end': get_date_obj_from_str(input['TEST_DATA_END_DATE'])
+                'test_data_start': test_start,
+                'test_data_end': test_end
             }
 
         #If exception causes training failure...
@@ -165,7 +171,7 @@ def do_train():
 
         # Connect to the database and push trained model and performance metrics
         # to the appropriate entries.
-        if input["MODEL_TYPE"] == 'client':
+        if data["MODEL_TYPE"] == 'client':
             model_performance_dict['client_model_id'] = model_id
             ClientModelPerformance(**model_performance_dict).save_to_db()
             # If there is no active model for this client, set it automatically to the current one.
@@ -185,6 +191,6 @@ def do_train():
         response['status'] = 'ok'
         response['payload']['performance_metrics'] = performance_metrics
         response['payload']['model_id'] = model_id
-        response['payload']['model_type'] = input["MODEL_TYPE"]
+        response['payload']['model_type'] = data["MODEL_TYPE"]
         response['message'] = 'Model created, trained, and pushed to database. Notification sent to {}'.format('someone@kpmg.ca')
         return jsonify(response, 201)

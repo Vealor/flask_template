@@ -353,6 +353,7 @@ class CDM_label(db.Model):
 
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
 
+
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -369,16 +370,45 @@ class ClientModel(db.Model):
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
     client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+    @classmethod
+    def find_active_for_client(cls, client_id):
+        return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
+
+    @classmethod
+    def set_active_for_client(cls, id, client_id):
+        active_model = cls.find_active_for_client(client_id)
+        if active_model:
+            active_model.status = Activity.inactive.value
+        cls.query.filter_by(id=id).first().status = Activity.active.value
+        db.session.commit()
+
 
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
@@ -392,6 +422,19 @@ class ClientModelPerformance(db.Model):
 
     client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='CASCADE'))
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
 
 class MasterModel(db.Model):
     __tablename__ = 'master_models'
@@ -410,12 +453,37 @@ class MasterModel(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'created':self.created.strftime('%Y/%m/%d, %H:%M:%S'),
+            'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
         }
+
+    @classmethod
+    def find_active(cls):
+        return cls.query.filter_by(status = Activity.active.value).first()
+
+    @classmethod
+    def set_active(cls, id):
+        active_model = cls.find_active()
+        if active_model:
+            active_model.status = Activity.inactive.value
+        cls.query.filter_by(id=id).first().status = Activity.active.value
+        db.session.commit()
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
 
 class MasterModelPerformance(db.Model):
     __tablename__ = 'master_model_performances'
@@ -429,6 +497,19 @@ class MasterModelPerformance(db.Model):
 
     master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='CASCADE'), nullable=False)
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances')
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -457,7 +538,23 @@ class Transaction(db.Model):
     master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
     transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions')
 
+    @property
+    def serialize(self):
 
+        return {
+            'id': self.id,
+            'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
+            'is_approved': self.is_approved,
+            'is_predicted': self.is_predicted,
+            'recovery_probability': self.recovery_probability,
+            'rbc_predicted': self.rbc_predicted,
+            'rbc_recovery_probability': self.rbc_recovery_probability,
+            'data': self.data,
+            'project_id': self.project_id,
+            'client_model_id': self.client_model_id,
+            'master_model_id': self.master_model_id
+
+        }
 
 
 ##
