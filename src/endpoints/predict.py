@@ -2,10 +2,14 @@
 Predict Endpoints
 '''
 import json
+import pandas as pd
 import pickle
 import random
+import src.prediction.model_client as client_model
+import src.prediction.model_master as master_model
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
+from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import validate_request_data
 
 predict = Blueprint('predict', __name__)
@@ -41,25 +45,32 @@ def do_predict():
 
             # Check the database to see if there are issues.
             if data['MODEL_TYPE'] == 'client':
-                query = ClientModel.query.filter_by(client_id=data['CLIENT_ID'])
+                active_model = ClientModel.find_active_for_client(data['CLIENT_ID'])
+                lh_model = client_model.ClientPredictionModel(active_model.pickle)
             else:
-                query =  MasterModel.query
-            query = query.filter_by(status=Activity.active.value)
-            if len(query.all()) != 1:
-                raise ValueError("ERROR: Please specify one active model to be used for prediction.")
+                active_model = MasterModel.find_active()
+                lh_model = master_model.MasterPredictionModel(active_model.pickle)
+            predictors = active_model.hyper_p['predictors']
 
-            # Now apply the predictive model to generate the predictions
-            model = pickle.loads(query.first().pickle)
-            print("Model unpickled.")
+            # Get the data to predict
+            client_projects = [p.id for p in \
+                Project.query.filter_by(client_id = data['CLIENT_ID']).distinct()]
+            prediction_transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
+            entries = [entry.serialize['data'] for entry in prediction_transactions.filter_by(is_approved=False).all()]
+            df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
+            df_predict = preprocessing_predict(df_predict, predictors)
+            #classes = lh_model.predict(df_predict, predictors)
+            #print(lh_model.predict_probabilities(df_predict, predictors))
+            classes = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
+            classes = {int(key):float(val) for (key,val) in zip(range(0,len(classes)),classes)}
 
         except Exception as e:
             response['status'] = 'error'
             response['message'] = str(e)
             return jsonify(response), 400
 
-
     response['status'] = 'ok'
-    response['payload'] = [i.serialize for i in query.all()]
+    response['payload'] = {'classes': classes}
     response['message'] = 'Prediction successful. Transactions have been marked.'
 
     return jsonify(response), 202
