@@ -134,7 +134,7 @@ def update_user(id):
 
 #===============================================================================
 # Check A USER password
-@users.route('/<path:id>/passcheck', methods=['UPDATE'])
+@users.route('/<path:id>/passcheck', methods=['POST'])
 # @jwt_required
 def check_password(id):
     response = { 'status': '', 'message': '', 'payload': [] }
@@ -161,7 +161,7 @@ def check_password(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response), 201
+    return jsonify(response), 200
 
 #===============================================================================
 # UPDATE A USER password
@@ -174,7 +174,8 @@ def update_user_password(id):
     try:
         # input validation
         request_types = {
-            'password': 'str'
+            'password': 'str',
+            'newpassword': 'str',
         }
         validate_request_data(data, request_types)
 
@@ -184,7 +185,8 @@ def update_user_password(id):
             response['message'] = 'Password Invalid'
             return jsonify(response), 401
 
-        query.password = generate_hash(data['password'])
+        query.password = User.generate_hash(data['newpassword'])
+        query.req_pass_reset = False
         query.update_to_db()
 
         response['status'] = 'ok'

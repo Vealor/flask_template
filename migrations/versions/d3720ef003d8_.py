@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 09bfe7eb6380
+Revision ID: d3720ef003d8
 Revises: 
-Create Date: 2019-07-23 14:55:31.449598
+Create Date: 2019-08-06 16:23:51.576994
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '09bfe7eb6380'
+revision = 'd3720ef003d8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -45,6 +45,8 @@ def upgrade():
     sa.Column('pickle', sa.PickleType(), nullable=False),
     sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
     sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
+    sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -55,7 +57,9 @@ def upgrade():
     sa.Column('first_name', sa.String(length=128), nullable=False),
     sa.Column('last_name', sa.String(length=128), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('req_pass_reset', sa.Boolean(), server_default='t', nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('vendors',
@@ -88,6 +92,8 @@ def upgrade():
     sa.Column('precision', sa.Float(), nullable=False),
     sa.Column('accuracy', sa.Float(), nullable=False),
     sa.Column('recall', sa.Float(), nullable=False),
+    sa.Column('test_data_start', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('test_data_end', sa.DateTime(timezone=True), nullable=False),
     sa.Column('master_model_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -121,6 +127,8 @@ def upgrade():
     sa.Column('pickle', sa.PickleType(), nullable=False),
     sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
     sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
+    sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -137,6 +145,11 @@ def upgrade():
     op.create_table('client_model_performances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('precision', sa.Float(), nullable=False),
+    sa.Column('accuracy', sa.Float(), nullable=False),
+    sa.Column('recall', sa.Float(), nullable=False),
+    sa.Column('test_data_start', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('test_data_end', sa.DateTime(timezone=True), nullable=False),
     sa.Column('client_model_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -150,10 +163,18 @@ def upgrade():
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('project_id', 'cdm_label_script_label')
     )
+    op.create_table('permission_assignment',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('project_permission', sa.Enum('tax_admin', 'data_admin', 'tax_approver', name='projectpermissions'), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'project_id', 'project_permission')
+    )
     op.create_table('transactions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('modified', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('is_required', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_predicted', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('recovery_probability', sa.Float(), nullable=True),
     sa.Column('rbc_predicted', sa.Boolean(), server_default='f', nullable=False),
@@ -172,21 +193,13 @@ def upgrade():
     sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('user_projects',
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.Column('project_permissions', sa.Enum('tax_admin', 'data_admin', 'tax_approver', name='projectpermissions'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('user_id', 'project_id', 'project_permissions')
-    )
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('user_projects')
     op.drop_table('transactions')
+    op.drop_table('permission_assignment')
     op.drop_table('data_mappings')
     op.drop_table('client_model_performances')
     op.drop_table('projects')

@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 
 class Config(object):
-    VERSION = '0.1.12'
+    VERSION = '0.1.15'
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -31,6 +31,9 @@ class DevelopmentConfig(Config):
     SECRET_KEY = "=!w-tp!0xuqscy*6^er*@l$5s#pu$#*17upk=dg-i_03@##=_)"
     # JWT Secret Key
     JWT_SECRET_KEY = 'jwt-secret-string'
+
+    SENDGRID_API_KEY = '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'
+    OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
 
     # Define the database we are working with
     SQLALCHEMY_TRACK_MODIFICATIONS = False
