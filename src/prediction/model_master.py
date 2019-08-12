@@ -48,6 +48,12 @@ class MasterPredictionModel(BasePredictionModel):
         return self.model.predict(xp)
 
 
+    def predict_probabilities(self,prediction_data,predictors):
+        super().predict()
+        xp = prediction_data[predictors]
+        return self.model.predict_proba(xp)
+
+
     def validate(self,validation_data,predictors,target):
         super().validate()
         if target in predictors:
