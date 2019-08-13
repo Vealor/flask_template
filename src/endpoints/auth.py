@@ -5,11 +5,21 @@ import json
 import random
 import string
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.models import *
 from src.util import send_mail, validate_request_data
 
 auth = Blueprint('auth', __name__)
+
+#===============================================================================
+# Verify that access_token is valid
+@auth.route('/test', methods=['GET'])
+@jwt_required
+def get_test():
+    user = current_user
+    response = { 'status': 'ok', 'message': '', 'payload': user.serialize }
+    return jsonify(response), 200
+
 #===============================================================================
 # create admin superuser
 @auth.route('/createadminsuperuseraccount', methods=['POST'])
