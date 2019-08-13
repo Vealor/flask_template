@@ -553,8 +553,25 @@ class Transaction(db.Model):
             'project_id': self.project_id,
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
-
         }
+
+
+    def update_prediction(self,update_dict):
+        if 'client_model_id' in update_dict.keys():
+            self.client_model_id = update_dict['client_model_id']
+            self.master_model_id = None
+        elif 'master_model_id' in update_dict.keys():
+            self.master_model_id = update_dict['master_model_id']
+            self.client_model_id = None
+        else:
+            raise ValueError("To update transaction, 'master_model_id' or 'client_model_id' must be specified.")
+        self.recovery_probability = float(update_dict['recovery_probability'])
+        self.is_predicted = True
+        self.update_to_db()
+
+
+    def update_to_db(self):
+        db.session.commit()
 
 
 ##
