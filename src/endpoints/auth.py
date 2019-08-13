@@ -12,15 +12,6 @@ from src.util import send_mail, validate_request_data
 auth = Blueprint('auth', __name__)
 
 #===============================================================================
-# Verify that access_token is valid
-@auth.route('/test', methods=['GET'])
-@jwt_required
-def get_test():
-    user = current_user
-    response = { 'status': 'ok', 'message': '', 'payload': user.serialize }
-    return jsonify(response), 200
-
-#===============================================================================
 # create admin superuser
 @auth.route('/createadminsuperuseraccount', methods=['POST'])
 def createadminsuperuseraccount():
@@ -103,7 +94,7 @@ def reset():
             user.update_to_db()
 
         response['status'] = 'ok'
-        response['message'] = 'Password for {} sent via e-mail if credentials were correct.'.format(data['username'])
+        response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
         response['payload'] = []
     except Exception as e:
         response['status'] = 'error'
@@ -164,4 +155,13 @@ def refresh():
 def get_tokens():
     user_identity = get_jwt_identity()
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    return jsonify(response), 200
+
+#===============================================================================
+# Get user details (including credentials)
+@auth.route('/user_details', methods=['GET'])
+@jwt_required
+def get_user_details():
+    user = current_user
+    response = { 'status': 'ok', 'message': '', 'payload': user.serialize }
     return jsonify(response), 200
