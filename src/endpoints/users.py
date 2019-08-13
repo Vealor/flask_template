@@ -88,7 +88,7 @@ def post_user():
 
 #===============================================================================
 # UPDATE A USER information
-@users.route('/<path:id>', methods=['UPDATE'])
+@users.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_user(id):
     response = { 'status': '', 'message': '', 'payload': [] }
@@ -165,7 +165,7 @@ def check_password(id):
 
 #===============================================================================
 # UPDATE A USER password
-@users.route('/<path:id>/passchange', methods=['UPDATE'])
+@users.route('/<path:id>/passchange', methods=['PUT'])
 # @jwt_required
 def update_user_password(id):
     response = { 'status': '', 'message': '', 'payload': [] }
