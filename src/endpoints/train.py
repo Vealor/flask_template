@@ -116,13 +116,20 @@ def do_train():
 
     # Try to train the instantiated model and edit the db entry
     try:
-        transactions = transactions.filter_by(is_approved=True)
-        entries = [i.serialize['data'] for i in transactions]
-        df = pd.read_json('[' + ','.join(entries) + ']',orient='records')
+
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
+        train_entries = [tr.serialize['data'] for tr in train_transactions]
+        data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
+        print("TRAIN DATA LEN: {}".format(len(data_train)))
+
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        print("TEST DATA LEN: {}".format(len(data_valid)))
 
         # Training ===============================================================
         # split into training and validation data and begin training
-        data_train, data_valid = train_test_split(df,test_size=0.2,shuffle=True)
+        #data_train, data_valid = train_test_split(df,test_size=0.2,shuffle=True)
         data_train = preprocessing_train(data_train)
 
 
@@ -168,14 +175,21 @@ def do_train():
         model_performance_dict['client_model_id'] = model_id
         ClientModelPerformance(**model_performance_dict).save_to_db()
         # If there is no active model for this client, set it automatically to the current one.
-        if not ClientModel.find_active_for_client(cid):
+        active_model = ClientModel.find_active_for_client(cid)
+        if not active_model:
             ClientModel.set_active_for_client(model_id,cid)
+        else:
+            pass
     else:
         model_performance_dict['master_model_id'] = model_id
         MasterModelPerformance(**model_performance_dict).save_to_db()
         # If there is no active model, set the current one to be the active one.
-        if not MasterModel.find_active():
+        active_model = MasterModel.find_active()
+        if not active:
             MasterModel.set_active(model_id)
+        else:
+            pass
+
 
     # Send an email here?
     # ==================
