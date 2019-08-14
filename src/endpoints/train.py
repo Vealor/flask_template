@@ -185,5 +185,5 @@ def do_train():
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['payload']['model_type'] = data["MODEL_TYPE"]
-    response['message'] = 'Model created, trained, and pushed to database. Setup sendgrid to send notifications to user\'s email'
+    response['message'] = 'Model created, trained, and pushed to database. Setup sendgrid to notify current user via email'
     return jsonify(response, 201)

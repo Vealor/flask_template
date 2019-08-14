@@ -29,12 +29,7 @@ migrate = Migrate(api, db)
 jwt = JWTManager(api)
 
 #===============================================================================
-# Check token blacklisting
-@jwt.token_in_blacklist_loader
-def check_if_token_in_blacklist(decrypted_token):
-    jti = decrypted_token['jti']
-    return models.BlacklistToken.is_blacklisted(jti)
-
-#===============================================================================
+# JWT helpers
+from src import jwt_helpers
 # Routing
 from src import routes
