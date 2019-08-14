@@ -4,7 +4,7 @@ from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
 
 class ClientPredictionModel(BasePredictionModel):
 
@@ -75,5 +75,5 @@ class ClientPredictionModel(BasePredictionModel):
             recall = true_positives / (true_positives + false_negatives)
         if (true_positives + false_negatives) != 0:
             precision = true_positives / (true_positives + false_positives)
-
-        return {"recall": recall, "precision": precision, "accuracy": accuracy}
+        yp_prob = self.predict_probabilities(xv,predictors)
+        return {"recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
