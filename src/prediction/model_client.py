@@ -75,5 +75,5 @@ class ClientPredictionModel(BasePredictionModel):
             recall = true_positives / (true_positives + false_negatives)
         if (true_positives + false_negatives) != 0:
             precision = true_positives / (true_positives + false_positives)
-        yp_prob = self.predict_probabilities(xv,predictors)
+        yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
         return {"recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
