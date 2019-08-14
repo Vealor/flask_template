@@ -176,19 +176,40 @@ def do_train():
         ClientModelPerformance(**model_performance_dict).save_to_db()
         # If there is no active model for this client, set it automatically to the current one.
         active_model = ClientModel.find_active_for_client(cid)
-        if not active_model:
-            ClientModel.set_active_for_client(model_id,cid)
+        if active_model:
+            lh_model_old = client_model.ClientPredictionModel(active_model.pickle)
+            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            model_performance_dict_old = {
+                'client_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            ClientModelPerformance(**model_performance_dict_old).save_to_db()
         else:
-            pass
+            ClientModel.set_active_for_client(model_id,cid)
+
     else:
         model_performance_dict['master_model_id'] = model_id
         MasterModelPerformance(**model_performance_dict).save_to_db()
         # If there is no active model, set the current one to be the active one.
         active_model = MasterModel.find_active()
-        if not active:
-            MasterModel.set_active(model_id)
+        if active_model:
+            lh_model_old = master_model.MasterPredictionModel(active_model.pickle)
+            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            model_performance_dict_old = {
+                'master_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            MasterModelPerformance(**model_performance_dict_old).save_to_db()
         else:
-            pass
+            MasterModel.set_active(model_id)
 
 
     # Send an email here?
