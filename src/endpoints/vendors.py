@@ -76,7 +76,7 @@ def post_vendor():
 
 #===============================================================================
 # UPDATE A VENDOR
-@vendors.route('/<path:id>', methods=['UPDATE'])
+@vendors.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_vendor(id):
     response = { 'status': '', 'message': '', 'payload': [] }

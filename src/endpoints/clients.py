@@ -82,7 +82,7 @@ def post_client():
 
 #===============================================================================
 # UPDATE A CLIENT
-@clients.route('/<path:id>', methods=['UPDATE'])
+@clients.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_client(id):
     response = { 'status': '', 'message': '', 'payload': [] }

@@ -86,7 +86,7 @@ def post_project():
 
 #===============================================================================
 # UPDATE A PROJECT
-@projects.route('/<path:id>', methods=['UPDATE'])
+@projects.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_project(id):
     response = { 'status': '', 'message': '', 'payload': [] }
