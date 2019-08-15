@@ -193,7 +193,7 @@ class Client(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
-        return self.id
+        return { 'name': self.name, 'line_of_business_id': self.line_of_business_id }
 
     def update_to_db(self):
         db.session.commit()
@@ -205,18 +205,14 @@ class Client(db.Model):
     @property
     def serialize(self):
         return {
-            'id': self.id,
             'name': self.name,
             'line_of_business_id': self.line_of_business_id
         }
 
     @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id = id).first()
+    def find_by_name_and_lob(cls, name, line_of_business_id):
+        return cls.query.filter_by(name = name).filter_by(line_of_business_id = line_of_business_id).first()
 
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
 
 class LineOfBusiness(db.Model):
     __tablename__ = 'line_of_business'
