@@ -10,10 +10,8 @@ db = SQLAlchemy()
 ################################################################################
 # ENUMS
 
-class GlobalPermissions(enum.Enum):
+class Roles(enum.Enum):
     it_admin = "it_admin"
-
-class ProjectPermissions(enum.Enum):
     tax_admin = "tax_admin"
     data_admin = "data_admin"
     tax_approver = "tax_approver"
@@ -23,7 +21,6 @@ class Actions(enum.Enum):
     delete = "delete"
     modify = "modify"
     approve = "approve"
-
 
 class Activity(enum.Enum):
     active = "active"
@@ -39,13 +36,34 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
+class Juristiction(enum.Enum):
+    ab = "Alberta"
+    bc = "British Columbia"
+    mb = "Manitoba"
+    nb = "New Brunswick"
+    nl = "Newfoundland and Labrador"
+    nt = "Northwest Territories"
+    ns = "Nova Scotia"
+    nu = "Nunavut"
+    on = "Ontario"
+    pe = "Prince Edward Island"
+    qc = "Quebec"
+    sk = "Saskatchewan"
+    ty = "Yukon"
+    foreign = "Outside Canada"
 
 ################################################################################
 # Many 2 Many links
 
-user_global_permissions = db.Table('user_permissions',
+project_sector_link = db.Table('project_sector',
+    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
+    db.Column('sector_id', db.Integer, db.ForeignKey('sectors.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+)
+
+user_project_link = db.Table('user_project',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('global_permissions', db.Enum(GlobalPermissions), nullable=False, primary_key=True)
+    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
+    db.Column('is_favourite', db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 )
 
 ################################################################################
@@ -60,10 +78,11 @@ class User(db.Model):
     last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
+    role = db.Column(db.Enum(Roles), nullable=False)
 
+    user_projects = db.relationship('Project', secondary=user_project_link)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    user_permission_assignments = db.relationship('PermissionAssignment', back_populates='permission_assignment_user', lazy='dynamic')
 
 
     def save_to_db(self):
@@ -114,26 +133,6 @@ class User(db.Model):
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
 
-class PermissionAssignment(db.Model):
-    __tablename__ = 'permission_assignment'
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, primary_key=True)
-    permission_assignment_user = db.relationship('User', back_populates='user_permission_assignments')
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, primary_key=True)
-    permission_assignment_project = db.relationship('Project', back_populates='project_permission_assignments')
-
-    project_permission = db.Column(db.Enum(ProjectPermissions), nullable=False, primary_key=True)
-
-    @property
-    def serialize(self):
-        return {
-            'user_id': self.user_id,
-            'user': self.permission_assignment_user.username,
-            'project_id': self.project_id,
-            'project': self.permission_assignment_project.name,
-            'project_permission': self.project_permission
-        }
-
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
     id = db.Column(db.Integer, primary_key=True)
@@ -162,6 +161,11 @@ class Log(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     log_user = db.relationship('User', back_populates='user_logs')
 
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
     @property
     def serialize(self):
         username = ((User.query.filter_by(id=self.user_id).one()).serialize)['username']
@@ -177,11 +181,10 @@ class Log(db.Model):
 
 class Client(db.Model):
     __tablename__ = 'clients'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
+    name = db.Column(db.String(128), nullable=False, primary_key=True)
 
-    industry_id = db.Column(db.Integer, db.ForeignKey('industries.id'))
-    client_industry = db.relationship('Industry', back_populates='industry_clients')
+    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id'), nullable=False, primary_key=True)
+    client_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_clients')
 
     client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
     client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic')
@@ -190,7 +193,7 @@ class Client(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
-        return self.id
+        return { 'name': self.name, 'line_of_business_id': self.line_of_business_id }
 
     def update_to_db(self):
         db.session.commit()
@@ -202,52 +205,32 @@ class Client(db.Model):
     @property
     def serialize(self):
         return {
-            'id': self.id,
             'name': self.name,
-            'industry_id': self.industry_id
+            'line_of_business_id': self.line_of_business_id
         }
 
     @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id = id).first()
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
+    def find_by_name_and_lob(cls, name, line_of_business_id):
+        return cls.query.filter_by(name = name).filter_by(line_of_business_id = line_of_business_id).first()
 
 
-class Industry(db.Model):
-    __tablename__ = 'industries'
+class LineOfBusiness(db.Model):
+    __tablename__ = 'line_of_business'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
 
-    industry_clients = db.relationship('Client', back_populates='client_industry', lazy='dynamic')
-    industry_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_industry', lazy='dynamic')
-    industry_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_industry', lazy='dynamic')
+    line_of_business_clients = db.relationship('Client', back_populates='client_line_of_business', lazy='dynamic')
+    line_of_business_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_line_of_business', lazy='dynamic')
+    line_of_business_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_line_of_business', lazy='dynamic')
+    line_of_business_sectors = db.relationship('Sector', back_populates='sector_line_of_business', lazy='dynamic')
 
-class ParedownRule(db.Model):
-    # these rules are only either core, or for an industry
-    # there are no project specific rules
-    __tablename__ = 'paredown_rules'
+class Sector(db.Model):
+    __tablename__ = 'sectors'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
 
-    industry_id = db.Column(db.Integer, db.ForeignKey('industries.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    paredown_rule_industry = db.relationship('Industry', back_populates='industry_paredown_rules')
-    #TODO add in rule saving data
-
-class ClassificationRule(db.Model):
-    __tablename__ = 'classification_rules'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    weight = db.Column(db.Integer, nullable=False)
-
-    industry_id = db.Column(db.Integer, db.ForeignKey('industries.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    classification_rule_industry = db.relationship('Industry', back_populates='industry_classification_rules')
-
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    classification_rule_client = db.relationship('Client', back_populates='client_classification_rules')
-    #TODO add in rule saving data
+    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id'))
+    sector_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_sectors')
 
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -255,13 +238,16 @@ class Project(db.Model):
     name = db.Column(db.String(128), unique=True, nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    juristiction = db.Column(db.Enum(Juristiction), nullable=False)
 
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
+    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
+    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
     project_client = db.relationship('Client', back_populates='client_projects')
 
+    project_sectors = db.relationship('Sector', secondary=project_sector_link)
+    project_users = db.relationship('Project', secondary=user_project_link)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
-    project_permission_assignments = db.relationship('PermissionAssignment', back_populates='permission_assignment_project', lazy='dynamic')
 
     def save_to_db(self):
         db.session.add(self)
@@ -294,6 +280,17 @@ class Project(db.Model):
     @classmethod
     def find_by_name(cls, name):
         return cls.query.filter_by(name = name).first()
+
+class ParedownRule(db.Model):
+    # these rules are only either core, or for a line_of_business
+    # there are no project specific rules
+    __tablename__ = 'paredown_rules'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+
+    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id', ondelete='SET NULL'), server_default=None, nullable=True)
+    paredown_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_paredown_rules')
+    #TODO add in rule saving data
 
 class Vendor(db.Model):
     __tablename__ = 'vendors'
@@ -329,7 +326,6 @@ class Vendor(db.Model):
     def find_by_name(cls, name):
         return cls.query.filter_by(name = name).first()
 
-
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     column_name = db.Column(db.String(256), nullable=False)
@@ -338,13 +334,13 @@ class DataMapping(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
     data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
 
-    cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_labels'), nullable=False, primary_key=True)
+    cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_label'), nullable=False, primary_key=True)
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
-    script_labels = db.Column(db.String(256), primary_key=True, nullable=False)
-    english_labels = db.Column(db.String(256), nullable=False)
+    script_label = db.Column(db.String(256), primary_key=True, nullable=False)
+    english_label = db.Column(db.String(256), nullable=False)
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_required = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
@@ -353,6 +349,21 @@ class CDM_label(db.Model):
 
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
 
+################################################################################
+# Prediction Models
+class ClassificationRule(db.Model):
+    __tablename__ = 'classification_rules'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    weight = db.Column(db.Integer, nullable=False)
+
+    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id', ondelete='SET NULL'), server_default=None, nullable=True)
+    classification_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_classification_rules')
+
+    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
+    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
+    classification_rule_client = db.relationship('Client', back_populates='client_classification_rules')
+    #TODO add in rule saving data
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
@@ -364,7 +375,8 @@ class ClientModel(db.Model):
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
+    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
     client_model_client = db.relationship('Client', back_populates='client_client_models')
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
@@ -397,18 +409,20 @@ class ClientModel(db.Model):
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
 
-    @classmethod
-    def find_active_for_client(cls, client_id):
-        return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
+        client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
+        client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
 
     @classmethod
-    def set_active_for_client(cls, id, client_id):
-        active_model = cls.find_active_for_client(client_id)
+    def find_active_for_client(cls, client_name, client_line_of_business_id):
+        return cls.query.filter_by(status = Activity.active.value).filter_by(client_name = client_name).filter_by(client_line_of_business_id = client_line_of_business_id).first()
+
+    @classmethod
+    def set_active_for_client(cls, id, client_name, client_line_of_business_id):
+        active_model = cls.find_active_for_client(client_name, client_line_of_business_id)
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=id).first().status = Activity.active.value
         db.session.commit()
-
 
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
@@ -434,7 +448,6 @@ class ClientModelPerformance(db.Model):
     def delete_from_db(self):
         db.session.delete(self)
         db.session.commit()
-
 
 class MasterModel(db.Model):
     __tablename__ = 'master_models'
@@ -484,7 +497,6 @@ class MasterModel(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-
 class MasterModelPerformance(db.Model):
     __tablename__ = 'master_model_performances'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -510,7 +522,7 @@ class MasterModelPerformance(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-
+################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
