@@ -128,10 +128,7 @@ def do_train():
         print("TEST DATA LEN: {}".format(len(data_valid)))
 
         # Training ===============================================================
-        # split into training and validation data and begin training
-        #data_train, data_valid = train_test_split(df,test_size=0.2,shuffle=True)
         data_train = preprocessing_train(data_train)
-
 
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
@@ -139,9 +136,7 @@ def do_train():
 
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
-        entry.hyper_p = {'predictors': predictors,
-                         'target': target
-                         }
+        entry.hyper_p = {'predictors': predictors, 'target': target}
         entry.update_to_db()
 
         # Output validation data results, used to assess model quality
@@ -152,6 +147,7 @@ def do_train():
             'accuracy': performance_metrics['accuracy'],
             'precision': performance_metrics['precision'],
             'recall': performance_metrics['recall'],
+            'roc_auc': performance_metrics['roc_auc_score'],
             'test_data_start': test_start,
             'test_data_end': test_end
         }
@@ -174,7 +170,9 @@ def do_train():
     if data["MODEL_TYPE"] == 'client':
         model_performance_dict['client_model_id'] = model_id
         ClientModelPerformance(**model_performance_dict).save_to_db()
-        # If there is no active model for this client, set it automatically to the current one.
+
+        # If there is an active model for this client, check to compare performance
+        # Else, automatically push newly trained model to active
         active_model = ClientModel.find_active_for_client(cid)
         if active_model:
             lh_model_old = client_model.ClientPredictionModel(active_model.pickle)
