@@ -39,7 +39,7 @@ def do_predict():
         if not project:
             raise IndexError("ERROR: Project not found in database.")
         project_transactions = Transaction.query.filter_by(project_id = data['PROJECT_ID']).filter_by(is_approved=False)
-        if len(project_transactions) == 0:
+        if project_transactions.count() == 0:
             raise IndexError("ERROR: Project has no transactions to predict.")
 
         # Get the appropriate active model
