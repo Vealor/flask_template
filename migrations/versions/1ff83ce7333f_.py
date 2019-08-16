@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 29dd090c8048
+Revision ID: 1ff83ce7333f
 Revises: 
-Create Date: 2019-08-15 15:19:45.349557
+Create Date: 2019-08-16 11:43:19.425655
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '29dd090c8048'
+revision = '1ff83ce7333f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -54,13 +54,15 @@ def upgrade():
     sa.Column('username', sa.String(length=64), nullable=False),
     sa.Column('password', sa.String(length=128), nullable=False),
     sa.Column('email', sa.String(length=128), nullable=False),
+    sa.Column('initials', sa.String(length=8), nullable=False),
     sa.Column('first_name', sa.String(length=128), nullable=False),
     sa.Column('last_name', sa.String(length=128), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('req_pass_reset', sa.Boolean(), server_default='t', nullable=False),
     sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('initials')
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('vendors',
@@ -70,10 +72,12 @@ def upgrade():
     sa.UniqueConstraint('name')
     )
     op.create_table('clients',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
     sa.Column('line_of_business_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ),
-    sa.PrimaryKeyConstraint('name', 'line_of_business_id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name', 'line_of_business_id', name='client_unique_constraint')
     )
     op.create_table('logs',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -107,22 +111,10 @@ def upgrade():
     op.create_table('sectors',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('line_of_business_id', sa.Integer(), nullable=True),
+    sa.Column('line_of_business_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
-    )
-    op.create_table('classification_rules',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('is_core', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('weight', sa.Integer(), nullable=False),
-    sa.Column('line_of_business_id', sa.Integer(), nullable=True),
-    sa.Column('client_name', sa.String(length=128), nullable=False),
-    sa.Column('client_line_of_business_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['client_line_of_business_id'], ['clients.line_of_business_id'], ),
-    sa.ForeignKeyConstraint(['client_name'], ['clients.name'], ),
-    sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ondelete='SET NULL'),
-    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('client_models',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -132,10 +124,8 @@ def upgrade():
     sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
     sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
     sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('client_name', sa.String(length=128), nullable=False),
-    sa.Column('client_line_of_business_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['client_line_of_business_id'], ['clients.line_of_business_id'], ),
-    sa.ForeignKeyConstraint(['client_name'], ['clients.name'], ),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('projects',
@@ -144,10 +134,8 @@ def upgrade():
     sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('juristiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='juristiction'), nullable=False),
-    sa.Column('client_name', sa.String(length=128), nullable=False),
-    sa.Column('client_line_of_business_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['client_line_of_business_id'], ['clients.line_of_business_id'], ),
-    sa.ForeignKeyConstraint(['client_name'], ['clients.name'], ),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -159,7 +147,7 @@ def upgrade():
     sa.Column('recall', sa.Float(), nullable=False),
     sa.Column('test_data_start', sa.DateTime(timezone=True), nullable=False),
     sa.Column('test_data_end', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('client_model_id', sa.Integer(), nullable=True),
+    sa.Column('client_model_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -221,7 +209,6 @@ def downgrade():
     op.drop_table('client_model_performances')
     op.drop_table('projects')
     op.drop_table('client_models')
-    op.drop_table('classification_rules')
     op.drop_table('sectors')
     op.drop_table('paredown_rules')
     op.drop_table('master_model_performances')

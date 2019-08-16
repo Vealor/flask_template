@@ -74,6 +74,7 @@ class User(db.Model):
     username = db.Column(db.String(64), unique = True, index = True, nullable = False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), unique=True, nullable=False)
+    initials = db.Column(db.String(8), unique=True, nullable=False)
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -103,6 +104,7 @@ class User(db.Model):
             'id': self.id,
             'username': self.username,
             'email': self.email,
+            'initials': self.initials.upper(),
             'first_name': self.first_name,
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
@@ -152,14 +154,18 @@ class BlacklistToken(db.Model):
 
 class Log(db.Model):
     __tablename__ = 'logs'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['user_id'], ['users.id']),
+    )
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     action = db.Column(db.Enum(Actions), nullable=False)
     affected_entity = db.Column(db.String(256), nullable=False)
     details = db.Column(db.Text(), nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    log_user = db.relationship('User', back_populates='user_logs')
+    user_id = db.Column(db.Integer, nullable=False) # FK
+    log_user = db.relationship('User', back_populates='user_logs') # FK
 
     def save_to_db(self):
         db.session.add(self)
@@ -181,12 +187,18 @@ class Log(db.Model):
 
 class Client(db.Model):
     __tablename__ = 'clients'
-    name = db.Column(db.String(128), nullable=False, primary_key=True)
+    __table_args__ = (
+        db.UniqueConstraint('name', 'line_of_business_id', name='client_unique_constraint'),
+        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id']),
+    )
 
-    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id'), nullable=False, primary_key=True)
-    client_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_clients')
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(128), nullable=False)
 
-    client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
+    line_of_business_id = db.Column(db.Integer, nullable=False) # FK
+    client_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_clients') # FK
+
+    # client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
     client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic')
     client_client_models = db.relationship('ClientModel', back_populates='client_model_client', cascade="save-update", lazy='dynamic')
 
@@ -210,8 +222,12 @@ class Client(db.Model):
         }
 
     @classmethod
-    def find_by_name_and_lob(cls, name, line_of_business_id):
-        return cls.query.filter_by(name = name).filter_by(line_of_business_id = line_of_business_id).first()
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filter_by(name = name).first()
 
 
 class LineOfBusiness(db.Model):
@@ -221,28 +237,43 @@ class LineOfBusiness(db.Model):
 
     line_of_business_clients = db.relationship('Client', back_populates='client_line_of_business', lazy='dynamic')
     line_of_business_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_line_of_business', lazy='dynamic')
-    line_of_business_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_line_of_business', lazy='dynamic')
+    # line_of_business_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_line_of_business', lazy='dynamic')
     line_of_business_sectors = db.relationship('Sector', back_populates='sector_line_of_business', lazy='dynamic')
 
 class Sector(db.Model):
     __tablename__ = 'sectors'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id']),
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
 
-    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id'))
-    sector_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_sectors')
+    line_of_business_id = db.Column(db.Integer, nullable=False) # FK
+    sector_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_sectors') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'line_of_business_id': self.line_of_business_id,
+            'line_of_business': self.line_of_business
+        }
 
 class Project(db.Model):
     __tablename__ = 'projects'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['client_id'], ['clients.id']),
+    )
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     juristiction = db.Column(db.Enum(Juristiction), nullable=False)
 
-    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
-    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
-    project_client = db.relationship('Client', back_populates='client_projects')
+    client_id = db.Column(db.Integer, nullable=False) # FK
+    project_client = db.relationship('Client', back_populates='client_projects') # FK
 
     project_sectors = db.relationship('Sector', secondary=project_sector_link)
     project_users = db.relationship('Project', secondary=user_project_link)
@@ -285,11 +316,14 @@ class ParedownRule(db.Model):
     # these rules are only either core, or for a line_of_business
     # there are no project specific rules
     __tablename__ = 'paredown_rules'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ondelete='SET NULL'),
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    paredown_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_paredown_rules')
+    line_of_business_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+    paredown_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_paredown_rules') # FK
     #TODO add in rule saving data
 
 class Vendor(db.Model):
@@ -328,14 +362,18 @@ class Vendor(db.Model):
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
+    )
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
+    project_id = db.Column(db.Integer, nullable=False, primary_key=True) # FK
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings') # FK
 
-    cdm_label_script_label = db.Column(db.String(256), db.ForeignKey('cdm_labels.script_label'), nullable=False, primary_key=True)
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
+    cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
+    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
@@ -351,22 +389,31 @@ class CDM_label(db.Model):
 
 ################################################################################
 # Prediction Models
-class ClassificationRule(db.Model):
-    __tablename__ = 'classification_rules'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    weight = db.Column(db.Integer, nullable=False)
 
-    line_of_business_id = db.Column(db.Integer, db.ForeignKey('line_of_business.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    classification_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_classification_rules')
-
-    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
-    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
-    classification_rule_client = db.relationship('Client', back_populates='client_classification_rules')
+# class ClassificationRule(db.Model):
+#     __tablename__ = 'classification_rules'
+#     __table_args__ = (
+#         db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ondelete='SET NULL'),
+#         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
+#     )
+#
+#     id = db.Column(db.Integer, primary_key=True, nullable=False)
+#     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+#     weight = db.Column(db.Integer, nullable=False)
+#
+#     line_of_business_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+#     classification_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_classification_rules') # FK
+#
+#     client_id = db.Column(db.Integer, nullable=False) # FK
+#     classification_rule_client = db.relationship('Client', back_populates='client_classification_rules') # FK
     #TODO add in rule saving data
 
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['client_id'], ['clients.id']),
+    )
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
@@ -375,9 +422,8 @@ class ClientModel(db.Model):
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
-    client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
-    client_model_client = db.relationship('Client', back_populates='client_client_models')
+    client_id = db.Column(db.Integer, nullable=False) # FK
+    client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
     client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
@@ -409,16 +455,13 @@ class ClientModel(db.Model):
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
 
-        client_name = db.Column(db.String(128), db.ForeignKey('clients.name'), nullable=False)
-        client_line_of_business_id = db.Column(db.Integer, db.ForeignKey('clients.line_of_business_id'), nullable=False)
+    @classmethod
+    def find_active_for_client(cls, id):
+        return cls.query.filter_by(status = Activity.active.value).filter_by(id = id).first()
 
     @classmethod
-    def find_active_for_client(cls, client_name, client_line_of_business_id):
-        return cls.query.filter_by(status = Activity.active.value).filter_by(client_name = client_name).filter_by(client_line_of_business_id = client_line_of_business_id).first()
-
-    @classmethod
-    def set_active_for_client(cls, id, client_name, client_line_of_business_id):
-        active_model = cls.find_active_for_client(client_name, client_line_of_business_id)
+    def set_active_for_client(cls, id):
+        active_model = cls.find_active_for_client(id)
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=id).first().status = Activity.active.value
@@ -426,6 +469,9 @@ class ClientModel(db.Model):
 
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='CASCADE'),
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     precision = db.Column(db.Float, nullable=False)
@@ -434,8 +480,8 @@ class ClientModelPerformance(db.Model):
     test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
 
-    client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='CASCADE'))
-    performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')
+    client_model_id = db.Column(db.Integer, nullable=False) # FK
+    performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances') # FK
 
     def save_to_db(self):
         db.session.add(self)
@@ -499,6 +545,9 @@ class MasterModel(db.Model):
 
 class MasterModelPerformance(db.Model):
     __tablename__ = 'master_model_performances'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='CASCADE'),
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     precision = db.Column(db.Float, nullable=False)
@@ -507,8 +556,8 @@ class MasterModelPerformance(db.Model):
     test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
 
-    master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='CASCADE'), nullable=False)
-    performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances')
+    master_model_id = db.Column(db.Integer, nullable=False) # FK
+    performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
 
     def save_to_db(self):
         db.session.add(self)
@@ -525,6 +574,13 @@ class MasterModelPerformance(db.Model):
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -535,20 +591,20 @@ class Transaction(db.Model):
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    locked_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    locked_transaction_user = db.relationship('User', back_populates='locked_transactions')
+    locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+    locked_transaction_user = db.relationship('User', back_populates='locked_transactions') # FK
 
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
-    transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions')
+    vendor_id = db.Column(db.Integer, nullable=False) # FK
+    transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions') # FK
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    transaction_project = db.relationship('Project', back_populates='project_transactions')
+    project_id = db.Column(db.Integer, nullable=False) # FK
+    transaction_project = db.relationship('Project', back_populates='project_transactions') # FK
 
-    client_model_id = db.Column(db.Integer, db.ForeignKey('client_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions')
+    client_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+    transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions') # FK
 
-    master_model_id = db.Column(db.Integer, db.ForeignKey('master_models.id', ondelete='SET NULL'), server_default=None, nullable=True)
-    transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions')
+    master_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+    transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions') # FK
 
     @property
     def serialize(self):

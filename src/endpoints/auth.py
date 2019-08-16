@@ -25,7 +25,9 @@ def createadminsuperuseraccount():
             'email': 'str',
             'first_name': 'str',
             'last_name': 'str',
-            'special_token': 'str'
+            'special_token': 'str',
+            'role': 'str',
+            'initials': 'str'
         }
         try:
             validate_request_data(data, request_types)
@@ -51,7 +53,9 @@ def createadminsuperuseraccount():
             email = data['email'],
             first_name = data['first_name'],
             last_name = data['last_name'],
-            is_superuser = True
+            is_superuser = True,
+            role = data['role'],
+            initials = data['initials']
         )
         new_user.save_to_db()
         response['access_token'] = create_access_token(identity = data['username'])
