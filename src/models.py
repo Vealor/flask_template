@@ -109,8 +109,8 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
-            'role': self.role,
-            'user_projects': self.user_projects
+            'role': self.role.name,
+            'user_projects': [i.serialize for i in self.user_projects]
         }
 
     @classmethod
@@ -215,8 +215,11 @@ class Client(db.Model):
     @property
     def serialize(self):
         return {
+            'id': self.id,
             'name': self.name,
-            'line_of_business_id': self.line_of_business_id
+            'line_of_business_id': self.line_of_business_id,
+            'client_line_of_business': self.client_line_of_business.name,
+            'client_projects': [i.serialize for i in self.client_projects]
         }
 
     @classmethod
@@ -238,6 +241,15 @@ class LineOfBusiness(db.Model):
     # line_of_business_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_line_of_business', lazy='dynamic')
     line_of_business_sectors = db.relationship('Sector', back_populates='sector_line_of_business', lazy='dynamic')
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'line_of_business_sectors': [i.serialize for i in self.line_of_business_sectors],
+            'line_of_business_clients': [{'id':i.id, 'name':i.name} for i in self.line_of_business_clients]
+        }
+
 class Sector(db.Model):
     __tablename__ = 'sectors'
     __table_args__ = (
@@ -255,7 +267,7 @@ class Sector(db.Model):
             'id': self.id,
             'name': self.name,
             'line_of_business_id': self.line_of_business_id,
-            'line_of_business': self.line_of_business
+            'line_of_business': self.sector_line_of_business.name
         }
 
 class Project(db.Model):
@@ -299,7 +311,11 @@ class Project(db.Model):
             'is_archived': self.is_archived,
             'area': 'TBD',
             'code': 'TBD',
-            'project': 'TBD'
+            'juristiction_code': self.juristiction.name,
+            'juristiction_name': self.juristiction.value,
+            'project_sectors': [i.serialize for i in self.project_sectors],
+            'project_users': [{'id':i.id,'username':i.username} for i in self.project_users],
+            'transaction_count': self.project_transactions.count()
         }
 
     @classmethod
@@ -347,7 +363,8 @@ class Vendor(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'vendor_transactions': [i.serialize for i in self.vendor_transactions]
         }
 
     @classmethod
@@ -606,7 +623,6 @@ class Transaction(db.Model):
 
     @property
     def serialize(self):
-
         return {
             'id': self.id,
             'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
@@ -617,9 +633,10 @@ class Transaction(db.Model):
             'rbc_recovery_probability': self.rbc_recovery_probability,
             'data': self.data,
             'project_id': self.project_id,
+            'locked_user_id': self.locked_user_id,
+            'locked_user_initials': self.locked_transaction_user.initials,
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
-
         }
 
 
