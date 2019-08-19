@@ -67,10 +67,10 @@ psql -h localhost -U itra itra_db -c "
   insert into clients (name, line_of_business_id) values ('mining corp', 1);
   insert into clients (name, line_of_business_id) values ('mining corp two', 1);
   insert into clients (name, line_of_business_id) values ('mining corp', 2);
-  insert into projects (name, client_id, juristiction) values ('miner 49er', 1, 'bc');
-  insert into projects (name, client_id, juristiction) values ('miner 49er two', 1, 'ab');
-  insert into projects (name, client_id, juristiction) values ('miner 50er', 2, 'sk');
-  insert into projects (name, client_id, juristiction) values ('miner 51er', 3, 'foreign');
+  insert into projects (name, client_id, jurisdiction) values ('miner 49er', 1, 'bc');
+  insert into projects (name, client_id, jurisdiction) values ('miner 49er two', 1, 'ab');
+  insert into projects (name, client_id, jurisdiction) values ('miner 50er', 2, 'sk');
+  insert into projects (name, client_id, jurisdiction) values ('miner 51er', 3, 'foreign');
   insert into vendors (name) values ('miner buyer');
   insert into transactions(data, vendor_id, project_id) values ('{}', 1, 1);"
 

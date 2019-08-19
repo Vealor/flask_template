@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1ff83ce7333f
+Revision ID: 1784139191b0
 Revises: 
-Create Date: 2019-08-16 11:43:19.425655
+Create Date: 2019-08-19 15:28:00.380645
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1ff83ce7333f'
+revision = '1784139191b0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -133,9 +133,55 @@ def upgrade():
     sa.Column('name', sa.String(length=128), nullable=False),
     sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('juristiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='juristiction'), nullable=False),
+    sa.Column('jurisdiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='jurisdiction'), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.Column('engagement_partner_id', sa.Integer(), nullable=True),
+    sa.Column('engagement_manager_id', sa.Integer(), nullable=True),
+    sa.Column('has_ts_gst', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_hst', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_qst', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_pst', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_vat', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_mft', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_ct', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_excise', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_customs', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_crown', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_ts_freehold', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_caps', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_taxreturn', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_flowthrough', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_employeeexpense', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_pccards', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_coupons', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_creditnotes', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_edi', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_cars', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_duplpay', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_unapplcredit', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_missedearly', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_otheroverpay', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_firmanalysis', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_brokeranalysis', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_crowngca', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_crownalloc', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_crownincent', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_lornri', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_lorsliding', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_lordeduct', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_lorunder', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_lormissed', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_gstreg', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_cvm', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_taxgl', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_aps', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_ars', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_fxrates', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_trt', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('has_es_daf', sa.Boolean(), server_default='f', nullable=False),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
+    sa.ForeignKeyConstraint(['engagement_manager_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['engagement_partner_id'], ['users.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
