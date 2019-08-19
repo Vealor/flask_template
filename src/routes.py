@@ -12,15 +12,27 @@ api.register_blueprint(general, url_prefix='/')
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
 
+# Client Endpoints
+from src.endpoints.clients import clients
+api.register_blueprint(clients, url_prefix='/clients')
+
 # Log Endpoints
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
+
+# Project Endpoints
+from src.endpoints.projects import projects
+api.register_blueprint(projects, url_prefix='/projects')
+
+# Vendor Endpoints
+from src.endpoints.vendors import vendors
+api.register_blueprint(vendors, url_prefix='/vendors')
 
 # Train Endpoints
 from src.endpoints.train import train
 api.register_blueprint(train, url_prefix='/train')
 
-# Auth Endpoints
+# Predict Endpoints
 from src.endpoints.predict import predict
 api.register_blueprint(predict, url_prefix='/predict')
 
