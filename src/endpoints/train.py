@@ -147,7 +147,6 @@ def do_train():
             'accuracy': performance_metrics['accuracy'],
             'precision': performance_metrics['precision'],
             'recall': performance_metrics['recall'],
-            'roc_auc': performance_metrics['roc_auc_score'],
             'test_data_start': test_start,
             'test_data_end': test_end
         }
