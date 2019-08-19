@@ -71,7 +71,7 @@ def do_predict():
             project_transactions.update({Transaction.client_model_id : None})
             project_transactions.update({Transaction.master_model_id :active_model.id})
 
-        project_transactions.is_predicted = True
+        project_transactions.update({Transaction.is_predicted : True})
         for tr,pr in zip(project_transactions,probability_recoverable):
             tr.recovery_probability = pr
 
