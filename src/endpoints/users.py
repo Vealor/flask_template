@@ -56,7 +56,8 @@ def post_user():
             'email': 'str',
             'initials': 'str',
             'first_name': 'str',
-            'last_name': 'str'
+            'last_name': 'str',
+            'role': 'str'
         }
         validate_request_data(data, request_types)
         # check if this username exists
@@ -75,7 +76,8 @@ def post_user():
             email = data['email'],
             initials = data['initials'].upper(),
             first_name = data['first_name'],
-            last_name = data['last_name']
+            last_name = data['last_name'],
+            role = data['role']
         ).save_to_db()
 
         response['status'] = 'ok'
