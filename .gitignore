@@ -117,4 +117,3 @@ dmypy.json
 activate
 sqlite3.db
 db_commands
-db_refresh.sh
