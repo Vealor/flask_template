@@ -54,8 +54,10 @@ def post_user():
             'username': 'str',
             'password': 'str',
             'email': 'str',
+            'initials': 'str',
             'first_name': 'str',
-            'last_name': 'str'
+            'last_name': 'str',
+            'role': 'str'
         }
         validate_request_data(data, request_types)
         # check if this username exists
@@ -72,8 +74,10 @@ def post_user():
             username = data['username'],
             password = User.generate_hash(data['password']),
             email = data['email'],
+            initials = data['initials'].upper(),
             first_name = data['first_name'],
-            last_name = data['last_name']
+            last_name = data['last_name'],
+            role = data['role']
         ).save_to_db()
 
         response['status'] = 'ok'
@@ -99,6 +103,7 @@ def update_user(id):
         request_types = {
             'username': 'str',
             'email': 'str',
+            'initials': 'str',
             'first_name': 'str',
             'last_name': 'str'
         }
@@ -116,9 +121,10 @@ def update_user(id):
         if check:
             raise ValueError('User email "{}" already exist.'.format(data['email']))
 
-        query.username = data['username'],
-        query.email = data['email'],
-        query.first_name = data['first_name'],
+        query.username = data['username']
+        query.email = data['email']
+        query.initials = data['initials'].upper()
+        query.first_name = data['first_name']
         query.last_name = data['last_name']
         query.update_to_db()
 
