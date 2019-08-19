@@ -125,7 +125,6 @@ def build_master_tables():
             "regex": label.regex
         }
 
-
     list_tablenames = ['AUFK', 'BSAK', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'REGUP', 'SKAT', 'T001', 'T001W', 'T007', 'T007S']
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
@@ -356,7 +355,7 @@ def j1_j10():
     """
     from sqlalchemy.sql.expression import cast
     #print(SapBseg.data['invoice_date'])
-    print(SapBseg.query.filter(SapBkpf, SapBseg.data['invoice_date'] == SapBkpf.data['posting_date']).add_columns(SapBseg.data, SapBkpf.data).limit(2).all())
+    print(SapBseg.query.filter(SapBkpf, SapBseg.data['invoice_date'].values() == SapBkpf.data['posting_date'].values()).add_columns(SapBseg.data, SapBkpf.data).limit(2).all())
     # t001_mstr = SapBkpf.query.with_entities(getattr(SapBkpf, 'data')).filter(SapBkpf.data['currency'].astext == "CAD").limit(2)
     # bkpf_mstr = SapBkpf.query.with_entities(getattr(SapBkpf, 'data'))
     # print(t001_mstr)

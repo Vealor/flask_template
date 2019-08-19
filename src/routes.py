@@ -40,6 +40,10 @@ api.register_blueprint(predict, url_prefix='/predict')
 from src.endpoints.sap_caps_gen import sap_caps_gen
 api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 
+#FXrates Endpoints
+from src.endpoints.fxrates import fxrates
+api.register_blueprint(fxrates, url_prefix='/fxrates')
+
 #===============================================================================
 # Error Handling
 
