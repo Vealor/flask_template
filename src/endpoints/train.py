@@ -92,7 +92,7 @@ def do_train():
     # ===================================================================
     # Now that all the database checks have been completed, we can submit
     # our request to the compute server
-
+    print("Here 1")
     model_data_dict = {
         'train_data_start': train_start,
         'train_data_end': train_end,
@@ -115,6 +115,7 @@ def do_train():
         transactions = Transaction.query
 
     # Try to train the instantiated model and edit the db entry
+    print("Here 2")
     try:
 
         train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
@@ -133,7 +134,6 @@ def do_train():
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
         lh_model.train(data_train,predictors,target)
-
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}

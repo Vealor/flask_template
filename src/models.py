@@ -402,11 +402,11 @@ class ClientModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
 
     @classmethod
-    def set_active_for_client(cls, id, client_id):
+    def set_active_for_client(cls, model_id, client_id):
         active_model = cls.find_active_for_client(client_id)
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=id).first().status = Activity.active.value
+        cls.query.filter_by(id=model_id).first().status = Activity.active.value
         db.session.commit()
 
 
@@ -465,11 +465,11 @@ class MasterModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).first()
 
     @classmethod
-    def set_active(cls, id):
+    def set_active(cls, model_id):
         active_model = cls.find_active()
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=id).first().status = Activity.active.value
+        cls.query.filter_by(id=model_id).first().status = Activity.active.value
         db.session.commit()
 
     def save_to_db(self):
