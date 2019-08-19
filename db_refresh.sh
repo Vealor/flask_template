@@ -18,7 +18,7 @@ curl -H "Content-Type: application/json" -X POST   -d '{
   "username":"test",
   "password":"test",
   "special_token":"lhsuperamazingawesometoken",
-  "email":"jakobroberts@kpmg.ca",
+  "email":"lh_test_user@kpmg.ca",
   "initials":"TEST",
   "first_name":"test_first",
   "last_name":"test_last"}' http://localhost:5000/auth/createadminsuperuseraccount
