@@ -109,10 +109,8 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
-            'project_permission_map': [{
-                    'project': assignment.permission_assignment_project.name,
-                    'permissions': assignment.project_permission.value
-                } for assignment in self.user_permission_assignments]
+            'role': self.role,
+            'user_projects': self.user_projects
         }
 
     @classmethod
