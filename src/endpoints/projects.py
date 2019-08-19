@@ -57,7 +57,7 @@ def post_project():
         request_types = {
             'name': 'str',
             'client_id': 'int',
-            'juristiction': 'str'
+            'jurisdiction': 'str'
         }
         validate_request_data(data, request_types)
         # check if this name exists
@@ -73,7 +73,7 @@ def post_project():
         project_id = Project(
             name = data['name'],
             client_id = data['client_id'],
-            juristiction = data['juristiction']
+            jurisdiction = data['jurisdiction']
         ).save_to_db()
 
         response['status'] = 'ok'
