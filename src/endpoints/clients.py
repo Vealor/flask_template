@@ -56,23 +56,23 @@ def post_client():
         }
         validate_request_data(data, request_types)
         # check if this name exists
-        query = Client.query.filter_by(name=data['name']).first()
-        if query:
+        check = Client.query.filter_by(name=data['name']).first()
+        if check:
             raise ValueError('Client "{}" already exist.'.format(data['name']))
         # check if this industry exists
-        query = Industry.query.filter_by(id=data['industry_id']).first()
-        if not query:
+        check = Industry.query.filter_by(id=data['industry_id']).first()
+        if not check:
             raise ValueError('Industry id does not exist.'.format(data['industry_id']))
 
         # INSERT transaction
-        Client(
+        client_id = Client(
             name = data['name'],
             industry_id = data['industry_id']
         ).save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_name(data['name']).serialize]
+        response['payload'] = [Client.find_by_id(client_id).serialize]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -82,7 +82,7 @@ def post_client():
 
 #===============================================================================
 # UPDATE A CLIENT
-@clients.route('/<path:id>', methods=['UPDATE'])
+@clients.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_client(id):
     response = { 'status': '', 'message': '', 'payload': [] }

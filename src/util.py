@@ -1,5 +1,8 @@
 # ~~~ Utils:
 import datetime
+import re
+import sendgrid
+from flask import current_app
 
 #==============================================================================
 # prints text with specific colours if adding to print statements
@@ -20,7 +23,7 @@ class bcolours:
 #     - ValueError on wrong format
 def get_date_obj_from_str(date_str):
     try:
-        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        date_obj = datetime.datetime.strptime(date_str, '%Y%m%d').date()
     except:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
     return date_obj
@@ -40,9 +43,26 @@ def validate_request_data(data, validation):
         raise ValueError('Request contains improper data types for keys.')
 
 #===============================================================================
-#
+# Sends an email to the user with given inputs
+def send_mail(user_email, subject, content):
+    try:
+        to_email = sendgrid.helpers.mail.To(email=user_email)
+        from_email = sendgrid.helpers.mail.Email(email=current_app.config['OUTBOUND_EMAIL'])
+        subject = '[ARRT] '+ subject
+        content = sendgrid.helpers.mail.Content(
+            'text/html',
+            '''<html><body>
+                '''+str(content)+'''
+            </body></html>'''
+        )
 
-
-
+        sg = sendgrid.SendGridAPIClient(current_app.config['SENDGRID_API_KEY'])
+        mail = sendgrid.helpers.mail.Mail(from_email, to_email, subject, content)
+        response_mail = sg.client.mail.send.post(request_body=mail.get())
+        if not re.search('^2(00|02)$', str(response_mail.status_code)):
+            raise 'ERROR '+str(response_mail.status_code)
+        return True
+    except Exception as e:
+        raise e
 
 #

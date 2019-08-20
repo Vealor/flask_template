@@ -126,6 +126,7 @@ def build_master_tables():
         }
 
     list_tablenames = ['AUFK', 'BSAK', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'REGUP', 'SKAT', 'T001', 'T001W', 'T007', 'T007S']
+    list_tablenames = ['BSEG', 'BKPF']
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
         table_results = {}
@@ -162,7 +163,7 @@ def build_master_tables():
         exampledump = []
         counter = 0
         with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
-            #masterfile = [next(masterfile) for x in range(10000)]
+            masterfile = [next(masterfile) for x in range(10000)]
             for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
                 counter += 1
                 print(counter)
@@ -213,7 +214,7 @@ def rename_scheme():
 
     mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-    list_tablenames = ['BSEG']
+    list_tablenames = ['BSEG', 'BKPF']
 
     for table in list_tablenames:
         renamed_columndata = []
