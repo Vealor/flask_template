@@ -92,7 +92,7 @@ def do_train():
     # ===================================================================
     # Now that all the database checks have been completed, we can submit
     # our request to the compute server
-
+    print("Here 1")
     model_data_dict = {
         'train_data_start': train_start,
         'train_data_end': train_end,
@@ -115,26 +115,28 @@ def do_train():
         transactions = Transaction.query
 
     # Try to train the instantiated model and edit the db entry
+    print("Here 2")
     try:
-        transactions = transactions.filter_by(is_approved=True)
-        entries = [i.serialize['data'] for i in transactions]
-        df = pd.read_json('[' + ','.join(entries) + ']',orient='records')
+
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
+        train_entries = [tr.serialize['data'] for tr in train_transactions]
+        data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
+        print("TRAIN DATA LEN: {}".format(len(data_train)))
+
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        print("TEST DATA LEN: {}".format(len(data_valid)))
 
         # Training ===============================================================
-        # split into training and validation data and begin training
-        data_train, data_valid = train_test_split(df,test_size=0.2,shuffle=True)
         data_train = preprocessing_train(data_train)
-
 
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
         lh_model.train(data_train,predictors,target)
-
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
-        entry.hyper_p = {'predictors': predictors,
-                         'target': target
-                         }
+        entry.hyper_p = {'predictors': predictors, 'target': target}
         entry.update_to_db()
 
         # Output validation data results, used to assess model quality
@@ -167,15 +169,45 @@ def do_train():
     if data["MODEL_TYPE"] == 'client':
         model_performance_dict['client_model_id'] = model_id
         ClientModelPerformance(**model_performance_dict).save_to_db()
-        # If there is no active model for this client, set it automatically to the current one.
-        if not ClientModel.find_active_for_client(cid):
+
+        # If there is an active model for this client, check to compare performance
+        # Else, automatically push newly trained model to active
+        active_model = ClientModel.find_active_for_client(cid)
+        if active_model:
+            lh_model_old = client_model.ClientPredictionModel(active_model.pickle)
+            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            model_performance_dict_old = {
+                'client_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            ClientModelPerformance(**model_performance_dict_old).save_to_db()
+        else:
             ClientModel.set_active_for_client(model_id,cid)
+
     else:
         model_performance_dict['master_model_id'] = model_id
         MasterModelPerformance(**model_performance_dict).save_to_db()
         # If there is no active model, set the current one to be the active one.
-        if not MasterModel.find_active():
+        active_model = MasterModel.find_active()
+        if active_model:
+            lh_model_old = master_model.MasterPredictionModel(active_model.pickle)
+            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            model_performance_dict_old = {
+                'master_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            MasterModelPerformance(**model_performance_dict_old).save_to_db()
+        else:
             MasterModel.set_active(model_id)
+
 
     # Send an email here?
     # ==================

@@ -589,11 +589,11 @@ class ClientModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).filter_by(id = id).first()
 
     @classmethod
-    def set_active_for_client(cls, id):
-        active_model = cls.find_active_for_client(id)
+    def set_active_for_client(cls, model_id, client_id):
+        active_model = cls.find_active_for_client( client_id)
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=id).first().status = Activity.active.value
+        cls.query.filter_by(id=model_id).first().status = Activity.active.value
         db.session.commit()
 
 class ClientModelPerformance(db.Model):
@@ -653,11 +653,11 @@ class MasterModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).first()
 
     @classmethod
-    def set_active(cls, id):
+    def set_active(cls, model_id):
         active_model = cls.find_active()
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=id).first().status = Activity.active.value
+        cls.query.filter_by(id=model_id).first().status = Activity.active.value
         db.session.commit()
 
     def save_to_db(self):
@@ -752,6 +752,24 @@ class Transaction(db.Model):
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
         }
+
+
+    def update_prediction(self,update_dict):
+        if 'client_model_id' in update_dict.keys():
+            self.client_model_id = update_dict['client_model_id']
+            self.master_model_id = None
+        elif 'master_model_id' in update_dict.keys():
+            self.master_model_id = update_dict['master_model_id']
+            self.client_model_id = None
+        else:
+            raise ValueError("To update transaction, 'master_model_id' or 'client_model_id' must be specified.")
+        self.recovery_probability = float(update_dict['recovery_probability'])
+        self.is_predicted = True
+        self.update_to_db()
+
+
+    def update_to_db(self):
+        db.session.commit()
 
 
 ##
