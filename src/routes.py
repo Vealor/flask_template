@@ -8,6 +8,10 @@ from src import api
 from src.endpoints.general import general
 api.register_blueprint(general, url_prefix='/')
 
+# Area Endpoints
+from src.endpoints.areas import areas
+api.register_blueprint(areas, url_prefix='/areas')
+
 # Auth Endpoints
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
@@ -16,13 +20,33 @@ api.register_blueprint(auth, url_prefix='/auth')
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
+# Jurisdiction Endpoints
+from src.endpoints.jurisdictions import jurisdictions
+api.register_blueprint(jurisdictions, url_prefix='/jurisdictions')
+
+# LineOfBusiness Endpoints
+from src.endpoints.lines_of_business import lines_of_business
+api.register_blueprint(lines_of_business, url_prefix='/lines_of_business')
+
 # Log Endpoints
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
+# Predict Endpoints
+from src.endpoints.predict import predict
+api.register_blueprint(predict, url_prefix='/predict')
+
 # Project Endpoints
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
+
+# Sector Endpoints
+from src.endpoints.sectors import sectors
+api.register_blueprint(sectors, url_prefix='/sectors')
+
+# Train Endpoints
+from src.endpoints.train import train
+api.register_blueprint(train, url_prefix='/train')
 
 # User Endpoints
 from src.endpoints.users import users
@@ -32,13 +56,6 @@ api.register_blueprint(users, url_prefix='/users')
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
-# Train Endpoints
-from src.endpoints.train import train
-api.register_blueprint(train, url_prefix='/train')
-
-# Predict Endpoints
-from src.endpoints.predict import predict
-api.register_blueprint(predict, url_prefix='/predict')
 
 #===============================================================================
 # Error Handling
