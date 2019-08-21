@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1784139191b0
+Revision ID: 76e580e0ce31
 Revises: 
-Create Date: 2019-08-19 15:28:00.380645
+Create Date: 2019-08-20 16:52:40.622369
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1784139191b0'
+revision = '76e580e0ce31'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -57,9 +57,9 @@ def upgrade():
     sa.Column('initials', sa.String(length=8), nullable=False),
     sa.Column('first_name', sa.String(length=128), nullable=False),
     sa.Column('last_name', sa.String(length=128), nullable=False),
+    sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('req_pass_reset', sa.Boolean(), server_default='t', nullable=False),
-    sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('initials')
@@ -131,12 +131,12 @@ def upgrade():
     op.create_table('projects',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_paredown_locked', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('jurisdiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='jurisdiction'), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
-    sa.Column('engagement_partner_id', sa.Integer(), nullable=True),
-    sa.Column('engagement_manager_id', sa.Integer(), nullable=True),
+    sa.Column('engagement_partner_id', sa.Integer(), nullable=False),
+    sa.Column('engagement_manager_id', sa.Integer(), nullable=False),
     sa.Column('has_ts_gst', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('has_ts_hst', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('has_ts_qst', sa.Boolean(), server_default='f', nullable=False),
@@ -236,12 +236,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_project',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('is_favourite', sa.Boolean(), server_default='f', nullable=False),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('user_id', 'project_id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'project_id', name='user_project_unique_constraint')
     )
     # ### end Alembic commands ###
 

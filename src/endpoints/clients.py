@@ -52,22 +52,22 @@ def post_client():
         # input validation
         request_types = {
             'name': 'str',
-            'industry_id': 'int'
+            'line_of_business_id': 'int'
         }
         validate_request_data(data, request_types)
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).first()
         if check:
             raise ValueError('Client "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        check = Industry.query.filter_by(id=data['industry_id']).first()
-        if not check:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+        # check if this line of business exists
+        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id']).first()
+        if not lineofbusiness:
+            raise ValueError('Line of Business with ID {} does not exist.'.format(data['line_of_business_id']))
 
         # INSERT transaction
         client_id = Client(
             name = data['name'],
-            industry_id = data['industry_id']
+            client_line_of_business = lineofbusiness
         ).save_to_db()
 
         response['status'] = 'ok'
@@ -92,7 +92,7 @@ def update_client(id):
         # input validation
         request_types = {
             'name': 'str',
-            'industry_id': 'int'
+            'line_of_business_id': 'int'
         }
         validate_request_data(data, request_types)
 
@@ -105,13 +105,14 @@ def update_client(id):
         check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
         if check:
             raise ValueError('Client name "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        check = Industry.query.filter_by(id=data['industry_id']).first()
-        if not check:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+
+        # check if this line of business exists
+        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id']).first()
+        if not lineofbusiness:
+            raise ValueError('Line of Business id does not exist.'.format(data['line_of_business_id']))
 
         query.name = data['name']
-        query.industry_id = data['industry_id']
+        query.client_line_of_business = lineofbusiness
         query.update_to_db()
 
         response['status'] = 'ok'

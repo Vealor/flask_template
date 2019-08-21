@@ -69,8 +69,12 @@ def post_user():
         if check:
             raise ValueError('User email "{}" already exist.'.format(data['email']))
 
+        # ENUM check
+        if data['role'] not in Roles._value2member_map_:
+            raise ValueError('Specified role does not exists')
+
         # INSERT transaction
-        user_id = User(
+        user = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
             email = data['email'],
@@ -78,7 +82,8 @@ def post_user():
             first_name = data['first_name'],
             last_name = data['last_name'],
             role = data['role']
-        ).save_to_db()
+        )
+        user_id = user.save_to_db()
 
         response['status'] = 'ok'
         response['message'] = 'Created user {}'.format(data['username'])
@@ -105,7 +110,8 @@ def update_user(id):
             'email': 'str',
             'initials': 'str',
             'first_name': 'str',
-            'last_name': 'str'
+            'last_name': 'str',
+            'role': 'str'
         }
         validate_request_data(data, request_types)
 
@@ -114,6 +120,7 @@ def update_user(id):
         if not query:
             raise ValueError('User ID {} does not exist.'.format(id))
 
+        # check if data already exists
         check = User.query.filter_by(name=data['username']).first()
         if check:
             raise ValueError('Username "{}" already exist.'.format(data['username']))
@@ -121,11 +128,15 @@ def update_user(id):
         if check:
             raise ValueError('User email "{}" already exist.'.format(data['email']))
 
+        # update data
         query.username = data['username']
         query.email = data['email']
         query.initials = data['initials'].upper()
         query.first_name = data['first_name']
         query.last_name = data['last_name']
+        if data['role'] not in Roles._value2member_map_:
+            raise ValueError('Specified role does not exists')
+        query.role = data['role']
         query.update_to_db()
 
         response['status'] = 'ok'

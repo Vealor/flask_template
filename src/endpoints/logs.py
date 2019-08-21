@@ -14,7 +14,7 @@ logs = Blueprint('logs', __name__)
 # @jwt_required
 # PERMISSION IT ADMIN
 def default():
-    response = { 'status': '', 'message': '', 'payload': ['potato'] }
+    response = { 'status': '', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:

@@ -16,6 +16,10 @@ class Roles(enum.Enum):
     data_admin = "data_admin"
     tax_approver = "tax_approver"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
+
 class Actions(enum.Enum):
     create = "create"
     delete = "delete"
@@ -52,18 +56,16 @@ class Jurisdiction(enum.Enum):
     ty = "Yukon"
     foreign = "Outside Canada"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
+
 ################################################################################
 # Many 2 Many links
 
 project_sector_link = db.Table('project_sector',
     db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
     db.Column('sector_id', db.Integer, db.ForeignKey('sectors.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-)
-
-user_project_link = db.Table('user_project',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('is_favourite', db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 )
 
 ################################################################################
@@ -77,15 +79,13 @@ class User(db.Model):
     initials = db.Column(db.String(8), unique=True, nullable=False)
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.Enum(Roles), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
-    role = db.Column(db.Enum(Roles), nullable=False)
 
-    user_projects = db.relationship('Project', secondary=user_project_link)
+    user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic')
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    # user_engagement_managers = db.relationship('Project', back_populates='engagement_manager_user', lazy='dynamic') # FK
-
 
     def save_to_db(self):
         db.session.add(self)
@@ -111,7 +111,7 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
-            'user_projects': [i.id for i in self.user_projects]
+            'user_projects': [i.serialize for i in self.user_projects]
         }
 
     @classmethod
@@ -133,6 +133,43 @@ class User(db.Model):
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
+
+class UserProject(db.Model):
+    __tablename__ = 'user_project'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.UniqueConstraint('user_id', 'project_id', name='user_project_unique_constraint'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    user_project_user = db.relationship('User', back_populates='user_projects')
+    project_id = db.Column(db.Integer, nullable=False)
+    user_project_project = db.relationship('Project', back_populates='project_users')
+    is_favourite = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+        return self.id
+
+    def update_to_db(self):
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'user': self.user_project_user.username,
+            'project_id': self.project_id,
+            'project': self.user_project_project.serialize,
+            'is_favourite': self.is_favourite
+        }
 
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
@@ -220,17 +257,12 @@ class Client(db.Model):
             'name': self.name,
             'line_of_business_id': self.line_of_business_id,
             'client_line_of_business': self.client_line_of_business.name,
-            'client_projects': [i.serialize for i in self.client_projects]
+            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects]
         }
 
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
-
 
 class LineOfBusiness(db.Model):
     __tablename__ = 'line_of_business'
@@ -250,6 +282,10 @@ class LineOfBusiness(db.Model):
             'line_of_business_sectors': [i.serialize for i in self.line_of_business_sectors],
             'line_of_business_clients': [{'id':i.id, 'name':i.name} for i in self.line_of_business_clients]
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
 class Sector(db.Model):
     __tablename__ = 'sectors'
@@ -271,31 +307,35 @@ class Sector(db.Model):
             'line_of_business': self.sector_line_of_business.name
         }
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
 class Project(db.Model):
     __tablename__ = 'projects'
     __table_args__ = (
         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
-        db.ForeignKeyConstraint(['engagement_partner_id','engagement_manager_id'], ['users.id','users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['engagement_partner_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['engagement_manager_id'], ['users.id'], ondelete='SET NULL'),
     )
-
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
-    is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    is_paredown_locked = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
 
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
-    engagement_partner_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_partner_user = db.relationship('User') # FK
+    engagement_partner_id = db.Column(db.Integer, nullable=False) # FK
+    engagement_partner_user = db.relationship('User', foreign_keys='Project.engagement_partner_id') # FK
 
-    engagement_manager_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_manager_user = db.relationship('User') # FK
+    engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
+    engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
     project_sectors = db.relationship('Sector', secondary=project_sector_link)
-    project_users = db.relationship('User', secondary=user_project_link)
+    project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic')
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
 
@@ -343,7 +383,6 @@ class Project(db.Model):
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
@@ -361,19 +400,19 @@ class Project(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'is_approved': self.is_approved,
+            'client_id': self.client_id,
+            'project_client': self.project_client.serialize,
+            'is_paredown_locked': self.is_paredown_locked,
             'is_archived': self.is_archived,
             'area': 'TBD',
             'code': 'TBD',
             'jurisdiction_code': self.jurisdiction.name,
             'jurisdiction_name': self.jurisdiction.value,
             'project_sectors': [i.serialize for i in self.project_sectors],
-            'project_users': [{'id':i.id,'username':i.username} for i in self.project_users],
+            'project_users': [{'id':i.id,'username':i.user_project_user.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
             'engagement_partner_id': self.engagement_partner_id,
-            'engagement_partner_user': self.engagement_partner_user.username.serialize,
             'engagement_manager_id': self.engagement_manager_id,
-            'engagement_manager_user': self.engagement_partner_user.username.serialize,
             'tax_scope': {
                 'has_ts_gst': self.has_ts_gst,
                 'has_ts_hst': self.has_ts_hst,
@@ -435,10 +474,6 @@ class Project(db.Model):
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
 
 class ParedownRule(db.Model):
     # these rules are only either core, or for a line_of_business
