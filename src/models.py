@@ -277,8 +277,6 @@ class Project(db.Model):
         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
         db.ForeignKeyConstraint(['engagement_partner_id','engagement_manager_id'], ['users.id','users.id'], ondelete='SET NULL'),
     )
-
-
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -540,7 +538,7 @@ class Sap_linkingfields(db.Model):
     field_name = db.Column(db.String(256), nullable=False)
     is_complete = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
-    datatype = db.Column(db.Enum(Linkingfields_DataType), nullable=False)
+    datatype = db.Column(db.Enum(Datatype), nullable=False)
     regex = db.Column(db.String(256), nullable=False)
     # project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     # sap_linkingfields_project = db.relationship('Project', back_populates='project_sap_linkingfields')
@@ -809,7 +807,6 @@ class Transaction(db.Model):
             'master_model_id': self.master_model_id
         }
 
-
     def update_prediction(self,update_dict):
         if 'client_model_id' in update_dict.keys():
             self.client_model_id = update_dict['client_model_id']
@@ -823,8 +820,6 @@ class Transaction(db.Model):
         self.is_predicted = True
         self.update_to_db()
 
-
-
     def update_to_db(self):
         db.session.commit()
 
@@ -835,7 +830,6 @@ class FXRates(db.Model):
     cadtousd = db.Column(db.Float, nullable=False)
     gbptocad = db.Column(db.Float, nullable=False)
     cadtogbp = db.Column(db.Float, nullable=False)
-
 
 class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'
@@ -848,10 +842,8 @@ class SapAufk(db.Model):
     _tablename__ = 'sap_aufk'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapaufk_project = db.relationship('Project', back_populates='project_sapaufk')
-
-##
 
 class SapBkpf(db.Model):
     _tablename__ = 'sap_bkpf'
@@ -860,7 +852,6 @@ class SapBkpf(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapbkpf_project = db.relationship('Project', back_populates='project_sapbkpf')
-
 
 class SapRegup(db.Model):
     _tablename__ = 'sap_regup'
@@ -917,8 +908,6 @@ class SapCsks(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapcsks_project = db.relationship('Project', back_populates='project_sapcsks')
-
-
 
 class SapEkko(db.Model):
     _tablename__ = 'sap_ekko'
@@ -998,7 +987,6 @@ class SapT001w(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapt001w_project = db.relationship('Project', back_populates='project_sapt001w')
-
 
 class SapT007s(db.Model):
     _tablename__ = 'sap_t007s'
