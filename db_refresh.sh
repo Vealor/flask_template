@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # if new migrations are required:
-flask db migrate
-
+#
+# source activate
+# FLASK_ENV='development' flask db migrate
 
 sudo -i -u postgres psql <<EOF
 drop database itra_db;
@@ -9,8 +10,7 @@ create database itra_db;
 grant all privileges on database itra_db to itra;
 EOF
 source activate
-FLASK_ENV='development'
-flask db upgrade
+FLASK_ENV='development' flask db upgrade
 
 read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue when started"
 
