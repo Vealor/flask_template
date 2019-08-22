@@ -2,8 +2,9 @@ import enum
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects import postgresql
+from marshmallow import Schema, fields, pprint
 from sqlalchemy.sql import func
-from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB
+from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
 
 db = SQLAlchemy()
 
@@ -36,7 +37,17 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
-class Jurisdiction(enum.Enum):
+
+class Linkingfields_DataType(enum.Enum):
+    dt_boolean = Boolean
+    dt_date = Date
+    dt_datetime = DateTime
+    dt_varchar = VARCHAR
+    dt_float = Float
+    dt_int = Integer
+    dt_blob = BLOB
+
+class Juristiction(enum.Enum):
     ab = "Alberta"
     bc = "British Columbia"
     mb = "Manitoba"
@@ -285,6 +296,28 @@ class Project(db.Model):
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
 
+    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
+    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
+    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
+    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
+    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
+    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
+    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
+    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
+    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
+    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
+    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
+    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
+    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
+    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
+    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
+    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
+    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
+    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
+    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
+    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
+    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
+    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
@@ -365,8 +398,8 @@ class Project(db.Model):
             'is_archived': self.is_archived,
             'area': 'TBD',
             'code': 'TBD',
-            'jurisdiction_code': self.jurisdiction.name,
-            'jurisdiction_name': self.jurisdiction.value,
+            'juristiction_code': self.juristiction.name,
+            'juristiction_name': self.juristiction.value,
             'project_sectors': [i.serialize for i in self.project_sectors],
             'project_users': [{'id':i.id,'username':i.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
@@ -430,6 +463,7 @@ class Project(db.Model):
                     'has_es_daf': self.has_es_daf
                 }
             }
+            'transaction_count': self.project_transactions.count()
         }
 
     @classmethod
@@ -493,7 +527,7 @@ class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-        db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
+        db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_labels']),
     )
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
@@ -504,10 +538,30 @@ class DataMapping(db.Model):
     cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
 
+    @property
+    def serialize(self):
+        return {
+            'column_name': self.column_name,
+            'table_name': self.table_name,
+            'cdm_label_script_label': self.cdm_label_script_label
+        }
+
+class Sap_linkingfields(db.Model):
+    __table_name__ = 'sap_linkingfields'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    table_name = db.Column(db.String(256), nullable=False)
+    field_name = db.Column(db.String(256), nullable=False)
+    is_complete = db.Column(db.Boolean, unique=False, nullable=False)
+    is_unique = db.Column(db.Boolean, unique=False, nullable=False)
+    datatype = db.Column(db.Enum(Linkingfields_DataType), nullable=False)
+    regex = db.Column(db.String(256), nullable=False)
+    # project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    # sap_linkingfields_project = db.relationship('Project', back_populates='project_sap_linkingfields')
+
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
-    script_label = db.Column(db.String(256), primary_key=True, nullable=False)
-    english_label = db.Column(db.String(256), nullable=False)
+    script_labels = db.Column(db.String(256), primary_key=True, nullable=False)
+    english_labels = db.Column(db.String(256), nullable=False)
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_required = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
@@ -515,6 +569,21 @@ class CDM_label(db.Model):
     regex = db.Column(db.String(256), nullable=False)
 
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
+    @property
+    def serialize(self):
+        table_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['table_name']
+        column_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['column_name']
+        return {
+            'table_name': table_name,
+            'column_name': column_name,
+            'script_labels': self.script_labels,
+            'english_labels': self.english_labels,
+            'is_calculated': self.is_calculated,
+            'is_required': self.is_required,
+            'is_unique': self.is_unique,
+            'datatype': self.datatype.name,
+            'regex': self.regex
+        }
 
 ################################################################################
 # Prediction Models
@@ -550,7 +619,6 @@ class ClientModel(db.Model):
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
-
     client_id = db.Column(db.Integer, nullable=False) # FK
     client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
 
@@ -753,6 +821,13 @@ class Transaction(db.Model):
             'master_model_id': self.master_model_id
         }
 
+class FXRates(db.Model):
+    _tablename_ = 'fx_rates'
+    dateid = db.Column(db.DateTime(timezone=True), primary_key=True)
+    usdtocad = db.Column(db.Float, nullable=False)
+    cadtousd = db.Column(db.Float, nullable=False)
+    gbptocad = db.Column(db.Float, nullable=False)
+    cadtogbp = db.Column(db.Float, nullable=False)
 
     def update_prediction(self,update_dict):
         if 'client_model_id' in update_dict.keys():
@@ -766,10 +841,179 @@ class Transaction(db.Model):
         self.recovery_probability = float(update_dict['recovery_probability'])
         self.is_predicted = True
         self.update_to_db()
+class SapBseg(db.Model):
+    _tablename__ = 'sap_bseg'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
 
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapbseg_project = db.relationship('Project', back_populates='project_sapbseg')
 
     def update_to_db(self):
         db.session.commit()
+class SapAufk(db.Model):
+    _tablename__ = 'sap_aufk'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapaufk_project = db.relationship('Project', back_populates='project_sapaufk')
 
 
-##
+class SapBkpf(db.Model):
+    _tablename__ = 'sap_bkpf'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapbkpf_project = db.relationship('Project', back_populates='project_sapbkpf')
+
+
+class SapRegup(db.Model):
+    _tablename__ = 'sap_regup'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapregup_project = db.relationship('Project', back_populates='project_sapregup')
+
+class SapCepct(db.Model):
+    _tablename__ = 'sap_cepct'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapcepct_project = db.relationship('Project', back_populates='project_sapcepct')
+
+class SapCskt(db.Model):
+    _tablename__ = 'sap_cskt'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapcskt_project = db.relationship('Project', back_populates='project_sapcskt')
+
+class SapEkpo(db.Model):
+    _tablename__ = 'sap_ekpo'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapekpo_project = db.relationship('Project', back_populates='project_sapekpo')
+
+class SapPayr(db.Model):
+    _tablename__ = 'sap_payr'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sappayr_project = db.relationship('Project', back_populates='project_sappayr')
+
+
+class SapSkat(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapskat_project = db.relationship('Project', back_populates='project_sapskat')
+
+
+class SapBsak(db.Model):
+    _tablename__ = 'sap_bsak'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapbsak_project = db.relationship('Project', back_populates='project_sapbsak')
+
+class SapCsks(db.Model):
+    _tablename__ = 'sap_csks'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapcsks_project = db.relationship('Project', back_populates='project_sapcsks')
+
+
+
+class SapEkko(db.Model):
+    _tablename__ = 'sap_ekko'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+    sapekko_project = db.relationship('Project', back_populates='project_sapekko')
+
+class SapIflot(db.Model):
+    _tablename__ = 'sap_iflot'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapiflot_project = db.relationship('Project', back_populates='project_sapiflot')
+
+class SapIloa(db.Model):
+    _tablename__ = 'sap_iloa'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapiloa_project = db.relationship('Project', back_populates='project_sapiloa')
+
+
+class SapLfa1(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    saplfa1_project = db.relationship('Project', back_populates='project_saplfa1')
+
+class SapMakt(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapmakt_project = db.relationship('Project', back_populates='project_sapmakt')
+
+class SapMara(db.Model):
+    _tablename__ = 'sap_mara'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapmara_project = db.relationship('Project', back_populates='project_sapmara')
+
+class SapProj(db.Model):
+    _tablename__ = 'sap_proj'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapproj_project = db.relationship('Project', back_populates='project_sapproj')
+
+class SapPrps(db.Model):
+    _tablename__ = 'sap_prps'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapprps_project = db.relationship('Project', back_populates='project_sapprps')
+
+class SapT001w(db.Model):
+    _tablename__ = 'sap_t001w'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapt001w_project = db.relationship('Project', back_populates='project_sapt001w')
+
+
+class SapT007s(db.Model):
+    _tablename__ = 'sap_t007s'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapt007s_project = db.relationship('Project', back_populates='project_sapt007s')
