@@ -902,16 +902,6 @@ class SapPayr(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sappayr_project = db.relationship('Project', back_populates='project_sappayr')
 
-
-class SapSkat(db.Model):
-    _tablename__ = 'sap_skat'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapskat_project = db.relationship('Project', back_populates='project_sapskat')
-
-
 class SapBsak(db.Model):
     _tablename__ = 'sap_bsak'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -953,61 +943,6 @@ class SapIloa(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapiloa_project = db.relationship('Project', back_populates='project_sapiloa')
 
-
-class SapLfa1(db.Model):
-    _tablename__ = 'sap_skat'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    saplfa1_project = db.relationship('Project', back_populates='project_saplfa1')
-
-class SapMakt(db.Model):
-    _tablename__ = 'sap_skat'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapmakt_project = db.relationship('Project', back_populates='project_sapmakt')
-
-class SapMara(db.Model):
-    _tablename__ = 'sap_mara'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapmara_project = db.relationship('Project', back_populates='project_sapmara')
-
-class SapProj(db.Model):
-    _tablename__ = 'sap_proj'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapproj_project = db.relationship('Project', back_populates='project_sapproj')
-
-class SapPrps(db.Model):
-    _tablename__ = 'sap_prps'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapprps_project = db.relationship('Project', back_populates='project_sapprps')
-
-class SapT001w(db.Model):
-    _tablename__ = 'sap_t001w'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapt001w_project = db.relationship('Project', back_populates='project_sapt001w')
-
-
-class SapT007s(db.Model):
-    _tablename__ = 'sap_t007s'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
 class SapSkat(db.Model):
     _tablename__ = 'sap_skat'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -1015,49 +950,6 @@ class SapSkat(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapskat_project = db.relationship('Project', back_populates='project_sapskat')
-
-
-class SapBsak(db.Model):
-    _tablename__ = 'sap_bsak'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapbsak_project = db.relationship('Project', back_populates='project_sapbsak')
-
-class SapCsks(db.Model):
-    _tablename__ = 'sap_csks'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapcsks_project = db.relationship('Project', back_populates='project_sapcsks')
-
-
-
-class SapEkko(db.Model):
-    _tablename__ = 'sap_ekko'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-    sapekko_project = db.relationship('Project', back_populates='project_sapekko')
-
-class SapIflot(db.Model):
-    _tablename__ = 'sap_iflot'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapiflot_project = db.relationship('Project', back_populates='project_sapiflot')
-
-class SapIloa(db.Model):
-    _tablename__ = 'sap_iloa'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapiloa_project = db.relationship('Project', back_populates='project_sapiloa')
-
 
 class SapLfa1(db.Model):
     _tablename__ = 'sap_skat'
