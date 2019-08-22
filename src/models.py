@@ -36,7 +36,7 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
-class Juristiction(enum.Enum):
+class Jurisdiction(enum.Enum):
     ab = "Alberta"
     bc = "British Columbia"
     mb = "Manitoba"
