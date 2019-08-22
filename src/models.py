@@ -56,6 +56,13 @@ class Jurisdiction(enum.Enum):
     ty = "Yukon"
     foreign = "Outside Canada"
 
+    @property
+    def serialize(self):
+        return {
+            'code': self.name,
+            'name': self.value
+        }
+
     @classmethod
     def list(cls):
         return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
@@ -83,7 +90,7 @@ class User(db.Model):
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
 
-    user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic')
+    user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic', passive_deletes=True)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
 
@@ -101,6 +108,20 @@ class User(db.Model):
 
     @property
     def serialize(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'initials': self.initials.upper(),
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'display_name': "{} {}".format(self.first_name, self.last_name),
+            'req_pass_reset': self.req_pass_reset,
+            'role': self.role.name
+        }
+
+    @property
+    def serialize_proj(self):
         return {
             'id': self.id,
             'username': self.username,
@@ -241,7 +262,7 @@ class Client(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
-        return { 'name': self.name, 'line_of_business_id': self.line_of_business_id }
+        return self.id
 
     def update_to_db(self):
         db.session.commit()
@@ -335,7 +356,7 @@ class Project(db.Model):
     engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
     project_sectors = db.relationship('Sector', secondary=project_sector_link)
-    project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic')
+    project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
 
@@ -392,7 +413,12 @@ class Project(db.Model):
         db.session.commit()
 
     def delete_from_db(self):
+        print('deleting')
+        print(self)
         db.session.delete(self)
+        print('deleted')
+        db.session.flush()
+        print('flushed')
         db.session.commit()
 
     @property
@@ -406,10 +432,9 @@ class Project(db.Model):
             'is_archived': self.is_archived,
             'area': 'TBD',
             'code': 'TBD',
-            'jurisdiction_code': self.jurisdiction.name,
-            'jurisdiction_name': self.jurisdiction.value,
+            'jurisdiction': self.jurisdiction.serialize,
             'project_sectors': [i.serialize for i in self.project_sectors],
-            'project_users': [{'id':i.id,'username':i.user_project_user.username} for i in self.project_users],
+            'project_users': [{'user_id':i.user_id,'username':i.user_project_user.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
             'engagement_partner_id': self.engagement_partner_id,
             'engagement_manager_id': self.engagement_manager_id,
@@ -513,7 +538,7 @@ class Vendor(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'vendor_transactions': [i.serialize for i in self.vendor_transactions]
+            'vendor_transactions': [i.id for i in self.vendor_transactions]
         }
 
     @classmethod
@@ -783,7 +808,7 @@ class Transaction(db.Model):
             'data': self.data,
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
-            'locked_user_initials': self.locked_transaction_user.initials,
+            'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
         }

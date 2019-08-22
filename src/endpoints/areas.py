@@ -13,11 +13,10 @@ areas = Blueprint('areas', __name__)
 @areas.route('/', methods=['GET'])
 # @jwt_required
 def default():
-    response = { 'status': '', 'message': '', 'payload': ['AREAS TBD'] }
+    response = { 'status': 'ok', 'message': '', 'payload': ['AREAS TBD'] }
 
     try:
         # query = LineOfBusiness.query
-        response['status'] = 'ok'
         response['message'] = ''
         # response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:

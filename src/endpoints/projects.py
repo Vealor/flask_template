@@ -14,16 +14,15 @@ projects = Blueprint('projects', __name__)
 @projects.route('/toggle_favourite/<path:id>', methods=['GET'])
 # @jwt_required
 def toggle_favourite(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = UserProject.query
         query = query.filter_by(user_id=current_user.id)
         query = query.filter_by(project_id=id)
         query = query.first()
-        query.is_favourite = !query.is_favourite
+        query.is_favourite = not query.is_favourite
         query.update_to_db()
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = []
     except Exception as e:
@@ -39,14 +38,17 @@ def toggle_favourite(id):
 @projects.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_projects(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
         query = Project.query
 
         # ID filter
-        query = query.filter_by(id=id) if id is not None else query
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('ID {} does not exist.'.format(id))
         # Set ORDER
         query = query.order_by('name')
         # Query on is_approved (is_approved, 1 or 0)
@@ -58,7 +60,6 @@ def get_projects(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:
@@ -73,7 +74,7 @@ def get_projects(id):
 @projects.route('/', methods=['POST'])
 # @jwt_required
 def post_project():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -109,7 +110,7 @@ def post_project():
         # CHECK CONSTRAINTS: name
         check = Project.query.filter_by(name=data['name']).first()
         if check:
-            raise ValueError("Project '{}' already exist.".format(data['name']))
+            raise ValueError('Project {} already exist.'.format(data['name']))
 
         # client_id validation
         client = Client.find_by_id(data['client_id'])
@@ -117,18 +118,18 @@ def post_project():
             raise ValueError('Client id does not exist.'.format(data['client_id']))
 
         # jurisdiction validation
-        if data['jurisdiction'] not in Jurisdiction._value2member_map_:
+        if data['jurisdiction'] not in Jurisdiction.__members__:
             raise ValueError('Specified jurisdiction does not exists')
 
         # engagement_partner_id validation
         eng_part = User.find_by_id(data['engagement_partner_id'])
         if not eng_part:
-            raise ValueError('User id does not exist for engagement partner.'.format(data['engagement_partner_id']))
+            raise ValueError('User id {} does not exist for engagement partner.'.format(data['engagement_partner_id']))
 
         # engagement_manager_id validation
         eng_mana = User.find_by_id(data['engagement_manager_id'])
         if not eng_mana:
-            raise ValueError('User id does not exist for engagement manager.'.format(data['engagement_manager_id']))
+            raise ValueError('User id {} does not exist for engagement manager.'.format(data['engagement_manager_id']))
 
         # BUILD transaction
         new_project = Project(
@@ -207,7 +208,6 @@ def post_project():
                 user_project_project = new_project,
             ).save_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Created project {}'.format(data['name'])
         response['payload'] = [Project.find_by_id(project_id).serialize]
     except Exception as e:
@@ -222,7 +222,7 @@ def post_project():
 @projects.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_project(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -279,9 +279,9 @@ def update_project(id):
         # archive project update
         query.is_archived = data['is_archived']
         # jurisdiction validation and update
-        if data['jurisdiction'] not in Jurisdiction._value2member_map_:
+        if data['jurisdiction'] not in Jurisdiction.__members__:
             raise ValueError('Specified jurisdiction does not exists')
-        query.jurisdiction = data['jurisdiction']
+        query.jurisdiction = Jurisdiction[data['jurisdiction']]
         # engagement_partner_id validation and update
         eng_part = User.find_by_id(data['engagement_partner_id'])
         if not eng_part:
@@ -338,21 +338,22 @@ def update_project(id):
         query.has_es_daf = data['engagement_scope']['data']['has_es_daf']
 
         # project_users update
-        query.project_users = []
         for user_id in data['project_users']:
             user = User.find_by_id(user_id)
             if not user:
                 raise ValueError('Added project user with id {} does not exist'.format(user_id))
         # project_sectors update
-        query.project_sectors = []
+        project_sectors = []
         for sector_id in data['project_sectors']:
             sector = Sector.find_by_id(sector_id)
             if not sector:
                 raise ValueError('Added project sector with id {} does not exist'.format(user_id))
-            new_project.project_sectors.append(sector)
+            project_sectors.append(sector)
+        query.project_sectors = project_sectors
 
         # UPDATE transaction
         query.update_to_db()
+
 
         # Add user_projects from project_users
         user_projects = UserProject.query.filter_by(project_id=id).all()
@@ -366,10 +367,9 @@ def update_project(id):
             user = User.find_by_id(user_id)
             UserProject(
                 user_project_user = user,
-                user_project_project = new_project,
+                user_project_project = query,
             ).save_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Updated project with id {}'.format(id)
         response['payload'] = [Project.find_by_id(id).serialize]
     except Exception as e:
@@ -384,7 +384,7 @@ def update_project(id):
 @projects.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_project(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = Project.query.filter_by(id=id).first()
@@ -394,7 +394,6 @@ def delete_project(id):
         project = query.serialize
         query.delete_from_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Deleted project id {}'.format(project['id'])
         response['payload'] = [project]
     except Exception as e:

@@ -15,14 +15,17 @@ clients = Blueprint('clients', __name__)
 @clients.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_clients(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
         query = Client.query
 
         # ID filter
-        query = query.filter_by(id=id) if id is not None else query
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('ID {} does not exist.'.format(id))
         # Set ORDER
         query = query.order_by('name')
         # Set LIMIT
@@ -30,7 +33,6 @@ def get_clients(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:
@@ -45,7 +47,7 @@ def get_clients(id):
 @clients.route('/', methods=['POST'])
 # @jwt_required
 def post_client():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -58,9 +60,9 @@ def post_client():
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).first()
         if check:
-            raise ValueError('Client "{}" already exist.'.format(data['name']))
+            raise ValueError('Client {} already exist.'.format(data['name']))
         # check if this line of business exists
-        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id']).first()
+        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id'])
         if not lineofbusiness:
             raise ValueError('Line of Business with ID {} does not exist.'.format(data['line_of_business_id']))
 
@@ -70,7 +72,6 @@ def post_client():
             client_line_of_business = lineofbusiness
         ).save_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Created client {}'.format(data['name'])
         response['payload'] = [Client.find_by_id(client_id).serialize]
     except Exception as e:
@@ -85,7 +86,7 @@ def post_client():
 @clients.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_client(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -97,17 +98,17 @@ def update_client(id):
         validate_request_data(data, request_types)
 
         # UPDATE transaction
-        query = Client.query.find_by_id(id)
+        query = Client.find_by_id(id)
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
 
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
         if check:
-            raise ValueError('Client name "{}" already exist.'.format(data['name']))
+            raise ValueError('Client name {} already exists.'.format(data['name']))
 
         # check if this line of business exists
-        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id']).first()
+        lineofbusiness = LineOfBusiness.find_by_id(data['line_of_business_id'])
         if not lineofbusiness:
             raise ValueError('Line of Business id does not exist.'.format(data['line_of_business_id']))
 
@@ -115,7 +116,6 @@ def update_client(id):
         query.client_line_of_business = lineofbusiness
         query.update_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Updated client with id {}'.format(id)
         response['payload'] = [Client.find_by_id(id).serialize]
     except Exception as e:
@@ -130,7 +130,7 @@ def update_client(id):
 @clients.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = Client.query.filter_by(id=id).first()
@@ -138,13 +138,13 @@ def delete_client(id):
             raise ValueError('Client ID {} does not exist.'.format(id))
 
         # fail delete if has projects, models, or classification_rules
-        if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
+        if query.client_projects.all() or query.client_client_models.all():
+        # if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
             raise Exception('Client not deleted. Client has active projects, models, or classification rules.')
 
         client = query.serialize
         query.delete_from_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Deleted client id {}'.format(client['id'])
         response['payload'] = [client]
     except Exception as e:

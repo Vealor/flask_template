@@ -14,7 +14,7 @@ logs = Blueprint('logs', __name__)
 # @jwt_required
 # PERMISSION IT ADMIN
 def default():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
@@ -27,7 +27,6 @@ def default():
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:

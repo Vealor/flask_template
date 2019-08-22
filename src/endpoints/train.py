@@ -22,7 +22,7 @@ train = Blueprint('train', __name__)
 @train.route('/', methods=['POST'])
 # @jwt_required
 def do_train():
-    response = {'status': '', 'message': '', 'payload': {}}
+    response = {'status': 'ok', 'message': '', 'payload': {}}
     data = request.get_json()
     request_types = {
         'MODEL_TYPE': 'str',
@@ -213,7 +213,6 @@ def do_train():
     # ==================
 
     # Send http response, terminate
-    response['status'] = 'ok'
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['payload']['model_type'] = data["MODEL_TYPE"]

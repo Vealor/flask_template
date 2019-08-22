@@ -15,22 +15,24 @@ vendors = Blueprint('vendors', __name__)
 @vendors.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_vendors(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
         query = Vendor.query
 
         # ID filter
-        query = query.filter_by(id=id) if id is not None else query
-        # Set ORDER
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('ID {} does not exist.'.format(id))
+        # # Set ORDER
         query = query.order_by('name')
-        # Set LIMIT
+        # # Set LIMIT
         query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
-        # Set OFFSET
+        # # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:
@@ -45,7 +47,7 @@ def get_vendors(id):
 @vendors.route('/', methods=['POST'])
 # @jwt_required
 def post_vendor():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -57,14 +59,13 @@ def post_vendor():
 
         check = Vendor.query.filter_by(name=data['name']).first()
         if check:
-            raise ValueError('Vendor "{}" already exist.'.format(data['name']))
+            raise ValueError('Vendor {} already exist.'.format(data['name']))
 
         # INSERT transaction
         vendor_id = Vendor(
             name = data['name']
         ).save_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Created vendor {}'.format(data['name'])
         response['payload'] = [Vendor.find_by_id(vendor_id).serialize]
     except Exception as e:
@@ -79,7 +80,7 @@ def post_vendor():
 @vendors.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_vendor(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -97,7 +98,6 @@ def update_vendor(id):
         query.name = data['name']
         query.update_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Updated vendor with id {}'.format(data['id'])
         response['payload'] = [Vendor.find_by_id(data['id']).serialize]
     except Exception as e:
@@ -112,7 +112,7 @@ def update_vendor(id):
 @vendors.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_vendor(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = Vendor.query.filter_by(id=id).first()
@@ -121,7 +121,6 @@ def delete_vendor(id):
         vendor = query.serialize
         query.delete_from_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Deleted vendor id {}'.format(vendor['id'])
         response['payload'] = [vendor]
     except Exception as e:

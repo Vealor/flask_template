@@ -13,11 +13,10 @@ sectors = Blueprint('sectors', __name__)
 @sectors.route('/', methods=['GET'])
 # @jwt_required
 def default():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
-        query = Sectors.query
-        response['status'] = 'ok'
+        query = Sector.query
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:

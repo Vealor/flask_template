@@ -13,10 +13,9 @@ jurisdictions = Blueprint('jurisdictions', __name__)
 @jurisdictions.route('/', methods=['GET'])
 # @jwt_required
 def default():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = Jurisdiction.list()
     except Exception as e:

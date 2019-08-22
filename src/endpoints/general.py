@@ -11,11 +11,10 @@ general = Blueprint('general', __name__)
 # General
 @general.route('/', methods=['GET'])
 def default():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
         response['VERSION'] = current_app.config['VERSION']
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = []
     except Exception as e:

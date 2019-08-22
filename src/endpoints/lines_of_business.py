@@ -13,11 +13,10 @@ lines_of_business = Blueprint('lines_of_business', __name__)
 @lines_of_business.route('/', methods=['GET'])
 # @jwt_required
 def default():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = LineOfBusiness.query
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:

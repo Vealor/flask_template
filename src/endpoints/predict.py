@@ -17,7 +17,7 @@ predict = Blueprint('predict', __name__)
 # General
 @predict.route('/', methods=['POST'])
 def do_predict():
-    response = { 'status': '', 'message': '', 'payload': {} }
+    response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
 
     # data type dictionary
@@ -84,7 +84,6 @@ def do_predict():
         response['message'] = str(e)
         return jsonify(response), 400
 
-    response['status'] = 'ok'
     response['payload'] = data
     response['message'] = 'Prediction successful. Transactions have been marked.'
 

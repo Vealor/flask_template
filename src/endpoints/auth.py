@@ -15,7 +15,7 @@ auth = Blueprint('auth', __name__)
 # create admin superuser
 @auth.route('/createadminsuperuseraccount', methods=['POST'])
 def createadminsuperuseraccount():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     if request.method == 'POST':
@@ -46,7 +46,6 @@ def createadminsuperuseraccount():
             response['message'] = 'Information improperly supplied.'
             return jsonify(response), 400
 
-        response['status'] = 'ok'
         new_user = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
@@ -69,7 +68,7 @@ def createadminsuperuseraccount():
 # sends email with new temp pass
 @auth.route('/reset', methods=['POST'])
 def reset():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -97,7 +96,6 @@ def reset():
 
             user.update_to_db()
 
-        response['status'] = 'ok'
         response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
         response['payload'] = []
     except Exception as e:
@@ -113,10 +111,8 @@ def reset():
 # login
 @auth.route('/login', methods=['POST'])
 def login():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
-
-    print(data)
 
     try:
         request_types = {
@@ -124,27 +120,18 @@ def login():
             'password': 'str',
         }
         validate_request_data(data, request_types)
-        print('made it1')
 
-        try:
-            user = User.find_by_username(data['username'])
-        except Exception as e:
-            print(e)
-        print('made it2')
+        user = User.find_by_username(data['username'])
         if not user or not User.verify_hash(data['password'], user.password):
             response['status'] = 'error'
             response['message'] = 'Wrong Credentials'
             return jsonify(response), 401
-            print('made it3')
 
-        print('made it4')
-        response['status'] = 'ok'
         response['access_token'] = create_access_token(identity = data['username'])
         response['refresh_token'] = create_refresh_token(identity = data['username'])
         response['message'] = 'Logged in as {}'.format(data['username'])
         response['payload'] = []
     except Exception as e:
-        print("BAD")
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -166,7 +153,7 @@ def refresh():
 # Verify that access_token is valid
 @auth.route('/verify', methods=['GET'])
 @jwt_required
-def get_tokens():
+def verify_tokens():
     user_identity = get_jwt_identity()
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     return jsonify(response), 200
@@ -178,4 +165,13 @@ def get_tokens():
 def get_user_details():
     user = current_user
     response = { 'status': 'ok', 'message': '', 'payload': user.serialize }
+    return jsonify(response), 200
+
+#===============================================================================
+# Get user details (including credentials)
+@auth.route('/user_details_proj', methods=['GET'])
+@jwt_required
+def get_user_details_proj():
+    user = current_user
+    response = { 'status': 'ok', 'message': '', 'payload': user.serialize_proj }
     return jsonify(response), 200
