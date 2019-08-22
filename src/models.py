@@ -36,16 +36,6 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
-
-class Linkingfields_DataType(enum.Enum):
-    dt_boolean = Boolean
-    dt_date = Date
-    dt_datetime = DateTime
-    dt_varchar = VARCHAR
-    dt_float = Float
-    dt_int = Integer
-    dt_blob = BLOB
-
 class Juristiction(enum.Enum):
     ab = "Alberta"
     bc = "British Columbia"
@@ -295,52 +285,6 @@ class Project(db.Model):
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
 
-    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
-    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
-    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
-    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
-    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
-    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
-    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
-    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
-    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
-    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
-    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
-    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
-    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
-    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
-    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
-    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
-    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
-    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
-    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
-    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
-    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
-    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
-    juristiction = db.Column(db.Enum(Juristiction), nullable=False)
-
-    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
-    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
-    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
-    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
-    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
-    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
-    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
-    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
-    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
-    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
-    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
-    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
-    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
-    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
-    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
-    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
-    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
-    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
-    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
-    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
-    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
-    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
@@ -398,7 +342,28 @@ class Project(db.Model):
     has_es_fxrates = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-
+    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
+    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
+    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
+    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
+    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
+    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
+    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
+    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
+    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
+    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
+    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
+    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
+    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
+    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
+    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
+    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
+    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
+    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
+    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
+    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
+    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
+    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
 
     def save_to_db(self):
         db.session.add(self)
