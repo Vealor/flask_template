@@ -63,6 +63,7 @@ class Juristiction(enum.Enum):
     ty = "Yukon"
     foreign = "Outside Canada"
 
+
 ################################################################################
 # Many 2 Many links
 
@@ -95,7 +96,6 @@ class User(db.Model):
     user_projects = db.relationship('Project', secondary=user_project_link)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    # user_engagement_managers = db.relationship('Project', back_populates='engagement_manager_user', lazy='dynamic') # FK
 
 
     def save_to_db(self):
@@ -122,7 +122,7 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
-            'user_projects': [i.id for i in self.user_projects]
+            'user_projects': [i.serialize for i in self.user_projects]
         }
 
     @classmethod
@@ -286,15 +286,36 @@ class Project(db.Model):
     __tablename__ = 'projects'
     __table_args__ = (
         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
-        db.ForeignKeyConstraint(['engagement_partner_id','engagement_manager_id'], ['users.id','users.id'], ondelete='SET NULL'),
     )
-
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
     is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
+
+    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
+    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
+    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
+    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
+    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
+    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
+    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
+    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
+    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
+    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
+    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
+    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
+    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
+    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
+    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
+    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
+    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
+    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
+    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
+    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
+    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
+    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
+    juristiction = db.Column(db.Enum(Juristiction), nullable=False)
 
     #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
     project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
@@ -321,61 +342,10 @@ class Project(db.Model):
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
-    engagement_partner_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_partner_user = db.relationship('User') # FK
-
-    engagement_manager_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_manager_user = db.relationship('User') # FK
-
     project_sectors = db.relationship('Sector', secondary=project_sector_link)
-    project_users = db.relationship('User', secondary=user_project_link)
+    project_users = db.relationship('Project', secondary=user_project_link)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
-
-    has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_qst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_pst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_vat = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_mft = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_ct = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_excise = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_customs = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_crown = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_freehold = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-
-    has_es_caps = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_taxreturn = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_flowthrough = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_employeeexpense = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_pccards = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_coupons = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_creditnotes = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_edi = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_cars = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_duplpay = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_unapplcredit = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_missedearly = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_otheroverpay = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_firmanalysis = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_brokeranalysis = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_crowngca = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_crownalloc = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_crownincent = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_lornri = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_lorsliding = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_lordeduct = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_lorunder = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_lormissed = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_gstreg = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_cvm = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_taxgl = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_aps = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_ars = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_fxrates = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-
 
     def save_to_db(self):
         db.session.add(self)
@@ -402,6 +372,7 @@ class Project(db.Model):
             'juristiction_name': self.juristiction.value,
             'project_sectors': [i.serialize for i in self.project_sectors],
             'project_users': [{'id':i.id,'username':i.username} for i in self.project_users],
+<<<<<<< HEAD
             'transaction_count': self.project_transactions.count(),
             'engagement_partner_id': self.engagement_partner_id,
             'engagement_partner_user': self.engagement_partner_user.username.serialize,
@@ -463,6 +434,8 @@ class Project(db.Model):
                     'has_es_daf': self.has_es_daf
                 }
             }
+=======
+>>>>>>> fd90b22692675ae67003da4dc2391c7eb535c3e7
             'transaction_count': self.project_transactions.count()
         }
 
@@ -657,11 +630,11 @@ class ClientModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).filter_by(id = id).first()
 
     @classmethod
-    def set_active_for_client(cls, model_id, client_id):
-        active_model = cls.find_active_for_client( client_id)
+    def set_active_for_client(cls, id):
+        active_model = cls.find_active_for_client(id)
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=model_id).first().status = Activity.active.value
+        cls.query.filter_by(id=id).first().status = Activity.active.value
         db.session.commit()
 
 class ClientModelPerformance(db.Model):
@@ -721,11 +694,11 @@ class MasterModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).first()
 
     @classmethod
-    def set_active(cls, model_id):
+    def set_active(cls, id):
         active_model = cls.find_active()
         if active_model:
             active_model.status = Activity.inactive.value
-        cls.query.filter_by(id=model_id).first().status = Activity.active.value
+        cls.query.filter_by(id=id).first().status = Activity.active.value
         db.session.commit()
 
     def save_to_db(self):
@@ -799,7 +772,6 @@ class Transaction(db.Model):
 
     client_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions') # FK
-
     master_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions') # FK
 
@@ -829,6 +801,7 @@ class FXRates(db.Model):
     gbptocad = db.Column(db.Float, nullable=False)
     cadtogbp = db.Column(db.Float, nullable=False)
 
+<<<<<<< HEAD
     def update_prediction(self,update_dict):
         if 'client_model_id' in update_dict.keys():
             self.client_model_id = update_dict['client_model_id']
@@ -841,6 +814,8 @@ class FXRates(db.Model):
         self.recovery_probability = float(update_dict['recovery_probability'])
         self.is_predicted = True
         self.update_to_db()
+=======
+>>>>>>> fd90b22692675ae67003da4dc2391c7eb535c3e7
 class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -849,8 +824,11 @@ class SapBseg(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapbseg_project = db.relationship('Project', back_populates='project_sapbseg')
 
+<<<<<<< HEAD
     def update_to_db(self):
         db.session.commit()
+=======
+>>>>>>> fd90b22692675ae67003da4dc2391c7eb535c3e7
 class SapAufk(db.Model):
     _tablename__ = 'sap_aufk'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -897,6 +875,20 @@ class SapEkpo(db.Model):
     _tablename__ = 'sap_ekpo'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
+<<<<<<< HEAD
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapekpo_project = db.relationship('Project', back_populates='project_sapekpo')
+
+class SapPayr(db.Model):
+    _tablename__ = 'sap_payr'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sappayr_project = db.relationship('Project', back_populates='project_sappayr')
+=======
+>>>>>>> fd90b22692675ae67003da4dc2391c7eb535c3e7
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapekpo_project = db.relationship('Project', back_populates='project_sapekpo')
@@ -1015,5 +1007,113 @@ class SapT007s(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
+<<<<<<< HEAD
+class SapSkat(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapskat_project = db.relationship('Project', back_populates='project_sapskat')
+
+
+class SapBsak(db.Model):
+    _tablename__ = 'sap_bsak'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapbsak_project = db.relationship('Project', back_populates='project_sapbsak')
+
+class SapCsks(db.Model):
+    _tablename__ = 'sap_csks'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapcsks_project = db.relationship('Project', back_populates='project_sapcsks')
+
+
+
+class SapEkko(db.Model):
+    _tablename__ = 'sap_ekko'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+    sapekko_project = db.relationship('Project', back_populates='project_sapekko')
+
+class SapIflot(db.Model):
+    _tablename__ = 'sap_iflot'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapiflot_project = db.relationship('Project', back_populates='project_sapiflot')
+
+class SapIloa(db.Model):
+    _tablename__ = 'sap_iloa'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapiloa_project = db.relationship('Project', back_populates='project_sapiloa')
+
+
+class SapLfa1(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    saplfa1_project = db.relationship('Project', back_populates='project_saplfa1')
+
+class SapMakt(db.Model):
+    _tablename__ = 'sap_skat'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapmakt_project = db.relationship('Project', back_populates='project_sapmakt')
+
+class SapMara(db.Model):
+    _tablename__ = 'sap_mara'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapmara_project = db.relationship('Project', back_populates='project_sapmara')
+
+class SapProj(db.Model):
+    _tablename__ = 'sap_proj'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapproj_project = db.relationship('Project', back_populates='project_sapproj')
+
+class SapPrps(db.Model):
+    _tablename__ = 'sap_prps'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapprps_project = db.relationship('Project', back_populates='project_sapprps')
+
+class SapT001w(db.Model):
+    _tablename__ = 'sap_t001w'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sapt001w_project = db.relationship('Project', back_populates='project_sapt001w')
+
+
+class SapT007s(db.Model):
+    _tablename__ = 'sap_t007s'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+=======
+>>>>>>> fd90b22692675ae67003da4dc2391c7eb535c3e7
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapt007s_project = db.relationship('Project', back_populates='project_sapt007s')
