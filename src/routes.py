@@ -48,6 +48,7 @@ api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
 
+
 #===============================================================================
 # Error Handling
 

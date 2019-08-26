@@ -116,25 +116,35 @@ def login():
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
 
+    print(data)
+
     try:
         request_types = {
             'username': 'str',
             'password': 'str',
         }
         validate_request_data(data, request_types)
+        print('made it1')
 
-        user = User.find_by_username(data['username'])
+        try:
+            user = User.find_by_username(data['username'])
+        except Exception as e:
+            print(e)
+        print('made it2')
         if not user or not User.verify_hash(data['password'], user.password):
             response['status'] = 'error'
             response['message'] = 'Wrong Credentials'
             return jsonify(response), 401
+            print('made it3')
 
+        print('made it4')
         response['status'] = 'ok'
         response['access_token'] = create_access_token(identity = data['username'])
         response['refresh_token'] = create_refresh_token(identity = data['username'])
         response['message'] = 'Logged in as {}'.format(data['username'])
         response['payload'] = []
     except Exception as e:
+        print("BAD")
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
