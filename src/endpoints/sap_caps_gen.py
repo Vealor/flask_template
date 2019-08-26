@@ -125,8 +125,9 @@ def build_master_tables():
             "regex": label.regex
         }
 
-    list_tablenames = ['AUFK', 'BSAK', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'REGUP', 'SKAT', 'T001', 'T001W', 'T007', 'T007S']
-    list_tablenames = ['BSEG', 'BKPF']
+    list_tablenames = ['AUFK', 'BSAK', 'BSEG', 'BKPF', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'SKAT', \
+    'T001', 'T001W', 'T007', 'T007S']
+    list_tablenames = ['T001']
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
         table_results = {}
@@ -163,37 +164,17 @@ def build_master_tables():
         exampledump = []
         counter = 0
         with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
-            masterfile = [next(masterfile) for x in range(10000)]
+            #masterfile = [next(masterfile) for x in range(10000)]
             for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
                 counter += 1
                 print(counter)
                 dict_to_insert = {'data' : line}
                 dict_to_insert['project_id'] = 1
                 exampledump.append(dict_to_insert)
-        linking_fields_query = [linking_fields_serializer(label) for label in Sap_linkingfields.query.all()]
-        table_check = [table_lf_query for table_lf_query in linking_fields_query if table_lf_query['table_name'] == table]
-        print(table_check)
-        for index, elem in enumerate(table_check):
-            if table_check[index]['field_name'] in table_results['header']:
-                column = table_check[index]['field_name']
-                columndata = ([row['data'][column] for row in exampledump])
-                table_results[column] = {'completeness' : completeness_check(columndata)}
-                table_results[column] = {'validity' : validity_check(columndata, table_check[index]['regex'])}
-            else:
-                print('missing' + table_check[index]['field_name'])
-                print('missing column')
-                table_results['missing_linking_field_columns'] = 'Missing critical linking field column in {table} for {column}'.format(table = table, column=table_check[index]['field_name'])
-        print(table_check)
-
-        unique_keys = set([col['field_name'] for col in table_check if col['is_unique'] == False])
-        unique_keys_data = [{k: v for k, v in i['data'].items() if k in unique_keys} for i in exampledump]
-        unique_score = 1 - (len({frozenset(item.items()): item for item in unique_keys_data}.values())/len(exampledump))
-        table_results['unique_score'] = {'uniqueness' : unique_score}
         db.session.bulk_insert_mappings(referenceclass, exampledump)
         db.session.commit()
         print('great success')
-        response['table'] = table_results
-    return response['table']['missing_linking_field_columns']
+    return 'OK'
 
 ######################### MAPPING HAPPENS HERE #######################################
 
@@ -243,8 +224,6 @@ def rename_scheme():
     return 'OK'
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
-
-
 def data_quality_check():
     def regex_serializer(row):
         return {
@@ -340,28 +319,22 @@ def j1_j10():
                     "project_id" : row.project_id}
         tabledata = [row_serializer(row) for row in query]
         return tabledata
-    """
-        SELECT L.*,
-                   LTRIM(RTRIM(R.KTOPL)) AS KTOPL, CONCAT(LTRIM(RTRIM(L.[BUKRS])), '_', LTRIM(RTRIM(L.[BELNR])), '_', LTRIM(RTRIM(L.[GJAHR]))) AS varAPKey, R.BUTXT
-    INTO JOIN_BKPF_T001_MSTR
-    FROM (SELECT DISTINCT * FROM BKPF_MSTR) AS L -- Just BKPF_MSTR after Jonathan fix the duplication issue
-    INNER JOIN (SELECT DISTINCT * FROM T001_MSTR WHERE [SPRAS] = 'EN') AS R -- Just T001_MSTR after Jonathan fix the duplication issue
-    ON LTRIM(RTRIM(L.[BUKRS])) = LTRIM(RTRIM(R.[BUKRS]))
-    
-    
-        userList = users.query.join(friendships, users.id == friendships.user_id).add_columns(users.userId, users.name,
-                                                                                              users.email, friends.userId,
-                                                                                              friendId).filter(
-            users.id == friendships.friend_id).filter(friendships.user_id == userID).paginate(page, 1, False)
-    """
-    from sqlalchemy.sql.expression import cast
-    #print(SapBseg.data['invoice_date'])
-    print(SapBseg.query.filter(SapBkpf, SapBseg.data['invoice_date'].values() == SapBkpf.data['posting_date'].values()).add_columns(SapBseg.data, SapBkpf.data).limit(2).all())
-    # t001_mstr = SapBkpf.query.with_entities(getattr(SapBkpf, 'data')).filter(SapBkpf.data['currency'].astext == "CAD").limit(2)
-    # bkpf_mstr = SapBkpf.query.with_entities(getattr(SapBkpf, 'data'))
-    # print(t001_mstr)
-    # print(bkpf_mstr)
-
+    j1 = db.session.execute("select data -> 'PSOBT' from (select distinct * from sap_bkpf as l)  \
+    inner join (select distinct * from t001_mstr where [SPRAS] = 'EN'] select distinct * from ").fetchall()
+    #db.session.commit()
+    print(j1)
+    #     SELECT L.*,
+    #                LTRIM(RTRIM(R.KTOPL)) AS KTOPL, CONCAT(LTRIM(RTRIM(L.[BUKRS])), '_', LTRIM(RTRIM(L.[BELNR])), '_', LTRIM(RTRIM(L.[GJAHR]))) AS varAPKey, R.BUTXT
+    # INTO JOIN_BKPF_T001_MSTR
+    # FROM (SELECT DISTINCT * FROM BKPF_MSTR) AS L -- Just BKPF_MSTR after Jonathan fix the duplication issue
+    # INNER JOIN (SELECT DISTINCT * FROM T001_MSTR WHERE [SPRAS] = 'EN') AS R -- Just T001_MSTR after Jonathan fix the duplication issue
+    # ON LTRIM(RTRIM(L.[BUKRS])) = LTRIM(RTRIM(R.[BUKRS]))
+    #
+    #
+    #     userList = users.query.join(friendships, users.id == friendships.user_id).add_columns(users.userId, users.name,
+    #                                                                                           users.email, friends.userId,
+    #                                                                                           friendId).filter(
+    #         users.id == friendships.friend_id).filter(friendships.user_id == userID).paginate(page, 1, False)
 
     return "ok"
 
