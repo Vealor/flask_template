@@ -10,7 +10,8 @@ create database itra_db;
 grant all privileges on database itra_db to itra;
 EOF
 source activate
-FLASK_ENV='development' flask db upgrade
+FLASK_ENV='development'
+flask db upgrade
 
 read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue when started"
 

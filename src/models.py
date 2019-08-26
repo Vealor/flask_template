@@ -825,7 +825,8 @@ class Transaction(db.Model):
 
 class FXRates(db.Model):
     _tablename_ = 'fx_rates'
-    dateid = db.Column(db.DateTime(timezone=True), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    dateid = db.Column(db.DateTime(timezone=True), unique=False)
     usdtocad = db.Column(db.Float, nullable=False)
     cadtousd = db.Column(db.Float, nullable=False)
     gbptocad = db.Column(db.Float, nullable=False)
