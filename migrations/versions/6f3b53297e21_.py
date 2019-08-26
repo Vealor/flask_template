@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1784139191b0
+Revision ID: 6f3b53297e21
 Revises: 
-Create Date: 2019-08-19 15:28:00.380645
+Create Date: 2019-08-20 13:33:47.633263
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1784139191b0'
+revision = '6f3b53297e21'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,14 +24,22 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('cdm_labels',
-    sa.Column('script_label', sa.String(length=256), nullable=False),
-    sa.Column('english_label', sa.String(length=256), nullable=False),
+    sa.Column('script_labels', sa.String(length=256), nullable=False),
+    sa.Column('english_labels', sa.String(length=256), nullable=False),
     sa.Column('is_calculated', sa.Boolean(), nullable=False),
     sa.Column('is_required', sa.Boolean(), nullable=False),
     sa.Column('is_unique', sa.Boolean(), nullable=False),
     sa.Column('datatype', sa.Enum('dt_boolean', 'dt_date', 'dt_datetime', 'dt_varchar', 'dt_float', 'dt_int', 'dt_blob', name='datatype'), nullable=False),
     sa.Column('regex', sa.String(length=256), nullable=False),
-    sa.PrimaryKeyConstraint('script_label')
+    sa.PrimaryKeyConstraint('script_labels')
+    )
+    op.create_table('fx_rates',
+    sa.Column('dateid', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('usdtocad', sa.Float(), nullable=False),
+    sa.Column('cadtousd', sa.Float(), nullable=False),
+    sa.Column('gbptocad', sa.Float(), nullable=False),
+    sa.Column('cadtogbp', sa.Float(), nullable=False),
+    sa.PrimaryKeyConstraint('dateid')
     )
     op.create_table('line_of_business',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -47,6 +55,16 @@ def upgrade():
     sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
     sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
     sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_linkingfields',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('table_name', sa.String(length=256), nullable=False),
+    sa.Column('field_name', sa.String(length=256), nullable=False),
+    sa.Column('is_complete', sa.Boolean(), nullable=False),
+    sa.Column('is_unique', sa.Boolean(), nullable=False),
+    sa.Column('datatype', sa.Enum('dt_boolean', 'dt_date', 'dt_datetime', 'dt_varchar', 'dt_float', 'dt_int', 'dt_blob', name='linkingfields_datatype'), nullable=False),
+    sa.Column('regex', sa.String(length=256), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -133,55 +151,9 @@ def upgrade():
     sa.Column('name', sa.String(length=128), nullable=False),
     sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('jurisdiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='jurisdiction'), nullable=False),
+    sa.Column('juristiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='juristiction'), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
-    sa.Column('engagement_partner_id', sa.Integer(), nullable=True),
-    sa.Column('engagement_manager_id', sa.Integer(), nullable=True),
-    sa.Column('has_ts_gst', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_hst', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_qst', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_pst', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_vat', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_mft', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_ct', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_excise', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_customs', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_crown', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_ts_freehold', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_caps', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_taxreturn', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_flowthrough', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_employeeexpense', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_pccards', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_coupons', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_creditnotes', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_edi', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_cars', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_duplpay', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_unapplcredit', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_missedearly', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_otheroverpay', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_firmanalysis', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_brokeranalysis', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_crowngca', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_crownalloc', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_crownincent', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_lornri', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_lorsliding', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_lordeduct', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_lorunder', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_lormissed', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_gstreg', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_cvm', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_taxgl', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_aps', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_ars', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_fxrates', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_trt', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('has_es_daf', sa.Boolean(), server_default='f', nullable=False),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
-    sa.ForeignKeyConstraint(['engagement_manager_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['engagement_partner_id'], ['users.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -202,7 +174,7 @@ def upgrade():
     sa.Column('table_name', sa.String(length=256), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
     sa.Column('cdm_label_script_label', sa.String(length=256), nullable=False),
-    sa.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label'], ),
+    sa.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_labels'], ),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('project_id', 'cdm_label_script_label')
     )
@@ -212,6 +184,153 @@ def upgrade():
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['sector_id'], ['sectors.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('project_id', 'sector_id')
+    )
+    op.create_table('sap_aufk',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_bkpf',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_bsak',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_bseg',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_cepct',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_csks',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_cskt',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_ekko',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_ekpo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_iflot',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_iloa',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_lfa1',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_makt',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_mara',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_payr',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_proj',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_prps',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_regup',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_skat',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_t001w',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('sap_t007s',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('data', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('transactions',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -250,6 +369,27 @@ def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('user_project')
     op.drop_table('transactions')
+    op.drop_table('sap_t007s')
+    op.drop_table('sap_t001w')
+    op.drop_table('sap_skat')
+    op.drop_table('sap_regup')
+    op.drop_table('sap_prps')
+    op.drop_table('sap_proj')
+    op.drop_table('sap_payr')
+    op.drop_table('sap_mara')
+    op.drop_table('sap_makt')
+    op.drop_table('sap_lfa1')
+    op.drop_table('sap_iloa')
+    op.drop_table('sap_iflot')
+    op.drop_table('sap_ekpo')
+    op.drop_table('sap_ekko')
+    op.drop_table('sap_cskt')
+    op.drop_table('sap_csks')
+    op.drop_table('sap_cepct')
+    op.drop_table('sap_bseg')
+    op.drop_table('sap_bsak')
+    op.drop_table('sap_bkpf')
+    op.drop_table('sap_aufk')
     op.drop_table('project_sector')
     op.drop_table('data_mappings')
     op.drop_table('client_model_performances')
@@ -263,8 +403,10 @@ def downgrade():
     op.drop_table('vendors')
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_table('users')
+    op.drop_table('sap_linkingfields')
     op.drop_table('master_models')
     op.drop_table('line_of_business')
+    op.drop_table('fx_rates')
     op.drop_table('cdm_labels')
     op.drop_table('blacklisted_tokens')
     # ### end Alembic commands ###

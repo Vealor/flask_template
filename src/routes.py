@@ -40,6 +40,11 @@ api.register_blueprint(train, url_prefix='/train')
 from src.endpoints.predict import predict
 api.register_blueprint(predict, url_prefix='/predict')
 
+#FXrates Endpoints
+from src.endpoints.fxrates import fxrates
+api.register_blueprint(fxrates, url_prefix='/fxrates')
+
+
 #===============================================================================
 # Error Handling
 
