@@ -80,7 +80,7 @@ def do_train():
 
             # create placeholder model
             model_data_dict['client_id'] = data['client_id']
-            entry = ClientModel(**model_data_dict).save_to_db()
+            entry = ClientModel(**model_data_dict)
             db.session.add(entry)
             db.session.flush()
             model_id = entry.id
@@ -163,7 +163,6 @@ def do_train():
         # Push trained model and performance metrics
         if data['model_type'] == 'client':
             model_performance_dict['client_model_id'] = model_id
-            # TODO: change to pull using model_id and update_to_db
             new_model = ClientModelPerformance(**model_performance_dict)
             db.session.add(new_model)
 
@@ -187,7 +186,6 @@ def do_train():
                 ClientModel.set_active_for_client(model_id, data['client_id'])
         else:
             model_performance_dict['master_model_id'] = model_id
-            # TODO: change to pull using model_id and update_to_db
             new_model = MasterModelPerformance(**model_performance_dict)
             db.session.add(new_model)
             # If there is no active model, set the current one to be the active one.
