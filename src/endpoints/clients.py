@@ -68,7 +68,7 @@ def post_client():
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).first()
         if check:
-            raise ValueError('Client {} already exist.'.format(data['name']))
+            raise ValueError('Client {} already exists.'.format(data['name']))
 
         new_client = Client(
             name = data['name']
