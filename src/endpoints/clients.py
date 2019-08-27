@@ -90,7 +90,7 @@ def post_client():
             db.session.flush()
             for jurisdiction in entity['jurisdictions']:
                 if jurisdiction not in Jurisdiction.__members__:
-                    raise ValueError('Specified jurisdiction does not exists')
+                    raise ValueError('Specified jurisdiction does not exist.')
                 if ClientEntityJurisdiction.query.filter_by(client_entity_id=new_entity.id).filter_by(jurisdiction=jurisdiction).first():
                     raise ValueError('Duplicate jurisdictions for a client entity cannot exist.')
                 new_jurisdiction = ClientEntityJurisdiction(
