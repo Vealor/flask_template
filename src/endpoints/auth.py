@@ -171,9 +171,9 @@ def get_user_details():
 
 #===============================================================================
 # Get user details (including credentials)
-@auth.route('/user_details_proj', methods=['GET'])
+@auth.route('/user_details_with_projects', methods=['GET'])
 @jwt_required
-def get_user_details_proj():
+def get_user_details_with_projects():
     user = current_user
     response = { 'status': 'ok', 'message': '', 'payload': user.serialize_proj }
     return jsonify(response), 200
