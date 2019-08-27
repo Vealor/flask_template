@@ -57,13 +57,13 @@ def post_client():
             'client_entities': 'list'
         }
         validate_request_data(data, request_types)
-        client_entitiy_types = {
+        client_entity_types = {
             'company_code': 'int',
             'lob_sector': 'str',
             'jurisdictions': 'list'
         }
         for entity in data['client_entities']:
-            validate_request_data(entity, client_entitiy_types)
+            validate_request_data(entity, client_entity_types)
 
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).first()
@@ -126,14 +126,14 @@ def update_client(id):
             'client_entities': 'list'
         }
         validate_request_data(data, request_types)
-        client_entitiy_types = {
+        client_entity_types = {
             'id': 'int',
             'company_code': 'int',
             'lob_sector': 'str',
             'jurisdictions': 'list'
         }
         for entity in data['client_entities']:
-            validate_request_data(entity, client_entitiy_types)
+            validate_request_data(entity, client_entity_types)
 
         # UPDATE transaction
         query = Client.find_by_id(id)
