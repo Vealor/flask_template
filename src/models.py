@@ -144,7 +144,7 @@ class User(db.Model):
         }
 
     @property
-    def serialize_proj(self):
+    def serialize_user_proj(self):
         return {
             'id': self.id,
             'username': self.username,

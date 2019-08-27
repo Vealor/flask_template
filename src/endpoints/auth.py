@@ -175,5 +175,5 @@ def get_user_details():
 @jwt_required
 def get_user_details_with_projects():
     user = current_user
-    response = { 'status': 'ok', 'message': '', 'payload': user.serialize_proj }
+    response = { 'status': 'ok', 'message': '', 'payload': user.serialize_user_proj }
     return jsonify(response), 200
