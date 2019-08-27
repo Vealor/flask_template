@@ -1,5 +1,5 @@
 '''
-Sector Endpoints
+Jurisdiction Endpoints
 '''
 import json
 import random
@@ -7,18 +7,17 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
 
-sectors = Blueprint('sectors', __name__)
+lob_sectors = Blueprint('lob_sectors', __name__)
 #===============================================================================
-# GET ALL SECTORS
-@sectors.route('/', methods=['GET'])
+# GET ALL JURISDICTIONS
+@lob_sectors.route('/', methods=['GET'])
 # @jwt_required
 def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
-        query = Sector.query
         response['message'] = ''
-        response['payload'] = [i.serialize for i in query.all()]
+        response['payload'] = LineOfBusinessSectors.list()
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)

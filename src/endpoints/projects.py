@@ -53,8 +53,8 @@ def get_projects(id):
         query = query.order_by('name')
         # Query on is_approved (is_approved, 1 or 0)
         query = query.filter_by(is_approved=bool(args['is_approved'])) if 'is_approved' in args.keys() and args['is_approved'].isdigit() else query
-        # Query on is_archived (is_archived, 1 or 0)
-        query = query.filter_by(is_archived=bool(args['is_archived'])) if 'is_archived' in args.keys() and args['is_archived'].isdigit() else query
+        # Query on is_completed (is_completed, 1 or 0)
+        query = query.filter_by(is_completed=bool(args['is_completed'])) if 'is_completed' in args.keys() and args['is_completed'].isdigit() else query
         # Set LIMIT
         query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
         # Set OFFSET
@@ -81,10 +81,8 @@ def post_project():
         # input validation
         request_types = {
             'name': 'str',
-            'jurisdiction': 'str',
             'client_id': 'int',
             'project_users': 'list',
-            'project_sectors': 'list',
             'engagement_partner_id': 'int',
             'engagement_manager_id': 'int',
             'tax_scope': 'dict',
@@ -117,10 +115,6 @@ def post_project():
         if not client:
             raise ValueError('Client id does not exist.'.format(data['client_id']))
 
-        # jurisdiction validation
-        if data['jurisdiction'] not in Jurisdiction.__members__:
-            raise ValueError('Specified jurisdiction does not exists')
-
         # engagement_partner_id validation
         eng_part = User.find_by_id(data['engagement_partner_id'])
         if not eng_part:
@@ -134,7 +128,6 @@ def post_project():
         # BUILD transaction
         new_project = Project(
             name = data['name'],
-            jurisdiction = data['jurisdiction'],
             project_client = client,
             engagement_partner_user = eng_part,
             engagement_manager_user = eng_mana,
@@ -183,6 +176,9 @@ def post_project():
             has_es_trt = data['engagement_scope']['data']['has_es_trt'],
             has_es_daf = data['engagement_scope']['data']['has_es_daf'],
         )
+        # INSERT transaction
+        db.session.add(new_project)
+        db.session.flush()
 
         # project_users validation
         for user_id in data['project_users']:
@@ -190,27 +186,21 @@ def post_project():
             if not user:
                 raise ValueError('Added project user with id {} does not exist'.format(user_id))
 
-        # project_sectors validation
-        for sector_id in data['project_sectors']:
-            sector = Sector.find_by_id(sector_id)
-            if not sector:
-                raise ValueError('Added project sector with id {} does not exist'.format(user_id))
-            new_project.project_sectors.append(sector)
-
-        # INSERT transaction
-        project_id = new_project.save_to_db()
-
         # Add user_projects from project_users
         for user_id in data['project_users']:
             user = User.find_by_id(user_id)
-            UserProject(
+            print(new_project.id)
+            new_user_project = UserProject(
                 user_project_user = user,
                 user_project_project = new_project,
-            ).save_to_db()
+            )
+            db.session.add(new_user_project)
 
+        db.session.commit()
         response['message'] = 'Created project {}'.format(data['name'])
-        response['payload'] = [Project.find_by_id(project_id).serialize]
+        response['payload'] = [Project.find_by_id(new_project.id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -230,11 +220,9 @@ def update_project(id):
         request_types = {
             'name': 'str',
             'is_paredown_locked': 'bool',
-            'is_archived': 'bool',
-            'jurisdiction': 'str',
+            'is_completed': 'bool',
             'client_id': 'int',
             'project_users': 'list',
-            'project_sectors': 'list',
             'engagement_partner_id': 'int',
             'engagement_manager_id': 'int',
             'tax_scope': 'dict',
@@ -277,11 +265,7 @@ def update_project(id):
         # lock paredown update
         query.is_paredown_locked = data['is_paredown_locked']
         # archive project update
-        query.is_archived = data['is_archived']
-        # jurisdiction validation and update
-        if data['jurisdiction'] not in Jurisdiction.__members__:
-            raise ValueError('Specified jurisdiction does not exists')
-        query.jurisdiction = Jurisdiction[data['jurisdiction']]
+        query.is_completed = data['is_completed']
         # engagement_partner_id validation and update
         eng_part = User.find_by_id(data['engagement_partner_id'])
         if not eng_part:
@@ -342,18 +326,6 @@ def update_project(id):
             user = User.find_by_id(user_id)
             if not user:
                 raise ValueError('Added project user with id {} does not exist'.format(user_id))
-        # project_sectors update
-        project_sectors = []
-        for sector_id in data['project_sectors']:
-            sector = Sector.find_by_id(sector_id)
-            if not sector:
-                raise ValueError('Added project sector with id {} does not exist'.format(user_id))
-            project_sectors.append(sector)
-        query.project_sectors = project_sectors
-
-        # UPDATE transaction
-        query.update_to_db()
-
 
         # Add user_projects from project_users
         user_projects = UserProject.query.filter_by(project_id=id).all()
@@ -362,17 +334,20 @@ def update_project(id):
             if user_project.user_id in user_list:
                 user_list.remove(user_project.user_id)
             else:
-                user_project.delete_from_db()
+                db.session.delete(user_project)
         for users in user_list:
             user = User.find_by_id(user_id)
-            UserProject(
+            new_user_project = UserProject(
                 user_project_user = user,
                 user_project_project = query,
-            ).save_to_db()
+            )
+            db.session.add(new_user_project)
 
+        db.session.commit()
         response['message'] = 'Updated project with id {}'.format(id)
         response['payload'] = [Project.find_by_id(id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -392,11 +367,13 @@ def delete_project(id):
             raise ValueError('Project ID {} does not exist.'.format(id))
 
         project = query.serialize
-        query.delete_from_db()
+        db.session.delete(query)
 
+        db.session.commit()
         response['message'] = 'Deleted project id {}'.format(project['id'])
         response['payload'] = [project]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []

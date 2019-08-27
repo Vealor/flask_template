@@ -76,7 +76,7 @@ def post_user():
             raise ValueError('Specified role does not exists')
 
         # INSERT transaction
-        user = User(
+        new_user = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
             email = data['email'],
@@ -85,11 +85,14 @@ def post_user():
             last_name = data['last_name'],
             role = data['role']
         )
-        user_id = user.save_to_db()
+        db.session.add(new_user)
+        db.session.flush()
 
+        db.session.commit()
         response['message'] = 'Created user {}'.format(data['username'])
-        response['payload'] = [User.find_by_id(user_id).serialize]
+        response['payload'] = [User.find_by_id(new_user.id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -138,11 +141,12 @@ def update_user(id):
         if data['role'] not in Roles.__members__:
             raise ValueError('Specified role does not exists')
         query.role = data['role']
-        query.update_to_db()
 
+        db.session.commit()
         response['message'] = 'Updated user with id {}'.format(id)
         response['payload'] = [User.find_by_id(id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -203,12 +207,13 @@ def update_user_password(id):
 
         query.password = User.generate_hash(data['newpassword'])
         query.req_pass_reset = False
-        query.update_to_db()
 
+        db.session.commit()
         response['status'] = 'ok'
         response['message'] = 'Password changed'
         response['payload'] = []
     except ValueError as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -228,12 +233,14 @@ def delete_user(id):
             raise ValueError('User ID {} does not exist.'.format(id))
 
         user = query.serialize
-        query.delete_from_db()
+        db.session.delete(query)
 
+        db.session.commit()
         response['status'] = 'ok'
         response['message'] = 'Deleted user id {}'.format(user['id'])
         response['payload'] = [user]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []

@@ -80,8 +80,10 @@ def do_train():
 
             # create placeholder model
             model_data_dict['client_id'] = data['client_id']
-            model_id = ClientModel(**model_data_dict).save_to_db()
-            entry = ClientModel.query.filter_by(id=model_id).first()
+            entry = ClientModel(**model_data_dict).save_to_db()
+            db.session.add
+            db.session.flush()
+            model_id = entry.id
             lh_model = client_model.ClientPredictionModel()
             client_projects = [p.id for p in Project.query.filter_by(client_id = data['client_id']).distinct()]
             transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
@@ -97,14 +99,17 @@ def do_train():
                 raise Exception('Not enough data to train a master model. Only {} approved transactions. Requires >= 10,000 approved transactions.'.format(transaction_count))
 
             # create placeholder model
-            model_id = MasterModel(**model_data_dict).save_to_db()
-            entry = MasterModel.query.filter_by(id=model_id).first()
+            entry = MasterModel(**model_data_dict)
+            db.session.add
+            db.session.flush()
+            model_id = entry.id
             lh_model = master_model.MasterPredictionModel()
             transactions = Transaction.query
         else:
             raise ValueError('Specified model type `{}` is invalid'.format(data['model_type']))
 
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         return jsonify(response), 400
@@ -130,7 +135,6 @@ def do_train():
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}
-        entry.update_to_db()
 
         # Output validation data results, used to assess model quality
         # Positive -> (Target == 1)
@@ -146,7 +150,7 @@ def do_train():
 
     except Exception as e:
         # Remove failed model from DB
-        entry.delete_from_db()
+        db.session.rollback()
 
         # Send an email here?
         # ==================
@@ -203,12 +207,14 @@ def do_train():
         # Send an email here?
         # ==================
 
-        # Send http response, terminate
+
+        db.session.commit()
         response['payload']['performance_metrics'] = performance_metrics
         response['payload']['model_id'] = model_id
         response['payload']['model_type'] = data['model_type']
         response['message'] = 'Model trained and created.'
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []

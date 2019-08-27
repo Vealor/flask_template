@@ -56,7 +56,8 @@ def createadminsuperuseraccount():
             role = data['role'],
             initials = data['initials']
         )
-        new_user.save_to_db()
+        db.session.add(new_user)
+        db.session.commit()
         response['access_token'] = create_access_token(identity = data['username'])
         response['refresh_token'] = create_refresh_token(identity = data['username'])
         response['message'] = 'User {} was successfully created.'.format(data['username'])
@@ -94,11 +95,12 @@ def reset():
             '''
             send_mail(data['email'], 'Password Reset', mailbody)
 
-            user.update_to_db()
 
+        db.session.commit()
         response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
         response['payload'] = []
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
