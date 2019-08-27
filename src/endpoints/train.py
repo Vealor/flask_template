@@ -164,7 +164,8 @@ def do_train():
         if data['model_type'] == 'client':
             model_performance_dict['client_model_id'] = model_id
             # TODO: change to pull using model_id and update_to_db
-            ClientModelPerformance(**model_performance_dict).save_to_db()
+            new_model = ClientModelPerformance(**model_performance_dict)
+            db.session.add(new_model)
 
             # If there is an active model for this client, check to compare performance
             # Else, automatically push newly trained model to active
@@ -180,13 +181,15 @@ def do_train():
                     'test_data_start': test_start,
                     'test_data_end': test_end
                 }
-                ClientModelPerformance(**model_performance_dict_old).save_to_db()
+                new_model = ClientModelPerformance(**model_performance_dict_old)
+                db.session.add(new_model)
             else:
                 ClientModel.set_active_for_client(model_id, data['client_id'])
         else:
             model_performance_dict['master_model_id'] = model_id
             # TODO: change to pull using model_id and update_to_db
-            MasterModelPerformance(**model_performance_dict).save_to_db()
+            new_model = MasterModelPerformance(**model_performance_dict)
+            db.session.add(new_model)
             # If there is no active model, set the current one to be the active one.
             active_model = MasterModel.find_active()
             if active_model:
@@ -200,7 +203,8 @@ def do_train():
                     'test_data_start': test_start,
                     'test_data_end': test_end
                 }
-                MasterModelPerformance(**model_performance_dict_old).save_to_db()
+                new_model = MasterModelPerformance(**model_performance_dict_old)
+                db.session.add(new_model)
             else:
                 MasterModel.set_active(model_id)
 
