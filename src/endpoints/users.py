@@ -75,7 +75,7 @@ def post_user():
         if data['role'] not in Roles.__members__:
             raise ValueError('Specified role does not exists')
 
-        # INSERT transaction
+        # INSERT user
         new_user = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
@@ -119,7 +119,7 @@ def update_user(id):
         }
         validate_request_data(data, request_types)
 
-        # UPDATE transaction
+        # UPDATE user
         query = User.find_by_id(id)
         if not query:
             raise ValueError('User ID {} does not exist.'.format(id))
@@ -132,7 +132,7 @@ def update_user(id):
         if check:
             raise ValueError('User email {} already exists.'.format(data['email']))
 
-        # update data
+        # update user data
         query.username = data['username']
         query.email = data['email']
         query.initials = data['initials'].upper()

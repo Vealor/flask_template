@@ -162,7 +162,7 @@ def update_client(id):
             # validate new jurisdictions for entity
             for jurisdiction in entity['jurisdictions']:
                 if jurisdiction not in Jurisdiction.__members__:
-                    raise ValueError('Specified jurisdiction does not exists')
+                    raise ValueError('Specified jurisdiction does not exist.')
             # create/delete jurisdictions for entity
             client_entity_jurisdictions = ClientEntityJurisdiction.query.filter_by(client_entity_id=entity['id']).all()
             jurisdictions_list = entity['jurisdictions']
