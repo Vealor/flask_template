@@ -28,7 +28,7 @@ psql -h localhost -U itra itra_db -c "
   insert into clients (name) values ('mining corp');
   insert into clients (name) values ('mining corp two');
   insert into clients (name) values ('mining corp');
-  insert into client_entities (client_id, company_code, lob_sector) values (1, 5892, 'consumer_retail_food_beverage');
+  insert into client_entities (client_id, company_code, lob_sector) values (1, '78GK', 'consumer_retail_food_beverage');
   insert into client_entity_jurisdictions (client_entity_id, jurisdiction) values (1, 'bc');
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('miner 49er', 1, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('miner 49er two', 1, 1, 1);

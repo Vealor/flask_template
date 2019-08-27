@@ -58,7 +58,7 @@ def post_client():
         }
         validate_request_data(data, request_types)
         client_entity_types = {
-            'company_code': 'int',
+            'company_code': 'str',
             'lob_sector': 'str',
             'jurisdictions': 'list'
         }
@@ -128,7 +128,7 @@ def update_client(id):
         validate_request_data(data, request_types)
         client_entity_types = {
             'id': 'int',
-            'company_code': 'int',
+            'company_code': 'str',
             'lob_sector': 'str',
             'jurisdictions': 'list'
         }

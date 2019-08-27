@@ -283,7 +283,7 @@ class ClientEntity(db.Model):
         db.UniqueConstraint('client_id', 'company_code', name='client_company_code_unique_constraint'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    company_code = db.Column(db.Integer, nullable=False)
+    company_code = db.Column(db.String(4), nullable=False)
     lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
 
     client_id = db.Column(db.Integer, nullable=False) # FK

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: a706c38e4d54
+Revision ID: 55cd16e0f60c
 Revises: 
-Create Date: 2019-08-27 15:03:17.963891
+Create Date: 2019-08-27 16:28:44.651887
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'a706c38e4d54'
+revision = '55cd16e0f60c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -78,7 +78,7 @@ def upgrade():
     )
     op.create_table('client_entities',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('company_code', sa.Integer(), nullable=False),
+    sa.Column('company_code', sa.String(length=4), nullable=False),
     sa.Column('lob_sector', sa.Enum('business_services_business_services', 'consumer_retail_consumer_goods', 'consumer_retail_food_beverage', 'consumer_retail_retail', 'energy_natural_resources_forestry', 'energy_natural_resources_mining', 'energy_natural_resources_oil_gas_upstream', 'energy_natural_resources_oil_gas_midstream', 'energy_natural_resources_oil_gas_downstream', 'energy_natural_resources_power_utilities', 'financial_services_asset_management', 'financial_services_banking', 'financial_services_insurance', 'financial_services_pensions', 'financial_services_private_equity', 'financial_services_automotive', 'financial_services_chemicals', 'financial_services_industrial_mfg', 'infrastructure_government_healthcare_aerospace_defense', 'infrastructure_government_healthcare_government_services', 'infrastructure_government_healthcare_health_life_science', 'infrastructure_government_healthcare_transport_infrastructure', 'real_estate_building_construct', 'real_estate_devleopers', 'real_estate_hotels_recreation', 'real_estate_invest_operator', 'technology_media_telecommunication_media', 'technology_media_telecommunication_technology', 'technology_media_telecommunication_telecommunications', name='lineofbusinesssectors'), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
