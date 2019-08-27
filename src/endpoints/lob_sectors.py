@@ -9,7 +9,7 @@ from src.models import *
 
 lob_sectors = Blueprint('lob_sectors', __name__)
 #===============================================================================
-# GET ALL JURISDICTIONS
+# GET ALL LineOfBusinessSectors
 @lob_sectors.route('/', methods=['GET'])
 # @jwt_required
 def default():
