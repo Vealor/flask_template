@@ -81,7 +81,7 @@ def do_train():
             # create placeholder model
             model_data_dict['client_id'] = data['client_id']
             entry = ClientModel(**model_data_dict).save_to_db()
-            db.session.add
+            db.session.add(entry)
             db.session.flush()
             model_id = entry.id
             lh_model = client_model.ClientPredictionModel()
@@ -100,7 +100,7 @@ def do_train():
 
             # create placeholder model
             entry = MasterModel(**model_data_dict)
-            db.session.add
+            db.session.add(entry)
             db.session.flush()
             model_id = entry.id
             lh_model = master_model.MasterPredictionModel()
