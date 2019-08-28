@@ -115,7 +115,7 @@ class Jurisdiction(enum.Enum):
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    username = db.Column(db.String(64), unique = True, index = True, nullable = False)
+    username = db.Column(db.String(64), unique=True, index=True, nullable=False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), unique=True, nullable=False)
     initials = db.Column(db.String(8), unique=True, nullable=False)

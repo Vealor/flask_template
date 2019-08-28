@@ -70,6 +70,10 @@ def post_user():
         check = User.query.filter_by(email=data['email']).first()
         if check:
             raise ValueError('User email {} already exists.'.format(data['email']))
+        # check if these initials exist
+        check = User.query.filter_by(initials=data['initials']).first()
+        if check:
+            raise ValueError('User initials {} already exist.'.format(data['initials']))
 
         # ENUM check
         if data['role'] not in Roles.__members__:
@@ -128,9 +132,14 @@ def update_user(id):
         check = User.query.filter_by(username=data['username']).filter(User.id != id).first()
         if check:
             raise ValueError('Username {} already exists.'.format(data['username']))
+        # check if this email exists
         check = User.query.filter_by(email=data['email']).filter(User.id != id).first()
         if check:
             raise ValueError('User email {} already exists.'.format(data['email']))
+        # check if these initials exist
+        check = User.query.filter_by(initials=data['initials']).first()
+        if check:
+            raise ValueError('User initials {} already exist.'.format(data['initials']))
 
         # update user data
         query.username = data['username']

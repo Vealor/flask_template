@@ -253,7 +253,7 @@ def update_project(id):
         # CHECK CONSTRAINTS: name
         check = Project.query.filter_by(name=data['name']).filter(Project.id != id).first()
         if check:
-            raise ValueError('Project name < {} > already exist.'.format(data['name']))
+            raise ValueError('Project name {} already exist.'.format(data['name']))
 
         # update name
         query.name = data['name']
