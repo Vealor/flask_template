@@ -157,7 +157,7 @@ def do_train():
 
         response['status'] = 'error'
         response['message'] = "Training failed: {}".format(str(e))
-        return jsonify(response, 500)
+        return jsonify(response), 500
 
     try:
         # Push trained model and performance metrics
@@ -221,4 +221,4 @@ def do_train():
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response, 201)
+    return jsonify(response), 201
