@@ -15,14 +15,17 @@ users = Blueprint('users', __name__)
 @users.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_users(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
         query = User.query
 
         # ID filter
-        query = query.filter_by(id=id) if id is not None else query
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('ID {} does not exist.'.format(id))
         # Set ORDER
         query = query.order_by('username')
         # Set LIMIT
@@ -30,9 +33,8 @@ def get_users(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
-        response['payload'] = [i.serialize for i in query.all()]
+        response['payload'] = [i.serialize_proj for i in query.all()] if 'projects' in args.keys() else [i.serialize for i in query.all()]
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -45,7 +47,7 @@ def get_users(id):
 @users.route('/', methods=['POST'])
 # @jwt_required
 def post_user():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -63,14 +65,18 @@ def post_user():
         # check if this username exists
         check = User.query.filter_by(username=data['username']).first()
         if check:
-            raise ValueError('Username "{}" already exist.'.format(data['username']))
+            raise ValueError('Username {} already exists.'.format(data['username']))
         # check if this email exists
         check = User.query.filter_by(email=data['email']).first()
         if check:
-            raise ValueError('User email "{}" already exist.'.format(data['email']))
+            raise ValueError('User email {} already exists.'.format(data['email']))
 
-        # INSERT transaction
-        user_id = User(
+        # ENUM check
+        if data['role'] not in Roles.__members__:
+            raise ValueError('Specified role does not exists')
+
+        # INSERT user
+        new_user = User(
             username = data['username'],
             password = User.generate_hash(data['password']),
             email = data['email'],
@@ -78,12 +84,15 @@ def post_user():
             first_name = data['first_name'],
             last_name = data['last_name'],
             role = data['role']
-        ).save_to_db()
+        )
+        db.session.add(new_user)
+        db.session.flush()
 
-        response['status'] = 'ok'
+        db.session.commit()
         response['message'] = 'Created user {}'.format(data['username'])
-        response['payload'] = [User.find_by_id(user_id).serialize]
+        response['payload'] = [User.find_by_id(new_user.id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -95,7 +104,7 @@ def post_user():
 @users.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_user(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -105,33 +114,39 @@ def update_user(id):
             'email': 'str',
             'initials': 'str',
             'first_name': 'str',
-            'last_name': 'str'
+            'last_name': 'str',
+            'role': 'str' # TODO: if user does not have correct role, do not do this
         }
         validate_request_data(data, request_types)
 
-        # UPDATE transaction
-        query = User.query.find_by_id(id)
+        # UPDATE user
+        query = User.find_by_id(id)
         if not query:
             raise ValueError('User ID {} does not exist.'.format(id))
 
-        check = User.query.filter_by(name=data['username']).first()
+        # check if data already exists
+        check = User.query.filter_by(username=data['username']).filter(User.id != id).first()
         if check:
-            raise ValueError('Username "{}" already exist.'.format(data['username']))
-        check = User.query.filter_by(name=data['email']).first()
+            raise ValueError('Username {} already exists.'.format(data['username']))
+        check = User.query.filter_by(email=data['email']).filter(User.id != id).first()
         if check:
-            raise ValueError('User email "{}" already exist.'.format(data['email']))
+            raise ValueError('User email {} already exists.'.format(data['email']))
 
+        # update user data
         query.username = data['username']
         query.email = data['email']
         query.initials = data['initials'].upper()
         query.first_name = data['first_name']
         query.last_name = data['last_name']
-        query.update_to_db()
+        if data['role'] not in Roles.__members__:
+            raise ValueError('Specified role does not exists')
+        query.role = data['role']
 
-        response['status'] = 'ok'
+        db.session.commit()
         response['message'] = 'Updated user with id {}'.format(id)
         response['payload'] = [User.find_by_id(id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -143,7 +158,7 @@ def update_user(id):
 @users.route('/<path:id>/passcheck', methods=['POST'])
 # @jwt_required
 def check_password(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
@@ -159,7 +174,6 @@ def check_password(id):
             response['message'] = 'Password Invalid'
             return jsonify(response), 401
 
-        response['status'] = 'ok'
         response['message'] = 'Password Valid'
         response['payload'] = []
     except ValueError as e:
@@ -193,12 +207,13 @@ def update_user_password(id):
 
         query.password = User.generate_hash(data['newpassword'])
         query.req_pass_reset = False
-        query.update_to_db()
 
+        db.session.commit()
         response['status'] = 'ok'
         response['message'] = 'Password changed'
         response['payload'] = []
     except ValueError as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -218,12 +233,14 @@ def delete_user(id):
             raise ValueError('User ID {} does not exist.'.format(id))
 
         user = query.serialize
-        query.delete_from_db()
+        db.session.delete(query)
 
+        db.session.commit()
         response['status'] = 'ok'
         response['message'] = 'Deleted user id {}'.format(user['id'])
         response['payload'] = [user]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []

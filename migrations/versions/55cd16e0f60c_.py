@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1784139191b0
+Revision ID: 55cd16e0f60c
 Revises: 
-Create Date: 2019-08-19 15:28:00.380645
+Create Date: 2019-08-27 16:28:44.651887
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1784139191b0'
+revision = '55cd16e0f60c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -33,11 +33,11 @@ def upgrade():
     sa.Column('regex', sa.String(length=256), nullable=False),
     sa.PrimaryKeyConstraint('script_label')
     )
-    op.create_table('line_of_business',
+    op.create_table('clients',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('master_models',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -49,6 +49,11 @@ def upgrade():
     sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('paredown_rules',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('is_core', sa.Boolean(), server_default='f', nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=64), nullable=False),
@@ -57,9 +62,9 @@ def upgrade():
     sa.Column('initials', sa.String(length=8), nullable=False),
     sa.Column('first_name', sa.String(length=128), nullable=False),
     sa.Column('last_name', sa.String(length=128), nullable=False),
+    sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('req_pass_reset', sa.Boolean(), server_default='t', nullable=False),
-    sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('initials')
@@ -71,13 +76,26 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
-    op.create_table('clients',
+    op.create_table('client_entities',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('line_of_business_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ),
+    sa.Column('company_code', sa.String(length=4), nullable=False),
+    sa.Column('lob_sector', sa.Enum('business_services_business_services', 'consumer_retail_consumer_goods', 'consumer_retail_food_beverage', 'consumer_retail_retail', 'energy_natural_resources_forestry', 'energy_natural_resources_mining', 'energy_natural_resources_oil_gas_upstream', 'energy_natural_resources_oil_gas_midstream', 'energy_natural_resources_oil_gas_downstream', 'energy_natural_resources_power_utilities', 'financial_services_asset_management', 'financial_services_banking', 'financial_services_insurance', 'financial_services_pensions', 'financial_services_private_equity', 'financial_services_automotive', 'financial_services_chemicals', 'financial_services_industrial_mfg', 'infrastructure_government_healthcare_aerospace_defense', 'infrastructure_government_healthcare_government_services', 'infrastructure_government_healthcare_health_life_science', 'infrastructure_government_healthcare_transport_infrastructure', 'real_estate_building_construct', 'real_estate_devleopers', 'real_estate_hotels_recreation', 'real_estate_invest_operator', 'technology_media_telecommunication_media', 'technology_media_telecommunication_technology', 'technology_media_telecommunication_telecommunications', name='lineofbusinesssectors'), nullable=False),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name', 'line_of_business_id', name='client_unique_constraint')
+    sa.UniqueConstraint('client_id', 'company_code', name='client_company_code_unique_constraint')
+    )
+    op.create_table('client_models',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('pickle', sa.PickleType(), nullable=False),
+    sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
+    sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('client_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('logs',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -101,42 +119,22 @@ def upgrade():
     sa.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('paredown_rules',
+    op.create_table('paredown_rule_lob_sector',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('is_core', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('line_of_business_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ondelete='SET NULL'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('sectors',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('line_of_business_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ),
+    sa.Column('lob_sector', sa.Enum('business_services_business_services', 'consumer_retail_consumer_goods', 'consumer_retail_food_beverage', 'consumer_retail_retail', 'energy_natural_resources_forestry', 'energy_natural_resources_mining', 'energy_natural_resources_oil_gas_upstream', 'energy_natural_resources_oil_gas_midstream', 'energy_natural_resources_oil_gas_downstream', 'energy_natural_resources_power_utilities', 'financial_services_asset_management', 'financial_services_banking', 'financial_services_insurance', 'financial_services_pensions', 'financial_services_private_equity', 'financial_services_automotive', 'financial_services_chemicals', 'financial_services_industrial_mfg', 'infrastructure_government_healthcare_aerospace_defense', 'infrastructure_government_healthcare_government_services', 'infrastructure_government_healthcare_health_life_science', 'infrastructure_government_healthcare_transport_infrastructure', 'real_estate_building_construct', 'real_estate_devleopers', 'real_estate_hotels_recreation', 'real_estate_invest_operator', 'technology_media_telecommunication_media', 'technology_media_telecommunication_technology', 'technology_media_telecommunication_telecommunications', name='lineofbusinesssectors'), nullable=False),
+    sa.Column('paredown_rule_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
-    )
-    op.create_table('client_models',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('pickle', sa.PickleType(), nullable=False),
-    sa.Column('hyper_p', postgresql.JSON(astext_type=sa.Text()), nullable=False),
-    sa.Column('status', sa.Enum('active', 'inactive', 'pending', name='activity'), server_default='pending', nullable=False),
-    sa.Column('train_data_start', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('train_data_end', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('client_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.UniqueConstraint('paredown_rule_id', 'lob_sector', name='paredown_rule_lob_sector_unique_constraint')
     )
     op.create_table('projects',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=128), nullable=False),
-    sa.Column('is_approved', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('is_archived', sa.Boolean(), server_default='f', nullable=False),
-    sa.Column('jurisdiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='jurisdiction'), nullable=False),
+    sa.Column('is_paredown_locked', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('is_completed', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=False),
-    sa.Column('engagement_partner_id', sa.Integer(), nullable=True),
-    sa.Column('engagement_manager_id', sa.Integer(), nullable=True),
+    sa.Column('engagement_partner_id', sa.Integer(), nullable=False),
+    sa.Column('engagement_manager_id', sa.Integer(), nullable=False),
     sa.Column('has_ts_gst', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('has_ts_hst', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('has_ts_qst', sa.Boolean(), server_default='f', nullable=False),
@@ -185,6 +183,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_table('client_entity_jurisdictions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('jurisdiction', sa.Enum('ab', 'bc', 'mb', 'nb', 'nl', 'nt', 'ns', 'nu', 'on', 'pe', 'qc', 'sk', 'ty', 'foreign', name='jurisdiction'), nullable=False),
+    sa.Column('client_entity_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['client_entity_id'], ['client_entities.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('client_entity_id', 'jurisdiction', name='client_entity_jurisdiction_unique_constraint')
+    )
     op.create_table('client_model_performances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -205,13 +211,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label'], ),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('project_id', 'cdm_label_script_label')
-    )
-    op.create_table('project_sector',
-    sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.Column('sector_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['sector_id'], ['sectors.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('project_id', 'sector_id')
     )
     op.create_table('transactions',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -236,12 +235,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_project',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('is_favourite', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.Column('is_favourite', sa.Boolean(), server_default='f', nullable=False),
     sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('user_id', 'project_id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'project_id', name='user_project_unique_constraint')
     )
     # ### end Alembic commands ###
 
@@ -250,21 +251,21 @@ def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('user_project')
     op.drop_table('transactions')
-    op.drop_table('project_sector')
     op.drop_table('data_mappings')
     op.drop_table('client_model_performances')
+    op.drop_table('client_entity_jurisdictions')
     op.drop_table('projects')
-    op.drop_table('client_models')
-    op.drop_table('sectors')
-    op.drop_table('paredown_rules')
+    op.drop_table('paredown_rule_lob_sector')
     op.drop_table('master_model_performances')
     op.drop_table('logs')
-    op.drop_table('clients')
+    op.drop_table('client_models')
+    op.drop_table('client_entities')
     op.drop_table('vendors')
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_table('users')
+    op.drop_table('paredown_rules')
     op.drop_table('master_models')
-    op.drop_table('line_of_business')
+    op.drop_table('clients')
     op.drop_table('cdm_labels')
     op.drop_table('blacklisted_tokens')
     # ### end Alembic commands ###
