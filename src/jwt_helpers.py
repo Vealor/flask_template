@@ -1,3 +1,5 @@
+
+from flask import jsonify
 from src import jwt
 from src.models import BlacklistToken, User
 
