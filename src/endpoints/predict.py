@@ -16,45 +16,51 @@ predict = Blueprint('predict', __name__)
 #===============================================================================
 # General
 @predict.route('/', methods=['POST'])
+# @jwt_required
 def do_predict():
-    response = { 'status': '', 'message': '', 'payload': {} }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
-    # data type dictionary
-    request_types = {
-        'MODEL_TYPE': 'str',
-        'PROJECT_ID': 'int',
-        }
-
-    # validate input
     try:
-        # Do some checks on the input itself.
+        # input validation
+        request_types = {
+            'model_type': 'str',
+            'project_id': 'int',
+        }
         validate_request_data(data, request_types)
 
-        if data['MODEL_TYPE'] not in ['client','master']:
-            raise ValueError("ERROR: Invalid model type. Must be 'client' or 'master'.")
-
         # Get the data to predict
-        project = Project.find_by_id(data['PROJECT_ID'])
+        project = Project.find_by_id(data['project_id'])
         if not project:
-            raise IndexError("ERROR: Project not found in database.")
-        project_transactions = Transaction.query.filter_by(project_id = data['PROJECT_ID']).filter_by(is_approved=False)
+            raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
+        project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
         if project_transactions.count() == 0:
-            raise IndexError("ERROR: Project has no transactions to predict.")
+            raise IndexError('Project has no transactions to predict.')
 
-        # Get the appropriate active model
-        if data['MODEL_TYPE'] == 'client':
+        # Get the appropriate active model if valid
+        if data['model_type'] == 'client':
             active_model = ClientModel.find_active_for_client(project.client_id)
             if not active_model:
-                raise IndexError('ERROR: No predictive model has been trained for client \'{}\'.'.format(Client.find_by_id(project.client_id).name))
+                raise IndexError('No predictive model has been trained for client {}.'.format(Client.find_by_id(project.client_id).name))
             lh_model = client_model.ClientPredictionModel(active_model.pickle)
-        else:
+
+            project_transactions.update({Transaction.client_model_id: active_model.id})
+            project_transactions.update({Transaction.master_model_id: None})
+        elif data['model_type'] == 'master':
             active_model = MasterModel.find_active()
             if not active_model:
-                raise IndexError('ERROR: No master model has been trained')
+                raise IndexError('No master model has been trained or is active.')
             lh_model = master_model.MasterPredictionModel(active_model.pickle)
+
+            project_transactions.update({Transaction.client_model_id : None})
+            project_transactions.update({Transaction.master_model_id :active_model.id})
+        else:
+            raise ValueError('Invalid model type.')
+
         predictors = active_model.hyper_p['predictors']
 
+        # TODO: fix separation of data so that prediction happens on transactions with IDs
+        # Can't assume that final zip lines up arrays properly
         entries = [entry.serialize['data'] for entry in project_transactions]
         df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
         df_predict = preprocessing_predict(df_predict, predictors)
@@ -62,30 +68,17 @@ def do_predict():
         # Get probability of each transaction being class '1'
         probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
-
-        # Modify the appropriate info in the transactions table
-        if data['MODEL_TYPE'] == 'client':
-            project_transactions.update({Transaction.client_model_id: active_model.id})
-            project_transactions.update({Transaction.master_model_id: None})
-        else:
-            project_transactions.update({Transaction.client_model_id : None})
-            project_transactions.update({Transaction.master_model_id :active_model.id})
-
         project_transactions.update({Transaction.is_predicted : True})
         for tr,pr in zip(project_transactions,probability_recoverable):
             tr.recovery_probability = pr
 
         db.session.commit()
-        # If we can make a commit without needing the command above, let's do it.
 
 
+        response['message'] = 'Prediction successful. Transactions have been marked.'
+        response['payload'] = []
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
         return jsonify(response), 400
-
-    response['status'] = 'ok'
-    response['payload'] = data
-    response['message'] = 'Prediction successful. Transactions have been marked.'
-
-    return jsonify(response), 202
+    return jsonify(response), 201

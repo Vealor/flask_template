@@ -42,6 +42,12 @@ def validate_request_data(data, validation):
     if [x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]:
         raise ValueError('Request contains improper data types for keys.')
 
+    # ensures strings are not empty
+    for x in validation.keys():
+        if validation[x] == 'str':
+            if "".join(e for e in data[x] if e.isalnum()) == '':
+                raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
+
 #===============================================================================
 # Sends an email to the user with given inputs
 def send_mail(user_email, subject, content):

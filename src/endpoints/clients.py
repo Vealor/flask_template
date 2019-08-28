@@ -15,14 +15,17 @@ clients = Blueprint('clients', __name__)
 @clients.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_clients(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     try:
         query = Client.query
 
         # ID filter
-        query = query.filter_by(id=id) if id is not None else query
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('ID {} does not exist.'.format(id))
         # Set ORDER
         query = query.order_by('name')
         # Set LIMIT
@@ -30,7 +33,6 @@ def get_clients(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['status'] = 'ok'
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
     except Exception as e:
@@ -45,35 +47,64 @@ def get_clients(id):
 @clients.route('/', methods=['POST'])
 # @jwt_required
 def post_client():
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
         # input validation
         request_types = {
             'name': 'str',
-            'industry_id': 'int'
+            'client_entities': 'list'
         }
         validate_request_data(data, request_types)
+        client_entity_types = {
+            'company_code': 'str',
+            'lob_sector': 'str',
+            'jurisdictions': 'list'
+        }
+        for entity in data['client_entities']:
+            validate_request_data(entity, client_entity_types)
+
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).first()
         if check:
-            raise ValueError('Client "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        check = Industry.query.filter_by(id=data['industry_id']).first()
-        if not check:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+            raise ValueError('Client {} already exists.'.format(data['name']))
 
-        # INSERT transaction
-        client_id = Client(
-            name = data['name'],
-            industry_id = data['industry_id']
-        ).save_to_db()
+        new_client = Client(
+            name = data['name']
+        )
+        db.session.add(new_client)
+        db.session.flush()
 
-        response['status'] = 'ok'
+        for entity in data['client_entities']:
+            if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified line of business sector does not exists')
+            if ClientEntity.query.filter_by(client_id=new_client.id).filter_by(company_code=entity['company_code']).first():
+                raise ValueError('Duplicate company codes for a client cannot exist.')
+            new_entity = ClientEntity(
+                client_id=new_client.id,
+                company_code=entity['company_code'],
+                lob_sector=entity['lob_sector'],
+            )
+            db.session.add(new_entity)
+            db.session.flush()
+            for jurisdiction in entity['jurisdictions']:
+                if jurisdiction not in Jurisdiction.__members__:
+                    raise ValueError('Specified jurisdiction does not exist.')
+                if ClientEntityJurisdiction.query.filter_by(client_entity_id=new_entity.id).filter_by(jurisdiction=jurisdiction).first():
+                    raise ValueError('Duplicate jurisdictions for a client entity cannot exist.')
+                new_jurisdiction = ClientEntityJurisdiction(
+                    client_entity_id=new_entity.id,
+                    jurisdiction=jurisdiction,
+                )
+                db.session.add(new_jurisdiction)
+                db.session.flush()
+
+        db.session.commit()
         response['message'] = 'Created client {}'.format(data['name'])
-        response['payload'] = [Client.find_by_id(client_id).serialize]
+        response['payload'] = [Client.find_by_id(new_client.id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -85,39 +116,76 @@ def post_client():
 @clients.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 def update_client(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     try:
         # input validation
         request_types = {
             'name': 'str',
-            'industry_id': 'int'
+            'client_entities': 'list'
         }
         validate_request_data(data, request_types)
+        client_entity_types = {
+            'id': 'int',
+            'company_code': 'str',
+            'lob_sector': 'str',
+            'jurisdictions': 'list'
+        }
+        for entity in data['client_entities']:
+            validate_request_data(entity, client_entity_types)
 
         # UPDATE transaction
-        query = Client.query.find_by_id(id)
+        query = Client.find_by_id(id)
         if not query:
             raise ValueError('Client ID {} does not exist.'.format(id))
 
         # check if this name exists
         check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
         if check:
-            raise ValueError('Client name "{}" already exist.'.format(data['name']))
-        # check if this industry exists
-        check = Industry.query.filter_by(id=data['industry_id']).first()
-        if not check:
-            raise ValueError('Industry id does not exist.'.format(data['industry_id']))
+            raise ValueError('Client name {} already exists.'.format(data['name']))
 
+        # update client name
         query.name = data['name']
-        query.industry_id = data['industry_id']
-        query.update_to_db()
 
-        response['status'] = 'ok'
+        # update client entities
+        for entity in data['client_entities']:
+            if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified line of business sector does not exists')
+            client_entity = ClientEntity.find_by_id(entity['id'])
+            if not client_entity:
+                raise ValueError('Client entity with ID {} does not exist.'.format(entity['id']))
+            if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).filter(ClientEntity.id != entity['id']).first():
+                raise ValueError('Duplicate company codes for a client cannot exist.')
+            client_entity.company_code = entity['company_code']
+            client_entity.lob_sector = entity['lob_sector']
+            # validate new jurisdictions for entity
+            for jurisdiction in entity['jurisdictions']:
+                if jurisdiction not in Jurisdiction.__members__:
+                    raise ValueError('Specified jurisdiction does not exist.')
+            # create/delete jurisdictions for entity
+            client_entity_jurisdictions = ClientEntityJurisdiction.query.filter_by(client_entity_id=entity['id']).all()
+            jurisdictions_list = entity['jurisdictions']
+            for cej in client_entity_jurisdictions:
+                if cej.jurisdiction.name in jurisdictions_list:
+                    jurisdictions_list.remove(cej.jurisdiction.name)
+                else:
+                    db.session.delete(cej)
+            for jurisdiction in jurisdictions_list:
+                if ClientEntityJurisdiction.query.filter_by(client_entity_id=entity['id']).filter_by(jurisdiction=jurisdiction).first():
+                    raise ValueError('Duplicate jurisdictions for a client entity cannot exist.')
+                new_jurisdiction = ClientEntityJurisdiction(
+                    client_entity_id=entity['id'],
+                    jurisdiction=jurisdiction,
+                )
+                db.session.add(new_jurisdiction)
+                db.session.flush()
+
+        db.session.commit()
         response['message'] = 'Updated client with id {}'.format(id)
         response['payload'] = [Client.find_by_id(id).serialize]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -129,7 +197,7 @@ def update_client(id):
 @clients.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = Client.query.filter_by(id=id).first()
@@ -137,16 +205,17 @@ def delete_client(id):
             raise ValueError('Client ID {} does not exist.'.format(id))
 
         # fail delete if has projects, models, or classification_rules
-        if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
+        if query.client_projects.all() or query.client_client_models.all():
+        # if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
             raise Exception('Client not deleted. Client has active projects, models, or classification rules.')
 
         client = query.serialize
-        query.delete_from_db()
-
-        response['status'] = 'ok'
+        db.session.delete(query)
+        db.session.commit()
         response['message'] = 'Deleted client id {}'.format(client['id'])
         response['payload'] = [client]
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
