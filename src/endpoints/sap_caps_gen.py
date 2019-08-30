@@ -127,7 +127,7 @@ def build_master_tables():
 
     list_tablenames = ['AUFK', 'BSAK', 'BSEG', 'BKPF', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'SKAT', \
     'T001', 'T001W', 'T007', 'T007S']
-    list_tablenames = ['T001']
+    list_tablenames = ['LFA1']
     response = {'status': '', 'message': {}, 'payload': []}
     for table in list_tablenames:
         table_results = {}
@@ -311,49 +311,203 @@ def data_quality_check():
 
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
-    def query_serializer(table):
-        query = table.query.all()
-        def row_serializer(row):
-            return {"id" : row.id,
-                    "data" : row.data,
-                    "project_id" : row.project_id}
-        tabledata = [row_serializer(row) for row in query]
-        return tabledata
-    j1 = db.session.execute("select data -> 'PSOBT' from (select distinct * from sap_bkpf as l)  \
-    inner join (select distinct * from t001_mstr where [SPRAS] = 'EN'] select distinct * from ").fetchall()
-    #db.session.commit()
-    print(j1)
-    #     SELECT L.*,
-    #                LTRIM(RTRIM(R.KTOPL)) AS KTOPL, CONCAT(LTRIM(RTRIM(L.[BUKRS])), '_', LTRIM(RTRIM(L.[BELNR])), '_', LTRIM(RTRIM(L.[GJAHR]))) AS varAPKey, R.BUTXT
-    # INTO JOIN_BKPF_T001_MSTR
-    # FROM (SELECT DISTINCT * FROM BKPF_MSTR) AS L -- Just BKPF_MSTR after Jonathan fix the duplication issue
-    # INNER JOIN (SELECT DISTINCT * FROM T001_MSTR WHERE [SPRAS] = 'EN') AS R -- Just T001_MSTR after Jonathan fix the duplication issue
-    # ON LTRIM(RTRIM(L.[BUKRS])) = LTRIM(RTRIM(R.[BUKRS]))
-    #
-    #
-    #     userList = users.query.join(friendships, users.id == friendships.user_id).add_columns(users.userId, users.name,
-    #                                                                                           users.email, friends.userId,
-    #                                                                                           friendId).filter(
-    #         users.id == friendships.friend_id).filter(friendships.user_id == userID).paginate(page, 1, False)
 
-    return "ok"
+    def execute(query):
+        result = db.session.execute(query)
+        db.session.commit()
+        return 'query execute successful'
 
 
-@sap_caps_gen.route('/j2', methods=['GET'])
-def j2():
-    response = {
-        "VERSION": current_app.config['VERSION']
-    }
-    return jsonify(response)
+    j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
+    select
+    L.*,
+    R.data -> 'KTOPL' as KTOPL,
+    ltrim(rtrim(cast(L.data ->> 'BUKRS' as Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'BELNR' AS Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'GJAHR' AS Text))) varapkey
+    into table JOIN_BKPF_T001_MSTR
+    from
+    (select * from sap_bkpf limit 100) as L
+    inner join
+    (select * from sap_t001 where CAST(data ->> 'SPRAS' AS TEXT) = 'EN') as R
+    on CAST(L.data -> 'BUKRS' AS TEXT) = cast(R.data -> 'BUKRS' AS TEXT)"""
 
-@sap_caps_gen.route('/j3', methods=['GET'])
-def j3():
-    response = {
-        "VERSION": current_app.config['VERSION']
-    }
-    return jsonify(response)
+
+    j2 = """DROP TABLE IF EXISTS BSEG_AP;
+    select
+    L.*,
+    ltrim(rtrim(cast(L.data ->> 'BUKRS' as Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'BELNR' AS Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'GJAHR' AS Text))) varAPKey,
+    cast('' as text) AS varMultiVND,
+    cast('' as text) as varSupplier_No
+    into  BSEG_AP
+    from (select * from sap_bseg) as L"""
+
+    j3 = """DROP TABLE IF EXISTS distinctVarAPKeyVendorAcctNum;
+    SELECT DISTINCT L.varAPKey, LTRIM(RTRIM(L.data ->> 'LIFNR')) AS LIFNR, Row_Number() Over(Partition by varAPKey ORDER BY L.data ->> 'LIFNR') AS RowNum
+    INTO table distinctVarAPKeyVendorAcctNum
+    FROM BSEG_AP AS L
+    WHERE L.data ->> 'LIFNR' IS NOT NULL
+                   AND LTRIM(RTRIM(L.data ->> 'LIFNR')) != ''"""
+
+    j4 = """
+    DROP TABLE IF EXISTS distinctVarAPKeyMultiVendor;
+    SELECT varAPKey, COUNT(*) AS Cnt
+    INTO table distinctVarAPKeyMultiVendor
+    FROM distinctVarAPKeyVendorAcctNum AS L
+    GROUP BY varAPKey
+    HAVING COUNT(*) >  1
+    """
+
+#Update Vendor Account Number for each varAPKey if Vendor Account Number is null with the first vendor account number
+
+    j5 = """
+    DROP TABLE IF EXISTS bseg_ap_final;
+select
+L.id,
+L.data,
+L.project_id,
+L.varapkey,
+R1.LIFNR,
+R2.varMultiVND
+into table bseg_ap_final
+from bseg_ap as L
+left join (select * from distinctvarAPKeyVendorAcctNum where rownum = 1) as R1
+on L.varapkey = R1.varapkey
+left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
+on L.varapkey = R2.varapkey
+where R2.varMultiVND = 'Multi_Vendor'
+"""
+
+
+
+    j6 = """
+    SELECT L.*,
+    LTRIM(RTRIM(R.data ->> 'BLART')) AS BLART,
+    LTRIM(RTRIM(R.data ->> 'BLDAT')) AS BLDAT,
+    LTRIM(RTRIM(R.data ->> 'XBLNR')) AS XBLNR,
+    LTRIM(RTRIM(R.data ->> 'WAERS')) AS WAERS,
+    LTRIM(RTRIM(R.data ->> 'MONAT')) AS MONAT,
+    LTRIM(RTRIM(R.data ->> 'CPUTM')) AS CPUTM,
+    LTRIM(RTRIM(R.data ->> 'KURSF')) AS KURSF,
+    LTRIM(RTRIM(R.data ->> 'TCODE')) AS TCODE,
+    LTRIM(RTRIM(R.data ->> 'KTOPL')) AS KTOPL
+    into table J1_BSEG_BKPF
+    FROM BSEG_AP AS L
+    INNER JOIN JOIN_BKPF_T001_MSTR AS R
+    ON L.varAPKey = R.varAPKey
+    """
+
+    j7 = """
+    DROP TABLE IF EXISTS J2_BSEG_BKPF_LFA1;
+    SELECT L.*, LTRIM(RTRIM(R.data ->> 'NAME1')) AS NAME1, LTRIM(RTRIM(R.data ->> 'NAME2')) AS NAME2,
+               LTRIM(RTRIM(R.data ->> 'LAND1')) AS LAND1, LTRIM(RTRIM(R.data ->> 'REGIO')) AS REGIO, LTRIM(RTRIM(R.data ->> 'ORT01')) AS ORT01,
+               LTRIM(RTRIM(R.data ->> 'PSTLZ')) AS PSTLZ, LTRIM(RTRIM(R.data ->> 'STRAS')) AS STRAS
+INTO J2_BSEG_BKPF_LFA1
+FROM J1_BSEG_BKPF AS L
+LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
+"""
+
+
+
+    j8 = """
+    DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_SKAT;
+
+SELECT L.*, LTRIM(RTRIM(R.data ->> 'TXT50')) AS TXT50
+INTO J3_BSEG_BKPF_LFA1_SKAT
+FROM J2_BSEG_BKPF_LFA1 AS L
+LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+ON LTRIM(RTRIM(L.KTOPL)) = LTRIM(RTRIM(R.data ->> 'KTOPL'))
+               AND LTRIM(RTRIM(L.data ->> 'SAKNR')) = LTRIM(RTRIM(R.data ->> 'SAKNR'))
+    """
+
+    j9 = """
+    DROP TABLE IF EXISTS distinctVarAPKey;
+
+SELECT CONCAT(L.data ->> 'BUKRS', '_', L.data ->> 'BELNR', '_', L.data ->> 'GJAHR') AS varAPKey
+INTO distinctVarAPKey
+FROM sap_bseg AS L
+WHERE cast(L.data ->> 'KOART' as text) = 'K'
+GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
+    """
+
+    j10 = """
+    DROP TABLE IF EXISTS J4_BSEG_BKPF_LFA1_SKAT_OnlyAP;
+
+    SELECT L.*
+    INTO J4_BSEG_BKPF_LFA1_SKAT_OnlyAP
+    FROM J3_BSEG_BKPF_LFA1_SKAT AS L
+    INNER JOIN distinctVarAPKey AS R
+    ON L.varAPKey = R.varAPKey
+    """
+
+    j11 = """
+    DROP TABLE IF EXISTS J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO;
+
+SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
+INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
+FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
+LEFT JOIN (SELECT * FROM sap_ekpo) AS R
+ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
+               AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
+    """
+
+    j12 = """
+    DROP TABLE IF EXISTS J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT;
+
+SELECT L.*, R.data ->> 'MAKTX' as MAKTX
+INTO J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT
+FROM J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO AS L
+LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+ON L.MATNR2 = R.data ->> 'MATNR'
+    """
+
+    j13 = """
+    DROP TABLE IF EXISTS J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR;
+
+SELECT L.*
+INTO J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR
+FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
+LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
+ON L.varAPKey = R.varAPKey
+
+
+    j14 = """
+    DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
+
+SELECT L.*, R.data ->> 'KTEXT'
+INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
+FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
+LEFT JOIN (SELECT * FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
+    """
+
+    j15 = """
+    DROP TABLE IF EXISTS J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007;
+
+    SELECT L.*, R.data ->> 'KALSM' as KALSM, R.data ->> 'TEXT1' as TEXT1
+    INTO J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
+    FROM J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT AS L
+    LEFT JOIN (SELECT  * FROM sap_t007s WHERE LTRIM(RTRIM(cast(data ->> 'KALSM' as text))) = 'ZTAXCA' AND cast(data ->> 'SPRAS' as text) = 'EN') AS R
+    ON L.data ->> 'MWSKZ' = R.data ->> 'MWSKZ'
+    """
+
+    j16 = """
+    DROP TABLE IF EXISTS RAW;
+select *
+into RAW
+from J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
+where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
+    """
+
 
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])
+def aps_quality_check():
+    response = {
+        "VERSION": current_app.config['VERSION']
+    }
+    return jsonify(response)
+
+
+@sap_caps_gen.route('/APS_to_CAPS', methods=['GET'])
 def aps_quality_check():
     response = {
         "VERSION": current_app.config['VERSION']

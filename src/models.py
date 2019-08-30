@@ -2,7 +2,6 @@ import enum
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
 from sqlalchemy.dialects import postgresql
-from marshmallow import Schema, fields, pprint
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
 
@@ -52,7 +51,6 @@ class Jurisdiction(enum.Enum):
     sk = "Saskatchewan"
     ty = "Yukon"
     foreign = "Outside Canada"
-
 
 ################################################################################
 # Many 2 Many links
@@ -362,7 +360,7 @@ class Project(db.Model):
     project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
     project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
     project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
-    project_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_project')
+    project_sapt001 = db.relationship('SapT001', back_populates='sapt001_project')
     project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
 
     def save_to_db(self):
@@ -606,6 +604,7 @@ class ClientModel(db.Model):
     status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
+
     client_id = db.Column(db.Integer, nullable=False) # FK
     client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
 
@@ -786,6 +785,7 @@ class Transaction(db.Model):
 
     client_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions') # FK
+
     master_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions') # FK
 
@@ -825,8 +825,7 @@ class Transaction(db.Model):
 
 class FXRates(db.Model):
     _tablename_ = 'fx_rates'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    dateid = db.Column(db.DateTime(timezone=True), unique=False)
+    dateid = db.Column(db.DateTime(timezone=True), primary_key=True)
     usdtocad = db.Column(db.Float, nullable=False)
     cadtousd = db.Column(db.Float, nullable=False)
     gbptocad = db.Column(db.Float, nullable=False)
@@ -981,13 +980,13 @@ class SapPrps(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
     sapprps_project = db.relationship('Project', back_populates='project_sapprps')
 
-class SapT001w(db.Model):
-    _tablename__ = 'sap_t001w'
+class SapT001(db.Model):
+    _tablename__ = 'sap_t001'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapt001w_project = db.relationship('Project', back_populates='project_sapt001w')
+    sapt001_project = db.relationship('Project', back_populates='project_sapt001')
 
 class SapT007s(db.Model):
     _tablename__ = 'sap_t007s'
