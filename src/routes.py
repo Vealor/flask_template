@@ -16,13 +16,29 @@ api.register_blueprint(auth, url_prefix='/auth')
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
+# Jurisdiction Endpoints
+from src.endpoints.jurisdictions import jurisdictions
+api.register_blueprint(jurisdictions, url_prefix='/jurisdictions')
+
+# LineOfBusinessSectors Endpoints
+from src.endpoints.lob_sectors import lob_sectors
+api.register_blueprint(lob_sectors, url_prefix='/lob_sectors')
+
 # Log Endpoints
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
+# Predict Endpoints
+from src.endpoints.predict import predict
+api.register_blueprint(predict, url_prefix='/predict')
+
 # Project Endpoints
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
+
+# Train Endpoints
+from src.endpoints.train import train
+api.register_blueprint(train, url_prefix='/train')
 
 # User Endpoints
 from src.endpoints.users import users
@@ -32,13 +48,6 @@ api.register_blueprint(users, url_prefix='/users')
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
-# Train Endpoints
-from src.endpoints.train import train
-api.register_blueprint(train, url_prefix='/train')
-
-# Predict Endpoints
-from src.endpoints.predict import predict
-api.register_blueprint(predict, url_prefix='/predict')
 
 # SAP Caps Gen Endpoints
 from src.endpoints.sap_caps_gen import sap_caps_gen

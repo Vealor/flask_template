@@ -16,6 +16,53 @@ class Roles(enum.Enum):
     data_admin = "data_admin"
     tax_approver = "tax_approver"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
+
+class LineOfBusinessSectors(enum.Enum):
+    business_services_business_services = {'lob':'Business Services','sec':'Business Services'}
+    consumer_retail_consumer_goods = {'lob':'Consumer & Retail','sec':'Consumer Goods'}
+    consumer_retail_food_beverage = {'lob':'Consumer & Retail','sec':'Food & Beverage'}
+    consumer_retail_retail = {'lob':'Consumer & Retail','sec':'Retail'}
+    energy_natural_resources_forestry = {'lob':'Energy & Natural Resources','sec':'Forestry'}
+    energy_natural_resources_mining = {'lob':'Energy & Natural Resources','sec':'Mining'}
+    energy_natural_resources_oil_gas_upstream = {'lob':'Energy & Natural Resources','sec':'Oil & Gas - Upstream'}
+    energy_natural_resources_oil_gas_midstream = {'lob':'Energy & Natural Resources','sec':'Oil & Gas - Midstream'}
+    energy_natural_resources_oil_gas_downstream = {'lob':'Energy & Natural Resources','sec':'Oil & Gas - Downstream'}
+    energy_natural_resources_power_utilities = {'lob':'Energy & Natural Resources','sec':'Power & Utilities'}
+    financial_services_asset_management = {'lob':'Financial Services','sec':'Asset Management'}
+    financial_services_banking = {'lob':'Financial Services','sec':'Banking'}
+    financial_services_insurance = {'lob':'Financial Services','sec':'Insurance'}
+    financial_services_pensions = {'lob':'Financial Services','sec':'Pensions'}
+    financial_services_private_equity = {'lob':'Financial Services','sec':'Private Equity'}
+    financial_services_automotive = {'lob':'Industrial Markets','sec':'Automotive'}
+    financial_services_chemicals = {'lob':'Industrial Markets','sec':'Chemicals'}
+    financial_services_industrial_mfg = {'lob':'Industrial Markets','sec':'Industrial Mfg'}
+    infrastructure_government_healthcare_aerospace_defense = {'lob':'Infrastructure, Government & Healthcare','sec':'Aerospace & Defense'}
+    infrastructure_government_healthcare_government_services = {'lob':'Infrastructure, Government & Healthcare','sec':'Government Services'}
+    infrastructure_government_healthcare_health_life_science = {'lob':'Infrastructure, Government & Healthcare','sec':'Health & Life Science'}
+    infrastructure_government_healthcare_transport_infrastructure= {'lob':'Infrastructure, Government & Healthcare','sec':'Transport & Infrastructure'}
+    real_estate_building_construct= {'lob':'Real Estate','sec':'Building & Construct'}
+    real_estate_devleopers = {'lob':'Real Estate','sec':'Developers'}
+    real_estate_hotels_recreation = {'lob':'Real Estate','sec':'Hotels & Recreation'}
+    real_estate_invest_operator = {'lob':'Real Estate','sec':'Investors & Operator'}
+    technology_media_telecommunication_media = {'lob':'Technology, Media & Telecommunication','sec':'Media'}
+    technology_media_telecommunication_technology = {'lob':'Technology, Media & Telecommunication','sec':'Technology'}
+    technology_media_telecommunication_telecommunications = {'lob':'Technology, Media & Telecommunication','sec':'Telecommunications'}
+
+    @property
+    def serialize(self):
+        return {
+            'code': self.name,
+            'lob': self.value['lob'],
+            'sec': self.value['sec']
+        }
+
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: {'code':c.name,'lob':c.value['lob'],'sec':c.value['sec']}, cls))
+
 class Actions(enum.Enum):
     create = "create"
     delete = "delete"
@@ -52,52 +99,35 @@ class Jurisdiction(enum.Enum):
     ty = "Yukon"
     foreign = "Outside Canada"
 
-################################################################################
-# Many 2 Many links
+    @property
+    def serialize(self):
+        return {
+            'code': self.name,
+            'name': self.value
+        }
 
-project_sector_link = db.Table('project_sector',
-    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('sector_id', db.Integer, db.ForeignKey('sectors.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-)
-
-user_project_link = db.Table('user_project',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('project_id', db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, primary_key=True),
-    db.Column('is_favourite', db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-)
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
 
 ################################################################################
 # AUTH User and Token models
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    username = db.Column(db.String(64), unique = True, index = True, nullable = False)
+    username = db.Column(db.String(64), unique=True, index=True, nullable=False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), unique=True, nullable=False)
     initials = db.Column(db.String(8), unique=True, nullable=False)
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.Enum(Roles), nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
-    role = db.Column(db.Enum(Roles), nullable=False)
 
-    user_projects = db.relationship('Project', secondary=user_project_link)
+    user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic', passive_deletes=True)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    # user_engagement_managers = db.relationship('Project', back_populates='engagement_manager_user', lazy='dynamic') # FK
-
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
     @property
     def serialize(self):
@@ -110,8 +140,22 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
+            'role': self.role.name
+        }
+
+    @property
+    def serialize_user_proj(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'initials': self.initials.upper(),
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'display_name': "{} {}".format(self.first_name, self.last_name),
+            'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
-            'user_projects': [i.id for i in self.user_projects]
+            'user_projects': [i.serialize for i in self.user_projects]
         }
 
     @classmethod
@@ -133,6 +177,33 @@ class User(db.Model):
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
+
+class UserProject(db.Model):
+    __tablename__ = 'user_project'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.UniqueConstraint('user_id', 'project_id', name='user_project_unique_constraint'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    is_favourite = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+
+    user_id = db.Column(db.Integer, nullable=False) # FK
+    user_project_user = db.relationship('User', back_populates='user_projects') # FK
+
+    project_id = db.Column(db.Integer, nullable=False) # FK
+    user_project_project = db.relationship('Project', back_populates='project_users') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'user': self.user_project_user.username,
+            'project_id': self.project_id,
+            'project': self.user_project_project.serialize,
+            'is_favourite': self.is_favourite
+        }
 
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
@@ -166,11 +237,6 @@ class Log(db.Model):
     user_id = db.Column(db.Integer, nullable=False) # FK
     log_user = db.relationship('User', back_populates='user_logs') # FK
 
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
     @property
     def serialize(self):
         username = ((User.query.filter_by(id=self.user_id).one()).serialize)['username']
@@ -186,116 +252,109 @@ class Log(db.Model):
 
 class Client(db.Model):
     __tablename__ = 'clients'
-    __table_args__ = (
-        db.UniqueConstraint('name', 'line_of_business_id', name='client_unique_constraint'),
-        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id']),
-    )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), nullable=False)
-
-    line_of_business_id = db.Column(db.Integer, nullable=False) # FK
-    client_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_clients') # FK
+    created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')
-    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic')
-    client_client_models = db.relationship('ClientModel', back_populates='client_model_client', cascade="save-update", lazy='dynamic')
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return { 'name': self.name, 'line_of_business_id': self.line_of_business_id }
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
+    client_projects = db.relationship('Project', back_populates='project_client', cascade="save-update", lazy='dynamic', passive_deletes=True)
+    client_client_models = db.relationship('ClientModel', back_populates='client_model_client', cascade="save-update", lazy='dynamic', passive_deletes=True)
+    client_client_entities = db.relationship('ClientEntity', back_populates='client_entity_client', cascade="save-update", lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
         return {
             'id': self.id,
             'name': self.name,
-            'line_of_business_id': self.line_of_business_id,
-            'client_line_of_business': self.client_line_of_business.name,
-            'client_projects': [i.serialize for i in self.client_projects]
+            'created': self.created,
+            'client_entities': [i.serialize for i in self.client_client_entities],
+            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects]
         }
 
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
 
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
-
-
-class LineOfBusiness(db.Model):
-    __tablename__ = 'line_of_business'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-
-    line_of_business_clients = db.relationship('Client', back_populates='client_line_of_business', lazy='dynamic')
-    line_of_business_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_line_of_business', lazy='dynamic')
-    # line_of_business_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_line_of_business', lazy='dynamic')
-    line_of_business_sectors = db.relationship('Sector', back_populates='sector_line_of_business', lazy='dynamic')
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'line_of_business_sectors': [i.serialize for i in self.line_of_business_sectors],
-            'line_of_business_clients': [{'id':i.id, 'name':i.name} for i in self.line_of_business_clients]
-        }
-
-class Sector(db.Model):
-    __tablename__ = 'sectors'
+class ClientEntity(db.Model):
+    __tablename__ = 'client_entities'
     __table_args__ = (
-        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id']),
+        db.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
+        db.UniqueConstraint('client_id', 'company_code', name='client_company_code_unique_constraint'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
+    company_code = db.Column(db.String(4), nullable=False)
+    lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
 
-    line_of_business_id = db.Column(db.Integer, nullable=False) # FK
-    sector_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_sectors') # FK
+    client_id = db.Column(db.Integer, nullable=False) # FK
+    client_entity_client = db.relationship('Client', back_populates='client_client_entities') # FK
+
+    client_entity_jurisdictions = db.relationship('ClientEntityJurisdiction', back_populates='jurisdiction_client_entity', cascade="save-update", lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'name': self.name,
-            'line_of_business_id': self.line_of_business_id,
-            'line_of_business': self.sector_line_of_business.name
+            'client_id': self.client_id,
+            'client_name': self.client_entity_client.name,
+            'company_code': self.company_code,
+            'lob_sector': self.lob_sector.serialize,
+            'jurisdictions': [i.serialize for i in self.client_entity_jurisdictions]
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+class ClientEntityJurisdiction(db.Model):
+    __tablename__ = 'client_entity_jurisdictions'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['client_entity_id'], ['client_entities.id'], ondelete='CASCADE'),
+        db.UniqueConstraint('client_entity_id', 'jurisdiction', name='client_entity_jurisdiction_unique_constraint'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
+
+    client_entity_id = db.Column(db.Integer, nullable=False) # FK
+    jurisdiction_client_entity = db.relationship('ClientEntity', back_populates='client_entity_jurisdictions')
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'code': self.jurisdiction.name,
+            'name': self.jurisdiction.value
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
 class Project(db.Model):
     __tablename__ = 'projects'
     __table_args__ = (
         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
-        db.ForeignKeyConstraint(['engagement_partner_id','engagement_manager_id'], ['users.id','users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['engagement_partner_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['engagement_manager_id'], ['users.id'], ondelete='SET NULL'),
     )
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(128), unique=True, nullable=False)
-    is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    is_archived = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
+    is_paredown_locked = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    is_completed = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
-    engagement_partner_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_partner_user = db.relationship('User') # FK
+    engagement_partner_id = db.Column(db.Integer, nullable=False) # FK
+    engagement_partner_user = db.relationship('User', foreign_keys='Project.engagement_partner_id') # FK
 
-    engagement_manager_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    engagement_manager_user = db.relationship('User') # FK
+    engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
+    engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
-    project_sectors = db.relationship('Sector', secondary=project_sector_link)
-    project_users = db.relationship('User', secondary=user_project_link)
-    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic')
-    project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic')
+    project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
+    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
+    project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
 
     has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -363,36 +422,20 @@ class Project(db.Model):
     project_sapt001 = db.relationship('SapT001', back_populates='sapt001_project')
     project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
 
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
     @property
     def serialize(self):
         return {
             'id': self.id,
             'name': self.name,
-            'is_approved': self.is_approved,
-            'is_archived': self.is_archived,
-            'area': 'TBD',
-            'code': 'TBD',
-            'jurisdiction_code': self.jurisdiction.name,
-            'jurisdiction_name': self.jurisdiction.value,
-            'project_sectors': [i.serialize for i in self.project_sectors],
-            'project_users': [{'id':i.id,'username':i.username} for i in self.project_users],
+            'client_id': self.client_id,
+            'project_client': self.project_client.serialize,
+            'is_paredown_locked': self.is_paredown_locked,
+            'is_completed': self.is_completed,
+            'project_users': [{'user_id':i.user_id,'username':i.user_project_user.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
             'engagement_partner_id': self.engagement_partner_id,
-            'engagement_partner_user': self.engagement_partner_user.username.serialize,
             'engagement_manager_id': self.engagement_manager_id,
-            'engagement_manager_user': self.engagement_partner_user.username.serialize,
             'tax_scope': {
                 'has_ts_gst': self.has_ts_gst,
                 'has_ts_hst': self.has_ts_hst,
@@ -455,23 +498,34 @@ class Project(db.Model):
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
 
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
-
 class ParedownRule(db.Model):
-    # these rules are only either core, or for a line_of_business
+    # these rules are only either core, or for a lob_sector
     # there are no project specific rules
     __tablename__ = 'paredown_rules'
-    __table_args__ = (
-        db.ForeignKeyConstraint(['line_of_business_id'], ['line_of_business.id'], ondelete='SET NULL'),
-    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    line_of_business_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    paredown_rule_line_of_business = db.relationship('LineOfBusiness', back_populates='line_of_business_paredown_rules') # FK
+    paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', cascade="save-update", lazy='dynamic')
     #TODO add in rule saving data
+
+class ParedownRuleLineOfBusinessSector(db.Model):
+    __tablename__ = 'paredown_rule_lob_sector'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
+        db.UniqueConstraint('paredown_rule_id', 'lob_sector', name='paredown_rule_lob_sector_unique_constraint'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
+
+    paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
+    lob_sector_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_lob_sectors')
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'lob_sector': self.lob_sector.serialize
+        }
 
 class Vendor(db.Model):
     __tablename__ = 'vendors'
@@ -480,24 +534,12 @@ class Vendor(db.Model):
 
     vendor_transactions = db.relationship('Transaction', back_populates='transaction_vendor')
 
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
-
     @property
     def serialize(self):
         return {
             'id': self.id,
             'name': self.name,
-            'vendor_transactions': [i.serialize for i in self.vendor_transactions]
+            'vendor_transactions': [i.id for i in self.vendor_transactions]
         }
 
     @classmethod
@@ -611,18 +653,6 @@ class ClientModel(db.Model):
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
     client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
 
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
-
     @property
     def serialize(self):
         return {
@@ -648,7 +678,6 @@ class ClientModel(db.Model):
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=model_id).first().status = Activity.active.value
-        db.session.commit()
 
 class ClientModelPerformance(db.Model):
     __tablename__ = 'client_model_performances'
@@ -665,18 +694,6 @@ class ClientModelPerformance(db.Model):
 
     client_model_id = db.Column(db.Integer, nullable=False) # FK
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances') # FK
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
 class MasterModel(db.Model):
     __tablename__ = 'master_models'
@@ -712,19 +729,6 @@ class MasterModel(db.Model):
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=model_id).first().status = Activity.active.value
-        db.session.commit()
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
 class MasterModelPerformance(db.Model):
     __tablename__ = 'master_model_performances'
@@ -741,18 +745,6 @@ class MasterModelPerformance(db.Model):
 
     master_model_id = db.Column(db.Integer, nullable=False) # FK
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-        return self.id
-
-    def update_to_db(self):
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
 ################################################################################
 class Transaction(db.Model):
@@ -802,26 +794,23 @@ class Transaction(db.Model):
             'data': self.data,
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
-            'locked_user_initials': self.locked_transaction_user.initials,
+            'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
         }
 
-    def update_prediction(self,update_dict):
-        if 'client_model_id' in update_dict.keys():
-            self.client_model_id = update_dict['client_model_id']
-            self.master_model_id = None
-        elif 'master_model_id' in update_dict.keys():
-            self.master_model_id = update_dict['master_model_id']
-            self.client_model_id = None
-        else:
-            raise ValueError("To update transaction, 'master_model_id' or 'client_model_id' must be specified.")
-        self.recovery_probability = float(update_dict['recovery_probability'])
-        self.is_predicted = True
-        self.update_to_db()
 
-    def update_to_db(self):
-        db.session.commit()
+    # def update_prediction(self,update_dict):
+    #     if 'client_model_id' in update_dict.keys():
+    #         self.client_model_id = update_dict['client_model_id']
+    #         self.master_model_id = None
+    #     elif 'master_model_id' in update_dict.keys():
+    #         self.master_model_id = update_dict['master_model_id']
+    #         self.client_model_id = None
+    #     else:
+    #         raise ValueError("To update transaction, 'master_model_id' or 'client_model_id' must be specified.")
+    #     self.recovery_probability = float(update_dict['recovery_probability'])
+    #     self.is_predicted = True
 
 class FXRates(db.Model):
     _tablename_ = 'fx_rates'

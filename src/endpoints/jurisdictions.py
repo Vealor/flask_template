@@ -1,22 +1,23 @@
 '''
-General Endpoints
+Jurisdiction Endpoints
 '''
 import json
 import random
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
 
-general = Blueprint('general', __name__)
+jurisdictions = Blueprint('jurisdictions', __name__)
 #===============================================================================
-# General
-@general.route('/', methods=['GET'])
+# GET ALL JURISDICTIONS
+@jurisdictions.route('/', methods=['GET'])
+# @jwt_required
 def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    try:
-        response['VERSION'] = current_app.config['VERSION']
 
+    try:
         response['message'] = ''
-        response['payload'] = []
+        response['payload'] = Jurisdiction.list()
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
