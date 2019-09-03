@@ -194,7 +194,6 @@ def do_train():
     return jsonify(response), 201
 
 #===============================================================================
-#===============================================================================
 # Predict transactions for a project using the active master
 @client_model.route('/predict/', methods=['POST'])
 # @jwt_required
@@ -252,3 +251,36 @@ def do_predict():
         return jsonify(response), 400
 
     return jsonify(response), 201
+
+#===============================================================================
+# Delete a master model
+@client_model.route('/delete/<path:id>', methods=['DELETE'])
+# @jwt_required
+def delete_client_model(id):
+    response = { 'status': '', 'message': '', 'payload': [] }
+
+    try:
+        query = ClientModel.find_by_id(id)
+        if not query:
+            raise ValueError('Client model ID {} does not exist.'.format(id))
+        if query.status == Activity.active:
+            raise ValueError('Client model ID {} is currently active. Cannot delete.'.format(id))
+
+        # Eliminate model performance information. Not required.
+        perf_query = ClientModelPerformance.query.filter_by(client_model_id=id).delete()
+
+        model = query.serialize
+        db.session.delete(query)
+        db.session.commit()
+
+        response['status'] = 'ok'
+        response['message'] = 'Deleted Client model id {}'.format(model['id'])
+        response['payload'] = [model]
+    except Exception as e:
+        db.session.rollback()
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 400
+
+    return jsonify(response), 200
