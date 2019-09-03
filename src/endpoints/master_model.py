@@ -237,3 +237,35 @@ def do_predict():
         response['message'] = str(e)
         return jsonify(response), 400
     return jsonify(response), 201
+
+#===============================================================================
+# Delete a master model
+@master_model.route('/delete/<path:id>', methods=['DELETE'])
+# @jwt_required
+def delete_master_model(id):
+    response = { 'status': '', 'message': '', 'payload': [] }
+
+    try:
+        query = MasterModel.query.filter_by(id=id).first()
+        if not query:
+            raise ValueError('Master model ID {} does not exist.'.format(id))
+        if query.status == Activity.active:
+            raise ValueError('Master model ID {} is currently active. Cannot delete.'.format(id))
+
+        # Eliminate model performance information. Not required.
+        perf_query = MasterModelPerformance.query.filter_by(master_model_id=id).delete()
+
+        model = query.serialize
+        db.session.delete(query)
+        db.session.commit()
+
+        response['status'] = 'ok'
+        response['message'] = 'Deleted Master model id {}'.format(model['id'])
+        response['payload'] = [model]
+    except Exception as e:
+        db.session.rollback()
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 400
+    return jsonify(response), 200
