@@ -611,12 +611,12 @@ class ClientModel(db.Model):
         return cls.query.filter_by(id = id).first()
 
     @classmethod
-    def find_active_for_client(cls, id):
-        return cls.query.filter_by(status = Activity.active.value).filter_by(id = id).first()
+    def find_active_for_client(cls, client_id):
+        return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
 
     @classmethod
     def set_active_for_client(cls, model_id, client_id):
-        active_model = cls.find_active_for_client( client_id)
+        active_model = cls.find_active_for_client(client_id)
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=model_id).first().status = Activity.active.value
