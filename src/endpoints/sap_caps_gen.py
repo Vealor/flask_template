@@ -36,48 +36,33 @@ def mapping_serializer(label):
         "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
     }
 
+#helper function to recursively unzip files within a folder
+def extract_nested_zip(zippedFile, toFolder):
+    try:
+        with zipfile.ZipFile(zippedFile, 'r') as zfile:
+            zfile.extractall(path=toFolder)
+    except NotImplementedError:
+        raise Exception(str(zippedFile) + ' has compression errors. Please fix')
+    except Exception as e:
+        raise Exception('Unable to work with file ' + str(zippedFile))
+    os.remove(zippedFile)
+    for root, dirs, files in os.walk(toFolder):
+        for filename in files:
+            #print(len(filename))
+            if re.search(r'\.(?i)ZIP$', filename):
+                fileSpec = os.path.join(root, filename)
+                extract_nested_zip(fileSpec, root)
 
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
-    """
-    This is a function that iterates through each folder in the directory, and recursively walks to the nth level of the folder, retrieving any zipped files.
-    Example Payload: {"client" : "Repsol" ,"project": "Repsol-2019", "system" : "SAP", "file" : "sanic.png", "debug" : True}
-    """
-
-    def extract_nested_zip(zippedFile, toFolder):
-        try:
-            with zipfile.ZipFile(zippedFile, 'r') as zfile:
-                zfile.extractall(path=toFolder)
-        except NotImplementedError:
-            response['status'] = 'Incorrect compression type. Please extract manually and store into staged_for_db folder.'
-            return 'Incorrect compression type. Please extract manually and store into staged_for_db folder.'
-        except Exception as e:
-            response['status'] = 'There were errors unzipping one of the zipped files inside. Please check error log.'
-            response['message'] = response['message'] + ('Failed on ' + str(zippedFile) + ' ')
-            os.remove(zippedFile)
-            print(zippedFile + 'has been removed')
-            return (zippedFile +  'failed to unzip!')
-        os.remove(zippedFile)
-        print(zippedFile + 'has been removed')
-        for root, dirs, files in os.walk(toFolder):
-            for filename in files:
-                #print(len(filename))
-                if re.search(r'\.(?i)ZIP$', filename):
-                    fileSpec = os.path.join(root, filename)
-                    print(fileSpec)
-                    try:
-                        extract_nested_zip(fileSpec, root)
-                    except Exception as e:
-                        pass
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     data = request.get_json()
-    if data is not None and data['debug'] == False:
-        print('debug set to False')
-    if os.listdir('caps_gen_processing/caps_gen_raw') is not None:
-        #try:
-        #logging.basicConfig(format='%(asctime)s %(name)-20s %(levelname)-5s %(message)s', level=logging.INFO)
+    try:
+        # if data is None:
+        #     response['status'] = 'error'
+        #     response['message'] = 'no data'
+        #     raise exception('Error in data upload.')
         current_input_path = get_cwd('caps_gen_processing/caps_gen_raw')
-        print(current_input_path)
         current_output_path = get_cwd('caps_gen_processing/caps_gen_unzipped')
         cwd = os.getcwd()
         os.chdir(current_input_path)
@@ -85,12 +70,15 @@ def unzipping():
         for item in os.listdir(current_input_path):
             if item.lower().endswith(extension):
                 try:
-                    print(item)
                     extract_nested_zip(item, current_output_path)
                 except Exception as e:
                     response['status'] = 'Cannot unzip input zip'
                     response['message'] = response['message'] + ('Failed on ' + str(item))
+            else:
+                response['payload']['files_skipped'].append(item.lower())
         os.chdir(cwd)
+    except Exception as e:
+        return response
         #except Exception as e:
             #response['message'] = 'Successfully downloaded, but unable to access caps_gen_unzipped folder'
             #return 'Unable to access folder.'
@@ -99,128 +87,99 @@ def unzipping():
 
 #MAPPING HAPPENS
 
-def completeness_check(column):
-    completeness_response = {}
-    for index, elem in enumerate(column):
-        if '' == elem or elem.isspace():
-            completeness_response[str(index)] = elem
-    completeness_response['final_score'] = 100 - (len(completeness_response)/len(column))
-    return completeness_response
-
-def validity_check(column_data, regex):
-    validity_response = {}
-    results = list(filter(re.compile(regex).match, column_data))
-    validity_response['results'] = results
-    validity_response['final_score'] = 100 - (len(validity_response['results'])/len(column_data))
-    return validity_response
-
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
 def build_master_tables():
-    def linking_fields_serializer(label):
-        return {
-            "table_name": label.table_name,
-            "field_name": label.field_name,
-            "is_complete": label.is_complete,
-            "is_unique": label.is_unique,
-            "regex": label.regex
-        }
+    response = {'status': 'ok', 'message': {}, 'payload': {}}
+    try:
+        mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
+        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        list_tablenames = ['T007S']
 
-    list_tablenames = ['AUFK', 'BSAK', 'BSEG', 'BKPF', 'CEPCT', 'CSKS', 'CSKT', 'EKKO', 'EKPO', 'IFLOT', 'ILOA', 'LFA1' ,'MAKT', 'MARA', 'PAYR', 'PROJ' ,'PRPS', 'SKAT', \
-    'T001', 'T001W', 'T007', 'T007S']
-    list_tablenames = ['LFA1']
-    response = {'status': '', 'message': {}, 'payload': []}
-    for table in list_tablenames:
-        table_results = {}
-        print(table)
-        list_of_files = []
-        for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
-            if re.search(table, file):
-                if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
-                    list_of_files.append(file)
-        wfd = open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'wb')
-        for index, file in enumerate(list_of_files):
-            # for first file
-            if index == 0:
-                with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r' ,encoding='utf-8-sig') as fd:
-                    #   get first line
-                    #   change headers on first line to desired values
-                    first_line = fd.readline()
-                    table_results['header'] = first_line
-                    first_line = first_line.encode()
-                    #   add header to wfd
-                    wfd.write(first_line)
-                #   add rest of file to wfd
-                    wfd.write(fd.read().encode())
-            else:
-                # for all future files
-                with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r', encoding='utf-8-sig') as fd:
-                    #   strip header
-                    next(fd)
-                    wfd.write(fd.read().encode())
-        wfd.close()
-        print('table renamed to')
-        referenceclass = eval('Sap' + str(table.lower().capitalize()))
-        print(referenceclass)
-        exampledump = []
-        counter = 0
-        with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
-            #masterfile = [next(masterfile) for x in range(10000)]
-            for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
-                counter += 1
-                print(counter)
-                dict_to_insert = {'data' : line}
-                dict_to_insert['project_id'] = 1
-                exampledump.append(dict_to_insert)
-        db.session.bulk_insert_mappings(referenceclass, exampledump)
-        db.session.commit()
-        print('great success')
-    return 'OK'
+        for table in list_tablenames:
+            table_results = {}
+            table_files = []
+
+            #Search for all files that match table
+            for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
+                if re.search(table, file):
+                    if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
+                        table_files.append(file)
+            print(table_files)
+
+            #Load & union files into one master table in memory
+            wfd = open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'wb')
+            for index, file in enumerate(table_files):
+                if index == 0:
+                    with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r' ,encoding='utf-8-sig') as fd:
+                        #first_line = fd.readline()
+                        #table_results['header'] = first_line
+                        #first_line = first_line.encode()
+                        #wfd.write(first_line)
+                        wfd.write(fd.read().encode())
+                else:
+                    # for all future files
+                    with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r', encoding='utf-8-sig') as fd:
+                        #   strip header
+                        next(fd)
+                        wfd.write(fd.read().encode())
+            wfd.close()
+
+            #initialize variables for bulk insertion
+            referenceclass = eval('Sap' + str(table.lower().capitalize()))
+            bulk_insert_handler = []
+
+            #bulk insert into database
+            with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
+                #masterfile = [next(masterfile) for x in range(10000)]
+                for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
+                    dict_to_insert = {'data' : line}
+                    dict_to_insert['project_id'] = 1
+                    bulk_insert_handler.append(dict_to_insert)
+            db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+            db.session.commit()
+            print('great success')
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        return response
+    return response
 
 ######################### MAPPING HAPPENS HERE #######################################
 
 @sap_caps_gen.route('/rename_scheme', methods=['GET'])
 def rename_scheme():
+    #jsonify DB query
     def rename_query_serializer(row):
         return {
             "id": row.id,
             "data": row.data
         }
 
-    def rename_builder(table):
-        rename_dict = {}
-        for index, elem in enumerate(mapping):
-            if mapping[index]['mappings'][0]['table_name'] == table:
-                rename_dict.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
-        return rename_dict
-
-    mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
-    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-    list_tablenames = ['BSEG', 'BKPF']
-
-    for table in list_tablenames:
-        renamed_columndata = []
-        print(table)
-        renaming_scheme = rename_builder(table)
-        tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
-        #columndata = list(list(zip(*tableclass.query.with_entities(getattr(tableclass, 'data')).all()))[0])
-        #print(renaming_scheme)
-        import time
-
-        start_time = time.time()
-        for row in columndata:
-            try:
-                row = rename_query_serializer(row)
-                for key, value in renaming_scheme.items():
-                    row['data'][value] = row['data'].pop(key)
-            except KeyError as e:
-                print('missing CDM label column' + str(e))
-
-            renamed_columndata.append(row)
-        print("--- %s seconds ---" % (time.time() - start_time))
-        db.session.bulk_update_mappings(tableclass, renamed_columndata)
-        db.session.commit()
-        print('great success')
+    response = {'status': 'ok', 'message': {}, 'payload': {}}
+    try:
+        mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
+        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        for table in list_tablenames:
+            renamed_columndata = []
+            rename_scheme = {}
+            for index, elem in enumerate(mapping):
+                if mapping[index]['mappings'][0]['table_name'] == table:
+                    rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
+            tableclass = eval('Sap' + str(table.lower().capitalize()))
+            columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
+            for row in columndata:
+                try:
+                    row = rename_query_serializer(row)
+                    for key, value in renaming_scheme.items():
+                        row['data'][value] = row['data'].pop(key)
+                except KeyError as e:
+                    print('missing CDM label column' + str(e))
+                renamed_columndata.append(row)
+            db.session.bulk_update_mappings(tableclass, renamed_columndata)
+            db.session.commit()
+    except Exception as e:
+            response['status'] = 'error'
+            response['message'] = str(e)
     return 'OK'
 
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
@@ -233,9 +192,6 @@ def data_quality_check():
         return {
             "unique_key" : [row.data[x] for x in unique_keys]
         }
-    def get_count(q):
-        return q.query.with_entities(func.count()).scalar()
-
 
     def data_dictionary(mapping, table):
         rename_dict = {}
@@ -311,7 +267,6 @@ def data_quality_check():
 
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
-
     def execute(query):
         result = db.session.execute(query)
         db.session.commit()
@@ -321,14 +276,15 @@ def j1_j10():
     j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
     select
     L.*,
-    R.data -> 'KTOPL' as KTOPL,
+    R.data ->> 'KTOPL' as KTOPL,
     ltrim(rtrim(cast(L.data ->> 'BUKRS' as Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'BELNR' AS Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'GJAHR' AS Text))) varapkey
     into table JOIN_BKPF_T001_MSTR
     from
-    (select * from sap_bkpf limit 100) as L
+    (select * from sap_bkpf) as L
     inner join
     (select * from sap_t001 where CAST(data ->> 'SPRAS' AS TEXT) = 'EN') as R
-    on CAST(L.data -> 'BUKRS' AS TEXT) = cast(R.data -> 'BUKRS' AS TEXT)"""
+    on CAST(L.data -> 'BUKRS' AS TEXT) = cast(R.data -> 'BUKRS' AS TEXT)
+    """
 
 
     j2 = """DROP TABLE IF EXISTS BSEG_AP;
@@ -340,12 +296,14 @@ def j1_j10():
     into  BSEG_AP
     from (select * from sap_bseg) as L"""
 
-    j3 = """DROP TABLE IF EXISTS distinctVarAPKeyVendorAcctNum;
+    j3 = """
+    DROP TABLE IF EXISTS distinctVarAPKeyVendorAcctNum;
     SELECT DISTINCT L.varAPKey, LTRIM(RTRIM(L.data ->> 'LIFNR')) AS LIFNR, Row_Number() Over(Partition by varAPKey ORDER BY L.data ->> 'LIFNR') AS RowNum
     INTO table distinctVarAPKeyVendorAcctNum
     FROM BSEG_AP AS L
     WHERE L.data ->> 'LIFNR' IS NOT NULL
-                   AND LTRIM(RTRIM(L.data ->> 'LIFNR')) != ''"""
+                   AND LTRIM(RTRIM(L.data ->> 'LIFNR')) != ''
+    """
 
     j4 = """
     DROP TABLE IF EXISTS distinctVarAPKeyMultiVendor;
@@ -373,12 +331,12 @@ left join (select * from distinctvarAPKeyVendorAcctNum where rownum = 1) as R1
 on L.varapkey = R1.varapkey
 left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
 on L.varapkey = R2.varapkey
-where R2.varMultiVND = 'Multi_Vendor'
 """
 
 
 
     j6 = """
+    DROP TABLE IF EXISTS J1_BSEG_BKPF;
     SELECT L.*,
     LTRIM(RTRIM(R.data ->> 'BLART')) AS BLART,
     LTRIM(RTRIM(R.data ->> 'BLDAT')) AS BLDAT,
@@ -390,7 +348,7 @@ where R2.varMultiVND = 'Multi_Vendor'
     LTRIM(RTRIM(R.data ->> 'TCODE')) AS TCODE,
     LTRIM(RTRIM(R.data ->> 'KTOPL')) AS KTOPL
     into table J1_BSEG_BKPF
-    FROM BSEG_AP AS L
+    FROM BSEG_AP_final AS L
     INNER JOIN JOIN_BKPF_T001_MSTR AS R
     ON L.varAPKey = R.varAPKey
     """
@@ -468,6 +426,7 @@ INTO J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR
 FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
 LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
 ON L.varAPKey = R.varAPKey
+"""
 
 
     j14 = """
@@ -508,7 +467,7 @@ def aps_quality_check():
 
 
 @sap_caps_gen.route('/APS_to_CAPS', methods=['GET'])
-def aps_quality_check():
+def aps_to_caps():
     response = {
         "VERSION": current_app.config['VERSION']
     }
