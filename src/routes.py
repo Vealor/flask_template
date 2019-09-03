@@ -16,6 +16,10 @@ api.register_blueprint(auth, url_prefix='/auth')
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
+# ClientModel Endpoints
+from src.endpoints.client_model import client_model
+api.register_blueprint(client_model, url_prefix='/client_model')
+
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
 api.register_blueprint(jurisdictions, url_prefix='/jurisdictions')
