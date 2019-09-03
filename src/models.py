@@ -662,6 +662,10 @@ class MasterModel(db.Model):
         }
 
     @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+    @classmethod
     def find_active(cls):
         return cls.query.filter_by(status = Activity.active.value).first()
 
