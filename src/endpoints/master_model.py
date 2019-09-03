@@ -29,6 +29,7 @@ def get_master_models():
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -236,6 +237,7 @@ def do_predict():
         response['status'] = 'error'
         response['message'] = str(e)
         return jsonify(response), 400
+
     return jsonify(response), 201
 
 #===============================================================================
@@ -246,7 +248,7 @@ def delete_master_model(id):
     response = { 'status': '', 'message': '', 'payload': [] }
 
     try:
-        query = MasterModel.query.filter_by(id=id).first()
+        query = MasterModel.find_by_id(id)
         if not query:
             raise ValueError('Master model ID {} does not exist.'.format(id))
         if query.status == Activity.active:
@@ -268,4 +270,5 @@ def delete_master_model(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
+
     return jsonify(response), 200
