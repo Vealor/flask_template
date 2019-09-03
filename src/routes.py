@@ -28,6 +28,10 @@ api.register_blueprint(lob_sectors, url_prefix='/lob_sectors')
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
+# MasterModel Endpoints
+from src.endpoints.master_model import master_model
+api.register_blueprint(master_model, url_prefix='/master_model')
+
 # Predict Endpoints
 from src.endpoints.predict import predict
 api.register_blueprint(predict, url_prefix='/predict')
