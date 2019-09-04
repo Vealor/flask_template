@@ -12,7 +12,7 @@ projects = Blueprint('projects', __name__)
 #===============================================================================
 # Toggle Favourite for User
 @projects.route('/toggle_favourite/<path:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 def toggle_favourite(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
