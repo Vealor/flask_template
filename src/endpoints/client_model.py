@@ -1,5 +1,5 @@
 '''
-Master Model Endpoints
+Client Model Endpoints
 '''
 import json
 import pandas as pd
@@ -13,14 +13,14 @@ from src.util import get_date_obj_from_str, validate_request_data
 
 client_model = Blueprint('client_model', __name__)
 #===============================================================================
-# Get all master models
+# Get all client models
 @client_model.route('/', methods=['GET'])
 # @jwt_required
 def get_client_models():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
-        query = MasterModel.query
+        query = ClientModel.query
 
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
@@ -253,7 +253,7 @@ def do_predict():
     return jsonify(response), 201
 
 #===============================================================================
-# Delete a master model
+# Delete a client model
 @client_model.route('/delete/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client_model(id):
