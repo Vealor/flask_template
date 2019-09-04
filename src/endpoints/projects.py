@@ -11,10 +11,11 @@ from src.util import validate_request_data
 projects = Blueprint('projects', __name__)
 #===============================================================================
 # Toggle Favourite for User
-@projects.route('/toggle_favourite/<path:id>', methods=['GET'])
+@projects.route('/toggle_favourite/<path:id>', methods=['PUT'])
 # @jwt_required
 def toggle_favourite(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
 
     try:
         query = UserProject.query
@@ -22,10 +23,11 @@ def toggle_favourite(id):
         query = query.filter_by(project_id=id)
         query = query.first()
         query.is_favourite = not query.is_favourite
-        query.update_to_db()
+        db.session.commit()
         response['message'] = ''
         response['payload'] = []
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
