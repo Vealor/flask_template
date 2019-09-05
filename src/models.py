@@ -599,6 +599,7 @@ class ClientModel(db.Model):
     def serialize(self):
         return {
             'id': self.id,
+            'client_id': self.client_id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
