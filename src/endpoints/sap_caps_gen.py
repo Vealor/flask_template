@@ -43,7 +43,8 @@ def extract_nested_zip(zippedFile, toFolder):
             if re.search(r'\.(?i)ZIP$', filename):
                 fileSpec = os.path.join(root, filename)
                 extract_nested_zip(fileSpec, root)
-
+#This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
+#The endpoint can go through nested folders/zips. 
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
@@ -72,8 +73,7 @@ def unzipping():
     print('Data Received: "{data}"'.format(data=data))
     return response
 
-#MAPPING HAPPENS
-
+#MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
 def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
@@ -133,6 +133,8 @@ def build_master_tables():
 
 ######################### MAPPING HAPPENS HERE #######################################
 
+#renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
+#the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in. 
 @sap_caps_gen.route('/rename_scheme', methods=['GET'])
 def rename_scheme():
     #jsonify DB query
@@ -168,7 +170,7 @@ def rename_scheme():
             response['status'] = 'error'
             response['message'] = str(e)
     return 'OK'
-
+#this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
     def regex_serializer(row):
@@ -214,14 +216,12 @@ def data_quality_check():
     }
     CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
-    list_tablenames = ['BKPF']
     for table in list_tablenames:
         data_dictionary_results[table] = {}
-        print(table)
         tableclass = eval('Sap' + str(table.lower().capitalize()))
-
-        print(tableclass)
         compiled_data_dictionary = data_dictionary(CDM_query, table)
+        
+        ### UNIQUENESS CHECK ###
         unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
         if unique_keys:
             print(unique_keys)
@@ -238,19 +238,21 @@ def data_quality_check():
             uniqueness_response['results'] = dups
             uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
             data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
+        ### completeness check ###
         for column in compiled_data_dictionary.keys():
             completeness_response = {}
             print(column)
             column = 'company_code'
             query = tableclass.query
-            query = query.with_entities(getattr(tableclass, 'data')).limit(2).all()
+            query = query.with_entities(getattr(tableclass, 'data')).all()
             query = [regex_serializer(row)['data'][column] for row in query]
+        ### validity check ###
             if compiled_data_dictionary[column]['regex']:
                 data_dictionary_results[table][column] = {
                     'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
     return data_dictionary_results
 
-
+#j1 to j10 joins to create APS
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
     def execute(query):
@@ -460,7 +462,7 @@ def j1_j10():
     execute(j15)
     execute(j16)
 
-
+#This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details. 
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])
 def aps_quality_check():
     response = {
@@ -468,7 +470,7 @@ def aps_quality_check():
     }
     return jsonify(response)
 
-
+# see feature branch 72-aps_to_caps for more info
 @sap_caps_gen.route('/APS_to_CAPS', methods=['GET'])
 def aps_to_caps():
     response = {
