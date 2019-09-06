@@ -117,7 +117,6 @@ dmypy.json
 activate
 sqlite3.db
 db_commands
-db_refresh.sh
 .idea
 .idea/*
 caps_gen_processing/

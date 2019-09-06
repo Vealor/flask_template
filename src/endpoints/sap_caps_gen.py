@@ -2,17 +2,9 @@
 sap_caps_gen endpoints
 '''
 import csv
-import decimal
-import datetime
 import json
-import logging
-import glob
 import os
-import itertools
-import pandas as pd
-import random
 import re
-import shutil
 import zipfile
 import requests
 import sqlalchemy
@@ -48,7 +40,6 @@ def extract_nested_zip(zippedFile, toFolder):
     os.remove(zippedFile)
     for root, dirs, files in os.walk(toFolder):
         for filename in files:
-            #print(len(filename))
             if re.search(r'\.(?i)ZIP$', filename):
                 fileSpec = os.path.join(root, filename)
                 extract_nested_zip(fileSpec, root)
@@ -58,10 +49,6 @@ def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     data = request.get_json()
     try:
-        # if data is None:
-        #     response['status'] = 'error'
-        #     response['message'] = 'no data'
-        #     raise exception('Error in data upload.')
         current_input_path = get_cwd('caps_gen_processing/caps_gen_raw')
         current_output_path = get_cwd('caps_gen_processing/caps_gen_unzipped')
         cwd = os.getcwd()
@@ -251,7 +238,6 @@ def data_quality_check():
             uniqueness_response['results'] = dups
             uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
             data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
-        import json
         for column in compiled_data_dictionary.keys():
             completeness_response = {}
             print(column)
