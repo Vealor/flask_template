@@ -416,12 +416,12 @@ def j1_j10():
 
 
     j14 = """
-    DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
+       DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
 
     SELECT L.*, R.data ->> 'KTEXT'
     INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
     FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
-    LEFT JOIN (SELECT * FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+    LEFT JOIN (select cast(data as json) from (SELECT distinct cast(data as text) FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN')  R )AS R
     ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
     """
 
@@ -459,6 +459,8 @@ def j1_j10():
     execute(j14)
     execute(j15)
     execute(j16)
+
+    return 'OK'
 
 
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])
