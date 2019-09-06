@@ -222,6 +222,7 @@ def data_quality_check():
         compiled_data_dictionary = data_dictionary(CDM_query, table)
         
         ### UNIQUENESS CHECK ###
+        #The argument should be set to true when some of is_unique column in CDM labels is set to True. 
         unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
         if unique_keys:
             print(unique_keys)
@@ -233,6 +234,7 @@ def data_quality_check():
                 unique_key_checker.append(row['unique_key'])
             c = Counter(map(tuple, unique_key_checker))
             dups = [k for k, v in c.items() if v > 1]
+        #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
         if len(dups) > 1:
             uniqueness_response = {}
             uniqueness_response['results'] = dups
