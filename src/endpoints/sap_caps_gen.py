@@ -80,7 +80,7 @@ def build_master_tables():
     try:
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-        list_tablenames = ['T007S']
+        #list_tablenames = ['T007S']
 
         for table in list_tablenames:
             table_results = {}
@@ -303,21 +303,21 @@ def j1_j10():
 #Update Vendor Account Number for each varAPKey if Vendor Account Number is null with the first vendor account number
 
     j5 = """
-    DROP TABLE IF EXISTS bseg_ap_final;
-select
-L.id,
-L.data,
-L.project_id,
-L.varapkey,
-R1.LIFNR,
-R2.varMultiVND
-into table bseg_ap_final
-from bseg_ap as L
-left join (select * from distinctvarAPKeyVendorAcctNum where rownum = 1) as R1
-on L.varapkey = R1.varapkey
-left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
-on L.varapkey = R2.varapkey
-"""
+        DROP TABLE IF EXISTS bseg_ap_final;
+    select
+    L.id,
+    L.data,
+    L.project_id,
+    L.varapkey,
+    R1.LIFNR,
+    R2.varMultiVND
+    into table bseg_ap_final
+    from bseg_ap as L
+    left join (select * from distinctvarAPKeyVendorAcctNum where rownum = 1) as R1
+    on L.varapkey = R1.varapkey
+    left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
+    on L.varapkey = R2.varapkey
+    """
 
 
 
@@ -344,34 +344,34 @@ on L.varapkey = R2.varapkey
     SELECT L.*, LTRIM(RTRIM(R.data ->> 'NAME1')) AS NAME1, LTRIM(RTRIM(R.data ->> 'NAME2')) AS NAME2,
                LTRIM(RTRIM(R.data ->> 'LAND1')) AS LAND1, LTRIM(RTRIM(R.data ->> 'REGIO')) AS REGIO, LTRIM(RTRIM(R.data ->> 'ORT01')) AS ORT01,
                LTRIM(RTRIM(R.data ->> 'PSTLZ')) AS PSTLZ, LTRIM(RTRIM(R.data ->> 'STRAS')) AS STRAS
-INTO J2_BSEG_BKPF_LFA1
-FROM J1_BSEG_BKPF AS L
-LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
-ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
-"""
+    INTO J2_BSEG_BKPF_LFA1
+    FROM J1_BSEG_BKPF AS L
+    LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+    ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
+    """
 
 
 
     j8 = """
     DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_SKAT;
 
-SELECT L.*, LTRIM(RTRIM(R.data ->> 'TXT50')) AS TXT50
-INTO J3_BSEG_BKPF_LFA1_SKAT
-FROM J2_BSEG_BKPF_LFA1 AS L
-LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
-ON LTRIM(RTRIM(L.KTOPL)) = LTRIM(RTRIM(R.data ->> 'KTOPL'))
-               AND LTRIM(RTRIM(L.data ->> 'SAKNR')) = LTRIM(RTRIM(R.data ->> 'SAKNR'))
-    """
+    SELECT L.*, LTRIM(RTRIM(R.data ->> 'TXT50')) AS TXT50
+    INTO J3_BSEG_BKPF_LFA1_SKAT
+    FROM J2_BSEG_BKPF_LFA1 AS L
+    LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+    ON LTRIM(RTRIM(L.KTOPL)) = LTRIM(RTRIM(R.data ->> 'KTOPL'))
+                   AND LTRIM(RTRIM(L.data ->> 'SAKNR')) = LTRIM(RTRIM(R.data ->> 'SAKNR'))
+        """
 
     j9 = """
     DROP TABLE IF EXISTS distinctVarAPKey;
 
-SELECT CONCAT(L.data ->> 'BUKRS', '_', L.data ->> 'BELNR', '_', L.data ->> 'GJAHR') AS varAPKey
-INTO distinctVarAPKey
-FROM sap_bseg AS L
-WHERE cast(L.data ->> 'KOART' as text) = 'K'
-GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
-    """
+    SELECT CONCAT(L.data ->> 'BUKRS', '_', L.data ->> 'BELNR', '_', L.data ->> 'GJAHR') AS varAPKey
+    INTO distinctVarAPKey
+    FROM sap_bseg AS L
+    WHERE cast(L.data ->> 'KOART' as text) = 'K'
+    GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
+        """
 
     j10 = """
     DROP TABLE IF EXISTS J4_BSEG_BKPF_LFA1_SKAT_OnlyAP;
@@ -386,43 +386,43 @@ GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
     j11 = """
     DROP TABLE IF EXISTS J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO;
 
-SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
-INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
-FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
-LEFT JOIN (SELECT * FROM sap_ekpo) AS R
-ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
-               AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
+    SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
+    INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
+    FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
+    LEFT JOIN (SELECT * FROM sap_ekpo) AS R
+    ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
+                   AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
     """
 
     j12 = """
     DROP TABLE IF EXISTS J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT;
 
-SELECT L.*, R.data ->> 'MAKTX' as MAKTX
-INTO J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT
-FROM J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO AS L
-LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
-ON L.MATNR2 = R.data ->> 'MATNR'
+    SELECT L.*, R.data ->> 'MAKTX' as MAKTX
+    INTO J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT
+    FROM J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO AS L
+    LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+    ON L.MATNR2 = R.data ->> 'MATNR'
     """
 
     j13 = """
     DROP TABLE IF EXISTS J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR;
 
-SELECT L.*
-INTO J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR
-FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
-LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
-ON L.varAPKey = R.varAPKey
+    SELECT L.*
+    INTO J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR
+    FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
+    LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
+    ON L.varAPKey = R.varAPKey
 """
 
 
     j14 = """
     DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
 
-SELECT L.*, R.data ->> 'KTEXT'
-INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
-FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
-LEFT JOIN (SELECT * FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
-ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
+    SELECT L.*, R.data ->> 'KTEXT'
+    INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
+    FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
+    LEFT JOIN (SELECT * FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+    ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
     """
 
     j15 = """
@@ -437,11 +437,28 @@ ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
 
     j16 = """
     DROP TABLE IF EXISTS RAW;
-select *
-into RAW
-from J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
-where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
+    select *
+    into RAW
+    from J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
+    where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
     """
+
+    execute(j1)
+    execute(j2)
+    execute(j3)
+    execute(j4)
+    execute(j5)
+    execute(j6)
+    execute(j7)
+    execute(j8)
+    execute(j9)
+    execute(j10)
+    execute(j11)
+    execute(j12)
+    execute(j13)
+    execute(j14)
+    execute(j15)
+    execute(j16)
 
 
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])

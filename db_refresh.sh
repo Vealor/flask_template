@@ -39,47 +39,7 @@ psql -h localhost -U itra itra_db -c "
   insert into vendors (name) values ('miner buyer');
   insert into transactions (data, vendor_id, project_id) values ('{}', 1, 1);
   insert into user_project (user_id, project_id) values (1, 1);
-  "
 
-    insert into sectors (name, line_of_business_id) values ('Business Services', 1);
-    insert into sectors (name, line_of_business_id) values ('Consumer Goods', 2);
-    insert into sectors (name, line_of_business_id) values ('Food & Beverage', 2);
-    insert into sectors (name, line_of_business_id) values ('Retail', 2);
-    insert into sectors (name, line_of_business_id) values ('Forestry', 3);
-    insert into sectors (name, line_of_business_id) values ('Mining', 3);
-    insert into sectors (name, line_of_business_id) values ('Oil & Gas - Upstream', 3);
-    insert into sectors (name, line_of_business_id) values ('Oil & Gas - Midstream', 3);
-    insert into sectors (name, line_of_business_id) values ('Oil & Gas - Downstream', 3);
-    insert into sectors (name, line_of_business_id) values ('Power & Utilities', 3);
-    insert into sectors (name, line_of_business_id) values ('Asset Management', 4);
-    insert into sectors (name, line_of_business_id) values ('Banking', 4);
-    insert into sectors (name, line_of_business_id) values ('Insurance', 4);
-    insert into sectors (name, line_of_business_id) values ('Pensions', 4);
-    insert into sectors (name, line_of_business_id) values ('Private Equity', 4);
-    insert into sectors (name, line_of_business_id) values ('Automotive', 5);
-    insert into sectors (name, line_of_business_id) values ('Chemicals', 5);
-    insert into sectors (name, line_of_business_id) values ('Industrial Mfg', 5);
-    insert into sectors (name, line_of_business_id) values ('Aerospace & Defense', 6);
-    insert into sectors (name, line_of_business_id) values ('Government Services', 6);
-    insert into sectors (name, line_of_business_id) values ('Health & Life Science', 6);
-    insert into sectors (name, line_of_business_id) values ('Transport & Infrastre', 6);
-    insert into sectors (name, line_of_business_id) values ('Building & Construct', 7);
-    insert into sectors (name, line_of_business_id) values ('Developers', 7);
-    insert into sectors (name, line_of_business_id) values ('Hotels & Recreation', 7);
-    insert into sectors (name, line_of_business_id) values ('Investors & Operator', 7);
-    insert into sectors (name, line_of_business_id) values ('Media', 8);
-    insert into sectors (name, line_of_business_id) values ('Technology', 8);
-    insert into sectors (name, line_of_business_id) values ('Telecommunications', 8);
-
-    insert into clients (name, line_of_business_id) values ('mining corp', 1);
-    insert into clients (name, line_of_business_id) values ('mining corp two', 1);
-    insert into clients (name, line_of_business_id) values ('mining corp', 2);
-    insert into projects (name, client_id, jurisdiction) values ('miner 49er', 1, 'bc');
-    insert into projects (name, client_id, jurisdiction) values ('miner 49er two', 1, 'ab');
-    insert into projects (name, client_id, jurisdiction) values ('miner 50er', 2, 'sk');
-    insert into projects (name, client_id, jurisdiction) values ('miner 51er', 3, 'foreign');
-    insert into vendors (name) values ('miner buyer');
-    insert into transactions(data, vendor_id, project_id) values ('{}', 1, 1);
     INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BUKRS','BKPF_BUKRS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_KTOPL','BKPF_KTOPL','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BELNR','BKPF_BELNR','FALSE','TRUE','FALSE','dt_varchar','.*');
@@ -134,10 +94,10 @@ INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_WAERS','T001_WAERS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_TCODE','T001_TCODE','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_KTOPL','T001_KTOPL','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007_KALSM','T007_KALSM','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007_SPRAS','T007_SPRAS','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007_MWSKZ','T007_MWSKZ','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007_TEXT1','T007_TEXT1','FALSE','TRUE','FALSE','dt_varchar','.*');
+INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_KALSM','T007S_KALSM','FALSE','TRUE','FALSE','dt_varchar','.*');
+INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_SPRAS','T007S_SPRAS','FALSE','TRUE','FALSE','dt_varchar','.*');
+INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_MWSKZ','T007S_MWSKZ','FALSE','TRUE','FALSE','dt_varchar','.*');
+INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_TEXT1','T007S_TEXT1','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','BUKRS',1,'BKPF_BUKRS');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','KTOPL',1,'BKPF_KTOPL');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','BELNR',1,'BKPF_BELNR');
@@ -192,8 +152,8 @@ INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_lab
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','WAERS',1,'T001_WAERS');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','TCODE',1,'T001_TCODE');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','KTOPL',1,'T001_KTOPL');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007','KALSM',1,'T007_KALSM');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007','SPRAS',1,'T007_SPRAS');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007','MWSKZ',1,'T007_MWSKZ');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007','TEXT1',1,'T007_TEXT1');
+INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','KALSM',1,'T007S_KALSM');
+INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','SPRAS',1,'T007S_SPRAS');
+INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','MWSKZ',1,'T007S_MWSKZ');
+INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','TEXT1',1,'T007S_TEXT1');
 "
