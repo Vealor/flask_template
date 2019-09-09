@@ -44,7 +44,7 @@ def extract_nested_zip(zippedFile, toFolder):
                 fileSpec = os.path.join(root, filename)
                 extract_nested_zip(fileSpec, root)
 #This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
-#The endpoint can go through nested folders/zips. 
+#The endpoint can go through nested folders/zips.
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
@@ -134,7 +134,7 @@ def build_master_tables():
 ######################### MAPPING HAPPENS HERE #######################################
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
-#the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in. 
+#the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in.
 @sap_caps_gen.route('/rename_scheme', methods=['GET'])
 def rename_scheme():
     #jsonify DB query
@@ -220,9 +220,9 @@ def data_quality_check():
         data_dictionary_results[table] = {}
         tableclass = eval('Sap' + str(table.lower().capitalize()))
         compiled_data_dictionary = data_dictionary(CDM_query, table)
-        
+
         ### UNIQUENESS CHECK ###
-        #The argument should be set to true when some of is_unique column in CDM labels is set to True. 
+        #The argument should be set to true when some of is_unique column in CDM labels is set to True.
         unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
         if unique_keys:
             print(unique_keys)
@@ -254,14 +254,18 @@ def data_quality_check():
                     'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
     return data_dictionary_results
 
+import datetime
+
 #j1 to j10 joins to create APS
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
     def execute(query):
+        print(str(datetime.datetime.now()) +": "+query)
         result = db.session.execute(query)
         db.session.commit()
         return 'query execute successful'
 
+    response = {'status': 'ok', 'message': {}, 'payload': {}}
 
     j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
     select
@@ -286,6 +290,7 @@ def j1_j10():
     into  BSEG_AP
     from (select * from sap_bseg) as L"""
 
+    # Set the
     j3 = """
     DROP TABLE IF EXISTS distinctVarAPKeyVendorAcctNum;
     SELECT DISTINCT L.varAPKey, LTRIM(RTRIM(L.data ->> 'LIFNR')) AS LIFNR, Row_Number() Over(Partition by varAPKey ORDER BY L.data ->> 'LIFNR') AS RowNum
@@ -439,12 +444,17 @@ def j1_j10():
     ON L.data ->> 'MWSKZ' = R.data ->> 'MWSKZ'
     """
 
+
+    ## WARNING: Not every client uses these document types consistently.
     j16 = """
     DROP TABLE IF EXISTS RAW;
     select *
     into RAW
     from J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
     where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
+    """
+
+    j17 = """
     """
 
     execute(j1)
@@ -464,7 +474,10 @@ def j1_j10():
     execute(j15)
     execute(j16)
 
-#This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details. 
+
+    return jsonify(response), 200
+
+#This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details.
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])
 def aps_quality_check():
     response = {
