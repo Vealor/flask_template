@@ -321,7 +321,6 @@ class ClientEntityJurisdiction(db.Model):
     @property
     def serialize(self):
         return {
-            'id': self.id,
             'code': self.jurisdiction.name,
             'name': self.jurisdiction.value
         }

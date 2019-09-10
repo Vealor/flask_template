@@ -176,7 +176,7 @@ def update_client(id):
                 raise ValueError('Company Code cannot exceed 4 characters.')
 
             # update existing entity
-            if 'id' in entity.keys() and entity['id'] not None:
+            if 'id' in entity.keys() and entity['id'] is not None:
                 client_entity = ClientEntity.find_by_id(entity['id'])
                 if not client_entity:
                     raise ValueError('Client entity with ID {} does not exist.'.format(entity['id']))
