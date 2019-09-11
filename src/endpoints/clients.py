@@ -77,6 +77,8 @@ def post_client():
         db.session.flush()
 
         for entity in data['client_entities']:
+            if len(entity['company_code']) > 4:
+                raise ValueError('Company Code cannot exceed 4 characters.')
             if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
                 raise ValueError('Specified line of business sector does not exists')
             if ClientEntity.query.filter_by(client_id=new_client.id).filter_by(company_code=entity['company_code']).first():
@@ -127,7 +129,7 @@ def update_client(id):
         }
         validate_request_data(data, request_types)
         client_entity_types = {
-            'id': 'int',
+            # 'id': 'int',
             'company_code': 'str',
             'lob_sector': 'str',
             'jurisdictions': 'list'
@@ -148,21 +150,55 @@ def update_client(id):
         # update client name
         query.name = data['name']
 
-        # update client entities
+        # delete old entities
+        client_entity_ids = [i.id for i in query.client_client_entities.all()]
+        payload_entity_ids = [i['id'] for i in data['client_entities'] if 'id' in i.keys()]
+        for payload_id in payload_entity_ids:
+            if payload_id in client_entity_ids:
+                client_entity_ids.remove(payload_id)
+        for entity_id in client_entity_ids:
+            db.session.delete(ClientEntity.find_by_id(entity_id))
+
+        # update and add client entities
         for entity in data['client_entities']:
+
+            # valdate LoB for entity
             if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
                 raise ValueError('Specified line of business sector does not exists')
-            client_entity = ClientEntity.find_by_id(entity['id'])
-            if not client_entity:
-                raise ValueError('Client entity with ID {} does not exist.'.format(entity['id']))
-            if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).filter(ClientEntity.id != entity['id']).first():
-                raise ValueError('Duplicate company codes for a client cannot exist.')
-            client_entity.company_code = entity['company_code']
-            client_entity.lob_sector = entity['lob_sector']
+
             # validate new jurisdictions for entity
             for jurisdiction in entity['jurisdictions']:
                 if jurisdiction not in Jurisdiction.__members__:
                     raise ValueError('Specified jurisdiction does not exist.')
+
+            # validate company code length
+            if len(entity['company_code']) > 4:
+                raise ValueError('Company Code cannot exceed 4 characters.')
+
+            # update existing entity
+            if 'id' in entity.keys() and entity['id'] is not None:
+                client_entity = ClientEntity.find_by_id(entity['id'])
+                if not client_entity:
+                    raise ValueError('Client entity with ID {} does not exist.'.format(entity['id']))
+                # check for duplicate compnay
+                if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).filter(ClientEntity.id != entity['id']).first():
+                    raise ValueError('Duplicate company codes for a client cannot exist.')
+                client_entity.company_code = entity['company_code']
+                client_entity.lob_sector = entity['lob_sector']
+            # build new entity
+            else:
+                if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).first():
+                    raise ValueError('Duplicate company codes for a client cannot exist.')
+
+                new_client_entity = ClientEntity(
+                    client_id=id,
+                    company_code=entity['company_code'],
+                    lob_sector=entity['lob_sector'],
+                )
+                db.session.add(new_client_entity)
+                db.session.flush()
+                entity['id'] = new_client_entity.id
+
             # create/delete jurisdictions for entity
             client_entity_jurisdictions = ClientEntityJurisdiction.query.filter_by(client_entity_id=entity['id']).all()
             jurisdictions_list = entity['jurisdictions']
