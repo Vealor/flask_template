@@ -194,7 +194,7 @@ def do_train():
     return jsonify(response), 201
 
 #===============================================================================
-# Predict transactions for a project using the active master
+# Predict transactions for a project using the active client model
 @client_model.route('/predict/', methods=['POST'])
 # @jwt_required
 def do_predict():
