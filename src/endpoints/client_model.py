@@ -254,6 +254,7 @@ def do_predict():
 
 #===============================================================================
 # Delete a client model
+# 'id' specifies the id of the model to be deleted.
 @client_model.route('/delete/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client_model(id):
