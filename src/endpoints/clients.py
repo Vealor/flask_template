@@ -81,6 +81,8 @@ def post_client():
                 raise ValueError('Company Code cannot exceed 4 characters.')
             if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
                 raise ValueError('Specified line of business sector does not exists')
+            if not len(entity['jurisdictions']):
+                raise ValueError('All entities must have at least one jurisdiction.')
             if ClientEntity.query.filter_by(client_id=new_client.id).filter_by(company_code=entity['company_code']).first():
                 raise ValueError('Duplicate company codes for a client cannot exist.')
             new_entity = ClientEntity(
@@ -174,6 +176,10 @@ def update_client(id):
             # validate company code length
             if len(entity['company_code']) > 4:
                 raise ValueError('Company Code cannot exceed 4 characters.')
+
+            # validate has at least 1 jurisdiction for each entity
+            if not len(entity['jurisdictions']):
+                raise ValueError('All entities must have at least one jurisdiction.')
 
             # update existing entity
             if 'id' in entity.keys() and entity['id'] is not None:
