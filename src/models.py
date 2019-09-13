@@ -11,10 +11,11 @@ db = SQLAlchemy()
 # ENUMS
 
 class Roles(enum.Enum):
-    it_admin = "it_admin"
-    tax_admin = "tax_admin"
-    data_admin = "data_admin"
+    tax_practitioner = "tax_practitioner"
     tax_approver = "tax_approver"
+    tax_master = "tax_master"
+    data_master = "data_master"
+    administrative_assistant = "administrative_assistant"
 
     @classmethod
     def list(cls):
@@ -122,6 +123,7 @@ class User(db.Model):
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
     role = db.Column(db.Enum(Roles), nullable=False)
+    is_system_administrator = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
 
