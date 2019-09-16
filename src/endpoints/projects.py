@@ -337,7 +337,7 @@ def update_project(id):
                 user_list.remove(user_project.user_id)
             else:
                 db.session.delete(user_project)
-        for users in user_list:
+        for user_id in user_list:
             user = User.find_by_id(user_id)
             new_user_project = UserProject(
                 user_project_user = user,
