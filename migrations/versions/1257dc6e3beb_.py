@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b3adcfa3fb79
+Revision ID: 1257dc6e3beb
 Revises: 
-Create Date: 2019-09-11 13:53:18.855176
+Create Date: 2019-09-13 09:49:53.490392
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'b3adcfa3fb79'
+revision = '1257dc6e3beb'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -63,7 +63,8 @@ def upgrade():
     sa.Column('initials', sa.String(length=8), nullable=False),
     sa.Column('first_name', sa.String(length=128), nullable=False),
     sa.Column('last_name', sa.String(length=128), nullable=False),
-    sa.Column('role', sa.Enum('it_admin', 'tax_admin', 'data_admin', 'tax_approver', name='roles'), nullable=False),
+    sa.Column('role', sa.Enum('tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant', name='roles'), nullable=False),
+    sa.Column('is_system_administrator', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='f', nullable=False),
     sa.Column('req_pass_reset', sa.Boolean(), server_default='t', nullable=False),
     sa.PrimaryKeyConstraint('id'),
