@@ -12,59 +12,6 @@ from src.util import send_mail, validate_request_data
 auth = Blueprint('auth', __name__)
 
 #===============================================================================
-# create admin superuser
-@auth.route('/createadminsuperuseraccount', methods=['POST'])
-def createadminsuperuseraccount():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    data = request.get_json()
-
-    if request.method == 'POST':
-        request_types = {
-            'username': 'str',
-            'password': 'str',
-            'email': 'str',
-            'first_name': 'str',
-            'last_name': 'str',
-            'special_token': 'str',
-            'role': 'str',
-            'initials': 'str'
-        }
-        try:
-            validate_request_data(data, request_types)
-        except ValueError as e:
-            response['status'] = 'error'
-            response['message'] = str(e)
-            return jsonify(response), 400
-
-        if User.find_by_username(data['username']) or User.superuser_exists():
-            response['status'] = 'error'
-            response['message'] = 'Username {} already exists or there already is a system superuser.'.format(data['username'])
-            return jsonify(response), 400
-
-        if data['special_token'] != 'lhsuperamazingawesometoken':
-            response['status'] = 'error'
-            response['message'] = 'Information improperly supplied.'
-            return jsonify(response), 400
-
-        new_user = User(
-            username = data['username'],
-            password = User.generate_hash(data['password']),
-            email = data['email'],
-            first_name = data['first_name'],
-            last_name = data['last_name'],
-            is_superuser = True,
-            role = data['role'],
-            initials = data['initials']
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        response['access_token'] = create_access_token(identity = data['username'])
-        response['refresh_token'] = create_refresh_token(identity = data['username'])
-        response['message'] = 'User {} was successfully created.'.format(data['username'])
-
-    return jsonify(response), 201
-
-#===============================================================================
 # resets user's password given username and e-mail
 # sends email with new temp pass
 @auth.route('/reset', methods=['POST'])
