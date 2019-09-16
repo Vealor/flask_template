@@ -331,7 +331,7 @@ def update_project(id):
 
         # Add user_projects from project_users
         user_projects = UserProject.query.filter_by(project_id=id).all()
-        user_list = data['project_users']
+        user_list = list(set(data['project_users']))
         for user_project in user_projects:
             if user_project.user_id in user_list:
                 user_list.remove(user_project.user_id)
