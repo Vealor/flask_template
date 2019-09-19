@@ -260,9 +260,12 @@ import datetime
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
     def execute(query):
-        print(str(datetime.datetime.now()) +": "+query)
+        print(str(datetime.datetime.now()))
+        print("Executing...")
         result = db.session.execute(query)
+        print("Committing...")
         db.session.commit()
+        print("Done.")
         return 'query execute successful'
 
     response = {'status': 'ok', 'message': {}, 'payload': {}}
@@ -551,14 +554,14 @@ def j1_j10():
         """
 
     j21 = """
-    DROP TABLE IF EXISTS caps_table;
-    SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
-    INTO caps_table
-    FROM
-    (SELECT * FROM transaction_info) AS A
-    left join
-    (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey;
-    """
+        DROP TABLE IF EXISTS caps_table;
+        SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
+        INTO caps_table
+        FROM
+        (SELECT * FROM transaction_info) AS A
+        left join
+        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey;
+        """
 
     # Execute the joins defined above.
     execute(j1)
