@@ -265,7 +265,6 @@ def j1_j10():
         result = db.session.execute(query)
         print("Committing...")
         db.session.commit()
-        db.session.close()
         print("Done.")
         return 'query execute successful'
 
@@ -561,30 +560,30 @@ def j1_j10():
         FROM
         (SELECT * FROM transaction_info) AS A
         left join
-        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey;
+        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
         """
 
     # Execute the joins defined above.
-    execute(j1)
-    execute(j2)
-    execute(j3)
-    execute(j4)
-    execute(j5)
-    execute(j6)
-    execute(j7)
-    execute(j8)
-    execute(j9)
-    execute(j10)
-    execute(j11)
-    execute(j12)
-    execute(j13)
-    execute(j14)
-    execute(j15)
-    execute(j16)
-    execute(j17)
-    execute(j18)
-    execute(j19)
-    execute(j20)
+    # execute(j1)
+    # execute(j2)
+    # execute(j3)
+    # execute(j4)
+    # execute(j5)
+    # execute(j6)
+    # execute(j7)
+    # execute(j8)
+    # execute(j9)
+    # execute(j10)
+    # execute(j11)
+    # execute(j12)
+    # execute(j13)
+    # execute(j14)
+    # execute(j15)
+    # execute(j16)
+    # execute(j17)
+    # execute(j18)
+    # execute(j19)
+    # execute(j20)
     execute(j21)
 
 
