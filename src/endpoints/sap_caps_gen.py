@@ -555,33 +555,36 @@ def j1_j10():
 
     j21 = """
         DROP TABLE IF EXISTS caps_table;
-        SELECT B.varTransAmt
+        SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
         INTO caps_table
         FROM
-        (SELECT * FROM transaction_summary) as B;
+        (SELECT * FROM transaction_info) AS A
+        left join
+        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
         """
 
     # Execute the joins defined above.
-    # execute(j1)
-    # execute(j2)
-    # execute(j3)
-    # execute(j4)
-    # execute(j5)
-    # execute(j6)
-    # execute(j7)
-    # execute(j8)
-    # execute(j9)
-    # execute(j10)
-    # execute(j11)
-    # execute(j12)
-    # execute(j13)
-    # execute(j14)
-    # execute(j15)
-    # execute(j16)
-    # execute(j17)
-    # execute(j18)
-    # execute(j19)
-    # execute(j20)
+    execute(j1)
+    execute(j2)
+    execute(j3)
+    execute(j4)
+    execute(j5)
+    execute(j6)
+    execute(j7)
+    execute(j8)
+    execute(j9)
+    execute(j10)
+    execute(j11)
+    execute(j12)
+    execute(j13)
+    execute(j14)
+    execute(j15)
+    execute(j16)
+    execute(j17)
+    execute(j18)
+    execute(j19)
+    execute(j20)
+    db.session.rollback()   # This is the only way that j21 will proceed?
     execute(j21)
 
 
