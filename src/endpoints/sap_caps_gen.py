@@ -559,7 +559,7 @@ def j1_j10():
         INTO caps_table
         FROM
         (SELECT * FROM transaction_info) AS A
-        left join
+        inner join
         (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
         """
 
