@@ -584,7 +584,6 @@ def j1_j10():
     # execute(j18)
     # execute(j19)
     # execute(j20)
-    db.session.rollback()   # This is the only way that j21 will proceed?
     execute(j21)
 
 
