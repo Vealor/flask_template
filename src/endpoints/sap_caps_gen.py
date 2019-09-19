@@ -265,6 +265,7 @@ def j1_j10():
         result = db.session.execute(query)
         print("Committing...")
         db.session.commit()
+        db.session.close()
         print("Done.")
         return 'query execute successful'
 
