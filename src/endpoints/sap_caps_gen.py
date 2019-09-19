@@ -558,9 +558,7 @@ def j1_j10():
         SELECT B.varTransAmt
         INTO caps_table
         FROM
-        (SELECT * FROM transaction_info) AS A
-        left join
-        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
+        (SELECT * FROM transaction_summary) as B;
         """
 
     # Execute the joins defined above.
