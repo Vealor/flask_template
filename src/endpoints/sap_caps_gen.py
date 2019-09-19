@@ -554,9 +554,9 @@ def j1_j10():
         """
 
     j21 = """
-        DROP TABLE IF EXISTS caps_table;
+        DROP TABLE IF EXISTS tablex;
         SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
-        INTO caps_table
+        INTO tablex
         FROM
         (SELECT * FROM transaction_info) AS A
         left join
