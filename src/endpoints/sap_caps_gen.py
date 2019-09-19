@@ -555,11 +555,11 @@ def j1_j10():
 
     j21 = """
         DROP TABLE IF EXISTS caps_table;
-        SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
+        SELECT B.varTransAmt
         INTO caps_table
         FROM
         (SELECT * FROM transaction_info) AS A
-        inner join
+        left inner join
         (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
         """
 
