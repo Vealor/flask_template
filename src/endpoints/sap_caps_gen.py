@@ -526,18 +526,18 @@ def j1_j10():
     INTO RAW_SORTED_ACCT FROM RAW_SIGNED;
     """
 
-    # Define a table, 'transaction_info', with the unique transaction information
+    # Define a table, 'transaction-info', with the unique transaction information
     # WARNING: THIS MAY NOT BE THE CORRECT WAY TO SIFT TRANSACTION INFO.
     j19 = """
-        DROP TABLE IF EXISTS transaction_info;
-        SELECT B.* INTO transaction_info FROM
+        DROP TABLE IF EXISTS transaction-info;
+        SELECT B.* INTO transaction-info FROM
         (SELECT varapkey, MAX(varLocAmt) as var_max FROM RAW_SORTED_ACCT GROUP BY varapkey) AS A
         inner join
         (SELECT * FROM RAW_SORTED_ACCT) as B on A.varapkey = B.varapkey AND B.varLocAmt = A.var_max;
         """
 
     j20 = """
-        DROP TABLE IF EXISTS transaction_summary;
+        DROP TABLE IF EXISTS transaction-summary;
         SELECT
         varapkey,
         SUM(varLocAmt) as varTransAmt,
@@ -550,7 +550,7 @@ def j1_j10():
         SUM(QST) as QST_sum,
         SUM(TAXES_OTHER) as TAXES_OTHER_sum,
         COUNT(varapkey) as COUNT
-        INTO transaction_summary FROM RAW_SORTED_ACCT GROUP BY varapkey ORDER BY varapkey;
+        INTO transaction-summary FROM RAW_SORTED_ACCT GROUP BY varapkey ORDER BY varapkey;
         """
 
     j21 = """
@@ -558,9 +558,9 @@ def j1_j10():
         SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
         INTO caps
         FROM
-        (SELECT * FROM transaction_info) AS A
+        (SELECT * FROM transaction-info) AS A
         left join
-        (SELECT * FROM transaction_summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
+        (SELECT * FROM transaction-summary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
         """
 
     # Execute the joins defined above.
