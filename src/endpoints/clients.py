@@ -40,7 +40,7 @@ def get_clients(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response)
+    return jsonify(response), 200
 
 #===============================================================================
 # POST NEW CLIENT
@@ -232,7 +232,7 @@ def update_client(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response)
+    return jsonify(response), 200
 
 #===============================================================================
 # DELETE A CLIENT
@@ -262,4 +262,4 @@ def delete_client(id):
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    return jsonify(response)
+    return jsonify(response), 200
