@@ -142,7 +142,8 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
-            'role': self.role.name
+            'role': self.role.name,
+            'user_project_ids': [i.project_id for i in self.user_projects]
         }
 
     @property
