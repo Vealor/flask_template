@@ -43,7 +43,8 @@ def extract_nested_zip(zippedFile, toFolder):
             if re.search(r'\.(?i)ZIP$', filename):
                 fileSpec = os.path.join(root, filename)
                 extract_nested_zip(fileSpec, root)
-
+#This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
+#The endpoint can go through nested folders/zips.
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
@@ -72,8 +73,7 @@ def unzipping():
     print('Data Received: "{data}"'.format(data=data))
     return response
 
-#MAPPING HAPPENS
-
+#MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
 def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
@@ -133,6 +133,8 @@ def build_master_tables():
 
 ######################### MAPPING HAPPENS HERE #######################################
 
+#renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
+#the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in.
 @sap_caps_gen.route('/rename_scheme', methods=['GET'])
 def rename_scheme():
     #jsonify DB query
@@ -171,7 +173,7 @@ def rename_scheme():
             response['status'] = 'error'
             response['message'] = str(e)
     return 'OK'
-
+#this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
 @sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
     def regex_serializer(row):
@@ -217,14 +219,14 @@ def data_quality_check():
     }
     CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
-    list_tablenames = ['MAKT']
     for table in list_tablenames:
         data_dictionary_results[table] = {}
-        print(table)
         tableclass = eval('Sap' + str(table.lower().capitalize()))
-        print(tableclass)
         compiled_data_dictionary = data_dictionary(CDM_query, table)
-        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == True]
+
+        ### UNIQUENESS CHECK ###
+        #The argument should be set to true when some of is_unique column in CDM labels is set to True.
+        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
         if unique_keys:
             print(unique_keys)
             unique_key_checker = []
@@ -236,31 +238,41 @@ def data_quality_check():
                 unique_key_checker.append(row['unique_key'])
             c = Counter(map(tuple, unique_key_checker))
             dups = [k for k, v in c.items() if v > 1]
+        #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
         if len(dups) > 1:
             uniqueness_response = {}
             uniqueness_response['results'] = dups
             uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
             data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
+        ### completeness check ###
         for column in compiled_data_dictionary.keys():
             completeness_response = {}
             print(column)
             column = 'company_code'
             query = tableclass.query
-            query = query.with_entities(getattr(tableclass, 'data')).limit(2).all()
+            query = query.with_entities(getattr(tableclass, 'data')).all()
             query = [regex_serializer(row)['data'][column] for row in query]
+        ### validity check ###
             if compiled_data_dictionary[column]['regex']:
                 data_dictionary_results[table][column] = {
                     'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
     return data_dictionary_results
 
+import datetime
 
+#j1 to j10 joins to create APS
 @sap_caps_gen.route('/j1_j10', methods=['GET'])
 def j1_j10():
     def execute(query):
+        print(str(datetime.datetime.now()))
+        print("Executing...")
         result = db.session.execute(query)
+        print("Committing...")
         db.session.commit()
+        print("Done.")
         return 'query execute successful'
 
+    response = {'status': 'ok', 'message': {}, 'payload': {}}
 
     j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
     select
@@ -285,6 +297,7 @@ def j1_j10():
     into  BSEG_AP
     from (select * from sap_bseg) as L"""
 
+    # Set the
     j3 = """
     DROP TABLE IF EXISTS distinctVarAPKeyVendorAcctNum;
     SELECT DISTINCT L.varAPKey, LTRIM(RTRIM(L.data ->> 'LIFNR')) AS LIFNR, Row_Number() Over(Partition by varAPKey ORDER BY L.data ->> 'LIFNR') AS RowNum
@@ -415,11 +428,11 @@ def j1_j10():
     FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
     LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
     ON L.varAPKey = R.varAPKey
-"""
+    """
 
 
     j14 = """
-       DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
+          DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
 
     SELECT L.*, R.data ->> 'KTEXT'
     INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
@@ -438,6 +451,8 @@ def j1_j10():
     ON L.data ->> 'MWSKZ' = R.data ->> 'MWSKZ'
     """
 
+
+    ## WARNING: Not every client uses these document types consistently.
     j16 = """
     DROP TABLE IF EXISTS RAW;
     select *
@@ -446,6 +461,113 @@ def j1_j10():
     where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
     """
 
+    # j17 =====================================================================
+    # Add a few of andy's extra fields
+    # Add varLocAmt (signed)
+    # Add varDocAmt (signed)
+    # Add sel_acct
+    # Add amounts (unsigned)
+    # Sort by varapkey, then by varLocAmt
+    j17 = """
+    DROP TABLE IF EXISTS RAW_SIGNED;
+    SELECT * ,
+    CASE
+        WHEN data ->> 'SHKZG' = 'S' THEN DMBTR
+        WHEN data ->> 'SHKZG' = 'H' THEN -1*DMBTR
+        ELSE 0
+    END AS varLocAmt,
+    CASE
+        WHEN data ->> 'SHKZG' = 'S' THEN WRBTR
+        WHEN data ->> 'SHKZG' = 'H' THEN -1*WRBTR
+        ELSE 0
+    END AS varDocAmt,
+    CASE
+        WHEN data ->> 'HKONT' IN ('4700000000','4720000000','4750000000','4770000000') THEN 'G'
+        WHEN data ->> 'HKONT' IN ('4000000000','4000000002','4009000000','4009000002','4009000032','4020000000','4020000002', '4029000000', '4109000002', '4100000000', '4100000002', '4100000010', '4109000000', '4109000010', '4120000000', '4120000002', '4120000010', '4129000000', '4129000002', '4129000010', '4170000000', '4300000000', '4400000000', '4420000000', '4420000010', '4429000010', '4449900000', '4609000000', '4650000000', '4751300000') THEN 'A'
+        ELSE ''
+    END AS sel_acct
+    INTO RAW_SIGNED
+    FROM
+    (SELECT *,
+    CAST(data ->> 'WRBTR' as float) as WRBTR,
+    CAST(data ->> 'PSWBT' as float) as PSWBT,
+    CAST(data ->> 'DMBTR' as float) as DMBTR,
+    CAST(data ->> 'DMBE2' as float) as DMBE2,
+    CAST(data ->> 'RWBTR' as float) as RWBTR
+     FROM RAW) as L ORDER BY varapkey, varLocAmt DESC;
+    """
+
+    # Based on sel_acct value, assign the varLocAmt to the right account "bin"
+    # e.g. AP, GST, PST, etc.
+    j18 = """
+    DROP TABLE IF EXISTS RAW_SORTED_ACCT;
+    SELECT
+    *,
+    CASE
+        WHEN sel_acct = 'G' THEN varLocAmt
+        ELSE 0
+    END AS GST_HST,
+    CASE
+        WHEN sel_acct = 'A' THEN varLocAmt
+        ELSE 0
+    END AS AP_AMT,
+    CASE
+        WHEN sel_acct = 'P' THEN varLocAmt
+        ELSE 0
+    END AS PST,
+    CASE
+        WHEN sel_acct = 'P_SA' THEN varLocAmt
+        ELSE 0
+    END AS PST_SA,
+    CASE
+        WHEN sel_acct = 'Q' THEN varLocAmt
+        ELSE 0
+    END AS QST,
+    CASE
+        WHEN sel_acct = 'O' THEN varLocAmt
+        ELSE 0
+    END AS TAXES_OTHER
+    INTO RAW_SORTED_ACCT FROM RAW_SIGNED;
+    """
+
+    # Define a table, 'transactioninfo', with the unique transaction information
+    # WARNING: THIS MAY NOT BE THE CORRECT WAY TO SIFT TRANSACTION INFO.
+    j19 = """
+        DROP TABLE IF EXISTS transactioninfo;
+        SELECT B.* INTO transactioninfo FROM
+        (SELECT varapkey, MAX(varLocAmt) as var_max FROM RAW_SORTED_ACCT GROUP BY varapkey) AS A
+        inner join
+        (SELECT * FROM RAW_SORTED_ACCT) as B on A.varapkey = B.varapkey AND B.varLocAmt = A.var_max;
+        """
+
+    j20 = """
+        DROP TABLE IF EXISTS transactionsummary;
+        SELECT
+        varapkey,
+        SUM(varLocAmt) as varTransAmt,
+        SUM(varLocAmt) as varLocAmt_sum,
+        SUM(varDocAmt) as varDocAmt_sum,
+        SUM(AP_AMT) as AP_AMT_sum,
+        SUM(GST_HST) as GST_HST_sum,
+        SUM(PST) as PST_sum,
+        SUM(PST_SA) as PST_SA_sum,
+        SUM(QST) as QST_sum,
+        SUM(TAXES_OTHER) as TAXES_OTHER_sum,
+        COUNT(varapkey) as COUNT
+        INTO transactionsummary FROM RAW_SORTED_ACCT GROUP BY varapkey ORDER BY varapkey;
+        """
+
+    j21 = """
+        DROP TABLE IF EXISTS caps;
+        SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
+        INTO caps
+        FROM
+        (SELECT * FROM transactioninfo) AS A
+        left join
+        (SELECT * FROM transactionsummary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
+        """
+
+    # Execute the joins defined above.
     execute(j1)
     execute(j2)
     execute(j3)
@@ -462,10 +584,18 @@ def j1_j10():
     execute(j14)
     execute(j15)
     execute(j16)
+    execute(j17)
+    execute(j18)
+    execute(j19)
+    execute(j20)
+    execute(j21)
 
     return 'OK'
 
 
+    return jsonify(response), 200
+
+#This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details.
 @sap_caps_gen.route('/aps_quality_check', methods=['GET'])
 def aps_quality_check():
     response = {
@@ -473,7 +603,7 @@ def aps_quality_check():
     }
     return jsonify(response)
 
-
+# see feature branch 72-aps_to_caps for more info
 @sap_caps_gen.route('/APS_to_CAPS', methods=['GET'])
 def aps_to_caps():
     response = {
