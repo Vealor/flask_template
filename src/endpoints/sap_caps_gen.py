@@ -146,7 +146,9 @@ def rename_scheme():
     try:
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        print(list_tablenames)
         for table in list_tablenames:
+            print(table)
             renamed_columndata = []
             rename_scheme = {}
             for index, elem in enumerate(mapping):
@@ -154,6 +156,7 @@ def rename_scheme():
                     rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
+            print(columndata)
             for row in columndata:
                 try:
                     row = rename_query_serializer(row)
@@ -214,20 +217,20 @@ def data_quality_check():
     }
     CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
     list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
-    list_tablenames = ['BKPF']
+    list_tablenames = ['MAKT']
     for table in list_tablenames:
         data_dictionary_results[table] = {}
         print(table)
         tableclass = eval('Sap' + str(table.lower().capitalize()))
-
         print(tableclass)
         compiled_data_dictionary = data_dictionary(CDM_query, table)
-        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
+        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == True]
         if unique_keys:
             print(unique_keys)
             unique_key_checker = []
             data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
             for row in data:
+                print(row)
                 row = unique_key_serializer(row, unique_keys)
                 ''.join(row)
                 unique_key_checker.append(row['unique_key'])
