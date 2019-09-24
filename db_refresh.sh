@@ -40,8 +40,7 @@ psql -h localhost -U itra itra_db -c "
   insert into transactions (data, vendor_id, project_id) values ('{}', 1, 1);
   insert into user_project (user_id, project_id) values (1, 1);
 
-    INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BUKRS','BKPF_BUKRS','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_KTOPL','BKPF_KTOPL','FALSE','TRUE','FALSE','dt_varchar','.*');
+INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BUKRS','BKPF_BUKRS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BELNR','BKPF_BELNR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_GJAHR','BKPF_GJAHR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_XBLNR','BKPF_XBLNR','FALSE','TRUE','FALSE','dt_varchar','.*');
@@ -54,8 +53,6 @@ INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_BELNR','BSEG_BELNR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_GJAHR','BSEG_GJAHR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_LIFNR','BSEG_LIFNR','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_BLART','BSEG_BLART','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_BLDAT','BSEG_BLDAT','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_KOART','BSEG_KOART','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_EBELN','BSEG_EBELN','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BSEG_EBELP','BSEG_EBELP','FALSE','TRUE','FALSE','dt_varchar','.*');
@@ -68,7 +65,6 @@ INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('EKPO_EBELP','EKPO_EBELP','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('EKPO_MATNR','EKPO_MATNR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('EKPO_TXZ01','EKPO_TXZ01','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('EKPO_MATNR2','EKPO_MATNR2','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('LFA1_SPRAS','LFA1_SPRAS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('LFA1_LIFNR','LFA1_LIFNR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('LFA1_PSTLZ','LFA1_PSTLZ','FALSE','TRUE','FALSE','dt_varchar','.*');
@@ -92,14 +88,12 @@ INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_BUKRS','T001_BUKRS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_BUTXT','T001_BUTXT','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_WAERS','T001_WAERS','FALSE','TRUE','FALSE','dt_varchar','.*');
-INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_TCODE','T001_TCODE','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T001_KTOPL','T001_KTOPL','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_KALSM','T007S_KALSM','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_SPRAS','T007S_SPRAS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_MWSKZ','T007S_MWSKZ','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('T007S_TEXT1','T007S_TEXT1','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','BUKRS',1,'BKPF_BUKRS');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','KTOPL',1,'BKPF_KTOPL');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','BELNR',1,'BKPF_BELNR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','GJAHR',1,'BKPF_GJAHR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BKPF','XBLNR',1,'BKPF_XBLNR');
@@ -112,8 +106,6 @@ INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_lab
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','BELNR',1,'BSEG_BELNR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','GJAHR',1,'BSEG_GJAHR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','LIFNR',1,'BSEG_LIFNR');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','BLART',1,'BSEG_BLART');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','BLDAT',1,'BSEG_BLDAT');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','KOART',1,'BSEG_KOART');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','EBELN',1,'BSEG_EBELN');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('BSEG','EBELP',1,'BSEG_EBELP');
@@ -126,7 +118,6 @@ INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_lab
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('EKPO','EBELP',1,'EKPO_EBELP');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('EKPO','MATNR',1,'EKPO_MATNR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('EKPO','TXZ01',1,'EKPO_TXZ01');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('EKPO','MATNR2',1,'EKPO_MATNR2');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('LFA1','SPRAS',1,'LFA1_SPRAS');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('LFA1','LIFNR',1,'LFA1_LIFNR');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('LFA1','PSTLZ',1,'LFA1_PSTLZ');
@@ -150,7 +141,6 @@ INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_lab
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','BUKRS',1,'T001_BUKRS');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','BUTXT',1,'T001_BUTXT');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','WAERS',1,'T001_WAERS');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','TCODE',1,'T001_TCODE');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T001','KTOPL',1,'T001_KTOPL');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','KALSM',1,'T007S_KALSM');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T007S','SPRAS',1,'T007S_SPRAS');
