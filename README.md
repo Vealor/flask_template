@@ -60,7 +60,7 @@ Quit PSQL
 ```
 Apply migrations:
 ```
-./db_dev.sh
+./db_refresh.sh
 ```
 
 ___
