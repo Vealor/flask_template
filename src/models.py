@@ -143,6 +143,8 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
             'user_project_ids': [i.project_id for i in self.user_projects]
         }
 
@@ -158,6 +160,8 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
             'user_projects': [i.serialize for i in self.user_projects]
         }
 
