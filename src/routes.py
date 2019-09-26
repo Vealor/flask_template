@@ -40,6 +40,10 @@ api.register_blueprint(projects, url_prefix='/projects')
 from src.endpoints.train import train
 api.register_blueprint(train, url_prefix='/train')
 
+# Transaction Endpoints
+from src.endpoints.transactions import transactions
+api.register_blueprint(transactions, url_prefix='/transactions')
+
 # User Endpoints
 from src.endpoints.users import users
 api.register_blueprint(users, url_prefix='/users')
