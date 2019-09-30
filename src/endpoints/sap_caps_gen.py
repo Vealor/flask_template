@@ -482,104 +482,6 @@ def j1_j10():
         # Add sel_acct
         # Add amounts (unsigned)
         # Sort by varapkey, then by varLocAmt
-        j17 = """
-        DROP TABLE IF EXISTS RAW_SIGNED;
-        SELECT * ,
-        CASE
-            WHEN data ->> 'SHKZG' = 'S' THEN DMBTR
-            WHEN data ->> 'SHKZG' = 'H' THEN -1*DMBTR
-            ELSE 0
-        END AS varLocAmt,
-        CASE
-            WHEN data ->> 'SHKZG' = 'S' THEN WRBTR
-            WHEN data ->> 'SHKZG' = 'H' THEN -1*WRBTR
-            ELSE 0
-        END AS varDocAmt,
-        CASE
-            WHEN data ->> 'HKONT' IN ('4700000000','4720000000','4750000000','4770000000') THEN 'G'
-            WHEN data ->> 'HKONT' IN ('4000000000','4000000002','4009000000','4009000002','4009000032','4020000000','4020000002', '4029000000', '4109000002', '4100000000', '4100000002', '4100000010', '4109000000', '4109000010', '4120000000', '4120000002', '4120000010', '4129000000', '4129000002', '4129000010', '4170000000', '4300000000', '4400000000', '4420000000', '4420000010', '4429000010', '4449900000', '4609000000', '4650000000', '4751300000') THEN 'A'
-            ELSE ''
-        END AS sel_acct
-        INTO RAW_SIGNED
-        FROM
-        (SELECT *,
-        CAST(data ->> 'WRBTR' as float) as WRBTR,
-        CAST(data ->> 'PSWBT' as float) as PSWBT,
-        CAST(data ->> 'DMBTR' as float) as DMBTR,
-        CAST(data ->> 'DMBE2' as float) as DMBE2,
-        CAST(data ->> 'RWBTR' as float) as RWBTR
-         FROM RAW) as L ORDER BY varapkey, varLocAmt DESC;
-        """
-
-        # Based on sel_acct value, assign the varLocAmt to the right account "bin"
-        # e.g. AP, GST, PST, etc.
-        j18 = """
-        DROP TABLE IF EXISTS RAW_SORTED_ACCT;
-        SELECT
-        *,
-        CASE
-            WHEN sel_acct = 'G' THEN varLocAmt
-            ELSE 0
-        END AS GST_HST,
-        CASE
-            WHEN sel_acct = 'A' THEN varLocAmt
-            ELSE 0
-        END AS AP_AMT,
-        CASE
-            WHEN sel_acct = 'P' THEN varLocAmt
-            ELSE 0
-        END AS PST,
-        CASE
-            WHEN sel_acct = 'P_SA' THEN varLocAmt
-            ELSE 0
-        END AS PST_SA,
-        CASE
-            WHEN sel_acct = 'Q' THEN varLocAmt
-            ELSE 0
-        END AS QST,
-        CASE
-            WHEN sel_acct = 'O' THEN varLocAmt
-            ELSE 0
-        END AS TAXES_OTHER
-        INTO RAW_SORTED_ACCT FROM RAW_SIGNED;
-        """
-
-        # Define a table, 'transactioninfo', with the unique transaction information
-        # WARNING: THIS MAY NOT BE THE CORRECT WAY TO SIFT TRANSACTION INFO.
-        j19 = """
-            DROP TABLE IF EXISTS transactioninfo;
-            SELECT B.* INTO transactioninfo FROM
-            (SELECT varapkey, MAX(varLocAmt) as var_max FROM RAW_SORTED_ACCT GROUP BY varapkey) AS A
-            inner join
-            (SELECT * FROM RAW_SORTED_ACCT) as B on A.varapkey = B.varapkey AND B.varLocAmt = A.var_max;
-            """
-
-        j20 = """
-            DROP TABLE IF EXISTS transactionsummary;
-            SELECT
-            varapkey,
-            SUM(varLocAmt) as varTransAmt,
-            SUM(varLocAmt) as varLocAmt_sum,
-            SUM(varDocAmt) as varDocAmt_sum,
-            SUM(AP_AMT) as AP_AMT_sum,
-            SUM(GST_HST) as GST_HST_sum,
-            SUM(PST) as PST_sum,
-            SUM(PST_SA) as PST_SA_sum,
-            SUM(QST) as QST_sum,
-            SUM(TAXES_OTHER) as TAXES_OTHER_sum,
-            COUNT(varapkey) as COUNT
-            INTO transactionsummary FROM RAW_SORTED_ACCT GROUP BY varapkey ORDER BY varapkey;
-            """
-
-        j21 = """
-            DROP TABLE IF EXISTS caps;
-            SELECT A.*, B.varTransAmt, B.varLocAmt_sum, B.varDocAmt_sum, B.AP_AMT_sum, B.GST_HST_sum, B.PST_sum, B.PST_SA_sum, B.QST_sum,B.TAXES_OTHER_sum, B.count
-            INTO caps
-            FROM
-            (SELECT * FROM transactioninfo) AS A
-            left join
-            (SELECT * FROM transactionsummary) as B on A.varapkey = B.varapkey ORDER BY varapkey;
-            """
 
     # Execute the joins defined above.
         execute(j1)
@@ -598,11 +500,6 @@ def j1_j10():
         execute(j14)
         execute(j15)
         execute(j16)
-        execute(j17)
-        execute(j18)
-        execute(j19)
-        execute(j20)
-        execute(j21)
         response['message'] = ''
         response['payload'] = []
     except Exception as e:
