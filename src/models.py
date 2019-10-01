@@ -11,10 +11,11 @@ db = SQLAlchemy()
 # ENUMS
 
 class Roles(enum.Enum):
-    it_admin = "it_admin"
-    tax_admin = "tax_admin"
-    data_admin = "data_admin"
+    tax_practitioner = "tax_practitioner"
     tax_approver = "tax_approver"
+    tax_master = "tax_master"
+    data_master = "data_master"
+    administrative_assistant = "administrative_assistant"
 
     @classmethod
     def list(cls):
@@ -122,6 +123,7 @@ class User(db.Model):
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
     role = db.Column(db.Enum(Roles), nullable=False)
+    is_system_administrator = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_superuser = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     req_pass_reset = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
 
@@ -140,7 +142,10 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
-            'role': self.role.name
+            'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
+            'user_project_ids': [i.project_id for i in self.user_projects]
         }
 
     @property
@@ -155,6 +160,8 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
             'user_projects': [i.serialize for i in self.user_projects]
         }
 
@@ -254,7 +261,7 @@ class Client(db.Model):
     __tablename__ = 'clients'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # client_classification_rules = db.relationship('ClassificationRule', back_populates='classification_rule_client', cascade="save-update", lazy='dynamic')

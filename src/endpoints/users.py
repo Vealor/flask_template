@@ -137,7 +137,7 @@ def update_user(id):
         if check:
             raise ValueError('User email {} already exists.'.format(data['email']))
         # check if these initials exist
-        check = User.query.filter_by(initials=data['initials']).first()
+        check = User.query.filter_by(initials=data['initials']).filter(User.id != id).first()
         if check:
             raise ValueError('User initials {} already exist.'.format(data['initials']))
 
