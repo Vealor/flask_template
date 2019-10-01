@@ -15,15 +15,19 @@ master_model = Blueprint('master_model', __name__)
 #===============================================================================
 # Get all master models
 @master_model.route('/', methods=['GET'])
+@master_model.route('/<path:id>', methods=['GET'])
 # @jwt_required
-def get_master_models():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+def get_master_models(id=None):
 
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
         query = MasterModel.query
-
-        response['message'] = ''
+        if id:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError("No master model with ID {} exists.".format(id))
         response['payload'] = [i.serialize for i in query.all()]
+        response['message'] = ''
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
