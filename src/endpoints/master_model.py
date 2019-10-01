@@ -242,7 +242,7 @@ def do_predict():
 
 #===============================================================================
 # Delete a master model
-@master_model.route('/delete/<path:id>', methods=['DELETE'])
+@master_model.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_master_model(id):
     response = { 'status': '', 'message': '', 'payload': [] }
