@@ -108,7 +108,7 @@ def do_train():
     except Exception as e:
         db.session.rollback()
         response['status'] = 'error'
-        response['message'] = str(e)
+        response['message'] = "Cannot train model: {}".format(str(e))
         return jsonify(response), 400
 
     # Train the instantiated model and edit the db entry
@@ -145,18 +145,6 @@ def do_train():
             'test_data_end': test_end
         }
 
-    except Exception as e:
-        # Remove failed model from DB
-        db.session.rollback()
-
-        # Send an email here?
-        # ==================
-
-        response['status'] = 'error'
-        response['message'] = "Training failed: {}".format(str(e))
-        return jsonify(response), 500
-
-    try:
         model_performance_dict['client_model_id'] = model_id
         new_model = ClientModelPerformance(**model_performance_dict)
         db.session.add(new_model)
@@ -191,9 +179,8 @@ def do_train():
     except Exception as e:
         db.session.rollback()
         response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response['message'] = "Training failed: {}".format(str(e))
+        return jsonify(response), 500
 
     return jsonify(response), 201
 
