@@ -30,6 +30,15 @@ def mapping_serializer(label):
 def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            raise Exception('data is not a dict')
+        request_types = {
+            'project_id' : 'int',
+            'file_name': 'str',
+            'system': 'str'
+        }
+        validate_request_data(data, 'dictionary', request_types)
         get_data(response)
     except Exception as e:
         response['status'] = 'error'

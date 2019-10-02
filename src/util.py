@@ -32,23 +32,41 @@ def get_date_obj_from_str(date_str):
 
 #===============================================================================
 # Checks that keys and types are in JSON input
-def validate_request_data(data, validation):
+def validate_request_data(data, datatype, validation):
+    if datatype == 'list':
+        # Ensures keys in validation are all in data. Data can have excess keys.
+        if [x for x in validation.keys() if not x in data.keys()]:
+            raise ValueError('Request is missing required keys.')
 
-    # Ensures keys in validation are all in data. Data can have excess keys.
-    if [x for x in validation.keys() if not x in data.keys()]:
-        raise ValueError('Request is missing required keys.')
+        # Esures that the datatypes specified in validation match the types in data.
+        # Example Available types:
+        #   int, float, bool, str, list, tuple, dict, class, object
+        if [x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]:
+            raise ValueError('Request contains improper data types for keys.')
 
-    # Esures that the datatypes specified in validation match the types in data.
-    # Example Available types:
-    #   int, float, bool, str, list, tuple, dict, class, object
-    if [x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]:
-        raise ValueError('Request contains improper data types for keys.')
+        # ensures strings are not empty
+        for x in validation.keys():
+            if validation[x] == 'str':
+                if "".join(e for e in data[x] if e.isalnum()) == '':
+                    raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
+    elif datatype == 'dictionary':
+        print('hello')
+        # Ensures keys in validation are all in data. Data can have excess keys.
+        if {x for x in validation.keys() if not x in data.keys()}:
+            raise ValueError('Request is missing required keys.')
 
-    # ensures strings are not empty
-    for x in validation.keys():
-        if validation[x] == 'str':
-            if "".join(e for e in data[x] if e.isalnum()) == '':
-                raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
+        # Esures that the datatypes specified in validation match the types in data.
+        # Example Available types:
+        #   int, float, bool, str, list, tuple, dict, class, object
+        if {x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))}:
+            raise ValueError('Request contains improper data types for keys.')
+
+        # ensures strings are not empty
+        for x in validation.keys():
+            if validation[x] == 'str':
+                if "".join(e for e in data[x] if e.isalnum()) == '':
+                    raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
+
 
 #===============================================================================
 # Sends an email to the user with given inputs
