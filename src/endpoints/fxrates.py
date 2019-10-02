@@ -2,13 +2,11 @@
 General Endpoints
 '''
 import json
-import psycopg2
 import random
 from sqlalchemy import exc
 import datetime
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
-from src.util import validate_request_data, get_date_obj_from_str
 import datetime
 
 fxrates = Blueprint('fxrates', __name__)

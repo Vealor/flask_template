@@ -46,6 +46,9 @@ class DevelopmentConfig(Config):
     }
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+    CAPS_RAW_LOCATION = 'caps_gen_processing/caps_gen_raw'
+    CAPS_UNZIPPING_LOCATION = 'caps_gen_processing/caps_gen_unzipped'
+
 
 class ProductionConfig(Config):
     # Statement for enabling the development environment

@@ -8,18 +8,15 @@ import os
 import re
 import zipfile
 import requests
-import sqlalchemy
 from collections import Counter
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
-from sqlalchemy.sql import expression, functions
 from config import *
+from src.util import *
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
-def get_cwd(read_path):
-    current_directory = os.path.dirname(os.path.abspath('__file__'))
-    current_file_path = os.path.join(current_directory, read_path)
-    return current_file_path
+
+
 
 def mapping_serializer(label):
     return {
@@ -27,42 +24,13 @@ def mapping_serializer(label):
         "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
     }
 
-#helper function to recursively unzip files within a folder
-def extract_nested_zip(zippedFile, toFolder):
-    try:
-        with zipfile.ZipFile(zippedFile, 'r') as zfile:
-            zfile.extractall(path=toFolder)
-    except NotImplementedError:
-        raise Exception(str(zippedFile) + ' has compression errors. Please fix')
-    except Exception as e:
-        raise Exception('Unable to work with file ' + str(zippedFile))
-    os.remove(zippedFile)
-    for root, dirs, files in os.walk(toFolder):
-        for filename in files:
-            if re.search(r'\.(?i)ZIP$', filename):
-                fileSpec = os.path.join(root, filename)
-                extract_nested_zip(fileSpec, root)
 #This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
 #The endpoint can go through nested folders/zips.
 @sap_caps_gen.route('/unzipping', methods=['POST'])
 def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     try:
-        current_input_path = get_cwd('caps_gen_processing/caps_gen_raw')
-        current_output_path = get_cwd('caps_gen_processing/caps_gen_unzipped')
-        cwd = os.getcwd()
-        os.chdir(current_input_path)
-        extension = '.zip'
-        for item in os.listdir(current_input_path):
-            if item.lower().endswith(extension):
-                try:
-                    extract_nested_zip(item, current_output_path)
-                except Exception as e:
-                    response['status'] = 'Cannot unzip input zip'
-                    response['message'] = response['message'] + ('Failed on ' + str(item))
-            else:
-                response['payload']['files_skipped'].append(item.lower())
-        os.chdir(cwd)
+        get_data(response)
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -71,7 +39,6 @@ def unzipping():
     response['message'] = ''
     response['payload'] = []
     return jsonify(response), 200
-
 
 #MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
 @sap_caps_gen.route('/build_master_tables', methods=['GET'])
@@ -238,7 +205,6 @@ def data_quality_check():
             data_dictionary_results[table] = {}
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             compiled_data_dictionary = data_dictionary(CDM_query, table)
-
             ### UNIQUENESS CHECK ###
             #The argument should be set to true when some of is_unique column in CDM labels is set to True.
             unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
@@ -530,108 +496,114 @@ def aps_to_caps():
     try:
         response = {'status': 'ok', 'message': {}, 'payload': {}}
         j17 = """
-        DROP TABLE IF EXISTS raw_relational;
-        select
-        CAST( data ->> 'MANDT' as TEXT) MANDT,
-        CAST( data ->> 'SGTXT' as TEXT) SGTXT,
-        CAST( data ->> 'BEWAR' as TEXT) BEWAR,
-        CAST( data ->> 'KOART' as TEXT) KOART,
-        CAST( data ->> 'BELNR' as TEXT) BELNR,
-        CAST( data ->> 'REBZJ' as TEXT) REBZJ,
-        CAST( data ->> 'KUNNR' as TEXT) KUNNR,
-        CAST( data ->> 'GSBER' as TEXT) GSBER,
-        CAST( data ->> 'ZBD1P' as TEXT) ZBD1P,
-        CAST( data ->> 'MWSTS' as TEXT) MWSTS,
-        CAST( data ->> 'SEGMENT' as TEXT) SEGMENT,
-        CAST( data ->> 'VBUND' as TEXT) VBUND,
-        CAST( data ->> 'STCEG' as TEXT) STCEG,
-        CAST( data ->> 'XBILK' as TEXT) XBILK,
-        CAST( data ->> 'HWBAS' as TEXT) HWBAS,
-        CAST( data ->> 'SKFBT' as TEXT) SKFBT,
-        CAST( data ->> 'EBELN' as TEXT) EBELN,
-        CAST( data ->> 'ZUMSK' as TEXT) ZUMSK,
-        CAST( data ->> 'ANBWA' as TEXT) ANBWA,
-        CAST( data ->> 'BUZEI' as TEXT) BUZEI,
-        CAST( data ->> 'ERFME' as TEXT) ERFME,
-        CAST( data ->> 'ZFBDT' as TEXT) ZFBDT,
-        CAST( data ->> 'VORGN' as TEXT) VORGN,
-        CAST( data ->> 'GJAHR' as TEXT) GJAHR,
-        CAST( data ->> 'XHKOM' as TEXT) XHKOM,
-        CAST( data ->> 'ZBD3T' as TEXT) ZBD3T,
-        CAST( data ->> 'KZBTR' as TEXT) KZBTR,
-        CAST( data ->> 'FKBER_LONG' as TEXT) FKBER_LONG,
-        CAST( data ->> 'BWKEY' as TEXT) BWKEY,
-        CAST( data ->> 'AUGDT' as TEXT) AUGDT,
-        CAST( data ->> 'ZBD2T' as TEXT) ZBD2T,
-        CAST( data ->> 'AUGCP' as TEXT) AUGCP,
-        CAST( data ->> 'HKONT' as TEXT) HKONT,
-        CAST( data ->> 'ZUONR' as TEXT) ZUONR,
-        CAST( data ->> 'PSWSL' as TEXT) PSWSL,
-        CAST( data ->> 'XCPDD' as TEXT) XCPDD,
-        CAST( data ->> 'ANLN2' as TEXT) ANLN2,
-        CAST( data ->> 'AUFPL' as TEXT) AUFPL,
-        CAST( data ->> 'XRAGL' as TEXT) XRAGL,
-        CAST( data ->> 'KTOSL' as TEXT) KTOSL,
-        CAST( data ->> 'KIDNO' as TEXT) KIDNO,
-        CAST( data ->> 'VBEL2' as TEXT) VBEL2,
-        CAST( data ->> 'XZAHL' as TEXT) XZAHL,
-        CAST( data ->> 'DMBE2' as TEXT) DMBE2,
-        CAST( data ->> 'ANLN1' as TEXT) ANLN1,
-        CAST( data ->> 'NPLNR' as TEXT) NPLNR,
-        CAST( data ->> 'APLZL' as TEXT) APLZL,
-        CAST( data ->> 'REBZG' as TEXT) REBZG,
-        CAST( data ->> 'SKNTO' as TEXT) SKNTO,
-        CAST( data ->> 'AUGGJ' as TEXT) AUGGJ,
-        CAST( data ->> 'PROJK' as TEXT) PROJK,
-        CAST( data ->> 'MEINS' as TEXT) MEINS,
-        CAST( data ->> 'XNEGP' as TEXT) XNEGP,
-        CAST( data ->> 'HWMET' as TEXT) HWMET,
-        CAST( data ->> 'PRCTR' as TEXT) PRCTR,
-        CAST( data ->> 'SAKNR' as TEXT) SAKNR,
-        CAST( data ->> 'QSSKZ' as TEXT) QSSKZ,
-        CAST( data ->> 'WMWST' as TEXT) WMWST,
-        CAST( data ->> 'MATNR' as TEXT) MATNR,
-        CAST( data ->> 'ZBD1T' as TEXT) ZBD1T,
-        CAST( data ->> 'BUZID' as TEXT) BUZID,
-        CAST( data ->> 'FKBER' as TEXT) FKBER,
-        CAST( data ->> 'TXGRP' as TEXT) TXGRP,
-        CAST( data ->> 'KOSTL' as TEXT) KOSTL,
-        CAST( data ->> 'SHKZG' as TEXT) SHKZG,
-        CAST( data ->> 'ZTERM' as TEXT) ZTERM,
-        CAST( data ->> 'XUMSW' as TEXT) XUMSW,
-        CAST( data ->> 'XAUTO' as TEXT) XAUTO,
-        CAST( data ->> 'AUGBL' as TEXT) AUGBL,
-        CAST( data ->> 'UMSKS' as TEXT) UMSKS,
-        CAST( data ->> 'VBELN' as TEXT) VBELN,
-        CAST( data ->> 'BSCHL' as TEXT) BSCHL,
-        CAST( data ->> 'BWTAR' as TEXT) BWTAR,
-        CAST( data ->> 'QSFBT' as TEXT) QSFBT,
-        CAST( data ->> 'WRBTR' as TEXT) WRBTR,
-        CAST( data ->> 'MENGE' as TEXT) MENGE,
-        CAST( data ->> 'REBZZ' as TEXT) REBZZ,
-        CAST( data ->> 'TXJCD' as TEXT) TXJCD,
-        CAST( data ->> 'PSWBT' as TEXT) PSWBT,
-        CAST( data ->> 'TAXPS' as TEXT) TAXPS,
-        CAST( data ->> 'MWSKZ' as TEXT) MWSKZ,
-        CAST( data ->> 'PARGB' as TEXT) PARGB,
-        CAST( data ->> 'ZLSCH' as TEXT) ZLSCH,
-        CAST( data ->> 'WERKS' as TEXT) WERKS,
-        CAST( data ->> 'BUKRS' as TEXT) BUKRS,
-        CAST( data ->> 'AUFNR' as TEXT) AUFNR,
-        CAST( data ->> 'DMBTR' as TEXT) DMBTR,
-        CAST( data ->> 'QSSHB' as TEXT) QSSHB,
-        CAST( data ->> 'BUSTW' as TEXT) BUSTW,
-        CAST( data ->> 'EBELP' as TEXT) EBELP,
-        CAST( data ->> 'UMSKZ' as TEXT) UMSKZ,
-        CAST( data ->> 'GVTYP' as TEXT) GVTYP,
-        CAST( data ->> 'ZBD2P' as TEXT) ZBD2P,
-        CAST( data ->> 'NEBTR' as TEXT) NEBTR,
-        CAST( data ->> 'EGLLD' as TEXT) EGLLD,
-        case when cast(data ->> 'SHKZG' as TEXT) = 'H' then -(cast(data ->> 'WRBTR' as FLOAT)) else cast(data ->> 'WRBTR' as FLOAT) end vardocamt,
-        case when cast(data ->> 'SHKZG' as TEXT) = 'H' then -(cast(data ->> 'DMBTR' as FLOAT)) else  cast(data ->> 'DMBTR' as FLOAT) end varlocamt,
-        *
-        into raw_relational
-        from raw
+            DROP TABLE IF EXISTS raw_relational;
+            select
+            CAST( data ->> 'MANDT' as TEXT) MANDT,
+            CAST( data ->> 'SGTXT' as TEXT) SGTXT,
+            CAST( data ->> 'BEWAR' as TEXT) BEWAR,
+            CAST( data ->> 'KOART' as TEXT) KOART,
+            CAST( data ->> 'BELNR' as TEXT) BELNR,
+            CAST( data ->> 'REBZJ' as TEXT) REBZJ,
+            CAST( data ->> 'KUNNR' as TEXT) KUNNR,
+            CAST( data ->> 'GSBER' as TEXT) GSBER,
+            CAST( data ->> 'ZBD1P' as TEXT) ZBD1P,
+            CAST( data ->> 'MWSTS' as TEXT) MWSTS,
+            CAST( data ->> 'SEGMENT' as TEXT) SEGMENT,
+            CAST( data ->> 'VBUND' as TEXT) VBUND,
+            CAST( data ->> 'STCEG' as TEXT) STCEG,
+            CAST( data ->> 'XBILK' as TEXT) XBILK,
+            CAST( data ->> 'HWBAS' as TEXT) HWBAS,
+            CAST( data ->> 'SKFBT' as TEXT) SKFBT,
+            CAST( data ->> 'EBELN' as TEXT) EBELN,
+            CAST( data ->> 'ZUMSK' as TEXT) ZUMSK,
+            CAST( data ->> 'ANBWA' as TEXT) ANBWA,
+            CAST( data ->> 'BUZEI' as TEXT) BUZEI,
+            CAST( data ->> 'ERFME' as TEXT) ERFME,
+            CAST( data ->> 'ZFBDT' as TEXT) ZFBDT,
+            CAST( data ->> 'VORGN' as TEXT) VORGN,
+            CAST( data ->> 'GJAHR' as TEXT) GJAHR,
+            CAST( data ->> 'XHKOM' as TEXT) XHKOM,
+            CAST( data ->> 'ZBD3T' as TEXT) ZBD3T,
+            CAST( data ->> 'KZBTR' as TEXT) KZBTR,
+            CAST( data ->> 'FKBER_LONG' as TEXT) FKBER_LONG,
+            CAST( data ->> 'BWKEY' as TEXT) BWKEY,
+            CAST( data ->> 'AUGDT' as TEXT) AUGDT,
+            CAST( data ->> 'ZBD2T' as TEXT) ZBD2T,
+            CAST( data ->> 'AUGCP' as TEXT) AUGCP,
+            CAST( data ->> 'HKONT' as TEXT) HKONT,
+            CAST( data ->> 'ZUONR' as TEXT) ZUONR,
+            CAST( data ->> 'PSWSL' as TEXT) PSWSL,
+            CAST( data ->> 'XCPDD' as TEXT) XCPDD,
+            CAST( data ->> 'ANLN2' as TEXT) ANLN2,
+            CAST( data ->> 'AUFPL' as TEXT) AUFPL,
+            CAST( data ->> 'XRAGL' as TEXT) XRAGL,
+            CAST( data ->> 'KTOSL' as TEXT) KTOSL,
+            CAST( data ->> 'KIDNO' as TEXT) KIDNO,
+            CAST( data ->> 'VBEL2' as TEXT) VBEL2,
+            CAST( data ->> 'XZAHL' as TEXT) XZAHL,
+            CAST( data ->> 'DMBE2' as TEXT) DMBE2,
+            CAST( data ->> 'ANLN1' as TEXT) ANLN1,
+            CAST( data ->> 'NPLNR' as TEXT) NPLNR,
+            CAST( data ->> 'APLZL' as TEXT) APLZL,
+            CAST( data ->> 'REBZG' as TEXT) REBZG,
+            CAST( data ->> 'SKNTO' as TEXT) SKNTO,
+            CAST( data ->> 'AUGGJ' as TEXT) AUGGJ,
+            CAST( data ->> 'PROJK' as TEXT) PROJK,
+            CAST( data ->> 'MEINS' as TEXT) MEINS,
+            CAST( data ->> 'XNEGP' as TEXT) XNEGP,
+            CAST( data ->> 'HWMET' as TEXT) HWMET,
+            CAST( data ->> 'PRCTR' as TEXT) PRCTR,
+            CAST( data ->> 'SAKNR' as TEXT) SAKNR,
+            CAST( data ->> 'QSSKZ' as TEXT) QSSKZ,
+            CAST( data ->> 'WMWST' as TEXT) WMWST,
+            CAST( data ->> 'MATNR' as TEXT) MATNR,
+            CAST( data ->> 'ZBD1T' as TEXT) ZBD1T,
+            CAST( data ->> 'BUZID' as TEXT) BUZID,
+            CAST( data ->> 'FKBER' as TEXT) FKBER,
+            CAST( data ->> 'TXGRP' as TEXT) TXGRP,
+            CAST( data ->> 'KOSTL' as TEXT) KOSTL,
+            CAST( data ->> 'SHKZG' as TEXT) SHKZG,
+            CAST( data ->> 'ZTERM' as TEXT) ZTERM,
+            CAST( data ->> 'XUMSW' as TEXT) XUMSW,
+            CAST( data ->> 'XAUTO' as TEXT) XAUTO,
+            CAST( data ->> 'AUGBL' as TEXT) AUGBL,
+            CAST( data ->> 'UMSKS' as TEXT) UMSKS,
+            CAST( data ->> 'VBELN' as TEXT) VBELN,
+            CAST( data ->> 'BSCHL' as TEXT) BSCHL,
+            CAST( data ->> 'BWTAR' as TEXT) BWTAR,
+            CAST( data ->> 'QSFBT' as TEXT) QSFBT,
+            CAST( data ->> 'WRBTR' as TEXT) WRBTR,
+            CAST( data ->> 'MENGE' as TEXT) MENGE,
+            CAST( data ->> 'REBZZ' as TEXT) REBZZ,
+            CAST( data ->> 'TXJCD' as TEXT) TXJCD,
+            CAST( data ->> 'PSWBT' as TEXT) PSWBT,
+            CAST( data ->> 'TAXPS' as TEXT) TAXPS,
+            CAST( data ->> 'MWSKZ' as TEXT) MWSKZ,
+            CAST( data ->> 'PARGB' as TEXT) PARGB,
+            CAST( data ->> 'ZLSCH' as TEXT) ZLSCH,
+            CAST( data ->> 'WERKS' as TEXT) WERKS,
+            CAST( data ->> 'BUKRS' as TEXT) BUKRS,
+            CAST( data ->> 'AUFNR' as TEXT) AUFNR,
+            CAST( data ->> 'DMBTR' as TEXT) DMBTR,
+            CAST( data ->> 'QSSHB' as TEXT) QSSHB,
+            CAST( data ->> 'BUSTW' as TEXT) BUSTW,
+            CAST( data ->> 'EBELP' as TEXT) EBELP,
+            CAST( data ->> 'UMSKZ' as TEXT) UMSKZ,
+            CAST( data ->> 'GVTYP' as TEXT) GVTYP,
+            CAST( data ->> 'ZBD2P' as TEXT) ZBD2P,
+            CAST( data ->> 'NEBTR' as TEXT) NEBTR,
+            CAST( data ->> 'EGLLD' as TEXT) EGLLD,
+            case when cast(data ->> 'SHKZG' as TEXT) = 'H' 
+                then -(cast(data ->> 'WRBTR' as FLOAT)) 
+                else cast(data ->> 'WRBTR' as FLOAT) 
+                end vardocamt,
+            case when cast(data ->> 'SHKZG' as TEXT) = 'H' 
+                then -(cast(data ->> 'DMBTR' as FLOAT)) 
+                else  cast(data ->> 'DMBTR' as FLOAT) 
+                end varlocamt,
+            *
+            into raw_relational
+            from raw
         """
 
 
@@ -666,128 +638,244 @@ def aps_to_caps():
                 *
              FROM
                 (
-                   SELECT
-                      varapkey as varapkey_temp,
-                      Trim(hkont) AS varaccountcode_temp,
-                      mandt,
-                      sgtxt,
-                      bewar,
-                      koart,
-                      belnr,
-                      rebzj,
-                      kunnr,
-                      gsber,
-                      zbd1p,
-                      mwsts,
-                      segment,
-                      vbund,
-                      stceg,
-                      xbilk,
-                      hwbas,
-                      skfbt,
-                      ebeln,
-                      zumsk,
-                      anbwa,
-                      buzei,
-                      erfme,
-                      zfbdt,
-                      vorgn,
-                      gjahr,
-                      xhkom,
-                      zbd3t,
-                      kzbtr,
-                      fkber_long,
-                      bwkey,
-                      augdt,
-                      zbd2t,
-                      augcp,
-                      hkont,
-                      zuonr,
-                      pswsl,
-                      xcpdd,
-                      anln2,
-                      aufpl,
-                      xragl,
-                      ktosl,
-                      kidno,
-                      vbel2,
-                      xzahl,
-                      anln1,
-                      nplnr,
-                      aplzl,
-                      rebzg,
-                      sknto,
-                      auggj,
-                      projk,
-                      meins,
-                      xnegp,
-                      hwmet,
-                      prctr,
-                      saknr,
-                      qsskz,
-                      wmwst,
-                      matnr,
-                      zbd1t,
-                      buzid,
-                      fkber,
-                      txgrp,
-                      kostl,
-                      shkzg,
-                      zterm,
-                      xumsw,
-                      xauto,
-                      augbl,
-                      umsks,
-                      vbeln,
-                      bschl,
-                      bwtar,
-                      qsfbt,
-                      menge,
-                      rebzz,
-                      txjcd,
-                      taxps,
-                      mwskz,
-                      pargb,
-                      zlsch,
-                      werks,
-                      bukrs,
-                      aufnr,
-                      qsshb,
-                      bustw,
-                      ebelp,
-                      umskz,
-                      gvtyp,
-                      zbd2p,
-                      nebtr,
-                      eglld,
-                      id,
-                      project_id,
-                      lifnr,
-                      varmultivnd,
-                      blart,
-                      bldat,
-                      xblnr,
-                      waers,
-                      monat,
-                      cputm,
-                      kursf,
-                      tcode,
-                      ktopl,
-                      name1,
-                      name2,
-                      land1,
-                      regio,
-                      ort01,
-                      pstlz,
-                      stras,
-                      txt50,
-                      txz01,
-                      matnr2,
-                      maktx,
-                      kalsm,
-                      Row_number() OVER( partition BY varapkey, Trim(hkont)
-                   ORDER BY
-                      mandt, sgtxt, bewar, koart, belnr , rebzj , kunnr, gsber, zbd1p, mwsts, segment, vbund, stceg, xbilk, hwbas, skfbt, ebeln, zumsk, anbwa , buzei, erfme, zfbdt, vorgn, gjahr, xhkom, zbd3t, kzbtr, fkber_long, bwkey, augdt, zbd2t, augcp, hkont, zuonr, pswsl, xcpdd, anln2, aufpl, xragl, ktosl, kidno, vbel2, xzahl, anln1, nplnr, aplzl, rebzg, sknto, auggj, projk, meins, xnegp, hwmet, prctr, saknr, qsskz, wmwst, matnr, zbd1t, buzid, fkber, txgrp, kostl, shkzg, zterm, xumsw, xauto, augbl, umsks, vbeln, bschl, bwtar, qsfbt, menge, rebzz, txjcd, taxps, mwskz, pargb, zlsch, werks, bukrs, aufnr, qsshb, bustw, ebelp, umskz, gvtyp, zbd2p, nebtr, eglld, id, project_id, lifnr, varmultivnd, blart, bldat , xblnr , waers, monat, cputm, kursf, tcode, ktopl, name1, name2, land1, regio, ort01, pstlz, stras, txt50, txz01, matnr2, maktx, kalsm, text1 DESC) AS roworder
+                SELECT
+                varapkey as varapkey_temp,
+                Trim(hkont) AS varaccountcode_temp,
+                mandt,
+                sgtxt,
+                bewar,
+                koart,
+                belnr,
+                rebzj,
+                kunnr,
+                gsber,
+                zbd1p,
+                mwsts,
+                segment,
+                vbund,
+                stceg,
+                xbilk,
+                hwbas,
+                skfbt,
+                ebeln,
+                zumsk,
+                anbwa,
+                buzei,
+                erfme,
+                zfbdt,
+                vorgn,
+                gjahr,
+                xhkom,
+                zbd3t,
+                kzbtr,
+                fkber_long,
+                bwkey,
+                augdt,
+                zbd2t,
+                augcp,
+                hkont,
+                zuonr,
+                pswsl,
+                xcpdd,
+                anln2,
+                aufpl,
+                xragl,
+                ktosl,
+                kidno,
+                vbel2,
+                xzahl,
+                anln1,
+                nplnr,
+                aplzl,
+                rebzg,
+                sknto,
+                auggj,
+                projk,
+                meins,
+                xnegp,
+                hwmet,
+                prctr,
+                saknr,
+                qsskz,
+                wmwst,
+                matnr,
+                zbd1t,
+                buzid,
+                fkber,
+                txgrp,
+                kostl,
+                shkzg,
+                zterm,
+                xumsw,
+                xauto,
+                augbl,
+                umsks,
+                vbeln,
+                bschl,
+                bwtar,
+                qsfbt,
+                menge,
+                rebzz,
+                txjcd,
+                taxps,
+                mwskz,
+                pargb,
+                zlsch,
+                werks,
+                bukrs,
+                aufnr,
+                qsshb,
+                bustw,
+                ebelp,
+                umskz,
+                gvtyp,
+                zbd2p,
+                nebtr,
+                eglld,
+                id,
+                project_id,
+                lifnr,
+                varmultivnd,
+                blart,
+                bldat,
+                xblnr,
+                waers,
+                monat,
+                cputm,
+                kursf,
+                tcode,
+                ktopl,
+                name1,
+                name2,
+                land1,
+                regio,
+                ort01,
+                pstlz,
+                stras,
+                txt50,
+                txz01,
+                matnr2,
+                maktx,
+                kalsm,
+                Row_number() OVER( partition BY varapkey, Trim(hkont)
+                ORDER BY
+                mandt, 
+                sgtxt, 
+                bewar, 
+                koart, 
+                belnr,
+                rebzj,
+                kunnr,
+                gsber,
+                zbd1p,
+                mwsts,
+                segment,
+                vbund,
+                stceg,
+                xbilk,
+                hwbas,
+                skfbt,
+                ebeln,
+                zumsk,
+                anbwa,
+                buzei,
+                erfme,
+                zfbdt,
+                vorgn,
+                gjahr,
+                xhkom,
+                zbd3t,
+                kzbtr,
+                fkber_long,
+                bwkey,
+                augdt,
+                zbd2t,
+                augcp,
+                hkont,
+                zuonr,
+                pswsl,
+                xcpdd,
+                anln2,
+                aufpl,
+                xragl,
+                ktosl,
+                kidno,
+                vbel2,
+                xzahl,
+                anln1,
+                nplnr,
+                aplzl,
+                rebzg,
+                sknto,
+                auggj,
+                projk,
+                meins,
+                xnegp,
+                hwmet,
+                prctr,
+                saknr,
+                qsskz,
+                wmwst,
+                matnr,
+                zbd1t,
+                buzid,
+                fkber,
+                txgrp,
+                kostl,
+                shkzg,
+                zterm,
+                xumsw,
+                xauto,
+                augbl,
+                umsks,
+                vbeln,
+                bschl,
+                bwtar,
+                qsfbt,
+                menge,
+                rebzz,
+                txjcd,
+                taxps,
+                mwskz,
+                pargb,
+                zlsch,
+                werks,
+                bukrs,
+                aufnr,
+                qsshb,
+                bustw,
+                ebelp,
+                umskz,
+                gvtyp,
+                zbd2p,
+                nebtr,
+                eglld,
+                id,
+                project_id,
+                lifnr,
+                varmultivnd,
+                blart,
+                bldat,
+                xblnr,
+                waers,
+                monat,
+                cputm,
+                kursf,
+                tcode,
+                ktopl,
+                name1,
+                name2,
+                land1,
+                regio,
+                ort01,
+                pstlz,
+                stras,
+                txt50,
+                txz01,
+                matnr2,
+                maktx,
+                kalsm,
+                text1 DESC) AS roworder,
                    FROM
                       raw_relational
                 )
@@ -819,7 +907,14 @@ def aps_to_caps():
         when varaccountcode in ('NA') then 'P_SA'
         when varaccountcode in ('NA') then 'O'
         when varaccountcode in ('NA') then 'Q'
-        when varaccountcode in ('4000000000','4009000000','4009000002','4009000032','4020000000','4020000002','4029000000','4100000000',
+        when varaccountcode in ('4000000000',
+        '4009000000',
+        '4009000002',
+        '4009000032',
+        '4020000000',
+        '4020000002',
+        '4029000000',
+        '4100000000',
         '4100000002',
         '4100000010',
         '4109000000',
@@ -885,11 +980,242 @@ def aps_to_caps():
                  FROM
                     (
                        SELECT
-                          varapkey as varapkey_temp,
-        				mandt,sgtxt,bewar,koart,belnr,rebzj,kunnr,gsber,zbd1p,mwsts,segment,vbund,stceg,xbilk,hwbas,skfbt,ebeln,zumsk,anbwa,buzei,erfme,zfbdt,vorgn,gjahr,xhkom,zbd3t,kzbtr,fkber_long,bwkey,augdt,zbd2t,augcp,hkont,zuonr,pswsl,xcpdd,anln2,aufpl,xragl,ktosl,kidno,vbel2,xzahl,anln1,nplnr,aplzl,rebzg,sknto,auggj,projk,meins,xnegp,hwmet,prctr,saknr,qsskz,wmwst,matnr,zbd1t,buzid,fkber,txgrp,kostl,shkzg,zterm,xumsw,xauto,augbl,umsks,vbeln,bschl,bwtar,qsfbt,menge,rebzz,txjcd,taxps,mwskz,pargb,zlsch,werks,bukrs,aufnr,qsshb,bustw,ebelp,umskz,gvtyp,zbd2p,nebtr,eglld,id,project_id,lifnr,varmultivnd,blart,bldat,xblnr,waers,monat,cputm,kursf,tcode,ktopl,name1,name2,land1,regio,ort01,pstlz,stras,txt50,txz01,matnr2,maktx,kalsm,
-                             Row_number() OVER( partition BY varapkey
+                        varapkey as varapkey_temp,
+                        mandt
+                        sgtxt
+                        bewar
+                        koart
+                        belnr
+                        rebzj
+                        kunnr
+                        gsber
+                        zbd1p
+                        mwsts
+                        segment
+                        vbund
+                        stceg
+                        xbilk
+                        hwbas
+                        skfbt
+                        ebeln
+                        zumsk
+                        anbwa
+                        buzei
+                        erfme
+                        zfbdt
+                        vorgn
+                        gjahr
+                        xhkom
+                        zbd3t
+                        kzbtr
+                        fkber_long
+                        bwkey
+                        augdt
+                        zbd2t
+                        augcp
+                        hkont
+                        zuonr
+                        pswsl
+                        xcpdd
+                        anln2
+                        aufpl
+                        xragl
+                        ktosl
+                        kidno
+                        vbel2
+                        xzahl
+                        anln1
+                        nplnr
+                        aplzl
+                        rebzg
+                        sknto
+                        auggj
+                        projk
+                        meins
+                        xnegp
+                        hwmet
+                        prctr
+                        saknr
+                        qsskz
+                        wmwst
+                        matnr
+                        zbd1t
+                        buzid
+                        fkber
+                        txgrp
+                        kostl
+                        shkzg
+                        zterm
+                        xumsw
+                        xauto
+                        augbl
+                        umsks
+                        vbeln
+                        bschl
+                        bwtar
+                        qsfbt
+                        menge
+                        rebzz
+                        txjcd
+                        taxps
+                        mwskz
+                        pargb
+                        zlsch
+                        werks
+                        bukrs
+                        aufnr
+                        qsshb
+                        bustw
+                        ebelp
+                        umskz
+                        gvtyp
+                        zbd2p
+                        nebtr
+                        eglld
+                        id
+                        project_id
+                        lifnr
+                        varmultivnd
+                        blart
+                        bldat
+                        xblnr
+                        waers
+                        monat
+                        cputm
+                        kursf
+                        tcode
+                        ktopl
+                        name1
+                        name2
+                        land1
+                        regio
+                        ort01
+                        pstlz
+                        stras
+                        txt50
+                        txz01
+                        matnr2
+                        maktx
+                        kalsm
+
+        				      Row_number() OVER( partition BY varapkey
                        ORDER BY
-        				mandt,sgtxt,bewar,koart,belnr,rebzj,kunnr,gsber,zbd1p,mwsts,segment,vbund,stceg,xbilk,hwbas,skfbt,ebeln,zumsk,anbwa,buzei,erfme,zfbdt,vorgn,gjahr,xhkom,zbd3t,kzbtr,fkber_long,bwkey,augdt,zbd2t,augcp,hkont,zuonr,pswsl,xcpdd,anln2,aufpl,xragl,ktosl,kidno,vbel2,xzahl,anln1,nplnr,aplzl,rebzg,sknto,auggj,projk,meins,xnegp,hwmet,prctr,saknr,qsskz,wmwst,matnr,zbd1t,buzid,fkber,txgrp,kostl,shkzg,zterm,xumsw,xauto,augbl,umsks,vbeln,bschl,bwtar,qsfbt,menge,rebzz,txjcd,taxps,mwskz,pargb,zlsch,werks,bukrs,aufnr,qsshb,bustw,ebelp,umskz,gvtyp,zbd2p,nebtr,eglld,id,project_id,lifnr,varmultivnd,blart,bldat,xblnr,waers,monat,cputm,kursf,tcode,ktopl,name1,name2,land1,regio,ort01,pstlz,stras,txt50,txz01,matnr2,maktx,kalsm
+        				mandt
+                        sgtxt
+                        bewar
+                        koart
+                        belnr
+                        rebzj
+                        kunnr
+                        gsber
+                        zbd1p
+                        mwsts
+                        segment
+                        vbund
+                        stceg
+                        xbilk
+                        hwbas
+                        skfbt
+                        ebeln
+                        zumsk
+                        anbwa
+                        buzei
+                        erfme
+                        zfbdt
+                        vorgn
+                        gjahr
+                        xhkom
+                        zbd3t
+                        kzbtr
+                        fkber_long
+                        bwkey
+                        augdt
+                        zbd2t
+                        augcp
+                        hkont
+                        zuonr
+                        pswsl
+                        xcpdd
+                        anln2
+                        aufpl
+                        xragl
+                        ktosl
+                        kidno
+                        vbel2
+                        xzahl
+                        anln1
+                        nplnr
+                        aplzl
+                        rebzg
+                        sknto
+                        auggj
+                        projk
+                        meins
+                        xnegp
+                        hwmet
+                        prctr
+                        saknr
+                        qsskz
+                        wmwst
+                        matnr
+                        zbd1t
+                        buzid
+                        fkber
+                        txgrp
+                        kostl
+                        shkzg
+                        zterm
+                        xumsw
+                        xauto
+                        augbl
+                        umsks
+                        vbeln
+                        bschl
+                        bwtar
+                        qsfbt
+                        menge
+                        rebzz
+                        txjcd
+                        taxps
+                        mwskz
+                        pargb
+                        zlsch
+                        werks
+                        bukrs
+                        aufnr
+                        qsshb
+                        bustw
+                        ebelp
+                        umskz
+                        gvtyp
+                        zbd2p
+                        nebtr
+                        eglld
+                        id
+                        project_id
+                        lifnr
+                        varmultivnd
+                        blart
+                        bldat
+                        xblnr
+                        waers
+                        monat
+                        cputm
+                        kursf
+                        tcode
+                        ktopl
+                        name1
+                        name2
+                        land1
+                        regio
+                        ort01
+                        pstlz
+                        stras
+                        txt50
+                        txz01
+                        matnr2
+                        maktx
+                        kalsm
                            DESC) AS roworder
         									   FROM
                           raw_tax_calc
@@ -1082,21 +1408,37 @@ def aps_to_caps():
         """
 
         j22 = """
-        select CONCAT(noitc, itc), noitc, itc from (
+                select rtrim(concat(noitc_var,
+					itc_var,
+					noitr_var,
+					Even_var,
+					QC_var,
+					P5_var,
+					P6_var,
+					P7_var,
+					P8_var,
+					PST_SA_var,
+					APGST_var,
+					ODD5113_var,
+					ODD5114_var,
+					ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
+					caps_no_attributes.*
+					--into caps_with_attributes
+					from (
         select
-        case when GST_HST = 0.00 then 'NoITC' else null end as noitc,
-        case when GST_HST <> 0.00 then 'ITC' else null end itc,
-        case when QST = 0.00 then 'NoITR' else null end noitr,
+        case when GST_HST = 0.00 then 'NoITC, ' else null end as noitc_var,
+        case when GST_HST <> 0.00 then 'ITC, ' else null end itc_var,
+        case when QST = 0.00 then 'NoITR, ' else null end noitr_var,
         --case when ITR <> 0.00 then 'ITR' else null end itr, TBD what is ITR?
-        case when TOTAL_GST_HST <> 0.00 then 'TotalITC<>0.00'  else null end  totalitcnot0,
-        case when TOTAL_GST_HST = 0.00 then 'TotalITC=0.00' else  null end totalitceq0,
-        case when TOTAL_QST <> 0.00 then 'TotalITR<>0.00' else null end totalitrnot0,
-        case when GST_PCT >= 60 then 'GST_PCT>=60' else null end gst_pctgr60,
-        case when GST_PCT >= 20 and GST_PCT < 60 then '60<GST_PCT>=20' else null end gst_pctgr20less60,
-        case when varCurrency = 'CAD' then 'CCY' else null end CCY,
-        case when varCurrency <> 'CAD' then 'FCY' else null end FCY,
-        case when even_gst_ind = 'Y' and GST_HST = 0.00 and TOTAL_GST_HST <> 0.00 else null end Even,
-        case when eff_rate >= 4.544987838 and eff_rate <= 4.547987838 then 'QC' else null end QC,
+        --case when TOTAL_GST_HST <> 0.00 then 'TotalITC<>0.00'  else null end  totalitcnot0,
+        --case when TOTAL_GST_HST = 0.00 then 'TotalITC=0.00' else  null end totalitceq0,
+        --case when TOTAL_QST <> 0.00 then 'TotalITR<>0.00' else null end totalitrnot0,
+        --case when GST_PCT >= 60 then 'GST_PCT>=60' else null end gst_pctgr60,
+        --case when GST_PCT >= 20 and GST_PCT < 60 then '60<GST_PCT>=20' else null end gst_pctgr20less60,
+        --case when varCurrency = 'CAD' then 'CCY' else null end CCY,
+        --case when varCurrency <> 'CAD' then 'FCY' else null end FCY,
+        case when even_gst_ind = 'Y' and GST_HST = 0.00 and GST_HST <> 0.00 then 'Even, ' else null end Even_var,
+        case when eff_rate >= 4.544987838 and eff_rate <= 4.547987838 then 'QC, ' else null end QC_var,
         case when eff_rate >= 4.7604048 and eff_rate <= 4.7634048
         		and extract(year from cast(BLDAT as date)) <= 2015
         		and extract(year from cast(BLDAT as date)) >= 2014
@@ -1106,9 +1448,9 @@ def aps_to_caps():
         		   and
         			extract(day from cast(BLDAT as date)) <= 24
         		   )
-        		then 'QC'
+        		then 'QC, '
         		else null
-        		end P5,
+        		end P5_var,
         case when eff_rate >= 4.715481132
         		and eff_rate <= 4.718481132
         		and (extract(year from cast(bldat as date)) = 2017
@@ -1116,9 +1458,9 @@ def aps_to_caps():
         		and extract(date from cast(bldat as date)) >= 24)
         		or
         		extract(year from cast(bldat as date)) >= 2018
-        		then 'P6'
+        		then 'P6, '
         		else null
-        		end P6,
+        		end P6_var,
         case when (eff_rate >= 4.6713972 and eff_rate <= 4.6743972)
         		and (
         			extract(year from cast(bldat as date)) <= 2015
@@ -1130,13 +1472,13 @@ def aps_to_caps():
         			and
         			extract(month from cast(bldat as date)) <= 3
         			and
-        			extract(day from cast(bldat as date)) < 24)
+        			extract(day from cast(bldat as date)) < 24
         			)
         		)
-        		then 'P7'
+        		then 'P7, '
         		else null
-        		end P7
-        case when (eff_rate >= 4.6281296 and <= 4.6311296)
+        		end P7_var,
+        case when (eff_rate >= 4.6281296 and eff_rate <= 4.6311296)
         and (
         extract(year from cast(bldat as date)) <= 2015
         )
@@ -1150,22 +1492,25 @@ def aps_to_caps():
         	and
         	extract(day from cast(bldat as date)) < 24
         	)
-        then 'P8'
+        then 'P8, '
         else null
-        end P8
-        case when PST_SA <> 0 then 'PST_SA' else null end PST_SA
-        case when vend_cntry = 'Canada' then 'CdnVend' else null end 'CdnVend'
-        case when vend_cntry <> 'Canada' then 'ForeignVend' else null end 'ForeignVend'
-        case when eff_rate = '0.000000' then 'AP=GST' else null end 'AP=GST'
-        case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and rate_ind = 'D' then 'ODD_5/113' else null end ODD5113
-        case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and rate_ind = 'D' then 'ODD_5/114' else null end ODD5114
-        case when (eff_rate >= 4.542454545455 and eff_rate <= 4.548454545455) and rate_ind = 'D' then 'ODD_5/115' else null end ODD5115
-        case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM
-        case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD
-        case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate' else null end GSTSeperate
+        end P8_var,
+        case when PST_SA <> 0 then 'PST_SA, ' else null end PST_SA_var,
+        --case when vend_cntry = 'Canada' then 'CdnVend' else null end CdnVend,
+        --case when vend_cntry <> 'Canada' then 'ForeignVend' else null end ForeignVend,
+        case when eff_rate = '0.000000' then 'AP=GST, ' else null end APGST_var,
+        case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and new_rate_ind = 'D' then 'ODD_5/113, ' else null end ODD5113_var,
+        case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and new_rate_ind = 'D' then 'ODD_5/114, ' else null end ODD5114_var,
+        case when (eff_rate >= 4.542454545455 and eff_rate <= 4.548454545455) and new_rate_ind = 'D' then 'ODD_5/115, ' else null end ODD5115_var,
+        --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM,
+        --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
+        case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
         --EPD, Broker, GST, QST, NoGST, NoQST remaining
+						varapkey
         from
-        caps_no_attributes) test
+        caps_no_attributes) transaction_attributes
+inner join caps_no_attributes
+on caps_no_attributes.varapkey = transaction_attributes.varapkey
         """
         response['message'] = ''
         response['payload'] = []
