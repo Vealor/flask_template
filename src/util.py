@@ -32,8 +32,8 @@ def get_date_obj_from_str(date_str):
 
 #===============================================================================
 # Checks that keys and types are in JSON input
-def validate_request_data(data, datatype, validation):
-    if datatype == 'list':
+def validate_request_data(data, validation):
+    if isinstance(data, list):
         # Ensures keys in validation are all in data. Data can have excess keys.
         if [x for x in validation.keys() if not x in data.keys()]:
             raise ValueError('Request is missing required keys.')
@@ -49,8 +49,7 @@ def validate_request_data(data, datatype, validation):
             if validation[x] == 'str':
                 if "".join(e for e in data[x] if e.isalnum()) == '':
                     raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
-    elif datatype == 'dictionary':
-        print('hello')
+    elif isinstance(data, dict):
         # Ensures keys in validation are all in data. Data can have excess keys.
         if {x for x in validation.keys() if not x in data.keys()}:
             raise ValueError('Request is missing required keys.')
