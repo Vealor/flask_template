@@ -599,7 +599,7 @@ class ClientModel(db.Model):
     client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
-    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic', cascade='delete')
+    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
@@ -655,7 +655,7 @@ class MasterModel(db.Model):
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
     master_model_transactions = db.relationship('Transaction', back_populates='transaction_master_model', lazy='dynamic')
-    master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic',cascade='delete')
+    master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
