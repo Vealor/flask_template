@@ -11,11 +11,11 @@ from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import get_date_obj_from_str, validate_request_data
 
-master_model = Blueprint('master_model', __name__)
+master_models = Blueprint('master_models', __name__)
 #===============================================================================
 # Get all master models
-@master_model.route('/', methods=['GET'])
-@master_model.route('/<path:id>', methods=['GET'])
+@master_models.route('/', methods=['GET'])
+@master_models.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_master_models(id=None):
 
@@ -38,7 +38,7 @@ def get_master_models(id=None):
 
 #===============================================================================
 # Train a new master model.
-@master_model.route('/train/', methods=['POST'])
+@master_models.route('/train/', methods=['POST'])
 # @jwt_required
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -174,7 +174,7 @@ def do_train():
 
 #===============================================================================
 # Predict transactions for a project using the active master
-@master_model.route('/predict/', methods=['POST'])
+@master_models.route('/predict/', methods=['POST'])
 # @jwt_required
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -233,7 +233,7 @@ def do_predict():
 
 #===============================================================================
 # Delete a master model
-@master_model.route('/<path:id>', methods=['DELETE'])
+@master_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_master_model(id):
     response = { 'status': '', 'message': '', 'payload': [] }

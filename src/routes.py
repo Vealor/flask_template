@@ -17,8 +17,8 @@ from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
 # ClientModel Endpoints
-from src.endpoints.client_model import client_model
-api.register_blueprint(client_model, url_prefix='/client_model')
+from src.endpoints.client_models import client_models
+api.register_blueprint(client_models, url_prefix='/client_models')
 
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
@@ -33,8 +33,8 @@ from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
 # MasterModel Endpoints
-from src.endpoints.master_model import master_model
-api.register_blueprint(master_model, url_prefix='/master_model')
+from src.endpoints.master_models import master_models
+api.register_blueprint(master_models, url_prefix='/master_models')
 
 # Project Endpoints
 from src.endpoints.projects import projects

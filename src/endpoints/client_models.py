@@ -11,11 +11,11 @@ from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import get_date_obj_from_str, validate_request_data
 
-client_model = Blueprint('client_model', __name__)
+client_models = Blueprint('client_models', __name__)
 #===============================================================================
 # Get all client models
-@client_model.route('/', methods=['GET'])
-@client_model.route('/<path:id>', methods=['GET'])
+@client_models.route('/', methods=['GET'])
+@client_models.route('/<path:id>', methods=['GET'])
 # @jwt_required
 def get_client_models(id=None):
 
@@ -38,7 +38,7 @@ def get_client_models(id=None):
 
 #===============================================================================
 # Train a new client model.
-@client_model.route('/train/', methods=['POST'])
+@client_models.route('/train/', methods=['POST'])
 # @jwt_required
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -186,7 +186,7 @@ def do_train():
 
 #===============================================================================
 # Predict transactions for a project using the active client model
-@client_model.route('/predict/', methods=['POST'])
+@client_models.route('/predict/', methods=['POST'])
 # @jwt_required
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -246,7 +246,7 @@ def do_predict():
 #===============================================================================
 # Delete a client model
 # 'id' specifies the id of the model to be deleted.
-@client_model.route('/<path:id>', methods=['DELETE'])
+@client_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client_model(id):
     response = { 'status': '', 'message': '', 'payload': [] }
