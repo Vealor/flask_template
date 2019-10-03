@@ -26,13 +26,19 @@ def get_client_models(id=None):
             query = query.filter_by(id=id)
             if not query.first():
                 raise ValueError("No client model with ID {} exists.".format(id))
+
         response['payload'] = [i.serialize for i in query.all()]
         response['message'] = ''
     except Exception as e:
         response['status'] = 'error'
-        response['message'] = str(e)
+        response['message'] = "Cannot get model(s): " + str(e)
         response['payload'] = []
         return jsonify(response), 400
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = "Model retrieval failed: " + str(e)
+        response['payload'] = []
+        return jsonify(response), 500
 
     return jsonify(response), 200
 
@@ -88,12 +94,12 @@ def do_train():
 
         # validate if pending mode, stop on exist
         if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.pending.value).all():
-            raise Exception('There are pending models for client {}.'.format(data['client_id']))
+            raise ValueError('There are pending models for client ID {}.'.format(data['client_id']))
 
         # validate sufficient transactions for training
         transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
         if transaction_count < 2000:
-            raise Exception('Not enough data to train a client model. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(transaction_count))
+            raise ValueError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
         # create placeholder model
         model_data_dict['client_id'] = data['client_id']
@@ -105,14 +111,7 @@ def do_train():
         client_projects = [p.id for p in Project.query.filter_by(client_id = data['client_id']).distinct()]
         transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
-    except Exception as e:
-        db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = "Cannot train model: {}".format(str(e))
-        return jsonify(response), 400
-
-    # Train the instantiated model and edit the db entry
-    try:
+        # Train the instantiated model and edit the db entry
         train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
         train_entries = [tr.serialize['data'] for tr in train_transactions]
         data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
@@ -172,16 +171,20 @@ def do_train():
         # ==================
 
         db.session.commit()
+
         response['payload']['performance_metrics'] = performance_metrics
         response['payload']['model_id'] = model_id
         response['message'] = 'Model trained and created.'
-
+    except ValueError as e:
+        db.session.rollback()
+        response['status'] = 'error'
+        response['message'] = "Cannot train model: {}".format(str(e))
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
         response['status'] = 'error'
         response['message'] = "Training failed: {}".format(str(e))
         return jsonify(response), 500
-
     return jsonify(response), 201
 
 #===============================================================================
@@ -205,13 +208,13 @@ def do_predict():
             raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
         project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
         if project_transactions.count() == 0:
-            raise IndexError('Project has no transactions to predict.')
+            raise ValueError('Project has no transactions to predict.')
 
         # Get the appropriate active model if valid
         active_model = ClientModel.find_active_for_client(project.client_id)
 
         if not active_model:
-            raise IndexError('No predictive model has been trained for client [{}].'.format(Client.find_by_id(project.client_id).name))
+            raise ValueError('No predictive model has been trained for client [{}].'.format(Client.find_by_id(project.client_id).name))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
 
         project_transactions.update({Transaction.client_model_id: active_model.id})
@@ -238,9 +241,12 @@ def do_predict():
         response['payload'] = []
     except Exception as e:
         response['status'] = 'error'
-        response['message'] = str(e)
+        response['message'] = "Cannot predict: {}".format(str(e))
         return jsonify(response), 400
-
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = "Prediction failed: {}".format(str(e))
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -256,20 +262,24 @@ def delete_client_model(id):
         if not query:
             raise ValueError('Client model ID {} does not exist.'.format(id))
         if query.status == Activity.active:
-            raise ValueError('Client model ID {} is currently active. Cannot delete.'.format(id))
+            raise ValueError('Client model ID {} is currently active.'.format(id))
 
         model = query.serialize
         db.session.delete(query)
         db.session.commit()
 
         response['status'] = 'ok'
-        response['message'] = 'Deleted Client model id {}'.format(model['id'])
+        response['message'] = 'Deleted Client model ID {}'.format(model['id'])
         response['payload'] = [model]
+    except ValueError as e:
+        db.session.rollback()
+        response['status'] = 'error'
+        response['message'] = "Cannot delete: {}".format(str(e))
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
         response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response['message'] = "Deletion failed: {}".format(str(e))
+        return jsonify(response), 500
 
     return jsonify(response), 200
