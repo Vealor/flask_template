@@ -258,9 +258,6 @@ def delete_client_model(id):
         if query.status == Activity.active:
             raise ValueError('Client model ID {} is currently active. Cannot delete.'.format(id))
 
-        # Eliminate model performance information. Not required.
-        perf_query = ClientModelPerformance.query.filter_by(client_model_id=id).delete()
-
         model = query.serialize
         db.session.delete(query)
         db.session.commit()

@@ -245,9 +245,6 @@ def delete_master_model(id):
         if query.status == Activity.active:
             raise ValueError('Master model ID {} is currently active. Cannot delete.'.format(id))
 
-        # Eliminate model performance information. Not required.
-        perf_query = MasterModelPerformance.query.filter_by(master_model_id=id).delete()
-
         model = query.serialize
         db.session.delete(query)
         db.session.commit()
