@@ -289,7 +289,6 @@ def j1_j10():
 
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
-
         j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
         select
         L.*,
@@ -509,6 +508,15 @@ def aps_quality_check():
     response = {
         "VERSION": current_app.config['VERSION']
     }
+    try:
+        response['VERSION'] = current_app.config['VERSION']
+        response['message'] = ''
+        response['payload'] = []
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 400
     return jsonify(response)
 
 # see feature branch 72-aps_to_caps for more info
@@ -639,31 +647,31 @@ def aps_to_caps():
 
         #Generates raw account sum, groups varaccountcode and varapkey, sums on dmbtr, wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for everything else. order by vartranamount
         j18 = """
-        DROP TABLE IF EXISTS raw_acct_summ;
-        SELECT
-       *
-       INTO raw_acct_summ
-    FROM
-       (
-          SELECT
+            DROP TABLE IF EXISTS raw_acct_summ;
+            SELECT
+            *
+            INTO raw_acct_summ
+            FROM
+            (
+            SELECT
              Sum(Cast(dmbtr AS FLOAT)) AS DMBTR,
              Sum(Cast(wrbtr AS FLOAT)) AS WRBTR,
              Sum(Cast(pswbt AS FLOAT)) AS PSWBT,
              Sum(Cast(dmbe2 AS FLOAT)) AS DMBE2,
-    	   SUM(vardocamt) as vardocamt,
-    	   SUM(varlocamt) as varlocamt,
-
+            SUM(vardocamt) as vardocamt,
+            SUM(varlocamt) as varlocamt,
+            
              l.varapkey,
              Trim(hkont) AS varaccountcode
-          FROM
+            FROM
              raw_relational AS l
-          GROUP BY
+            GROUP BY
              varapkey,
              varaccountcode
-       )
-       AS l
-       INNER JOIN
-          (
+            )
+            AS l
+            INNER JOIN
+            (
              SELECT
                 *
              FROM
@@ -912,67 +920,67 @@ def aps_to_caps():
                 AS subq
              WHERE
                 subq.roworder = 1
-          )
-          AS r
-          ON l.varapkey = r.varapkey_temp
-          AND l.varaccountcode = r.varaccountcode_temp
-    	  order by varlocamt desc
-          """
+            )
+            AS r
+            ON l.varapkey = r.varapkey_temp
+            AND l.varaccountcode = r.varaccountcode_temp
+            order by varlocamt desc
+            """
 
 
         j19 = """
-        DROP TABLE IF EXISTS raw_tax_calc;
-        select case when sel_acct = 'G' then varlocamt else 0 end as GST_HST ,
-        case when sel_acct = 'P' then varlocamt else 0 end as PST,
-        case when sel_acct = 'P_SA' then varlocamt else 0 end as PST_SA,
-        case when sel_acct = 'O' then varlocamt else 0 end as TAXES_OTHER,
-        case when sel_acct = 'Q' then varlocamt else 0 end as QST,
-        case when sel_acct = 'A' then varlocamt else 0 end as AP_AMT,
-        *
-        into raw_tax_calc
-        from (
-        select
-        case when varaccountcode in ('4700000000','4720000000','4750000000','4770000000') then 'G'
-        when varaccountcode in ('NA') then 'P'
-        when varaccountcode in ('NA') then 'P_SA'
-        when varaccountcode in ('NA') then 'O'
-        when varaccountcode in ('NA') then 'Q'
-        when varaccountcode in ('4000000000',
-        '4009000000',
-        '4009000002',
-        '4009000032',
-        '4020000000',
-        '4020000002',
-        '4029000000',
-        '4100000000',
-        '4100000002',
-        '4100000010',
-        '4109000000',
-        '4109000002',
-        '4109000010',
-        '4120000000',
-        '4120000002',
-        '4120000010',
-        '4129000000',
-        '4129000002',
-        '4129000010',
-        '4170000000',
-        '4300000000',
-        '4400000000',
-        '4420000000',
-        '4420000010',
-        '4429000010',
-        '4449900000',
-        '4609000000',
-        '4650000000',
-        '4751300000'
-        ) then 'A'
-        else ''
-        end as SEL_ACCT,
-        	*
-        from
-        raw_acct_summ
-        	) as subq
+            DROP TABLE IF EXISTS raw_tax_calc;
+            select case when sel_acct = 'G' then varlocamt else 0 end as GST_HST ,
+            case when sel_acct = 'P' then varlocamt else 0 end as PST,
+            case when sel_acct = 'P_SA' then varlocamt else 0 end as PST_SA,
+            case when sel_acct = 'O' then varlocamt else 0 end as TAXES_OTHER,
+            case when sel_acct = 'Q' then varlocamt else 0 end as QST,
+            case when sel_acct = 'A' then varlocamt else 0 end as AP_AMT,
+            *
+            into raw_tax_calc
+            from (
+            select
+            case when varaccountcode in ('4700000000','4720000000','4750000000','4770000000') then 'G'
+            when varaccountcode in ('NA') then 'P'
+            when varaccountcode in ('NA') then 'P_SA'
+            when varaccountcode in ('NA') then 'O'
+            when varaccountcode in ('NA') then 'Q'
+            when varaccountcode in ('4000000000',
+            '4009000000',
+            '4009000002',
+            '4009000032',
+            '4020000000',
+            '4020000002',
+            '4029000000',
+            '4100000000',
+            '4100000002',
+            '4100000010',
+            '4109000000',
+            '4109000002',
+            '4109000010',
+            '4120000000',
+            '4120000002',
+            '4120000010',
+            '4129000000',
+            '4129000002',
+            '4129000010',
+            '4170000000',
+            '4300000000',
+            '4400000000',
+            '4420000000',
+            '4420000010',
+            '4429000010',
+            '4449900000',
+            '4609000000',
+            '4650000000',
+            '4751300000'
+            ) then 'A'
+            else ''
+            end as SEL_ACCT,
+                *
+            from
+            raw_acct_summ
+                ) as subq
               """
 
         j20 = """
@@ -1261,200 +1269,200 @@ def aps_to_caps():
               """
 
         j21 = """
-        select
-        case when
-         AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-         else 'F'
-         end
-         EVEN_GST_IND,
-         * from (
-        select
-        CASE WHEN
-        EFF_RATE >= 6.9800000  and EFF_RATE <= 7.0999999 and New_Rate_Ind = 'A' then 'F'
-        when EFF_RATE >= 5.9800000  and  EFF_RATE <= 6.0999999 and New_Rate_Ind = 'B' then 'F'
-        when EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then 'F'
-        when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.949999 and New_Rate_Ind = 'A' then 'F'
-        when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.949999  and New_Rate_Ind = 'B' then 'F'
-        when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.949999  and New_Rate_Ind = 'C' then 'F'
-        when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and New_Rate_Ind = 'D' then 'F'
-        when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and New_Rate_Ind = 'D' then 'F'
-        when EFF_RATE = 0.000000000 then 'F'
-        else 'T' end ODD_IND,
-
-        --calculation for prov tax ind PROV_TAX_IND <> '         '  'F'
-
-        case when ABS(GST_HST) > 0 then 1 else 0 end GST_COUNT,
-
-        case
-        when EFF_RATE >= 6.980000  and  EFF_RATE <= 7.099999 then 'T'
-        when EFF_RATE >= 5.980000  and  EFF_RATE <= 6.099999 then 'T'
-        when EFF_RATE >= 4.980000  and  EFF_RATE <= 5.099999 then 'T'
-        when EFF_RATE >= 14.980000 and  EFF_RATE <= 15.950000 then 'T'
-        when EFF_RATE >= 13.980000 and  EFF_RATE <= 14.950000 then 'T'
-        when EFF_RATE >= 12.980000 and  EFF_RATE <= 13.950000 then 'T'
-        when EFF_RATE >= 11.980000 and  EFF_RATE <= 12.950000 then 'T'
-        else 'F' end CN_FLAG_IND,
-
-        case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'T'
-        else 'F' end CN_REP2_IND,
-        --prov_ap code to be added
-        case when
-        PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*7.0000000000)/107.0000000000
-         when PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*6.0000000000)/106.0000000000
-         when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*5.0000000000)/105.0000000000
-        when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*12.0000000000)/112.0000000000
-        else 0.5555555555 end EVEN_GST_RATE,
-
-        case when
-         New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'PEI-GST 7%'  then ABS(AP_AMT*7.0000000000)/117.7000000000
-         when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 6%' then ABS(AP_AMT*6.0000000000)/116.6000000000
-        when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 5%' then  ABS(AP_AMT*5.0000000000)/115.5000000000
-         else 0.5555555555 end EVEN_GST_PEI_RATE,
-
-        case when
-          (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC 7.5%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.5000000000
-         when  New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.0000000000
-        when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 6%' then  ABS(AP_AMT*6.0000000000)/113.0000000000
-        when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN 7%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.0000000000
-         else 0.5555555555 end EVEN_GST_BC_RATE,
-
-
-
-        case when
-        (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 6%-GST 7%' then  ABS(AP_AMT*7.0000000000)/113.0000000000
-        when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 6%' then ABS(AP_AMT*6.0000000000)/111.0000000000
-        when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 5%' then  ABS(AP_AMT*5.0000000000)/110.0000000000
-        else  0.5555555555
-        end EVEN_GST_SASK_RATE,
-
-        case when
-        (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0000000000
-        when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 6%' then  ABS(AP_AMT*6.0000000000)/114.0000000000
-        when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 5%' then ABS(AP_AMT*5.0000000000)/113.0000000000
-        else  0.5555555555 end EVEN_GST_ORST_RATE,
-
-        case when
-        New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'QST 6.48%-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0250000000
-        when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 6%' then ABS(AP_AMT*6.0000000000)/113.9500000000
-        when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.8750000000
-        else 0.5555555555
-        end EVEN_GST_QST_RATE,
-
-
-         case when
-         New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000)) - abs(GST_HST)
-         when New_Rate_Ind = 'B' then (abs(AP_AMT) - (abs(GST_HST)/0.0600000000)) - abs(GST_HST)
-         when New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000)) - abs(GST_HST)
-         else 0.00
-         end PST_MAT,
-
-         case when
-          (New_Rate_Ind = 'A' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST)) * -1
-         when (New_Rate_Ind = 'B' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST)) * -1
-         when (New_Rate_Ind = 'C' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
-          when (New_Rate_Ind = 'D' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST)) * -1
-        when New_Rate_Ind = 'A' then  (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST))
-         when  New_Rate_Ind = 'B' then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST))
-          when New_Rate_Ind = 'C' then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST))
-         when New_Rate_Ind = 'D' then  (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST))
-         else 0.00
-         end GST_MAT,
-
-         case when
-         New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000))
-        when New_Rate_Ind = 'B' then  (abs(AP_AMT) - (abs(GST_HST)/0.0600000000))
-         when  New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000))
-         when New_Rate_Ind = 'D' then  (abs(AP_AMT) - (abs(GST_HST)/0.1200000000))
-         else 0.00
-         end BROKER_VALUE,
-
-
-
-        case when
-        AP_AMT = 0 then 0.00000
-        else
-         ((abs(GST_HST)*10000000)/(abs(AP_AMT)*100000))
-        end
-        BROKER_PCT,
-        	 *
-        from
-        (
-        select
-        case when
-        EFF_RATE >= 5.4235000 and eff_rate <= 5.4265000 and new_rate_ind = 'B' then  'PEI-GST 6%'
-        when EFF_RATE >= 4.5233869 and eff_rate <= 4.5263869 and new_rate_ind ='C' or New_rate_ind = 'D' then  'PEI-GST 5%'
-        when EFF_RATE >= 5.606000 AND EFF_RATE <= 5.6090000 and New_Rate_Ind = 'B' then  'BC-MAN-SASK 7%-GST 6%'
-        when EFF_RATE >= 4.6713972 AND EFF_RATE <= 4.6743972 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'BC-MAN 7%-GST 5%'
-        when EFF_RATE >= 5.7127000 AND EFF_RATE <= 5.7160000 and New_Rate_Ind = 'B' then 'SASK 5%-GST 6%'
-        when EFF_RATE >= 4.7604048 AND EFF_RATE <= 4.7634048 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'SASK 5%-GST 5%'
-        when EFF_RATE >= 5.5540000 AND EFF_RATE <= 5.5569990 and New_Rate_Ind = 'B' then  'ORST-GST 6%'
-        when EFF_RATE >= 4.6281296 AND EFF_RATE <= 4.6311296 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'ORST-GST 5%'
-        when EFF_RATE >= 5.5570000 AND EFF_RATE <= 5.5600000 and extract(year from cast(BLDAT as date)) <= 2007 then  'QST 6.48%-GST 6%'
-        when EFF_RATE >= 4.6334942 AND EFF_RATE <= 4.6364942 and extract(year from cast(BLDAT as date)) < 2010  and extract(month from cast(BLDAT as date)) < 12 then  'QST 6.48%-GST 5%'
-        when EFF_RATE >= 7.8720000 AND EFF_RATE <= 7.8780000 and extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) <= 12 then  'QST 7.50%-GST 5%'
-        when EFF_RATE >= 8.9220000 AND EFF_RATE <= 8.9280000 and extract(year from cast(BLDAT as date)) =2011 and extract(month from cast(BLDAT as date))<=12 then  'QST 8.50%-GST 5%'
-        when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))=2012 and extract(month from cast(BLDAT as date)) <=12 then  'QST 9.50%-GST 5%'
-        when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))>=2013 then  'HST_Quebec'
-        when EFF_RATE >= 7.4980190 AND EFF_RATE <= 7.5007180  then  'QST AS GST'
-         else '' end PROV_TAX_IND,
-         *
-        from (
-        select
-        case when
-        --should be GST_HST = 0, but some bug is preventing me from doing the proper calculation.
-        --PostgreSQL cannot handle mixed data types, setting this from text to numeric
-        net_value = 0 then '9999' else abs(round(cast(GST_HST*1000000/NET_VALUE as numeric), 6)) end EFF_RATE,
-        	net_value,
-        *
-        from (
-        select
-        case when extract(year from cast(BLDAT as date)) = 2006 and extract(month from cast(BLDAT as date)) > 6 then 'B'
-        when extract(year from cast(BLDAT as date)) = 2007  then 'B'
-        when extract(year from cast(BLDAT as date)) = 2008  then 'C'
-        when extract(year from cast(BLDAT as date)) = 2009  then 'C'
-        when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) < 7 then 'C'
-        when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) >= 7 then 'D'
-        when extract(year from cast(BLDAT as date)) = 2011  then 'D'
-        when extract(year from cast(BLDAT as date)) = 2012  then 'D'
-        when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) < 4 then 'D'
-        when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) >= 4 then 'C'
-        when extract(year from cast(BLDAT as date)) >= 2014 then 'C'
-        else 'A' end
-        New_Rate_Ind,
-        upper(trim(name1)) as New_Vend_Name,
-        abs(AP_AMT) - abs(GST_HST) - abs(PST) as Net_Value,
-        	*
-        from raw_summ) subq) subq1 ) subq2 ) subq3
-        """
+            select
+            case when
+             AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+             else 'F'
+             end
+             EVEN_GST_IND,
+             * from (
+            select
+            CASE WHEN
+            EFF_RATE >= 6.9800000  and EFF_RATE <= 7.0999999 and New_Rate_Ind = 'A' then 'F'
+            when EFF_RATE >= 5.9800000  and  EFF_RATE <= 6.0999999 and New_Rate_Ind = 'B' then 'F'
+            when EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then 'F'
+            when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.949999 and New_Rate_Ind = 'A' then 'F'
+            when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.949999  and New_Rate_Ind = 'B' then 'F'
+            when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.949999  and New_Rate_Ind = 'C' then 'F'
+            when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and New_Rate_Ind = 'D' then 'F'
+            when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and New_Rate_Ind = 'D' then 'F'
+            when EFF_RATE = 0.000000000 then 'F'
+            else 'T' end ODD_IND,
+    
+            --calculation for prov tax ind PROV_TAX_IND <> '         '  'F'
+    
+            case when ABS(GST_HST) > 0 then 1 else 0 end GST_COUNT,
+    
+            case
+            when EFF_RATE >= 6.980000  and  EFF_RATE <= 7.099999 then 'T'
+            when EFF_RATE >= 5.980000  and  EFF_RATE <= 6.099999 then 'T'
+            when EFF_RATE >= 4.980000  and  EFF_RATE <= 5.099999 then 'T'
+            when EFF_RATE >= 14.980000 and  EFF_RATE <= 15.950000 then 'T'
+            when EFF_RATE >= 13.980000 and  EFF_RATE <= 14.950000 then 'T'
+            when EFF_RATE >= 12.980000 and  EFF_RATE <= 13.950000 then 'T'
+            when EFF_RATE >= 11.980000 and  EFF_RATE <= 12.950000 then 'T'
+            else 'F' end CN_FLAG_IND,
+    
+            case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'T'
+            else 'F' end CN_REP2_IND,
+            --prov_ap code to be added
+            case when
+            PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*7.0000000000)/107.0000000000
+             when PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*6.0000000000)/106.0000000000
+             when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*5.0000000000)/105.0000000000
+            when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*12.0000000000)/112.0000000000
+            else 0.5555555555 end EVEN_GST_RATE,
+    
+            case when
+             New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'PEI-GST 7%'  then ABS(AP_AMT*7.0000000000)/117.7000000000
+             when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 6%' then ABS(AP_AMT*6.0000000000)/116.6000000000
+            when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 5%' then  ABS(AP_AMT*5.0000000000)/115.5000000000
+             else 0.5555555555 end EVEN_GST_PEI_RATE,
+    
+            case when
+              (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC 7.5%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.5000000000
+             when  New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.0000000000
+            when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 6%' then  ABS(AP_AMT*6.0000000000)/113.0000000000
+            when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN 7%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.0000000000
+             else 0.5555555555 end EVEN_GST_BC_RATE,
+    
+    
+    
+            case when
+            (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 6%-GST 7%' then  ABS(AP_AMT*7.0000000000)/113.0000000000
+            when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 6%' then ABS(AP_AMT*6.0000000000)/111.0000000000
+            when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 5%' then  ABS(AP_AMT*5.0000000000)/110.0000000000
+            else  0.5555555555
+            end EVEN_GST_SASK_RATE,
+    
+            case when
+            (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0000000000
+            when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 6%' then  ABS(AP_AMT*6.0000000000)/114.0000000000
+            when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 5%' then ABS(AP_AMT*5.0000000000)/113.0000000000
+            else  0.5555555555 end EVEN_GST_ORST_RATE,
+    
+            case when
+            New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'QST 6.48%-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0250000000
+            when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 6%' then ABS(AP_AMT*6.0000000000)/113.9500000000
+            when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.8750000000
+            else 0.5555555555
+            end EVEN_GST_QST_RATE,
+    
+    
+             case when
+             New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000)) - abs(GST_HST)
+             when New_Rate_Ind = 'B' then (abs(AP_AMT) - (abs(GST_HST)/0.0600000000)) - abs(GST_HST)
+             when New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000)) - abs(GST_HST)
+             else 0.00
+             end PST_MAT,
+    
+             case when
+              (New_Rate_Ind = 'A' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST)) * -1
+             when (New_Rate_Ind = 'B' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST)) * -1
+             when (New_Rate_Ind = 'C' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
+              when (New_Rate_Ind = 'D' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST)) * -1
+            when New_Rate_Ind = 'A' then  (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST))
+             when  New_Rate_Ind = 'B' then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST))
+              when New_Rate_Ind = 'C' then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST))
+             when New_Rate_Ind = 'D' then  (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST))
+             else 0.00
+             end GST_MAT,
+    
+             case when
+             New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000))
+            when New_Rate_Ind = 'B' then  (abs(AP_AMT) - (abs(GST_HST)/0.0600000000))
+             when  New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000))
+             when New_Rate_Ind = 'D' then  (abs(AP_AMT) - (abs(GST_HST)/0.1200000000))
+             else 0.00
+             end BROKER_VALUE,
+    
+    
+    
+            case when
+            AP_AMT = 0 then 0.00000
+            else
+             ((abs(GST_HST)*10000000)/(abs(AP_AMT)*100000))
+            end
+            BROKER_PCT,
+                 *
+            from
+            (
+            select
+            case when
+            EFF_RATE >= 5.4235000 and eff_rate <= 5.4265000 and new_rate_ind = 'B' then  'PEI-GST 6%'
+            when EFF_RATE >= 4.5233869 and eff_rate <= 4.5263869 and new_rate_ind ='C' or New_rate_ind = 'D' then  'PEI-GST 5%'
+            when EFF_RATE >= 5.606000 AND EFF_RATE <= 5.6090000 and New_Rate_Ind = 'B' then  'BC-MAN-SASK 7%-GST 6%'
+            when EFF_RATE >= 4.6713972 AND EFF_RATE <= 4.6743972 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'BC-MAN 7%-GST 5%'
+            when EFF_RATE >= 5.7127000 AND EFF_RATE <= 5.7160000 and New_Rate_Ind = 'B' then 'SASK 5%-GST 6%'
+            when EFF_RATE >= 4.7604048 AND EFF_RATE <= 4.7634048 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'SASK 5%-GST 5%'
+            when EFF_RATE >= 5.5540000 AND EFF_RATE <= 5.5569990 and New_Rate_Ind = 'B' then  'ORST-GST 6%'
+            when EFF_RATE >= 4.6281296 AND EFF_RATE <= 4.6311296 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'ORST-GST 5%'
+            when EFF_RATE >= 5.5570000 AND EFF_RATE <= 5.5600000 and extract(year from cast(BLDAT as date)) <= 2007 then  'QST 6.48%-GST 6%'
+            when EFF_RATE >= 4.6334942 AND EFF_RATE <= 4.6364942 and extract(year from cast(BLDAT as date)) < 2010  and extract(month from cast(BLDAT as date)) < 12 then  'QST 6.48%-GST 5%'
+            when EFF_RATE >= 7.8720000 AND EFF_RATE <= 7.8780000 and extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) <= 12 then  'QST 7.50%-GST 5%'
+            when EFF_RATE >= 8.9220000 AND EFF_RATE <= 8.9280000 and extract(year from cast(BLDAT as date)) =2011 and extract(month from cast(BLDAT as date))<=12 then  'QST 8.50%-GST 5%'
+            when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))=2012 and extract(month from cast(BLDAT as date)) <=12 then  'QST 9.50%-GST 5%'
+            when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))>=2013 then  'HST_Quebec'
+            when EFF_RATE >= 7.4980190 AND EFF_RATE <= 7.5007180  then  'QST AS GST'
+             else '' end PROV_TAX_IND,
+             *
+            from (
+            select
+            case when
+            --should be GST_HST = 0, but some bug is preventing me from doing the proper calculation.
+            --PostgreSQL cannot handle mixed data types, setting this from text to numeric
+            net_value = 0 then '9999' else abs(round(cast(GST_HST*1000000/NET_VALUE as numeric), 6)) end EFF_RATE,
+                net_value,
+            *
+            from (
+            select
+            case when extract(year from cast(BLDAT as date)) = 2006 and extract(month from cast(BLDAT as date)) > 6 then 'B'
+            when extract(year from cast(BLDAT as date)) = 2007  then 'B'
+            when extract(year from cast(BLDAT as date)) = 2008  then 'C'
+            when extract(year from cast(BLDAT as date)) = 2009  then 'C'
+            when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) < 7 then 'C'
+            when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) >= 7 then 'D'
+            when extract(year from cast(BLDAT as date)) = 2011  then 'D'
+            when extract(year from cast(BLDAT as date)) = 2012  then 'D'
+            when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) < 4 then 'D'
+            when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) >= 4 then 'C'
+            when extract(year from cast(BLDAT as date)) >= 2014 then 'C'
+            else 'A' end
+            New_Rate_Ind,
+            upper(trim(name1)) as New_Vend_Name,
+            abs(AP_AMT) - abs(GST_HST) - abs(PST) as Net_Value,
+                *
+            from raw_summ) subq) subq1 ) subq2 ) subq3
+            """
 
         j22 = """
                 select rtrim(concat(noitc_var,
-					itc_var,
-					noitr_var,
-					Even_var,
-					QC_var,
-					P5_var,
-					P6_var,
-					P7_var,
-					P8_var,
-					PST_SA_var,
-					APGST_var,
-					ODD5113_var,
-					ODD5114_var,
-					ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
-					caps_no_attributes.*
-					--into caps_with_attributes
-					from (
+                    itc_var,
+                    noitr_var,
+                    Even_var,
+                    QC_var,
+                    P5_var,
+                    P6_var,
+                    P7_var,
+                    P8_var,
+                    PST_SA_var,
+                    APGST_var,
+                    ODD5113_var,
+                    ODD5114_var,
+                    ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
+                    caps_no_attributes.*
+                    --into caps_with_attributes
+                    from (
         select
         case when GST_HST = 0.00 then 'NoITC, ' else null end as noitc_var,
         case when GST_HST <> 0.00 then 'ITC, ' else null end itc_var,
@@ -1470,44 +1478,44 @@ def aps_to_caps():
         case when even_gst_ind = 'Y' and GST_HST = 0.00 and GST_HST <> 0.00 then 'Even, ' else null end Even_var,
         case when eff_rate >= 4.544987838 and eff_rate <= 4.547987838 then 'QC, ' else null end QC_var,
         case when eff_rate >= 4.7604048 and eff_rate <= 4.7634048
-        		and extract(year from cast(BLDAT as date)) <= 2015
-        		and extract(year from cast(BLDAT as date)) >= 2014
-        		or (extract(year from cast(BLDAT as date)) = 2017
-        			and
-        		    extract(month from cast(BLDAT as date)) <= 3
-        		   and
-        			extract(day from cast(BLDAT as date)) <= 24
-        		   )
-        		then 'QC, '
-        		else null
-        		end P5_var,
+                and extract(year from cast(BLDAT as date)) <= 2015
+                and extract(year from cast(BLDAT as date)) >= 2014
+                or (extract(year from cast(BLDAT as date)) = 2017
+                    and
+                    extract(month from cast(BLDAT as date)) <= 3
+                   and
+                    extract(day from cast(BLDAT as date)) <= 24
+                   )
+                then 'QC, '
+                else null
+                end P5_var,
         case when eff_rate >= 4.715481132
-        		and eff_rate <= 4.718481132
-        		and (extract(year from cast(bldat as date)) = 2017
-        		and extract(month from cast(bldat as date)) >= 3
-        		and extract(date from cast(bldat as date)) >= 24)
-        		or
-        		extract(year from cast(bldat as date)) >= 2018
-        		then 'P6, '
-        		else null
-        		end P6_var,
+                and eff_rate <= 4.718481132
+                and (extract(year from cast(bldat as date)) = 2017
+                and extract(month from cast(bldat as date)) >= 3
+                and extract(date from cast(bldat as date)) >= 24)
+                or
+                extract(year from cast(bldat as date)) >= 2018
+                then 'P6, '
+                else null
+                end P6_var,
         case when (eff_rate >= 4.6713972 and eff_rate <= 4.6743972)
-        		and (
-        			extract(year from cast(bldat as date)) <= 2015
-        			and
-        			extract(year from cast(bldat as date)) <= 2015
-        			or
-        			(
-        			extract(year from cast(bldat as date)) = 2017
-        			and
-        			extract(month from cast(bldat as date)) <= 3
-        			and
-        			extract(day from cast(bldat as date)) < 24
-        			)
-        		)
-        		then 'P7, '
-        		else null
-        		end P7_var,
+                and (
+                    extract(year from cast(bldat as date)) <= 2015
+                    and
+                    extract(year from cast(bldat as date)) <= 2015
+                    or
+                    (
+                    extract(year from cast(bldat as date)) = 2017
+                    and
+                    extract(month from cast(bldat as date)) <= 3
+                    and
+                    extract(day from cast(bldat as date)) < 24
+                    )
+                )
+                then 'P7, '
+                else null
+                end P7_var,
         case when (eff_rate >= 4.6281296 and eff_rate <= 4.6311296)
         and (
         extract(year from cast(bldat as date)) <= 2015
@@ -1516,12 +1524,12 @@ def aps_to_caps():
         extract(year from cast(bldat as date)) >= 2014
         )
         or (
-        	extract(year from cast(bldat as date)) = 2017
-        	and
-        	extract(month from cast(bldat as date)) <= 3
-        	and
-        	extract(day from cast(bldat as date)) < 24
-        	)
+            extract(year from cast(bldat as date)) = 2017
+            and
+            extract(month from cast(bldat as date)) <= 3
+            and
+            extract(day from cast(bldat as date)) < 24
+            )
         then 'P8, '
         else null
         end P8_var,
@@ -1536,11 +1544,11 @@ def aps_to_caps():
         --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
         case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
         --EPD, Broker, GST, QST, NoGST, NoQST remaining
-						varapkey
+                        varapkey
         from
         caps_no_attributes) transaction_attributes
-inner join caps_no_attributes
-on caps_no_attributes.varapkey = transaction_attributes.varapkey
+        inner join caps_no_attributes
+        on caps_no_attributes.varapkey = transaction_attributes.varapkey
         """
         response['message'] = ''
         response['payload'] = []
