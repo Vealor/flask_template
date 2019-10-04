@@ -358,6 +358,8 @@ class Project(db.Model):
     engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
     engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
+    project_capsgen = db.relationship('CapsGen', back_populates='capsgen_project', cascade="save-update", lazy='dynamic',
+                                      passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
@@ -406,27 +408,7 @@ class Project(db.Model):
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
-    project_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_project')
-    project_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_project')
-    project_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_project')
-    project_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_project')
-    project_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_project')
-    project_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_project')
-    project_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_project')
-    project_sapekko = db.relationship('SapEkko', back_populates='sapekko_project')
-    project_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_project')
-    project_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_project')
-    project_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_project')
-    project_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_project')
-    project_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_project')
-    project_sapmara = db.relationship('SapMara', back_populates='sapmara_project')
-    project_sappayr = db.relationship('SapPayr', back_populates='sappayr_project')
-    project_sapproj = db.relationship('SapProj', back_populates='sapproj_project')
-    project_sapprps = db.relationship('SapPrps', back_populates='sapprps_project')
-    project_sapregup = db.relationship('SapRegup', back_populates='sapregup_project')
-    project_sapskat = db.relationship('SapSkat', back_populates='sapskat_project')
-    project_sapt001 = db.relationship('SapT001', back_populates='sapt001_project')
-    project_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_project')
+
 
 
     @property
@@ -555,6 +537,37 @@ class Vendor(db.Model):
     @classmethod
     def find_by_name(cls, name):
         return cls.query.filter_by(name = name).first()
+
+
+class CapsGen(db.Model):
+    __tablename__ = 'capsgen'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    )
+    project_id = db.Column(db.Integer, primary_key=True, nullable=False)  # FK
+    capsgen_project = db.relationship('Project', back_populates='project_capsgen')
+
+    capsgen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_capsgen')
+    capsgen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_capsgen')
+    capsgen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_capsgen')
+    capsgen_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_capsgen')
+    capsgen_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_capsgen')
+    capsgen_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_capsgen')
+    capsgen_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_capsgen')
+    capsgen_sapekko = db.relationship('SapEkko', back_populates='sapekko_capsgen')
+    capsgen_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_capsgen')
+    capsgen_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_capsgen')
+    capsgen_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_capsgen')
+    capsgen_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_capsgen')
+    capsgen_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_capsgen')
+    capsgen_sapmara = db.relationship('SapMara', back_populates='sapmara_capsgen')
+    capsgen_sappayr = db.relationship('SapPayr', back_populates='sappayr_capsgen')
+    capsgen_sapproj = db.relationship('SapProj', back_populates='sapproj_capsgen')
+    capsgen_sapprps = db.relationship('SapPrps', back_populates='sapprps_capsgen')
+    capsgen_sapregup = db.relationship('SapRegup', back_populates='sapregup_capsgen')
+    capsgen_sapskat = db.relationship('SapSkat', back_populates='sapskat_capsgen')
+    capsgen_sapt001 = db.relationship('SapT001', back_populates='sapt001_capsgen')
+    capsgen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_capsgen')
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
@@ -830,163 +843,162 @@ class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapbseg_project = db.relationship('Project', back_populates='project_sapbseg')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapbseg_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbseg')
 
 class SapAufk(db.Model):
     _tablename__ = 'sap_aufk'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapaufk_project = db.relationship('Project', back_populates='project_sapaufk')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapaufk_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapaufk')
 
 class SapBkpf(db.Model):
     _tablename__ = 'sap_bkpf'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapbkpf_project = db.relationship('Project', back_populates='project_sapbkpf')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapbkpf_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbkpf')
 
 class SapRegup(db.Model):
     _tablename__ = 'sap_regup'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapregup_project = db.relationship('Project', back_populates='project_sapregup')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapregup_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapregup')
 
 class SapCepct(db.Model):
     _tablename__ = 'sap_cepct'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapcepct_project = db.relationship('Project', back_populates='project_sapcepct')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapcepct_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcepct')
 
 class SapCskt(db.Model):
     _tablename__ = 'sap_cskt'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapcskt_project = db.relationship('Project', back_populates='project_sapcskt')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapcskt_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcskt')
 
 class SapEkpo(db.Model):
     _tablename__ = 'sap_ekpo'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapekpo_project = db.relationship('Project', back_populates='project_sapekpo')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapekpo_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapekpo')
 
 class SapPayr(db.Model):
     _tablename__ = 'sap_payr'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sappayr_project = db.relationship('Project', back_populates='project_sappayr')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sappayr_capsgen = db.relationship('CapsGen', back_populates='capsgen_sappayr')
 
 class SapBsak(db.Model):
     _tablename__ = 'sap_bsak'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapbsak_project = db.relationship('Project', back_populates='project_sapbsak')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapbsak_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbsak')
 
 class SapCsks(db.Model):
     _tablename__ = 'sap_csks'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapcsks_project = db.relationship('Project', back_populates='project_sapcsks')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapcsks_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcsks')
 
 class SapEkko(db.Model):
     _tablename__ = 'sap_ekko'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    sapekko_project = db.relationship('Project', back_populates='project_sapekko')
+    sapekko_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapekko')
 
 class SapIflot(db.Model):
     _tablename__ = 'sap_iflot'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapiflot_project = db.relationship('Project', back_populates='project_sapiflot')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapiflot_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapiflot')
 
 class SapIloa(db.Model):
     _tablename__ = 'sap_iloa'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapiloa_project = db.relationship('Project', back_populates='project_sapiloa')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapiloa_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapiloa')
 
 class SapSkat(db.Model):
     _tablename__ = 'sap_skat'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapskat_project = db.relationship('Project', back_populates='project_sapskat')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapskat_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapskat')
 
 class SapLfa1(db.Model):
     _tablename__ = 'sap_skat'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    saplfa1_project = db.relationship('Project', back_populates='project_saplfa1')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    saplfa1_capsgen = db.relationship('CapsGen', back_populates='capsgen_saplfa1')
 
 class SapMakt(db.Model):
     _tablename__ = 'sap_skat'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapmakt_project = db.relationship('Project', back_populates='project_sapmakt')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapmakt_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmakt')
 
 class SapMara(db.Model):
     _tablename__ = 'sap_mara'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapmara_project = db.relationship('Project', back_populates='project_sapmara')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapmara_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmara')
 
 class SapProj(db.Model):
     _tablename__ = 'sap_proj'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapproj_project = db.relationship('Project', back_populates='project_sapproj')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapproj_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapproj')
 
 class SapPrps(db.Model):
     _tablename__ = 'sap_prps'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapprps_project = db.relationship('Project', back_populates='project_sapprps')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapprps_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapprps')
 
 class SapT001(db.Model):
     _tablename__ = 'sap_t001'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapt001_project = db.relationship('Project', back_populates='project_sapt001')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapt001_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt001')
 
 class SapT007s(db.Model):
     _tablename__ = 'sap_t007s'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    sapt007s_project = db.relationship('Project', back_populates='project_sapt007s')
+    project_id = db.Column(db.Integer, db.ForeignKey('capsgen.project_id', ondelete='CASCADE'), nullable=False)
+    sapt007s_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt007s')

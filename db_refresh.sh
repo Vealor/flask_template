@@ -11,7 +11,8 @@ grant all privileges on database itra_db to itra;
 EOF
 
 source activate
-FLASK_ENV='development' flask db upgrade
+FLASK_ENV='development'
+flask db upgrade
 
 read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue once started" && printf "\n"
 
@@ -60,6 +61,7 @@ psql -h localhost -U itra itra_db -c "
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values (E'I\'m a lumberjack and I\'m okay', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('trees bro', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('fish n oceans n shit', 3, 1, 1);
+  insert into capsgen (project_id) values (1);
   insert into vendors (name) values ('miner buyer');
   insert into transactions (data, vendor_id, project_id) values ('{}', 1, 1);
   insert into user_project (user_id, project_id) values (1, 1);
@@ -98,9 +100,6 @@ psql -h localhost -U itra itra_db -c "
   insert into user_project (user_id, project_id) values (17, 7);
   insert into user_project (user_id, project_id) values (17, 1);
   insert into user_project (user_id, project_id) values (17, 2);
-  "
-
-
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BUKRS','BKPF_BUKRS','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_BELNR','BKPF_BELNR','FALSE','TRUE','FALSE','dt_varchar','.*');
 INSERT INTO cdm_labels(script_labels,english_labels,is_calculated,is_required,is_unique,datatype,regex) VALUES ('BKPF_GJAHR','BKPF_GJAHR','FALSE','TRUE','FALSE','dt_varchar','.*');

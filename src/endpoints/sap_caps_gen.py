@@ -11,6 +11,7 @@ import requests
 from collections import Counter
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from os import path
 from src.models import *
 from config import *
 from src.util import *
@@ -31,6 +32,11 @@ def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     try:
         data = request.get_json()
+        if not os.path.exists(os.path.join(str(data['project_id']))):
+            os.mkdir(str(data['project_id']))
+            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+            for folder in folders:
+                os.mkdir((os.path.join(str(data['project_id']), folder)))
         if not isinstance(data, dict):
             raise Exception('data is not a dict')
         request_types = {
@@ -38,8 +44,8 @@ def unzipping():
             'file_name': 'str',
             'system': 'str'
         }
-        validate_request_data(data, 'dictionary', request_types)
-        get_data(response)
+        validate_request_data(data, request_types)
+        get_data(data, response)
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -50,35 +56,33 @@ def unzipping():
     return jsonify(response), 200
 
 #MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
-@sap_caps_gen.route('/build_master_tables', methods=['GET'])
+@sap_caps_gen.route('/build_master_tables', methods=['POST'])
 def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
+        data = request.get_json()
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-        #list_tablenames = ['T007S']
 
         for table in list_tablenames:
-            print(table)
             table_results = {}
             table_files = []
 
             #Search for all files that match table
-            for file in os.listdir(get_cwd('caps_gen_processing/caps_gen_unzipped')):
+            for file in os.listdir(os.path.join(str(data['project_id']), 'caps_gen_unzipped')):
                 if re.search(table, file):
                     if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
                         table_files.append(file)
             print(table_files)
-
             #Load & union files into one master table in memory
-            wfd = open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'wb')
+            wfd = open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'wb')
             for index, file in enumerate(table_files):
                 if index == 0:
-                    with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r' ,encoding='utf-8-sig') as fd:
+                    with open(os.path.join(str(data['project_id']), 'caps_gen_unzipped', file), 'r' ,encoding='utf-8-sig') as fd:
                         wfd.write(fd.read().encode())
                 else:
                     # for all future files
-                    with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_unzipped', file)), 'r', encoding='utf-8-sig') as fd:
+                    with open(os.path.join(str(data['project_id']), 'caps_gen_unzipped', file), 'r', encoding='utf-8-sig') as fd:
                         #   strip header
                         next(fd)
                         wfd.write(fd.read().encode())
@@ -89,11 +93,15 @@ def build_master_tables():
             bulk_insert_handler = []
 
             #bulk insert into database
-            with open(get_cwd(os.path.join('caps_gen_processing/caps_gen_master', '{}_MASTER.txt'.format(table))), 'r', encoding='utf-8-sig') as masterfile:
+            with open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
+                counter = 0
                 for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
+                    counter += 1
+                    if counter > 1000:
+                        break
                     dict_to_insert = {'data' : line}
                     # WARNING: Project id needs to be provided in curl request
-                    dict_to_insert['project_id'] = 1
+                    dict_to_insert['project_id'] = str(data['project_id'])
                     bulk_insert_handler.append(dict_to_insert)
             db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
             db.session.commit()
@@ -123,7 +131,6 @@ def rename_scheme():
     try:
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-        list_tablenames = ['BSEG']
         for table in list_tablenames:
             print(table)
             renamed_columndata = []
@@ -135,28 +142,31 @@ def rename_scheme():
             print(rename_scheme)
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
+            print(len(columndata))
             for row in columndata:
                 row = rename_query_serializer(row)
+                print(rename_scheme.values())
+                print(row.keys())
+                if [x for x in rename_scheme.values() if x in row['data'].keys()]:
+                    [response.pop(key) for key in ['renaming']]
+                    raise Exception('Your table has already been renamed. Please ensure that mapping has not been applied twice.')
                 try:
                     #slow solution
                     for key, value in rename_scheme.items():
                         row['data'][value] = row['data'].pop(key)
-                    del(key)
-                    del(value)
+                    renamed_columndata.append(row)
                 except Exception as e:
-                    print('triggered')
                     errorlines.append(['Error in row' + str(row['id']), 'Error in Column ' + str(e), 'Table '  + str(table)])
             response['renaming']['payload'] = errorlines
             if len(response['renaming']['payload']) > 1:
                 response['renaming']['message'] = 'Issue with the following lines. Check if column exists in source data or is populated appropriately in data dictionary'
                 response['renaming']['status'] = 'error'
                 raise Exception(response['renaming'])
-            renamed_columndata.append(row)
             db.session.bulk_update_mappings(tableclass, renamed_columndata)
             db.session.commit()
     except Exception as e:
         response['status'] = 'error'
-        response['message'] = 'Error with following line items in renaming to CDM labels'
+        response['message'] = str(e)
         return jsonify(response), 400
     response['message'] = ''
     response['payload'] = []
@@ -207,6 +217,7 @@ def data_quality_check():
 
     response = {'status': 'ok', 'message': {}, 'payload': []}
     data_dictionary_results = {}
+    uniqueness_response = {}
     try:
         CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
@@ -222,7 +233,6 @@ def data_quality_check():
                 unique_key_checker = []
                 data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
                 for row in data:
-                    print(row)
                     row = unique_key_serializer(row, unique_keys)
                     ''.join(row)
                     unique_key_checker.append(row['unique_key'])
@@ -230,19 +240,19 @@ def data_quality_check():
                 dups = [k for k, v in c.items() if v > 1]
             #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
             if len(dups) > 1:
-                uniqueness_response = {}
                 uniqueness_response['results'] = dups
                 uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
+                print(uniqueness_response['final_score'])
                 data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
-            ### completeness check ###
+            else:
+                uniqueness_response['final_score'] = 100
+                data_dictionary_results[table] = {'uniqueness': 100}
+            ### validity check ###
             for column in compiled_data_dictionary.keys():
-                completeness_response = {}
                 print(column)
-                column = 'company_code'
                 query = tableclass.query
                 query = query.with_entities(getattr(tableclass, 'data')).all()
                 query = [regex_serializer(row)['data'][column] for row in query]
-            ### validity check ###
                 if compiled_data_dictionary[column]['regex']:
                     data_dictionary_results[table][column] = {
                         'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
@@ -252,7 +262,6 @@ def data_quality_check():
         response['status'] = 'error'
         response['message'] = str(e)
     return jsonify(response), 200
-
 
 #j1 to j10 joins to create APS
 @sap_caps_gen.route('/j1_j10', methods=['GET'])

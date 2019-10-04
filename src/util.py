@@ -91,44 +91,39 @@ def send_mail(user_email, subject, content):
         raise e
 
 #===============================================================================
-def get_cwd(read_path):
-    current_directory = os.path.dirname(os.path.abspath('__file__'))
-    current_file_path = os.path.join(current_directory, read_path)
-    return current_file_path
+
 
 
 #===============================================================================
 # Sends an email to the user with given inputs
-def get_data(response):
+def get_data(data, response):
     def extract_nested_zip(zippedFile, toFolder):
         try:
             with zipfile.ZipFile(zippedFile, 'r') as zfile:
                 zfile.extractall(path=toFolder)
+            os.remove(zippedFile)
+            for root, dirs, files in os.walk(toFolder):
+                for filename in files:
+                    if re.search(r'\.(?i)ZIP$', filename):
+                        fileSpec = os.path.join(root, filename)
+                        extract_nested_zip(fileSpec, root)
         except NotImplementedError:
             raise Exception(str(zippedFile) + ' has compression errors. Please fix')
         except Exception as e:
-            raise Exception('Unable to work with file ' + str(zippedFile))
-        os.remove(zippedFile)
-        for root, dirs, files in os.walk(toFolder):
-            for filename in files:
-                if re.search(r'\.(?i)ZIP$', filename):
-                    fileSpec = os.path.join(root, filename)
-                    extract_nested_zip(fileSpec, root)
+            raise Exception(str(e))
     if os.environ['FLASK_ENV'] == 'development':
-        current_input_path = get_cwd(current_app.config['CAPS_RAW_LOCATION'])
-        current_output_path = get_cwd(current_app.config['CAPS_UNZIPPING_LOCATION'])
+        current_input_path = os.path.join(os.getcwd(), str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        current_output_path = os.path.join(os.getcwd(), str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         cwd = os.getcwd()
         os.chdir(current_input_path)
-        extension = '.zip'
-        for item in os.listdir(current_input_path):
-            if item.lower().endswith(extension):
-                try:
-                    extract_nested_zip(item, current_output_path)
-                except Exception as e:
-                    response['status'] = 'Cannot unzip input zip'
-                    response['message'] = response['message'] + ('Failed on ' + str(item))
-            else:
-                response['payload']['files_skipped'].append(item.lower())
+
+        if data['file_name'].lower().endswith('.zip'):
+            try:
+                extract_nested_zip(os.path.join(current_input_path, data['file_name']), current_output_path)
+            except Exception as e:
+                raise Exception(str(e))
+        else:
+            raise Exception(str(data['file_name']) + 'does not end with .zip')
         os.chdir(cwd)
     elif os.environ['FLASK_ENV'] == 'production':
         #use blob storage
