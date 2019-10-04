@@ -215,6 +215,13 @@ def data_quality_check():
         validity_response['final_score'] = 100 - (len(validity_response['results'])/len(column))
         return validity_response
 
+    def completeness_check(result):
+        completeness_response = {}
+        counter = 0
+        results = [elem for elem in result if elem == '' or elem == None]
+        completeness_response['final_score'] =  (len(results) / len(result)) * 100
+        return completeness_response
+
     response = {'status': 'ok', 'message': {}, 'payload': []}
     data_dictionary_results = {}
     uniqueness_response = {}
@@ -253,9 +260,14 @@ def data_quality_check():
                 query = tableclass.query
                 query = query.with_entities(getattr(tableclass, 'data')).all()
                 query = [regex_serializer(row)['data'][column] for row in query]
+                print(type(query))
+                print(len(query))
                 if compiled_data_dictionary[column]['regex']:
                     data_dictionary_results[table][column] = {
                         'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
+            ###completeness check ###
+                data_dictionary_results[table][column] = {
+                    'completeness': completeness_check(query)}
         response['message'] = ''
         response['payload'] = data_dictionary_results
     except Exception as e:
