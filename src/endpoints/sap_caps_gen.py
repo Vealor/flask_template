@@ -63,17 +63,13 @@ def build_master_tables():
         data = request.get_json()
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-
         for table in list_tablenames:
-            table_results = {}
             table_files = []
-
             #Search for all files that match table
             for file in os.listdir(os.path.join(str(data['project_id']), 'caps_gen_unzipped')):
                 if re.search(table, file):
                     if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
                         table_files.append(file)
-            print(table_files)
             #Load & union files into one master table in memory
             wfd = open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'wb')
             for index, file in enumerate(table_files):
@@ -132,21 +128,17 @@ def rename_scheme():
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
-            print(table)
             renamed_columndata = []
             rename_scheme = {}
             errorlines = []
             for index, elem in enumerate(mapping):
                 if mapping[index]['mappings'][0]['table_name'] == table:
                     rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
-            print(rename_scheme)
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
             print(len(columndata))
             for row in columndata:
                 row = rename_query_serializer(row)
-                print(rename_scheme.values())
-                print(row.keys())
                 if [x for x in rename_scheme.values() if x in row['data'].keys()]:
                     [response.pop(key) for key in ['renaming']]
                     raise Exception('Your table has already been renamed. Please ensure that mapping has not been applied twice.')
@@ -236,7 +228,6 @@ def data_quality_check():
             #The argument should be set to true when some of is_unique column in CDM labels is set to True.
             unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
             if unique_keys:
-                print(unique_keys)
                 unique_key_checker = []
                 data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
                 for row in data:
@@ -249,19 +240,15 @@ def data_quality_check():
             if len(dups) > 1:
                 uniqueness_response['results'] = dups
                 uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
-                print(uniqueness_response['final_score'])
                 data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
             else:
                 uniqueness_response['final_score'] = 100
                 data_dictionary_results[table] = {'uniqueness': 100}
             ### validity check ###
             for column in compiled_data_dictionary.keys():
-                print(column)
                 query = tableclass.query
                 query = query.with_entities(getattr(tableclass, 'data')).all()
                 query = [regex_serializer(row)['data'][column] for row in query]
-                print(type(query))
-                print(len(query))
                 if compiled_data_dictionary[column]['regex']:
                     data_dictionary_results[table][column] = {
                         'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
