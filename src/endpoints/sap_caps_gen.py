@@ -14,6 +14,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 from os import path
 from src.models import *
 from config import *
+from sqlalchemy import exists
 from src.util import *
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
@@ -61,9 +62,15 @@ def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
         data = request.get_json()
+        deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).all()
+        print(deletecheck)
+        if len(deletecheck) > 1:
+            print('true')
+            #db.session.delete(deletecheck)
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
+
             table_files = []
             #Search for all files that match table
             for file in os.listdir(os.path.join(str(data['project_id']), 'caps_gen_unzipped')):
@@ -99,8 +106,8 @@ def build_master_tables():
                     # WARNING: Project id needs to be provided in curl request
                     dict_to_insert['project_id'] = str(data['project_id'])
                     bulk_insert_handler.append(dict_to_insert)
-            db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
-            db.session.commit()
+            #db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+            #db.session.commit()
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
@@ -114,7 +121,7 @@ def build_master_tables():
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
 #the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in.
-@sap_caps_gen.route('/rename_scheme', methods=['GET'])
+@sap_caps_gen.route('/rename_scheme', methods=['POST'])
 def rename_scheme():
     #jsonify DB query
     def rename_query_serializer(row):
@@ -125,6 +132,7 @@ def rename_scheme():
     response = {'status': 'ok', 'message': {}, 'payload': []}
     response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
     try:
+        data = request.get_json()
         mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
@@ -135,7 +143,7 @@ def rename_scheme():
                 if mapping[index]['mappings'][0]['table_name'] == table:
                     rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
             tableclass = eval('Sap' + str(table.lower().capitalize()))
-            columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
+            columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.project_id == data['project_id']).all()
             print(len(columndata))
             for row in columndata:
                 row = rename_query_serializer(row)
@@ -166,7 +174,7 @@ def rename_scheme():
 
 
 #this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
-@sap_caps_gen.route('/data_quality_check', methods=['GET'])
+@sap_caps_gen.route('/data_quality_check', methods=['POST'])
 def data_quality_check():
     def regex_serializer(row):
         return {
@@ -218,18 +226,20 @@ def data_quality_check():
     data_dictionary_results = {}
     uniqueness_response = {}
     try:
+        data = request.get_json()
         CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
         for table in list_tablenames:
             data_dictionary_results[table] = {}
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             compiled_data_dictionary = data_dictionary(CDM_query, table)
+            data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
+                tableclass.project_id == data['project_id']).all()
             ### UNIQUENESS CHECK ###
             #The argument should be set to true when some of is_unique column in CDM labels is set to True.
             unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
             if unique_keys:
                 unique_key_checker = []
-                data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).all()
                 for row in data:
                     row = unique_key_serializer(row, unique_keys)
                     ''.join(row)
@@ -246,9 +256,7 @@ def data_quality_check():
                 data_dictionary_results[table] = {'uniqueness': 100}
             ### validity check ###
             for column in compiled_data_dictionary.keys():
-                query = tableclass.query
-                query = query.with_entities(getattr(tableclass, 'data')).all()
-                query = [regex_serializer(row)['data'][column] for row in query]
+                query = [regex_serializer(row)['data'][column] for row in data]
                 if compiled_data_dictionary[column]['regex']:
                     data_dictionary_results[table][column] = {
                         'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
@@ -263,7 +271,7 @@ def data_quality_check():
     return jsonify(response), 200
 
 #j1 to j10 joins to create APS
-@sap_caps_gen.route('/j1_j10', methods=['GET'])
+@sap_caps_gen.route('/j1_j10', methods=['POST'])
 def j1_j10():
     def execute(query):
         print(str(datetime.datetime.now()))
@@ -276,6 +284,7 @@ def j1_j10():
 
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
+        data = request.get_json()
         j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
         select
         L.*,
@@ -283,11 +292,11 @@ def j1_j10():
         ltrim(rtrim(cast(L.data ->> 'BUKRS' as Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'BELNR' AS Text))) || '_' || LTRIM(RTRIM(CAST(L.data ->> 'GJAHR' AS Text))) varapkey
         into table JOIN_BKPF_T001_MSTR
         from
-        (select * from sap_bkpf) as L
+        (select * from sap_bkpf where project_id = {project_id}) as L
         inner join
-        (select * from sap_t001 where CAST(data ->> 'SPRAS' AS TEXT) = 'EN') as R
+        (select * from sap_t001 where CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) as R
         on CAST(L.data -> 'BUKRS' AS TEXT) = cast(R.data -> 'BUKRS' AS TEXT)
-        """
+        """.format(project_id = data['project_id'])
 
 
         j2 = """DROP TABLE IF EXISTS BSEG_AP;
@@ -297,7 +306,7 @@ def j1_j10():
         cast('' as text) AS varMultiVND,
         cast('' as text) as varSupplier_No
         into  BSEG_AP
-        from (select * from sap_bseg) as L"""
+        from (select * from sap_bseg where project_id = {project_id}) as L""".format(project_id = data['project_id'])
 
         # Set the
         j3 = """
@@ -316,7 +325,7 @@ def j1_j10():
         FROM distinctVarAPKeyVendorAcctNum AS L
         GROUP BY varAPKey
         HAVING COUNT(*) >  1
-        """
+        """.format(project_id = data['project_id'])
 #Update Vendor Account Number for each varAPKey if Vendor Account Number is null with the first vendor account number
         j5 = """
         DROP TABLE IF EXISTS bseg_ap_final;
@@ -333,7 +342,7 @@ def j1_j10():
         on L.varapkey = R1.varapkey
         left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
         on L.varapkey = R2.varapkey
-        """
+        """.format(project_id = data['project_id'])
 
         j6 = """
         DROP TABLE IF EXISTS J1_BSEG_BKPF;
@@ -351,7 +360,7 @@ def j1_j10():
         FROM BSEG_AP_final AS L
         INNER JOIN JOIN_BKPF_T001_MSTR AS R
         ON L.varAPKey = R.varAPKey
-        """
+        """.format(project_id = data['project_id'])
 
         j7 = """
         DROP TABLE IF EXISTS J2_BSEG_BKPF_LFA1;
@@ -360,9 +369,9 @@ def j1_j10():
                    LTRIM(RTRIM(R.data ->> 'PSTLZ')) AS PSTLZ, LTRIM(RTRIM(R.data ->> 'STRAS')) AS STRAS
         INTO J2_BSEG_BKPF_LFA1
         FROM J1_BSEG_BKPF AS L
-        LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+        LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) AS R
         ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
-        """
+        """.format(project_id = data['project_id'])
 
 
 
@@ -372,10 +381,10 @@ def j1_j10():
         SELECT L.*, LTRIM(RTRIM(R.data ->> 'TXT50')) AS TXT50
         INTO J3_BSEG_BKPF_LFA1_SKAT
         FROM J2_BSEG_BKPF_LFA1 AS L
-        LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN') AS R
+        LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) AS R
         ON LTRIM(RTRIM(L.KTOPL)) = LTRIM(RTRIM(R.data ->> 'KTOPL'))
                        AND LTRIM(RTRIM(L.data ->> 'SAKNR')) = LTRIM(RTRIM(R.data ->> 'SAKNR'))
-            """
+            """.format(project_id = data['project_id'])
 
         j9 = """
         DROP TABLE IF EXISTS distinctVarAPKey;
@@ -383,9 +392,9 @@ def j1_j10():
         SELECT CONCAT(L.data ->> 'BUKRS', '_', L.data ->> 'BELNR', '_', L.data ->> 'GJAHR') AS varAPKey
         INTO distinctVarAPKey
         FROM sap_bseg AS L
-        WHERE cast(L.data ->> 'KOART' as text) = 'K'
+        WHERE cast(L.data ->> 'KOART' as text) = 'K' and project_id = {project_id}
         GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
-            """
+            """.format(project_id = data['project_id'])
 
         j10 = """
         DROP TABLE IF EXISTS J4_BSEG_BKPF_LFA1_SKAT_OnlyAP;
@@ -395,7 +404,7 @@ def j1_j10():
         FROM J3_BSEG_BKPF_LFA1_SKAT AS L
         INNER JOIN distinctVarAPKey AS R
         ON L.varAPKey = R.varAPKey
-        """
+        """.format(project_id = data['project_id'])
 
         j11 = """
         DROP TABLE IF EXISTS J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO;
@@ -403,10 +412,10 @@ def j1_j10():
         SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
         INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
         FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
-        LEFT JOIN (SELECT * FROM sap_ekpo) AS R
+        LEFT JOIN (SELECT * FROM sap_ekpo where project_id = {project_id}) AS R
         ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
                        AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
-        """
+        """.format(project_id = data['project_id'])
 
         j12 = """
         DROP TABLE IF EXISTS J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT;
@@ -414,9 +423,9 @@ def j1_j10():
         SELECT L.*, R.data ->> 'MAKTX' as MAKTX
         INTO J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT
         FROM J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO AS L
-        LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN') AS R
+        LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id}) AS R
         ON L.MATNR2 = R.data ->> 'MATNR'
-        """
+        """.format(project_id = data['project_id'])
 
         j13 = """
         DROP TABLE IF EXISTS J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR;
@@ -424,9 +433,9 @@ def j1_j10():
         SELECT L.*
         INTO J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR
         FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
-        LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr) AS R
+        LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr where project_id = {project_id}) AS R
         ON L.varAPKey = R.varAPKey
-        """
+        """.format(project_id = data['project_id'])
 
         j14 = """
               DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
@@ -434,9 +443,9 @@ def j1_j10():
         SELECT L.*, R.data ->> 'KTEXT'
         INTO J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT
         FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
-        LEFT JOIN (select cast(data as json) from (SELECT distinct cast(data as text) FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN')  R )AS R
+        LEFT JOIN (select cast(data as json) from (SELECT distinct cast(data as text) FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id})  R )AS R
         ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
-        """
+        """.format(project_id = data['project_id'])
 
         j15 = """
         DROP TABLE IF EXISTS J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007;
@@ -444,9 +453,9 @@ def j1_j10():
         SELECT L.*, R.data ->> 'KALSM' as KALSM, R.data ->> 'TEXT1' as TEXT1
         INTO J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
         FROM J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT AS L
-        LEFT JOIN (SELECT  * FROM sap_t007s WHERE LTRIM(RTRIM(cast(data ->> 'KALSM' as text))) = 'ZTAXCA' AND cast(data ->> 'SPRAS' as text) = 'EN') AS R
+        LEFT JOIN (SELECT  * FROM sap_t007s WHERE LTRIM(RTRIM(cast(data ->> 'KALSM' as text))) = 'ZTAXCA' AND cast(data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id}) AS R
         ON L.data ->> 'MWSKZ' = R.data ->> 'MWSKZ'
-        """
+        """.format(project_id = data['project_id'])
 
         ## WARNING: Not every client uses these document types consistently.
         j16 = """
@@ -629,7 +638,7 @@ def aps_to_caps():
             *
             into raw_relational
             from raw
-        """
+        """.format(project_id = data['project_id'])
 
 
         #Generates raw account sum, groups varaccountcode and varapkey, sums on dmbtr, wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for everything else. order by vartranamount

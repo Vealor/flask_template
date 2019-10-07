@@ -11,8 +11,7 @@ grant all privileges on database itra_db to itra;
 EOF
 
 source activate
-FLASK_ENV='development'
-flask db upgrade
+FLASK_ENV='development' flask db upgrade
 
 read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue once started" && printf "\n"
 
@@ -48,7 +47,6 @@ make_user "nickfury" "test" "nickfury@test.test" "nf" "nick" "fury" "tax_practit
 
 psql -h localhost -U itra itra_db -c "
   insert into logs (action, affected_entity, details, user_id) values('create', 'everything', 'such detail', 1);
-
   insert into clients (name) values ('mining corp');
   insert into clients (name) values ('mining corp two');
   insert into clients (name) values ('mining corpses');

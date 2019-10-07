@@ -130,7 +130,7 @@ class User(db.Model):
     user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic', passive_deletes=True)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-
+    user_capsgen = db.relationship('CapsGen', back_populates='capsgen_user')
     @property
     def serialize(self):
         return {
@@ -543,10 +543,15 @@ class CapsGen(db.Model):
     __tablename__ = 'capsgen'
     __table_args__ = (
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
     )
+    user_id = db.Column(db.Integer, nullable=True) #FK
+    capsgen_user = db.relationship('User', back_populates='user_capsgen')
+
     project_id = db.Column(db.Integer, primary_key=True, nullable=False)  # FK
     capsgen_project = db.relationship('Project', back_populates='project_capsgen')
 
+    is_completed = db.Column(db.Boolean, nullable=False, default=False)
     capsgen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_capsgen', lazy='dynamic', passive_deletes=True)
