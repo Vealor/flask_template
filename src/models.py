@@ -488,7 +488,22 @@ class ParedownRule(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
+    paredown_rule_condition_paredown_rule = db.relationship('ParedownRuleCondition', back_populates='ParedownRuleCondition.rule_id') # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', cascade="save-update", lazy='dynamic')
+    #TODO add in rule saving data
+
+class ParedownRuleCondition(db.Model):
+    # these rules are only either core, or for a lob_sector
+    # there are no project specific rules
+    __tablename__ = 'paredown_rules_conditions'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    rule_id = db.Column(db.Integer, nullable=False) #FK
+    field = db.Column(db.String(128), nullable=False)
+    operator = db.Column(db.String(128), nullable=False)
+    value = db.Column(db.String(128), nullable=False))
+
+    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='ParedownRule.id') # FK
+
     #TODO add in rule saving data
 
 class ParedownRuleLineOfBusinessSector(db.Model):
