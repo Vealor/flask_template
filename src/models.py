@@ -488,7 +488,7 @@ class ParedownRule(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    paredown_rule_condition_paredown_rule = db.relationship('ParedownRuleCondition', back_populates='ParedownRuleCondition.rule_id') # FK
+    paredown_rule_condition_paredown_rules = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule') # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', cascade="save-update", lazy='dynamic')
     #TODO add in rule saving data
 
@@ -496,13 +496,19 @@ class ParedownRuleCondition(db.Model):
     # these rules are only either core, or for a lob_sector
     # there are no project specific rules
     __tablename__ = 'paredown_rules_conditions'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
+    )
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    rule_id = db.Column(db.Integer, nullable=False) #FK
+    rule_id = db.Column(db.Integer, nullable=False) # FK
     field = db.Column(db.String(128), nullable=False)
     operator = db.Column(db.String(128), nullable=False)
-    value = db.Column(db.String(128), nullable=False))
+    value = db.Column(db.String(128), nullable=False)
+    code = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.String(128), nullable=True)
 
-    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='ParedownRule.id') # FK
+    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_condition_paredown_rules')
 
     #TODO add in rule saving data
 
