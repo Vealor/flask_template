@@ -65,7 +65,7 @@ psql -h localhost -U itra itra_db -c "
   update users set req_pass_reset = 'f';
   update users set is_superuser = 'y' where id = 1;
   update users set is_system_administrator = 'y' where id = 17;
-  
+
   insert into user_project (user_id, project_id) values (2, 1);
   insert into user_project (user_id, project_id) values (3, 2);
   insert into user_project (user_id, project_id) values (3, 3);
@@ -96,6 +96,10 @@ psql -h localhost -U itra itra_db -c "
   insert into user_project (user_id, project_id) values (17, 7);
   insert into user_project (user_id, project_id) values (17, 1);
   insert into user_project (user_id, project_id) values (17, 2);
+
+  insert into paredown_rules (id) values (1);
+  insert into paredown_rules_conditions (id, rule_id, field, operator, value, code) values (1, 1, 'some_field','>','5', 202);
+
   "
 
 
