@@ -29,7 +29,7 @@ def get_client_models(id=None):
 
         response['payload'] = [i.serialize for i in query.all()]
         response['message'] = ''
-    except Exception as e:
+    except ValueError as e:
         response['status'] = 'error'
         response['message'] = "Cannot get model(s): " + str(e)
         response['payload'] = []
@@ -239,7 +239,7 @@ def do_predict():
 
         response['message'] = 'Prediction successful. Transactions have been marked.'
         response['payload'] = []
-    except Exception as e:
+    except ValueError as e:
         response['status'] = 'error'
         response['message'] = "Cannot predict: {}".format(str(e))
         return jsonify(response), 400
