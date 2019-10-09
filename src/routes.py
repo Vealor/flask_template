@@ -36,6 +36,10 @@ api.register_blueprint(predict, url_prefix='/predict')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# Role Endpoints
+from src.endpoints.roles import roles
+api.register_blueprint(roles, url_prefix='/roles')
+
 # Train Endpoints
 from src.endpoints.train import train
 api.register_blueprint(train, url_prefix='/train')

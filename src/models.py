@@ -19,7 +19,7 @@ class Roles(enum.Enum):
 
     @classmethod
     def list(cls):
-        return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
+        return list(map(lambda c: c.value, cls))
 
 class LineOfBusinessSectors(enum.Enum):
     business_services_business_services = {'lob':'Business Services','sec':'Business Services'}
