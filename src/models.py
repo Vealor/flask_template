@@ -487,6 +487,8 @@ class ParedownRule(db.Model):
     __tablename__ = 'paredown_rules'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    code = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.String(128), nullable=True)
 
     paredown_rule_condition_paredown_rules = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule') # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', cascade="save-update", lazy='dynamic')
@@ -505,8 +507,6 @@ class ParedownRuleCondition(db.Model):
     field = db.Column(db.String(128), nullable=False)
     operator = db.Column(db.String(128), nullable=False)
     value = db.Column(db.String(128), nullable=False)
-    code = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.String(128), nullable=True)
 
     paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_condition_paredown_rules')
 
