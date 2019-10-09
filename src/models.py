@@ -708,6 +708,7 @@ class Transaction(db.Model):
     rbc_recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
+    codes = db.Column(postgresql.JSON, nullable=False)
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     locked_transaction_user = db.relationship('User', back_populates='locked_transactions') # FK
@@ -735,12 +736,17 @@ class Transaction(db.Model):
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
             'data': self.data,
+            'codes': self.codes,
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
 
     # def update_prediction(self,update_dict):
