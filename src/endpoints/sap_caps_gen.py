@@ -62,12 +62,14 @@ def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
         data = request.get_json()
-        deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).all()
-        print(deletecheck)
-        if len(deletecheck) > 1:
-            print('true')
-            #db.session.delete(deletecheck)
-        mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
+        deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
+        if deletecheck:
+            db.session.delete(deletecheck)
+            db.session.commit()
+        db.session.add(CapsGen(user_id=1, project_id=data['project_id'], is_completed=False))
+        db.session.commit()
+        for label in CDM_label.query.all():
+            mapping = [label.serialize for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
 
@@ -94,7 +96,6 @@ def build_master_tables():
             #initialize variables for bulk insertion
             referenceclass = eval('Sap' + str(table.lower().capitalize()))
             bulk_insert_handler = []
-
             #bulk insert into database
             with open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
                 counter = 0
@@ -106,8 +107,9 @@ def build_master_tables():
                     # WARNING: Project id needs to be provided in curl request
                     dict_to_insert['project_id'] = str(data['project_id'])
                     bulk_insert_handler.append(dict_to_insert)
-            #db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
-            #db.session.commit()
+            db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+            CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
+            db.session.commit()
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)

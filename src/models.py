@@ -582,30 +582,10 @@ class DataMapping(db.Model):
     table_name = db.Column(db.String(256), nullable=False)
 
     project_id = db.Column(db.Integer, nullable=False, primary_key=True) # FK
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings') # FK
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
 
     cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
-
-    @property
-    def serialize(self):
-        return {
-            'column_name': self.column_name,
-            'table_name': self.table_name,
-            'cdm_label_script_label': self.cdm_label_script_label
-        }
-
-class Sap_linkingfields(db.Model):
-    __table_name__ = 'sap_linkingfields'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    table_name = db.Column(db.String(256), nullable=False)
-    field_name = db.Column(db.String(256), nullable=False)
-    is_complete = db.Column(db.Boolean, unique=False, nullable=False)
-    is_unique = db.Column(db.Boolean, unique=False, nullable=False)
-    datatype = db.Column(db.Enum(Datatype), nullable=False)
-    regex = db.Column(db.String(256), nullable=False)
-    # project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
-    # sap_linkingfields_project = db.relationship('Project', back_populates='project_sap_linkingfields')
+    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
@@ -618,20 +598,13 @@ class CDM_label(db.Model):
     regex = db.Column(db.String(256), nullable=False)
 
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
+
     @property
     def serialize(self):
-        table_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_label).one()).serialize)['table_name']
-        column_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_label).one()).serialize)['column_name']
         return {
-            'table_name': table_name,
-            'column_name': column_name,
-            'script_label': self.script_label,
-            'english_label': self.english_label,
-            'is_calculated': self.is_calculated,
-            'is_required': self.is_required,
-            'is_unique': self.is_unique,
-            'datatype': self.datatype.name,
-            'regex': self.regex
+            "script_label": self.script_label,
+            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in
+                         self.cdm_label_data_mappings.all()]
         }
 
 ################################################################################
