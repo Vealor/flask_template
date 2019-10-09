@@ -74,12 +74,10 @@ def send_mail(user_email, subject, content):
     except Exception as e:
         raise e
 
-#===============================================================================
-
 
 
 #===============================================================================
-# Returns unzipped zip
+# Unzips all SAP source data text files from a nested zip file.
 def get_data(data, response):
     def extract_nested_zip(zippedFile, toFolder):
         try:

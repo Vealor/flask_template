@@ -131,6 +131,7 @@ class User(db.Model):
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
     user_capsgen = db.relationship('CapsGen', back_populates='capsgen_user')
+    
     @property
     def serialize(self):
         return {
@@ -407,9 +408,6 @@ class Project(db.Model):
     has_es_fxrates = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    #project_sap_linkingfields = db.relationship('Sap_linkingfields', back_populates='sap_linkingfields_project')
-
-
 
     @property
     def serialize(self):
@@ -578,7 +576,7 @@ class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-        db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_labels']),
+        db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
     )
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
@@ -611,8 +609,8 @@ class Sap_linkingfields(db.Model):
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
-    script_labels = db.Column(db.String(256), primary_key=True, nullable=False)
-    english_labels = db.Column(db.String(256), nullable=False)
+    script_label = db.Column(db.String(256), primary_key=True, nullable=False)
+    english_label = db.Column(db.String(256), nullable=False)
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_required = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
@@ -622,13 +620,13 @@ class CDM_label(db.Model):
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
     @property
     def serialize(self):
-        table_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['table_name']
-        column_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_labels).one()).serialize)['column_name']
+        table_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_label).one()).serialize)['table_name']
+        column_name = ((DataMapping.query.filter_by(cdm_label_script_label=self.script_label).one()).serialize)['column_name']
         return {
             'table_name': table_name,
             'column_name': column_name,
-            'script_labels': self.script_labels,
-            'english_labels': self.english_labels,
+            'script_label': self.script_label,
+            'english_label': self.english_label,
             'is_calculated': self.is_calculated,
             'is_required': self.is_required,
             'is_unique': self.is_unique,

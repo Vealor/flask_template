@@ -22,7 +22,7 @@ sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
 def mapping_serializer(label):
     return {
-        "script_label": label.script_labels,
+        "script_label": label.script_label,
         "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
     }
 
@@ -199,7 +199,7 @@ def data_quality_check():
 
     def retrieve_dq_serializer(label):
         return {
-            "script_label": label.script_labels,
+            "script_label": label.script_label,
             "is_required": label.is_required,
             "regex": label.regex,
             "is_unique": label.is_unique,
