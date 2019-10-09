@@ -46,6 +46,7 @@ class DevelopmentConfig(Config):
     }
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+    CAPS_BASE_DIR = 'caps_gen_processing'
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
     CAPS_MASTER_LOCATION = 'caps_gen_master'

@@ -79,7 +79,7 @@ def send_mail(user_email, subject, content):
 
 
 #===============================================================================
-# Sends an email to the user with given inputs
+# Returns unzipped zip
 def get_data(data, response):
     def extract_nested_zip(zippedFile, toFolder):
         try:
@@ -96,8 +96,8 @@ def get_data(data, response):
         except Exception as e:
             raise Exception(str(e))
     if os.environ['FLASK_ENV'] == 'development':
-        current_input_path = os.path.join(os.getcwd(), str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
-        current_output_path = os.path.join(os.getcwd(), str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         cwd = os.getcwd()
         os.chdir(current_input_path)
 
