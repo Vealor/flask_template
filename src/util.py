@@ -78,7 +78,7 @@ def send_mail(user_email, subject, content):
 
 #===============================================================================
 # Unzips all SAP source data text files from a nested zip file.
-def get_data(data, response):
+def source_data_unzipper(data, response):
     def extract_nested_zip(zippedFile, toFolder):
         try:
             with zipfile.ZipFile(zippedFile, 'r') as zfile:

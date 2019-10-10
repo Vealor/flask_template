@@ -46,7 +46,7 @@ def unzipping():
             'system': 'str'
         }
         validate_request_data(data, request_types)
-        get_data(data, response)
+        source_data_unzipper(data, response)
     except Exception as e:
         response['status'] = 'error'
         response['message'] = str(e)
