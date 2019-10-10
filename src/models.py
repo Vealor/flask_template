@@ -490,7 +490,7 @@ class ParedownRule(db.Model):
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
-    paredown_rule_condition_paredown_rules = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_conditions', passive_deletes=True) # FK
+    paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_conditions', passive_deletes=True) # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', passive_deletes=True, lazy='dynamic')
     #TODO add in rule saving data
 
@@ -508,7 +508,7 @@ class ParedownRuleCondition(db.Model):
     value = db.Column(db.String(128), nullable=False)
 
     paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
-    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions', passive_deletes=True) #FK
+    paredown_rule_conditions = db.relationship('ParedownRule', back_populates='paredown_rule_conditions', passive_deletes=True) #FK
 
     #TODO add in rule saving data
 
