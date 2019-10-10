@@ -17,9 +17,11 @@ fxrates = Blueprint('fxrates', __name__)
 def insert_fxrates_data():
     try:
         response = {'status': 'ok', 'message': '', 'payload': []}
-        response.update({'validation': {'status': 'ok', 'message': ''},
-                         'date': {'status': 'ok', 'message': ''},
-                         'db_dump': {'status': 'ok', 'message': ''}})
+        response.update({
+            'validation': {'status': 'ok', 'message': ''},
+            'date': {'status': 'ok', 'message': ''},
+            'db_dump': {'status': 'ok', 'message': ''}
+        })
         data = request.get_json()
         if not isinstance(data, list):
             [response.pop(key) for key in ['date', 'db_dump', 'validation']]
