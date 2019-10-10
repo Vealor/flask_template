@@ -40,14 +40,6 @@ api.register_blueprint(master_models, url_prefix='/master_models')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
-# Role Endpoints
-from src.endpoints.roles import roles
-api.register_blueprint(roles, url_prefix='/roles')
-
-# Train Endpoints
-from src.endpoints.train import train
-api.register_blueprint(train, url_prefix='/train')
-
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
 api.register_blueprint(transactions, url_prefix='/transactions')
