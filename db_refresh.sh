@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 sudo -i -u postgres psql <<EOF
 drop database itra_db;
 create database itra_db;
