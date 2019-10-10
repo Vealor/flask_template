@@ -60,7 +60,7 @@ Quit PSQL
 ```
 Apply migrations:
 ```
-./db_dev.sh
+./db_refresh.sh
 ```
 
 ___
@@ -84,17 +84,6 @@ Dev with SSL:
 ```
 ./dev_srv.sh ssl
 ```
-
-### Creating system test user
-<strong>You can only have one. If you forget the password, you must go into the DB and delete the user with is_superuser.</strong>  
-Use the ```/auth/createadminsuperuseraccount``` endpoint  
-In your body of post request make sure to have:
-```
-{ 'special_token': ''} # Look in the code for the special_token
-```
-In the body you also need to include ```username```, ```password```, ```first_name```, and ```last_name```.
-<strong>If you need help, ask about this.</strong>
-
 
 ### Utility scripts
 <strong>upgrade_requirements.sh</strong>

@@ -142,7 +142,10 @@ class User(db.Model):
             'last_name': self.last_name,
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
-            'role': self.role.name
+            'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
+            'user_project_ids': [i.project_id for i in self.user_projects]
         }
 
     @property
@@ -157,6 +160,8 @@ class User(db.Model):
             'display_name': "{} {}".format(self.first_name, self.last_name),
             'req_pass_reset': self.req_pass_reset,
             'role': self.role.name,
+            'is_system_administrator': self.is_system_administrator,
+            'is_superuser': self.is_superuser,
             'user_projects': [i.serialize for i in self.user_projects]
         }
 
@@ -594,12 +599,13 @@ class ClientModel(db.Model):
     client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
-    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic')
+    client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
         return {
             'id': self.id,
+            'client_id': self.client_id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
@@ -612,12 +618,12 @@ class ClientModel(db.Model):
         return cls.query.filter_by(id = id).first()
 
     @classmethod
-    def find_active_for_client(cls, id):
-        return cls.query.filter_by(status = Activity.active.value).filter_by(id = id).first()
+    def find_active_for_client(cls, client_id):
+        return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
 
     @classmethod
     def set_active_for_client(cls, model_id, client_id):
-        active_model = cls.find_active_for_client( client_id)
+        active_model = cls.find_active_for_client(client_id)
         if active_model:
             active_model.status = Activity.inactive.value
         cls.query.filter_by(id=model_id).first().status = Activity.active.value
@@ -649,7 +655,7 @@ class MasterModel(db.Model):
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
     master_model_transactions = db.relationship('Transaction', back_populates='transaction_master_model', lazy='dynamic')
-    master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic')
+    master_model_model_performances = db.relationship('MasterModelPerformance', back_populates='performance_master_model', lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
@@ -661,6 +667,10 @@ class MasterModel(db.Model):
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
     @classmethod
     def find_active(cls):
