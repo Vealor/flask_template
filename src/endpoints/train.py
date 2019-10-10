@@ -110,8 +110,7 @@ def do_train():
 
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
 
     # Train the instantiated model and edit the db entry
@@ -215,10 +214,12 @@ def do_train():
         response['payload']['model_id'] = model_id
         response['payload']['model_type'] = data['model_type']
         response['message'] = 'Model trained and created.'
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201

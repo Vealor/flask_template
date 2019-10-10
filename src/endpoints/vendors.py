@@ -33,13 +33,13 @@ def get_vendors(id):
         # # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -68,11 +68,12 @@ def post_vendor():
 
         response['message'] = 'Created vendor {}'.format(data['name'])
         response['payload'] = [Vendor.find_by_id(vendor_id).serialize]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -100,11 +101,12 @@ def update_vendor(id):
 
         response['message'] = 'Updated vendor with id {}'.format(data['id'])
         response['payload'] = [Vendor.find_by_id(data['id']).serialize]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -123,10 +125,12 @@ def delete_vendor(id):
 
         response['message'] = 'Deleted vendor id {}'.format(vendor['id'])
         response['payload'] = [vendor]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
-
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)

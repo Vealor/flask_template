@@ -16,16 +16,11 @@ def get_lob_sectors():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
-        response['message'] = ''
         response['payload'] = LineOfBusinessSectors.list()
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response)

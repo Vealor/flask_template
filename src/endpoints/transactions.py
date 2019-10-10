@@ -41,14 +41,10 @@ def get_transactions(id):
 
         response['payload'] = [i.serialize for i in query.all()]
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
 
@@ -72,14 +68,10 @@ def check_transaction_lock(id):
 
         response['payload'] = query.first().locked_transaction_user.username if query.first().locked_transaction_user else False
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
 
@@ -109,15 +101,11 @@ def lock_transaction(id):
         response['payload'] = [Transaction.find_by_id(id).serialize]
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
 
@@ -147,15 +135,11 @@ def unlock_transaction(id):
         response['payload'] = [Transaction.find_by_id(id).serialize]
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
 
@@ -192,14 +176,10 @@ def update_transaction(id):
         response['payload'] = [Transaction.find_by_id(id).serialize]
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200

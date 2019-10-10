@@ -73,12 +73,13 @@ def do_predict():
             tr.recovery_probability = pr
 
         db.session.commit()
-
-
         response['message'] = 'Prediction successful. Transactions have been marked.'
-        response['payload'] = []
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201

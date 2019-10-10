@@ -27,11 +27,11 @@ def default():
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
