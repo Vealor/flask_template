@@ -33,11 +33,6 @@ def unzipping():
     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
     try:
         data = request.get_json()
-        if not os.path.exists(os.path.join(str(data['project_id']))):
-            os.mkdir(str(data['project_id']))
-            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-            for folder in folders:
-                os.mkdir((os.path.join(str(data['project_id']), folder)))
         if not isinstance(data, dict):
             raise Exception('data is not a dict')
         request_types = {
@@ -52,8 +47,6 @@ def unzipping():
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
-    response['message'] = ''
-    response['payload'] = []
     return jsonify(response), 200
 
 #MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh

@@ -33,6 +33,8 @@ def get_date_obj_from_str(date_str):
 #===============================================================================
 # Checks that keys and types are in JSON input
 def validate_request_data(data, validation):
+    if not isinstance(data, dict):
+        raise Exception('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
     if [x for x in validation.keys() if not x in data.keys()]:
         raise ValueError('Request is missing required keys.')
@@ -94,6 +96,11 @@ def source_data_unzipper(data, response):
         except Exception as e:
             raise Exception(str(e))
     if os.environ['FLASK_ENV'] == 'development':
+        if not os.path.exists(os.path.join(str(data['project_id']))):
+            os.mkdir(str(data['project_id']))
+            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+            for folder in folders:
+                os.mkdir((os.path.join(str(data['project_id']), folder)))
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         cwd = os.getcwd()
