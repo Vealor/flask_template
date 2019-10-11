@@ -22,14 +22,15 @@ def get_transactions(id):
 
     try:
         # TODO: make sure user has access to the project
+        query = Transaction.query
         if id is None:
             if 'project_id' not in args.keys():
                 raise ValueError('Please specify a Transaction ID in the URL or a Project ID as an argument for the transactions query.')
-            query = Transaction.query.filter_by(project_id=args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
+            query = query.filter_by(project_id=args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
         else:
-            # Project ID filter
-            query = Transaction.find_by_id(id)
-            if not query:
+            # ID filter
+            query = query.filter_by(id=id)
+            if not query.first():
                 raise ValueError('Transaction ID {} does not exist.'.format(id))
 
         # Set ORDER
@@ -66,7 +67,7 @@ def check_transaction_lock(id):
         if not query:
             raise ValueError('Transaction ID {} does not exist.'.format(id))
 
-        response['payload'] = query.first().locked_transaction_user.username if query.first().locked_transaction_user else False
+        response['payload'] = query.locked_transaction_user.username if query.locked_transaction_user else ''
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
