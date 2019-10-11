@@ -487,9 +487,11 @@ class ParedownRule(db.Model):
     __tablename__ = 'paredown_rules'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    code = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.String(128), nullable=True)
 
-    paredown_rule_condition_paredown_rules = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule') # FK
-    paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', cascade="save-update", lazy='dynamic')
+    paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', passive_deletes=True) # FK
+    paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
     #TODO add in rule saving data
 
 class ParedownRuleCondition(db.Model):
@@ -497,18 +499,16 @@ class ParedownRuleCondition(db.Model):
     # there are no project specific rules
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
-        db.ForeignKeyConstraint(['rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    rule_id = db.Column(db.Integer, nullable=False) # FK
     field = db.Column(db.String(128), nullable=False)
     operator = db.Column(db.String(128), nullable=False)
     value = db.Column(db.String(128), nullable=False)
-    code = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.String(128), nullable=True)
 
-    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_condition_paredown_rules')
+    paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
+    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions') #FK
 
     #TODO add in rule saving data
 
