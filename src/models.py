@@ -582,10 +582,10 @@ class DataMapping(db.Model):
     table_name = db.Column(db.String(256), nullable=False)
 
     project_id = db.Column(db.Integer, nullable=False, primary_key=True) # FK
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings')
+    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings') # FK
 
     cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings')
+    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
 
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
@@ -603,8 +603,7 @@ class CDM_label(db.Model):
     def serialize(self):
         return {
             "script_label": self.script_label,
-            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in
-                         self.cdm_label_data_mappings.all()]
+            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
         }
 
 ################################################################################
@@ -809,11 +808,15 @@ class Transaction(db.Model):
 
 class FXRates(db.Model):
     _tablename_ = 'fx_rates'
-    dateid = db.Column(db.DateTime(timezone=True), primary_key=True)
+    date_id = db.Column(db.Date(), primary_key=True)
     usdtocad = db.Column(db.Float, nullable=False)
-    cadtousd = db.Column(db.Float, nullable=False)
-    gbptocad = db.Column(db.Float, nullable=False)
-    cadtogbp = db.Column(db.Float, nullable=False)
+
+    @property
+    def serialize(self):
+        return {
+            'date_id': self.date_id,
+            'usdtocad': self.usdtocad
+        }
 
 class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'

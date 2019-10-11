@@ -4,10 +4,6 @@ from src import api
 #===============================================================================
 ### Endpoint Imports
 
-# General Endpoints
-from src.endpoints.general import general
-api.register_blueprint(general, url_prefix='/')
-
 # Auth Endpoints
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
@@ -15,6 +11,14 @@ api.register_blueprint(auth, url_prefix='/auth')
 # Client Endpoints
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
+
+# FXrates Endpoints
+from src.endpoints.fxrates import fxrates
+api.register_blueprint(fxrates, url_prefix='/fxrates')
+
+# General Endpoints
+from src.endpoints.general import general
+api.register_blueprint(general, url_prefix='/')
 
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
@@ -36,6 +40,10 @@ api.register_blueprint(predict, url_prefix='/predict')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# SAP Caps Gen Endpoints
+from src.endpoints.sap_caps_gen import sap_caps_gen
+api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
+
 # Train Endpoints
 from src.endpoints.train import train
 api.register_blueprint(train, url_prefix='/train')
@@ -49,13 +57,6 @@ from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
 
-# SAP Caps Gen Endpoints
-from src.endpoints.sap_caps_gen import sap_caps_gen
-api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
-
-#FXrates Endpoints
-from src.endpoints.fxrates import fxrates
-api.register_blueprint(fxrates, url_prefix='/fxrates')
 
 
 #===============================================================================

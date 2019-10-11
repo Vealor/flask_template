@@ -100,10 +100,7 @@ def source_data_unzipper(data, response):
         os.chdir(current_input_path)
 
         if data['file_name'].lower().endswith('.zip'):
-            try:
-                extract_nested_zip(os.path.join(current_input_path, data['file_name']), current_output_path)
-            except Exception as e:
-                raise Exception(str(e))
+            extract_nested_zip(os.path.join(current_input_path, data['file_name']), current_output_path)
         else:
             raise Exception(str(data['file_name']) + 'does not end with .zip')
         os.chdir(cwd)
