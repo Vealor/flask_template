@@ -9,7 +9,7 @@ from src.models import *
 
 roles = Blueprint('roles', __name__)
 #===============================================================================
-# GET ALL LineOfBusinessSectors
+# GET ALL Roles
 @roles.route('/', methods=['GET'])
 # @jwt_required
 def get_roles():
