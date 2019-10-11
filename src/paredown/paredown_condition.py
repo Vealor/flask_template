@@ -5,7 +5,7 @@ class ParedownCondition():
         self.field_name = field_name         #The data field name
         self.operator = operator        #The operator between
         self.value = value              #The value that the data field is compared to
-        if self.operator in ['>','<','==','>=','<=','<>']:
+        if self.operator in ['>','<','==','>=','<=','!=']:
             self.value_type = 'float'
         else:
             self.value_type = 'str'
