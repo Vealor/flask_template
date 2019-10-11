@@ -28,18 +28,12 @@ def get_client_models(id=None):
                 raise ValueError("No client model with ID {} exists.".format(id))
 
         response['payload'] = [i.serialize for i in query.all()]
-        response['message'] = ''
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = "Cannot get model(s): " + str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
-        response['status'] = 'error'
-        response['message'] = "Model retrieval failed: " + str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
-
     return jsonify(response), 200
 
 #===============================================================================
@@ -177,13 +171,11 @@ def do_train():
         response['message'] = 'Model trained and created.'
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = "Cannot train model: {}".format(str(e))
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = "Training failed: {}".format(str(e))
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 201
 
@@ -240,46 +232,41 @@ def do_predict():
         response['message'] = 'Prediction successful. Transactions have been marked.'
         response['payload'] = []
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = "Cannot predict: {}".format(str(e))
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
-        response['status'] = 'error'
-        response['message'] = "Prediction failed: {}".format(str(e))
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
 # Delete a client model
-# 'id' specifies the id of the model to be deleted.
 @client_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 def delete_client_model(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
         query = ClientModel.find_by_id(id)
         if not query:
             raise ValueError('Client model ID {} does not exist.'.format(id))
         if query.status == Activity.active:
-            raise ValueError('Client model ID {} is currently active.'.format(id))
+            raise ValueError('Client model ID {} is currently active. Cannot delete.'.format(id))
 
         model = query.serialize
         db.session.delete(query)
         db.session.commit()
 
-        response['status'] = 'ok'
         response['message'] = 'Deleted Client model ID {}'.format(model['id'])
         response['payload'] = [model]
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = "Cannot delete: {}".format(str(e))
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = "Deletion failed: {}".format(str(e))
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
-
     return jsonify(response), 200

@@ -35,11 +35,12 @@ def get_clients(id):
 
         response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 200
 
 #===============================================================================
@@ -107,12 +108,14 @@ def post_client():
         db.session.commit()
         response['message'] = 'Created client {}'.format(data['name'])
         response['payload'] = [Client.find_by_id(new_client.id).serialize]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -226,12 +229,14 @@ def update_client(id):
         db.session.commit()
         response['message'] = 'Updated client with id {}'.format(id)
         response['payload'] = [Client.find_by_id(id).serialize]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 200
 
 #===============================================================================
@@ -256,10 +261,12 @@ def delete_client(id):
         db.session.commit()
         response['message'] = 'Deleted client id {}'.format(client['id'])
         response['payload'] = [client]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 200
