@@ -1,5 +1,4 @@
 import re
-re.search(r'\babc\b', 'abc 123')
 
 class ParedownCondition():
 
@@ -14,7 +13,7 @@ class ParedownCondition():
         else:
             self.value_type = 'str'
             if self.operator == 'contains':
-                lambda_func_str = 'lambda x : True if re.search(r\'{}\', x, re.IGNORECASE) else False'.format(self.value)
+                lambda_func_str = 'lambda x : True if re.search(r\'\\b{}\\b\', x, re.IGNORECASE) else False'.format(self.value)
             else:
                 lambda_func_str = 'lambda x : True if x {} {} else False'.format(self.operator, self.value)
 
