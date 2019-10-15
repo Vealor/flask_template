@@ -169,7 +169,7 @@ def rename_scheme():
 
 
 #this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
-@sap_caps_gen.route('/data_quality_check', methods=['POST'])
+@sap_caps_gen.route('/data_quality_check', methods=['GET'])
 def data_quality_check():
     def regex_serializer(row):
         return {
