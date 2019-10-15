@@ -543,6 +543,7 @@ class CapsGen(db.Model):
         db.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, nullable=True) #FK
     capsgen_user = db.relationship('User', back_populates='user_capsgen')
 
