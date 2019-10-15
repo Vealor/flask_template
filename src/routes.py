@@ -4,6 +4,10 @@ from src import api
 #===============================================================================
 ### Endpoint Imports
 
+# General Endpoints
+from src.endpoints.general import general
+api.register_blueprint(general, url_prefix='/')
+
 # Auth Endpoints
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
@@ -19,10 +23,6 @@ api.register_blueprint(client_models, url_prefix='/client_models')
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
-
-# General Endpoints
-from src.endpoints.general import general
-api.register_blueprint(general, url_prefix='/')
 
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
