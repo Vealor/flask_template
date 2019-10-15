@@ -24,14 +24,14 @@ def toggle_favourite(id):
         query = query.first()
         query.is_favourite = not query.is_favourite
         db.session.commit()
-        response['message'] = ''
-        response['payload'] = []
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -62,13 +62,13 @@ def get_projects(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['message'] = ''
         response['payload'] = [i.serialize for i in query.all()]
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -201,12 +201,14 @@ def post_project():
         db.session.commit()
         response['message'] = 'Created project {}'.format(data['name'])
         response['payload'] = [Project.find_by_id(new_project.id).serialize]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -348,12 +350,14 @@ def update_project(id):
         db.session.commit()
         response['message'] = 'Updated project with id {}'.format(id)
         response['payload'] = [Project.find_by_id(id).serialize]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -368,16 +372,18 @@ def delete_project(id):
         if not query:
             raise ValueError('Project ID {} does not exist.'.format(id))
 
-        project = query.serialize
+        deletedproject = query.serialize
         db.session.delete(query)
 
         db.session.commit()
-        response['message'] = 'Deleted project id {}'.format(project['id'])
-        response['payload'] = [project]
+        response['message'] = 'Deleted project id {}'.format(deletedproject['id'])
+        response['payload'] = [deletedproject]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)

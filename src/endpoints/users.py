@@ -33,13 +33,17 @@ def get_users(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        response['message'] = ''
         response['payload'] = [i.serialize_proj for i in query.all()] if 'projects' in args.keys() else [i.serialize for i in query.all()]
-    except Exception as e:
+    except ValueError as e:
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -95,12 +99,18 @@ def post_user():
         db.session.commit()
         response['message'] = 'Created user {}'.format(data['username'])
         response['payload'] = [User.find_by_id(new_user.id).serialize]
-    except Exception as e:
+    except ValueError as e:
         db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
         return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -154,12 +164,14 @@ def update_user(id):
         db.session.commit()
         response['message'] = 'Updated user with id {}'.format(id)
         response['payload'] = [User.find_by_id(id).serialize]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
 
 #===============================================================================
@@ -184,12 +196,12 @@ def check_password(id):
             return jsonify(response), 401
 
         response['message'] = 'Password Valid'
-        response['payload'] = []
     except ValueError as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 200
 
 #===============================================================================
@@ -218,15 +230,15 @@ def update_user_password(id):
         query.req_pass_reset = False
 
         db.session.commit()
-        response['status'] = 'ok'
         response['message'] = 'Password changed'
-        response['payload'] = []
     except ValueError as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -245,13 +257,14 @@ def delete_user(id):
         db.session.delete(query)
 
         db.session.commit()
-        response['status'] = 'ok'
         response['message'] = 'Deleted user id {}'.format(user['id'])
         response['payload'] = [user]
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)

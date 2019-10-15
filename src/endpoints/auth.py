@@ -42,21 +42,19 @@ def reset():
             '''
             send_mail(data['email'], 'Password Reset', mailbody)
 
-
         db.session.commit()
         response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
-        response['payload'] = []
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
     except Exception as e:
         db.session.rollback()
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
-# TODO:
-#   Acquire roles and other details like this: https://github.com/vimalloc/flask-jwt-extended/blob/master/examples/tokens_from_complex_objects.py
 # login
 @auth.route('/login', methods=['POST'])
 def login():
@@ -79,12 +77,12 @@ def login():
         response['access_token'] = create_access_token(identity = data['username'])
         response['refresh_token'] = create_refresh_token(identity = data['username'])
         response['message'] = 'Logged in as {}'.format(data['username'])
-        response['payload'] = []
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response), 201
 
 #===============================================================================
@@ -95,7 +93,6 @@ def refresh():
     user = get_jwt_identity()
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['access_token'] = create_access_token(identity = user)
-    # add_token_to_database(access_token, app.config['JWT_IDENTITY_CLAIM'])
     return jsonify(response), 201
 
 #===============================================================================
@@ -112,8 +109,7 @@ def verify_tokens():
 @auth.route('/user_details', methods=['GET'])
 @jwt_required
 def get_user_details():
-    user = current_user
-    response = { 'status': 'ok', 'message': '', 'payload': user.serialize }
+    response = { 'status': 'ok', 'message': '', 'payload': current_user.serialize }
     return jsonify(response), 200
 
 #===============================================================================
@@ -121,6 +117,5 @@ def get_user_details():
 @auth.route('/user_details_with_projects', methods=['GET'])
 @jwt_required
 def get_user_details_with_projects():
-    user = current_user
-    response = { 'status': 'ok', 'message': '', 'payload': user.serialize_user_proj }
+    response = { 'status': 'ok', 'message': '', 'payload': current_user.serialize_user_proj }
     return jsonify(response), 200
