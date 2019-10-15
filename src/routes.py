@@ -12,6 +12,10 @@ api.register_blueprint(auth, url_prefix='/auth')
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
+# ClientModel Endpoints
+from src.endpoints.client_models import client_models
+api.register_blueprint(client_models, url_prefix='/client_models')
+
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
@@ -32,9 +36,9 @@ api.register_blueprint(lob_sectors, url_prefix='/lob_sectors')
 from src.endpoints.logs import logs
 api.register_blueprint(logs, url_prefix='/logs')
 
-# Predict Endpoints
-from src.endpoints.predict import predict
-api.register_blueprint(predict, url_prefix='/predict')
+# MasterModel Endpoints
+from src.endpoints.master_models import master_models
+api.register_blueprint(master_models, url_prefix='/master_models')
 
 # Project Endpoints
 from src.endpoints.projects import projects
@@ -47,6 +51,10 @@ api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 # Train Endpoints
 from src.endpoints.train import train
 api.register_blueprint(train, url_prefix='/train')
+
+# Transaction Endpoints
+from src.endpoints.transactions import transactions
+api.register_blueprint(transactions, url_prefix='/transactions')
 
 # User Endpoints
 from src.endpoints.users import users

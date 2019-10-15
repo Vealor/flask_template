@@ -5,6 +5,7 @@ grant all privileges on database itra_db to itra;
 EOF
 
 source activate
+rm ./migrations/versions/*.py
 FLASK_ENV='development' flask db migrate
 sleep 2
 FLASK_ENV='development' flask db upgrade
@@ -59,7 +60,18 @@ psql -h localhost -U itra itra_db -c "
   insert into fx_rates (date_id, usdtocad) values ('2010-01-01', 1.56);
   insert into fx_rates (date_id, usdtocad) values ('2010-01-02', 1.57);
   insert into vendors (name) values ('miner buyer');
-  insert into transactions (data, vendor_id, project_id) values ('{}', 1, 1);
+  insert into vendors (name) values ('banana buyer');
+  insert into vendors (name) values ('potato buyer');
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 3, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 3, 1);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 2);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 2);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 3);
+  insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 3);
   insert into user_project (user_id, project_id) values (1, 1);
 
   update users set req_pass_reset = 'f';

@@ -14,12 +14,10 @@ def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
         response['VERSION'] = current_app.config['VERSION']
-
-        response['message'] = ''
-        response['payload'] = []
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
     return jsonify(response)
