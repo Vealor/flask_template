@@ -115,6 +115,7 @@ def create_rule():
             db.session.add(new_paredown_condition)
             db.session.flush()
 
+        response['message'] = 'New paredown rule ID {} added.'.format(new_paredown_rule.id)
         db.session.commit()
     except ValueError as e:
         db.session.rollback()
