@@ -1,6 +1,6 @@
 import re
 
-class ParedownCondition():
+class ParedownConditionObject():
 
     def __init__(self, field_name, operator, value):
 
@@ -17,7 +17,6 @@ class ParedownCondition():
             else:
                 lambda_func_str = 'lambda x : True if x {} {} else False'.format(self.operator, self.value)
 
-        print(lambda_func_str)
         self.evaluator = eval(lambda_func_str)
 
 

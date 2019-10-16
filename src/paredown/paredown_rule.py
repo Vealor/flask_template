@@ -1,7 +1,7 @@
 
 from functools import reduce
 
-class ParedownRule:
+class ParedownRuleObject:
 
     def __init__(self, paredown_conditions, code, comment=None):
         self.paredown_conditions = paredown_conditions
