@@ -503,6 +503,10 @@ class ParedownRule(db.Model):
             'comment': self.comment
         }
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
 class ParedownRuleCondition(db.Model):
     # these rules are only either core, or for a lob_sector
     # there are no project specific rules
