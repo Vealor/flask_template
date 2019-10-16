@@ -113,15 +113,16 @@ def apply_paredown_rules(df=None):
 
         # Now apply the rules to the data and append the codes as appropriate
         paredown_codes = {i: set('') for i in range(len(df))}
+        paredown_comments = {i: set('') for i in range(len(df))}
         for r in rules:
-            print(r.code)
             inds = list(df.loc[r.apply_to_data(df)].index)
             for i in inds:
                 paredown_codes[i] |= set([str(r.code)])
-
+                paredown_comments[i] |= set([str(r.comment) if r.comment else ''])
 
         paredown_codes = [','.join(x) for x in paredown_codes.values()]
-        response['payload'] = paredown_codes
+        paredown_comments = [','.join(x) for x in paredown_comments.values()]
+        response['payload'] = {'codes': paredown_codes, 'comments': paredown_comments}
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
