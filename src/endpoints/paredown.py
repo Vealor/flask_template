@@ -33,7 +33,7 @@ def get_paredown_rules():
 # Apply Paredown rules
 @paredown.route('/apply/', methods=['POST'])
 # @jwt_required
-def apply_rules(df=None):
+def apply_paredown_rules(df=None):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
 
@@ -68,7 +68,7 @@ def apply_rules(df=None):
 # Create Paredown rules
 @paredown.route('/create/', methods=['POST'])
 # @jwt_required
-def create_rule():
+def create_paredown_rule():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
     try:
