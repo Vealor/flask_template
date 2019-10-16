@@ -191,7 +191,6 @@ def post_project():
         # Add user_projects from project_users
         for user_id in data['project_users']:
             user = User.find_by_id(user_id)
-            print(new_project.id)
             new_user_project = UserProject(
                 user_project_user = user,
                 user_project_project = new_project,
