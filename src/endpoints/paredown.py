@@ -53,9 +53,10 @@ def apply_paredown_rules(df=None):
             print(r.code)
             inds = list(df.loc[r.apply_to_data(df)].index)
             for i in inds:
-                paredown_codes[i] |= set([r.code])
+                paredown_codes[i] |= set([str(r.code)])
 
 
+        paredown_codes = [','.join(x) for x in paredown_codes.values()]
         response['payload'] = paredown_codes
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
