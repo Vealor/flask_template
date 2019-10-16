@@ -18,7 +18,3 @@ class ParedownConditionObject():
                 lambda_func_str = 'lambda x : True if x {} {} else False'.format(self.operator, self.value)
 
         self.evaluator = eval(lambda_func_str)
-
-
-    def get_evaluator(self):
-        return self.evaluator
