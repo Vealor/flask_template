@@ -5,7 +5,7 @@ grant all privileges on database itra_db to itra;
 EOF
 
 source activate
-rm ./migrations/versions/*.py
+#rm ./migrations/versions/*.py
 FLASK_ENV='development' flask db migrate
 sleep 2
 FLASK_ENV='development' flask db upgrade
