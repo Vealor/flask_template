@@ -131,7 +131,7 @@ def apply_paredown_rules(df=None):
 
 #===============================================================================
 # Update a Paredown rule
-@paredown.route('/<path:id>', methods=['PUT'])
+@paredown.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 def update_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
