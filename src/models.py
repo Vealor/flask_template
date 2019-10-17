@@ -482,7 +482,7 @@ class Project(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRule(db.Model):
-    
+
     __tablename__ = 'paredown_rules'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -506,8 +506,7 @@ class ParedownRule(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRuleCondition(db.Model):
-    # these rules are only either core, or for a lob_sector
-    # there are no project specific rules
+
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
