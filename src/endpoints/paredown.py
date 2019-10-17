@@ -197,16 +197,16 @@ def update_paredown_rule(id):
 
 #===============================================================================
 # DELETE A PAREDOWN RULE
-@paredown.route('/<path:paredown_rule_id>', methods=['DELETE'])
+@paredown.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
-def delete_paredown_rule(paredown_rule_id):
+def delete_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     try:
 
-        query = ParedownRule.find_by_id(paredown_rule_id)
+        query = ParedownRule.find_by_id(id)
         if not query:
-            raise ValueError("Paredown Rule ID {} does not exist.".format(paredown_rule_id))
+            raise ValueError("Paredown Rule ID {} does not exist.".format(id))
 
         pd_rule = query.serialize
         db.session.delete(query)
