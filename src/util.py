@@ -34,7 +34,7 @@ def get_date_obj_from_str(date_str):
 # Checks that keys and types are in JSON input
 def validate_request_data(data, validation):
     if not isinstance(data, dict):
-        raise Exception('Input payload for endpoint must be a dictionary.')
+        raise ValueError('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
     if [x for x in validation.keys() if not x in data.keys()]:
         raise ValueError('Request is missing required keys.')
