@@ -5,7 +5,7 @@ grant all privileges on database itra_db to itra;
 EOF
 
 source activate
-#rm ./migrations/versions/*.py
+rm ./migrations/versions/*.py
 FLASK_ENV='development' flask db migrate
 sleep 2
 FLASK_ENV='development' flask db upgrade
@@ -57,8 +57,8 @@ psql -h localhost -U itra itra_db -c "
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('trees bro', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('fish n oceans n shit', 3, 1, 1);
   insert into capsgen (user_id, project_id, is_completed) values (1, 1, False);
-  insert into fx_rates (date_id, usdtocad) values ('2010-01-01', 1.56);
-  insert into fx_rates (date_id, usdtocad) values ('2010-01-02', 1.57);
+  insert into fx_rates (date, usdtocad) values ('2010-01-01', 1.56);
+  insert into fx_rates (date, usdtocad) values ('2010-01-02', 1.57);
   insert into vendors (name) values ('miner buyer');
   insert into vendors (name) values ('banana buyer');
   insert into vendors (name) values ('potato buyer');

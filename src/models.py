@@ -570,7 +570,7 @@ class CapsGen(db.Model):
     user_id = db.Column(db.Integer, nullable=True) #FK
     capsgen_user = db.relationship('User', back_populates='user_capsgen')
 
-    project_id = db.Column(db.Integer,  nullable=False) # FK
+    project_id = db.Column(db.Integer, unique=True, nullable=False) # FK
     capsgen_project = db.relationship('Project', back_populates='project_capsgen')
 
     capsgen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_capsgen', lazy='dynamic', passive_deletes=True)
@@ -843,7 +843,7 @@ class Transaction(db.Model):
 class FXRates(db.Model):
     _tablename_ = 'fx_rates'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    date_id = db.Column(db.Date, unique=True)
+    date = db.Column(db.Date, unique=True)
     usdtocad = db.Column(db.Float, nullable=False)
 
     @property
@@ -990,7 +990,7 @@ class SapIloa(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, ullable=False)
+    capsgen_id = db.Column(db.Integer, nullable=False)
     sapiloa_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapiloa')
 
 class SapSkat(db.Model):

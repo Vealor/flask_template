@@ -94,13 +94,6 @@ def source_data_unzipper(data, response):
         except NotImplementedError:
             raise Exception(str(zippedFile) + ' has compression errors. Please fix')
     if os.environ['FLASK_ENV'] == 'development':
-        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
-            print('path does not exist, creating project')
-            #Talk to Cio about how he is ingesting data. Is he passing the data into the backend or directly into the folder?
-            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
-            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-            for folder in folders:
-                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         cwd = os.getcwd()

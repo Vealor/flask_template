@@ -26,6 +26,35 @@ def mapping_serializer(label):
         "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
     }
 
+
+
+@sap_caps_gen.route('project_path_creation', methods=['POST'])
+def file_path_creation():
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            raise Exception('data is not a dict')
+        request_types = {
+            'project_id': 'int',
+            'system': 'str'
+        }
+        validate_request_data(data, request_types)
+        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
+            print('path does not exist, creating project')
+            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
+            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+            for folder in folders:
+                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
+        else:
+            raise Exception('Path has already been created for project')
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        response['payload'] = []
+        return jsonify(response), 400
+    return jsonify(response), 200
+
 #This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
 #The endpoint can go through nested folders/zips.
 @sap_caps_gen.route('/unzipping', methods=['POST'])
@@ -59,7 +88,7 @@ def build_master_tables():
         if deletecheck:
             db.session.delete(deletecheck)
             db.session.commit()
-        db.session.add(CapsGen(user_id=1, project_id=data['project_id'], is_completed=False))
+        db.session.add(CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False))
         db.session.commit()
         for label in CDM_label.query.all():
             mapping = [label.serialize for label in CDM_label.query.all()]
@@ -68,19 +97,19 @@ def build_master_tables():
 
             table_files = []
             #Search for all files that match table
-            for file in os.listdir(os.path.join(str(data['project_id']), 'caps_gen_unzipped')):
+            for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
                 if re.search(table, file):
                     if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
                         table_files.append(file)
             #Load & union files into one master table in memory
-            wfd = open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'wb')
+            wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
             for index, file in enumerate(table_files):
                 if index == 0:
-                    with open(os.path.join(str(data['project_id']), 'caps_gen_unzipped', file), 'r' ,encoding='utf-8-sig') as fd:
+                    with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
                         wfd.write(fd.read().encode())
                 else:
                     # for all future files
-                    with open(os.path.join(str(data['project_id']), 'caps_gen_unzipped', file), 'r', encoding='utf-8-sig') as fd:
+                    with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
                         #   strip header
                         next(fd)
                         wfd.write(fd.read().encode())
@@ -90,7 +119,7 @@ def build_master_tables():
             referenceclass = eval('Sap' + str(table.lower().capitalize()))
             bulk_insert_handler = []
             #bulk insert into database
-            with open(os.path.join(str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
+            with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
                 counter = 0
                 for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
                     counter += 1
@@ -98,7 +127,7 @@ def build_master_tables():
                         break
                     dict_to_insert = {'data' : line}
                     # WARNING: Project id needs to be provided in curl request
-                    dict_to_insert['project_id'] = str(data['project_id'])
+                    dict_to_insert['capsgen_id'] = str(data['project_id'])
                     bulk_insert_handler.append(dict_to_insert)
             db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
             CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
@@ -137,8 +166,9 @@ def rename_scheme():
             for index, elem in enumerate(mapping):
                 if mapping[index]['mappings'][0]['table_name'] == table:
                     rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
+            print(rename_scheme)
             tableclass = eval('Sap' + str(table.lower().capitalize()))
-            columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.project_id == data['project_id']).all()
+            columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.capsgen_id == data['project_id']).all()
             print(len(columndata))
             for row in columndata:
                 row = rename_query_serializer(row)
