@@ -17,10 +17,8 @@ paredown = Blueprint('paredown', __name__)
 # @jwt_required
 def get_paredown_rules():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-
-    query = ParedownRule.query
-
     try:
+        query = ParedownRule.query
         response['payload'] = [i.serialize for i in query.all()]
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
