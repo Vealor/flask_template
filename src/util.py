@@ -51,8 +51,6 @@ def validate_request_data(data, validation):
             if "".join(e for e in data[x] if e.isalnum()) == '':
                 raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
 
-
-
 #===============================================================================
 # Sends an email to the user with given inputs
 def send_mail(user_email, subject, content):
@@ -75,8 +73,6 @@ def send_mail(user_email, subject, content):
         return True
     except Exception as e:
         raise e
-
-
 
 #===============================================================================
 # Unzips all SAP source data text files from a nested zip file.
