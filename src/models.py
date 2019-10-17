@@ -359,8 +359,7 @@ class Project(db.Model):
     engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
     engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
-    project_capsgen = db.relationship('CapsGen', back_populates='capsgen_project', cascade="save-update", lazy='dynamic',
-                                      passive_deletes=True)
+    project_capsgen = db.relationship('CapsGen', back_populates='capsgen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
