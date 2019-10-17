@@ -92,44 +92,6 @@ def create_paredown_rule():
     return jsonify(response), 201
 
 #===============================================================================
-# Apply Paredown rules
-@paredown.route('/apply/', methods=['POST'])
-# @jwt_required
-def apply_paredown_rules(df=None):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-
-
-    try:
-        # Retrieve and create the rule objects
-        paredown_rule_entries = ParedownRule.query
-        rules = []
-        for pr in paredown_rule_entries:
-            i = pr.id
-            conds = ParedownRuleCondition.query.filter_by(paredown_rule_id=i).all()
-            pcs = [ParedownConditionObject(*(p.field,p.operator,p.value)) for p in conds]
-            rules.append(ParedownRuleObject(pcs, pr.code, pr.comment))
-
-        # Now apply the rules to the data and append the codes as appropriate
-        paredown_codes = {i: set('') for i in range(len(df))}
-        paredown_comments = {i: set('') for i in range(len(df))}
-        for r in rules:
-            inds = list(df.loc[r.apply_to_data(df)].index)
-            for i in inds:
-                paredown_codes[i] |= set([str(r.code)])
-                paredown_comments[i] |= set([str(r.comment) if r.comment else ''])
-
-        paredown_codes = [','.join(x) for x in paredown_codes.values()]
-        paredown_comments = [','.join(x) for x in paredown_comments.values()]
-        response['payload'] = {'codes': paredown_codes, 'comments': paredown_comments}
-    except ValueError as e:
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
-    return jsonify(response), 200
-
-#===============================================================================
 # Update a Paredown rule
 @paredown.route('/<int:id>', methods=['PUT'])
 # @jwt_required
