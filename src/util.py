@@ -94,7 +94,6 @@ def source_data_unzipper(data, response):
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         if data['file_name'].lower().endswith('.zip'):
             extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path)
-            raise Exception('trying to break app')
         else:
             raise Exception(str(data['file_name']) + 'does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
