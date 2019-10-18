@@ -609,6 +609,12 @@ class DataMapping(db.Model):
     cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
 
+    @property
+    def serialize(self):
+        return {
+            self.table_name: [{"column_name": self.column_name, "script_label" : self.cdm_label_script_label}]
+        }
+
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
@@ -625,6 +631,10 @@ class CDM_label(db.Model):
     def serialize(self):
         return {
             "script_label": self.script_label,
+            "is_required": self.is_required,
+            "regex": self.regex,
+            "is_unique": self.is_unique,
+            "is_calculated": self.is_calculated,
             "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
         }
 

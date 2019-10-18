@@ -79,9 +79,12 @@ def build_master_tables():
         if deletecheck:
             db.session.delete(deletecheck)
             db.session.commit()
-        db.session.add(CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False))
-        db.session.commit()
-        list_tablenames = current_app.config['CDM_TABLES']
+        capsgen = CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False)
+        db.session.add(capsgen)
+        db.session.flush()
+
+        mapping = [label.serialize for label in CDM_label.query.all()]
+        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
             table_files = []
             #Search for all files that match table
@@ -115,12 +118,15 @@ def build_master_tables():
                         break
                     dict_to_insert = {'data' : line}
                     # WARNING: Project id needs to be provided in curl request
-                    dict_to_insert['capsgen_id'] = str(data['project_id'])
+                    dict_to_insert['capsgen_id'] = capsgen.id
                     bulk_insert_handler.append(dict_to_insert)
             db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
             CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
-            db.session.commit()
+            db.session.flush()
+        response['message'] = 'All tables are successfully committed.'
+        db.session.commit()
     except Exception as e:
+        db.session.rollback()
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -146,7 +152,9 @@ def rename_scheme():
     try:
         data = request.get_json()
         mapping = [label.serialize for label in CDM_label.query.all()]
+        print(mapping)
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        print(list_tablenames)
         for table in list_tablenames:
             renamed_columndata = []
             rename_scheme = {}
@@ -154,7 +162,6 @@ def rename_scheme():
             for index, elem in enumerate(mapping):
                 if mapping[index]['mappings'][0]['table_name'] == table:
                     rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
-            print(rename_scheme)
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.capsgen_id == data['project_id']).all()
             print(len(columndata))
@@ -210,17 +217,6 @@ def data_quality_check():
                 }})
         return rename_dict
 
-    def retrieve_dq_serializer(label):
-        return {
-            "script_label": label.script_label,
-            "is_required": label.is_required,
-            "regex": label.regex,
-            "is_unique": label.is_unique,
-            "is_calculated": label.is_calculated,
-            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in
-                         label.cdm_label_data_mappings.all()]
-        }
-
     def validity_check(result, regex):
         validity_response = {}
         results = list(filter(re.compile(regex).match, result))
@@ -240,14 +236,14 @@ def data_quality_check():
     uniqueness_response = {}
     try:
         data = request.get_json()
-        CDM_query = [retrieve_dq_serializer(label) for label in CDM_label.query.all()]
+        CDM_query = [label.serialize for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
         for table in list_tablenames:
             data_dictionary_results[table] = {}
             tableclass = eval('Sap' + str(table.lower().capitalize()))
             compiled_data_dictionary = data_dictionary(CDM_query, table)
             data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
-                tableclass.project_id == data['project_id']).all()
+                tableclass.capsgen_id == data['project_id']).all()
             ### UNIQUENESS CHECK ###
             #The argument should be set to true when some of is_unique column in CDM labels is set to True.
             unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
