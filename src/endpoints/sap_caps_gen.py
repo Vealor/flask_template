@@ -19,15 +19,6 @@ from src.util import *
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
 
-
-def mapping_serializer(label):
-    return {
-        "script_label": label.script_label,
-        "mappings": [{"column_name": map.column_name, "table_name" : map.table_name} for map in label.cdm_label_data_mappings.all()]
-    }
-
-
-
 @sap_caps_gen.route('project_path_creation', methods=['POST'])
 def file_path_creation():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -90,11 +81,8 @@ def build_master_tables():
             db.session.commit()
         db.session.add(CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False))
         db.session.commit()
-        for label in CDM_label.query.all():
-            mapping = [label.serialize for label in CDM_label.query.all()]
-        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
-
             table_files = []
             #Search for all files that match table
             for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
@@ -157,7 +145,7 @@ def rename_scheme():
     response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
     try:
         data = request.get_json()
-        mapping = [mapping_serializer(label) for label in CDM_label.query.all()]
+        mapping = [label.serialize for label in CDM_label.query.all()]
         list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
         for table in list_tablenames:
             renamed_columndata = []
