@@ -1,7 +1,9 @@
 # ~~~ Utils:
 import datetime
+import os
 import re
 import sendgrid
+import zipfile
 from flask import current_app
 
 #==============================================================================
@@ -31,7 +33,8 @@ def get_date_obj_from_str(date_str):
 #===============================================================================
 # Checks that keys and types are in JSON input
 def validate_request_data(data, validation):
-
+    if not isinstance(data, dict):
+        raise ValueError('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
     if [x for x in validation.keys() if not x in data.keys()]:
         raise ValueError('Request is missing required keys.')
@@ -71,4 +74,33 @@ def send_mail(user_email, subject, content):
     except Exception as e:
         raise e
 
-#
+#===============================================================================
+# Unzips all SAP source data text files from a nested zip file.
+def source_data_unzipper(data, response):
+    def extract_nested_zip(zippedFile, toFolder):
+        try:
+            with zipfile.ZipFile(zippedFile, 'r') as zfile:
+                zfile.extractall(path=toFolder)
+            os.remove(zippedFile)
+            for root, dirs, files in os.walk(toFolder):
+                for filename in files:
+                    if re.search(r'\.(?i)ZIP$', filename):
+                        fileSpec = os.path.join(root, filename)
+                        extract_nested_zip(fileSpec, root)
+        except NotImplementedError:
+            raise Exception(str(zippedFile) + ' has compression errors. Please fix')
+    if os.environ['FLASK_ENV'] == 'development':
+        current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        if data['file_name'].lower().endswith('.zip'):
+            extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path)
+        else:
+            raise Exception(str(data['file_name']) + 'does not end with .zip')
+    elif os.environ['FLASK_ENV'] == 'production':
+        #use blob storage
+        pass
+    else:
+        raise Exception('Environ not present. Choose development or production')
+    return response
+
+
