@@ -86,6 +86,7 @@ def source_data_unzipper(data, response):
                 for filename in files:
                     if re.search(r'\.(?i)ZIP$', filename):
                         fileSpec = os.path.join(root, filename)
+                        print(fileSpec)
                         extract_nested_zip(fileSpec, root)
         except NotImplementedError:
             raise Exception(str(zippedFile) + ' has compression errors. Please fix')
