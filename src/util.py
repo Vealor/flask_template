@@ -93,6 +93,7 @@ def source_data_unzipper(data, response):
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         cwd = os.getcwd()
+        print(current_input_path)
         os.chdir(current_input_path)
 
         if data['file_name'].lower().endswith('.zip'):
