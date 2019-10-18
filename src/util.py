@@ -92,15 +92,11 @@ def source_data_unzipper(data, response):
     if os.environ['FLASK_ENV'] == 'development':
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-        #cwd = os.getcwd()
-        # IF THIS LINE OF CODE FAILS, the directory will be changed to current input path, which is very dangerous
-        #os.chdir(current_input_path)
         if data['file_name'].lower().endswith('.zip'):
             extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path)
             raise Exception('trying to break app')
         else:
             raise Exception(str(data['file_name']) + 'does not end with .zip')
-        #os.chdir(cwd)
     elif os.environ['FLASK_ENV'] == 'production':
         #use blob storage
         pass

@@ -63,6 +63,8 @@ def unzipping():
         validate_request_data(data, request_types)
         source_data_unzipper(data, response)
     except Exception as e:
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['status'] = 'error'
         response['message'] = str(e)
         response['payload'] = []
@@ -381,8 +383,6 @@ def j1_j10():
         LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) AS R
         ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
         """.format(project_id = data['project_id'])
-
-
 
         j8 = """
         DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_SKAT;
