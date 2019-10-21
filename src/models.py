@@ -667,10 +667,12 @@ class CDM_label(db.Model):
     def serialize(self):
         return {
             "script_label": self.script_label,
-            "is_required": self.is_required,
-            "length": self.length,
-            "is_unique": self.is_unique,
+            "display_name": self.display_name,
             "is_calculated": self.is_calculated,
+            "is_unique": self.is_unique,
+            "datatype": self.datatype,
+            "length": self.length,
+            "caps_interface": self.caps_interface,
             "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
         }
 
