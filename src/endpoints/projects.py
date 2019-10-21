@@ -2,9 +2,11 @@
 Project Endpoints
 '''
 import json
+import pandas as pd
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from functools import reduce
 from src.models import *
 from src.util import validate_request_data
 
@@ -211,6 +213,54 @@ def post_project():
     return jsonify(response), 201
 
 #===============================================================================
+# APPLY PAREDOWN RULES TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
+@projects.route('/<int:id>/apply_paredown/', methods=['POST'])
+# @jwt_required
+def apply_paredown_rules(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+
+    try:
+        query = Project.query
+
+        # Check if project exists
+        if id is not None:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError('Project ID {} does not exist.'.format(id))
+
+        # Retrieve and create the rule objects
+        paredown_rule_entries = ParedownRule.query
+        rules = []
+        for pr in paredown_rule_entries:
+            i = pr.id
+            conds = ParedownRuleCondition.query.filter_by(paredown_rule_id=i).all()
+            pcs = [ParedownConditionObject(*(p.field,p.operator,p.value)) for p in conds]
+            rules.append(ParedownRuleObject(pcs, pr.code, pr.comment))
+
+        # *** TBC: CREATE DATAFRAME df WITH APPROPRIATE TRANSACTION Data
+        df = pd.DataFrame()
+
+        # Now apply the rules to the data and append the codes as appropriate
+        paredown_codes = {i: set('') for i in range(len(df))}
+        paredown_comments = {i: set('') for i in range(len(df))}
+        for r in rules:
+            inds = list(df.loc[r.apply_to_data(df)].index)
+            for i in inds:
+                paredown_codes[i] |= set([str(r.code)])
+                paredown_comments[i] |= set([str(r.comment) if r.comment else ''])
+
+        paredown_codes = [','.join(x) for x in paredown_codes.values()]
+        paredown_comments = [','.join(x) for x in paredown_comments.values()]
+        response['payload'] = {'codes': paredown_codes, 'comments': paredown_comments}
+    except ValueError as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 200
+
+#===============================================================================
 # UPDATE A PROJECT
 @projects.route('/<path:id>', methods=['PUT'])
 # @jwt_required
@@ -386,3 +436,45 @@ def delete_project(id):
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response)
+
+#===============================================================================
+# HELPER CLASSES AND FUNCTIONS
+
+# The class applies a paredown rule to project data
+class ParedownRuleObject:
+
+    def __init__(self, paredown_conditions, code, comment=None):
+        self.paredown_conditions = paredown_conditions
+        self.code = code
+        self.comment = comment
+
+    def apply_to_data(self, df):
+        try:
+            # Check if paredown columns exist
+            if not all([col in df.columns for col in [pdc.field_name for pdc in self.paredown_conditions]]):
+                raise ValueError("Cannot apply rule. DataFrame does not contain at least one required field_name.")
+
+            fields_functions = [(pc.field_name,pc.value_type,pc.evaluator) for pc in self.paredown_conditions]
+            return reduce(lambda x,y: x & y, [df[ff[0]].astype(ff[1]).apply(ff[2]) for ff in fields_functions])
+        except Exception as e:
+            raise Exception("Applying paredown rule failed: {}".format(str(e)))
+
+# Class to create a valid paredown condition object
+class ParedownConditionObject():
+
+    def __init__(self, field_name, operator, value):
+
+        self.field_name = field_name         #The data field name
+        self.operator = operator            #The operator between
+        self.value = value                  #The value that the data field is compared to
+        if self.operator in ['>','<','==','>=','<=','!=']:
+            self.value_type = 'float'
+            lambda_func_str = 'lambda x : True if x {} {} else False'.format(self.operator, self.value)
+        else:
+            self.value_type = 'str'
+            if self.operator == 'contains':
+                lambda_func_str = 'lambda x : True if re.search(r\'\\b{}\\b\', x, re.IGNORECASE) else False'.format(self.value)
+            else:
+                lambda_func_str = 'lambda x : True if x {} {} else False'.format(self.operator, self.value)
+
+        self.evaluator = eval(lambda_func_str)
