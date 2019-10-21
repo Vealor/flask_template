@@ -61,6 +61,10 @@ api.register_blueprint(users, url_prefix='/users')
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
+# Tax Rate Endpoint
+from src.endpoints.tax_rate import tax_rate
+api.register_blueprint(tax_rate, url_prefix='/tax_rate')
+
 #===============================================================================
 # Error Handling
 
