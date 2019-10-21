@@ -69,6 +69,8 @@ api.register_blueprint(tax_rate, url_prefix='/tax_rate')
 from src.endpoints.client_vendor_master import client_vendor_master
 api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
+from src.endpoints.gst_registration import gst_registration
+api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
 #===============================================================================
 # Error Handling
