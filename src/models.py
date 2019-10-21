@@ -484,8 +484,7 @@ class Project(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRule(db.Model):
-    # these rules are only either core, or for a lob_sector
-    # there are no project specific rules
+
     __tablename__ = 'paredown_rules'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -494,11 +493,22 @@ class ParedownRule(db.Model):
 
     paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
-    #TODO add in rule saving data
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'is_core': self.is_core,
+            'code': self.code,
+            'comment': self.comment
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
 class ParedownRuleCondition(db.Model):
-    # these rules are only either core, or for a lob_sector
-    # there are no project specific rules
+
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
@@ -512,7 +522,14 @@ class ParedownRuleCondition(db.Model):
     paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
     paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions') #FK
 
-    #TODO add in rule saving data
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'field': self.field,
+            'operator': self.operator,
+            'value': self.value
+        }
 
 class ParedownRuleLineOfBusinessSector(db.Model):
     __tablename__ = 'paredown_rule_lob_sector'
