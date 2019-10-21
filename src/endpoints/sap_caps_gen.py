@@ -76,6 +76,7 @@ def unzipping():
 def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
+        print('it got here')
         data = request.get_json()
         deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
         if deletecheck:
@@ -85,9 +86,9 @@ def build_master_tables():
         db.session.add(capsgen)
         db.session.flush()
 
-        mapping = [label.serialize for label in CDM_label.query.all()]
         list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
+            print(table)
             table_files = []
             #Search for all files that match table
             for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
@@ -154,9 +155,7 @@ def rename_scheme():
     try:
         data = request.get_json()
         mapping = [label.serialize for label in CDM_label.query.all()]
-        print(mapping)
-        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-        print(list_tablenames)
+        list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
             renamed_columndata = []
             rename_scheme = {}

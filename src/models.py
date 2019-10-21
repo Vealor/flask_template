@@ -81,16 +81,6 @@ class Caps_Interface(enum.Enum):
     caps_basic = "caps_basic"
     sales = "sales"
 
-
-class Datatype(enum.Enum):
-    dt_boolean = Boolean
-    dt_date = Date
-    dt_datetime = DateTime
-    dt_varchar = VARCHAR
-    dt_float = Float
-    dt_int = Integer
-    dt_blob = BLOB
-
 class Category(enum.Enum):
     accounting = "Accounting"
     materials = "Materials"
@@ -100,6 +90,14 @@ class Category(enum.Enum):
     purchases = "Purchases"
     project_details = "Project Details"
 
+class Datatype(enum.Enum):
+    dt_boolean = Boolean
+    dt_date = Date
+    dt_datetime = DateTime
+    dt_varchar = VARCHAR
+    dt_float = Float
+    dt_int = Integer
+    dt_blob = BLOB
 
 class Jurisdiction(enum.Enum):
     ab = "Alberta"
@@ -655,12 +653,12 @@ class DataMapping(db.Model):
 class CDM_label(db.Model):
     __tablename__ = 'cdm_labels'
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
-    display_name = db.Column(db.String(256))
+    display_name = db.Column(db.String(256), nullable=True)
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
     datatype = db.Column(db.Enum(Datatype), nullable=False)
     length = db.Column(db.String(256), nullable=False)
-    caps_interface = db.Column(db.Enum(Caps_Interface))
+    caps_interface = db.Column(db.Enum(Caps_Interface), nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
 
     cdm_label_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_cdm_label', lazy='dynamic')
