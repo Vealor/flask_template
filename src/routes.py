@@ -20,6 +20,10 @@ api.register_blueprint(clients, url_prefix='/clients')
 from src.endpoints.client_models import client_models
 api.register_blueprint(client_models, url_prefix='/client_models')
 
+# FXrates Endpoints
+from src.endpoints.fxrates import fxrates
+api.register_blueprint(fxrates, url_prefix='/fxrates')
+
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
 api.register_blueprint(jurisdictions, url_prefix='/jurisdictions')
@@ -40,6 +44,11 @@ api.register_blueprint(master_models, url_prefix='/master_models')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# SAP Caps Gen Endpoints
+from src.endpoints.sap_caps_gen import sap_caps_gen
+api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
+
+
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
 api.register_blueprint(transactions, url_prefix='/transactions')
@@ -51,7 +60,6 @@ api.register_blueprint(users, url_prefix='/users')
 # Vendor Endpoints
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
-
 
 #===============================================================================
 # Error Handling

@@ -46,6 +46,14 @@ class DevelopmentConfig(Config):
     }
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+    CAPS_BASE_DIR = 'caps_gen_processing'
+    CAPS_RAW_LOCATION = 'caps_gen_raw'
+    CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
+    CAPS_MASTER_LOCATION = 'caps_gen_master'
+    CDM_TABLES = ['BKPF', 'BSAK', 'BSEG','CEPC' ,'CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TCURT','TGSBT',\
+                  'EKKO','EKPO','LFA1','LFAS','LFM1','T024','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
+                  'T006A','T023T','TMKM1T','TNTPB','TSKMT','TVEGRT','TVTYT','PROJ','PRPS','PAYR','REGUP','T042ZT',\
+                  'J_1ATODCT','T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
 
 class ProductionConfig(Config):
     # Statement for enabling the development environment
