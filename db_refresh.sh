@@ -1574,7 +1574,7 @@ INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_lab
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T042ZT','SPRAS',1,'t042zt_spras_key');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T042ZT','TEXT2',1,'pymt_method_pmt');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T042ZT','ZLSCH',1,'t042zt_zlsch_key');
-INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('J_1ATODCT','J_1ATODCT� (J_1ATODC=STCDT)',1,'j_1atodct_j_1atodct_key');
+INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('J_1ATODCT','J_1ATODCT',1,'j_1atodct_j_1atodct_key');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('J_1ATODCT','SPRAS',1,'j_1atodct_spras_key');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('J_1ATODCT','TEXT30',1,'tx_type_descr_tx');
 INSERT INTO data_mappings(table_name,column_name,project_id,cdm_label_script_label) VALUES ('T005S','BLAND',1,'t005s_bland_key');
