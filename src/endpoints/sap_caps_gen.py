@@ -16,8 +16,8 @@ from src.models import *
 from config import *
 from sqlalchemy import exists
 from src.util import *
-sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
+sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
 @sap_caps_gen.route('project_path_creation', methods=['POST'])
 def file_path_creation():
@@ -76,7 +76,6 @@ def unzipping():
 def build_master_tables():
     response = {'status': 'ok', 'message': {}, 'payload': {}}
     try:
-        print('it got here')
         data = request.get_json()
         deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
         if deletecheck:
@@ -88,7 +87,6 @@ def build_master_tables():
 
         list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
-            print(table)
             table_files = []
             #Search for all files that match table
             for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
