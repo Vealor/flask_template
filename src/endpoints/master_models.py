@@ -1,6 +1,7 @@
 '''
 Master Model Endpoints
 '''
+import datetime
 import json
 import pandas as pd
 import pickle
@@ -117,8 +118,7 @@ def do_train():
 
         # Output validation data results, used to assess model quality
         # Positive -> (Target == 1)
-        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
-        performance_metrics = lh_model.validate(data_valid,predictors,target)
+        performance_metrics = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
         model_performance_dict = {
             'accuracy': performance_metrics['accuracy'],
             'precision': performance_metrics['precision'],
@@ -135,7 +135,8 @@ def do_train():
         active_model = MasterModel.find_active()
         if active_model:
             lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            old_predictors, old_target = active_model.hyper_p['predictors'],active_model.hyper_p['target']
+            performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid,old_predictors,for_validation=True), old_predictors, old_target)
             model_performance_dict_old = {
                 'master_model_id': active_model.id,
                 'accuracy': performance_metrics_old['accuracy'],
@@ -231,7 +232,7 @@ def do_predict():
 @master_models.route('/validate/', methods=['POST'])
 # @jwt_required
 def do_validate():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
 
     try:
@@ -245,8 +246,8 @@ def do_validate():
             'test_data_end_date': 'str'
         }
         validate_request_data(data, request_types)
-        train_start = get_date_obj_from_str(active_model['train_data_start'])
-        train_end = get_date_obj_from_str(active_model['train_data_end'])
+        train_start = active_model.train_data_start.date()
+        train_end = active_model.train_data_end.date()
         test_start = get_date_obj_from_str(data['test_data_start_date'])
         test_end = get_date_obj_from_str(data['test_data_end_date'])
         if test_start >= test_end:
@@ -255,17 +256,18 @@ def do_validate():
             raise ValueError('Cannot validate model on data it was trained on.')
 
         lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        target = "Target"
-        predictors = list(set(active_model.hyper_p) - set([target]))
+        predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+
 
         # Pull the transaction data into a dataframe
-        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         test_entries = [tr.serialize['data'] for tr in test_transactions]
         data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
 
-
+        # Evaluate the performance metrics
         performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
         model_performance_dict_old = {
             'master_model_id': active_model.id,
@@ -278,9 +280,9 @@ def do_validate():
         db.session.add(MasterModelPerformance(**model_performance_dict_old))
         db.session.commit()
 
-
-        response['message'] = 'Prediction successful. Transactions have been marked.'
-        response['payload'] = model_performance_dict_old
+        response['message'] = 'Model validation complete.'
+        response['payload']['model_id'] = active_model.id
+        response['payload']['performance_metrics'] = performance_metrics_old
     except ValueError as e:
         db.session.rollback()
         response = { 'status': 'error', 'message': str(e), 'payload': [] }

@@ -128,8 +128,7 @@ def do_train():
 
         # Output validation data results, used to assess model quality
         # Positive -> (Target == 1)
-        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
-        performance_metrics = lh_model.validate(data_valid,predictors,target)
+        performance_metrics = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
         model_performance_dict = {
             'accuracy': performance_metrics['accuracy'],
             'precision': performance_metrics['precision'],
@@ -147,7 +146,8 @@ def do_train():
         active_model = ClientModel.find_active_for_client(data['client_id'])
         if active_model:
             lh_model_old = cm.ClientPredictionModel(active_model.pickle)
-            performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+            old_predictors, old_target = active_model.hyper_p['predictors'],active_model.hyper_p['target']
+            performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid,old_predictors,for_validation=True), old_predictors, old_target)
             model_performance_dict_old = {
                 'client_model_id': active_model.id,
                 'accuracy': performance_metrics_old['accuracy'],
@@ -239,6 +239,77 @@ def do_predict():
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 201
+
+
+#===============================================================================
+# Validate the active client model based on input ID.
+@client_models.route('/validate/', methods=['POST'])
+# @jwt_required
+def do_validate():
+    response = { 'status': 'ok', 'message': '', 'payload': {} }
+    data = request.get_json()
+
+    try:
+
+        # validate input
+        request_types = {
+            'test_data_start_date': 'str',
+            'test_data_end_date': 'str',
+            'client_id': 'int'
+        }
+        validate_request_data(data, request_types)
+
+        active_model = ClientModel.find_active_for_client(data['client_id'])
+        if not active_model:
+            raise ValueError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
+
+        train_start = active_model.train_data_start.date()
+        train_end = active_model.train_data_end.date()
+        test_start = get_date_obj_from_str(data['test_data_start_date'])
+        test_end = get_date_obj_from_str(data['test_data_end_date'])
+        if test_start >= test_end:
+            raise ValueError('Invalid Test Data date range.')
+        if not (train_end < test_start or test_end < train_start):
+            raise ValueError('Cannot validate model on data it was trained on.')
+
+        lh_model_old = cm.ClientPredictionModel(active_model.pickle)
+        predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+
+
+        # Pull the transaction data into a dataframe
+        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        if test_transactions.count() == 0:
+            raise ValueError('No transactions to validate in given date range.')
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+
+        # Evaluate the performance metrics
+        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+        model_performance_dict_old = {
+            'client_model_id': active_model.id,
+            'accuracy': performance_metrics_old['accuracy'],
+            'precision': performance_metrics_old['precision'],
+            'recall': performance_metrics_old['recall'],
+            'test_data_start': test_start,
+            'test_data_end': test_end
+        }
+        db.session.add(ClientModelPerformance(**model_performance_dict_old))
+        db.session.commit()
+
+        response['message'] = 'Model validation complete.'
+        response['payload']['model_id'] = active_model.id
+        response['payload']['performance_metrics'] = performance_metrics_old
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 201
+
 
 #===============================================================================
 # Delete a client model
