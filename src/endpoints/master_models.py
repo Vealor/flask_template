@@ -227,6 +227,71 @@ def do_predict():
     return jsonify(response), 201
 
 #===============================================================================
+# Validate the active master model.
+@master_models.route('/validate/', methods=['POST'])
+# @jwt_required
+def do_validate():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+
+    try:
+        active_model = MasterModel.find_active()
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+
+        # validate input
+        request_types = {
+            'test_data_start_date': 'str',
+            'test_data_end_date': 'str'
+        }
+        validate_request_data(data, request_types)
+        train_start = get_date_obj_from_str(active_model['train_data_start'])
+        train_end = get_date_obj_from_str(active_model['train_data_end'])
+        test_start = get_date_obj_from_str(data['test_data_start_date'])
+        test_end = get_date_obj_from_str(data['test_data_end_date'])
+        if test_start >= test_end:
+            raise ValueError('Invalid Test Data date range.')
+        if not (train_end < test_start or test_end < train_start):
+            raise ValueError('Cannot validate model on data it was trained on.')
+
+        lh_model_old = mm.MasterPredictionModel(active_model.pickle)
+        target = "Target"
+        predictors = list(set(active_model.hyper_p) - set([target]))
+
+        # Pull the transaction data into a dataframe
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        if test_transactions.count() == 0:
+            raise ValueError('No transactions to validate in given date range.')
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+
+
+        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+        model_performance_dict_old = {
+            'master_model_id': active_model.id,
+            'accuracy': performance_metrics_old['accuracy'],
+            'precision': performance_metrics_old['precision'],
+            'recall': performance_metrics_old['recall'],
+            'test_data_start': test_start,
+            'test_data_end': test_end
+        }
+        db.session.add(MasterModelPerformance(**model_performance_dict_old))
+        db.session.commit()
+
+
+        response['message'] = 'Prediction successful. Transactions have been marked.'
+        response['payload'] = model_performance_dict_old
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 201
+
+#===============================================================================
 # Delete a master model
 @master_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
