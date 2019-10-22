@@ -293,6 +293,68 @@ def do_validate():
         return jsonify(response), 500
     return jsonify(response), 201
 
+
+#===============================================================================
+# Compare active and pending models
+@master_models.route('/compare/', methods=['POST'])
+# @jwt_required
+def compare_active_and_pending():
+    response = { 'status': 'ok', 'message': '', 'payload': {} }
+    data = request.get_json()
+
+    try:
+        active_model = MasterModel.find_active()
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+        pending_model = MasterModel.find_pending()
+        if not pending_model:
+            raise ValueError('There is no pending model to compare to the active model.')
+
+        # validate input
+        request_types = {
+            'test_data_start_date': 'str',
+            'test_data_end_date': 'str'
+        }
+        validate_request_data(data, request_types)
+        test_start = get_date_obj_from_str(data['test_data_start_date'])
+        test_end = get_date_obj_from_str(data['test_data_end_date'])
+
+        # Check if date range is acceptable for comparing the two models
+        if test_start >= test_end:
+            raise ValueError('Invalid Test Data date range.')
+        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
+            raise ValueError('Cannot validate active model on data it was trained on.')
+        if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
+            raise ValueError('Cannot validate pending model on data it was trained on.')
+
+        # Pull the validation transaction data into a dataframe
+        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        if test_transactions.count() == 0:
+            raise ValueError('No transactions to validate in given date range.')
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+
+        performance_metrics = {}
+
+        for model in [active_model, pending_model]:
+
+            lh_model = mm.MasterPredictionModel(model.pickle)
+            predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
+            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
+
+        response['message'] = 'Master model comaprison complete'
+        response['payload'] = performance_metrics
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 200
+
+
 #===============================================================================
 # Delete a master model
 @master_models.route('/<path:id>', methods=['DELETE'])
