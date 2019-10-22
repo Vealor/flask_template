@@ -593,7 +593,7 @@ class CapsGen(db.Model):
     capsgen_sapskat = db.relationship('SapSkat', back_populates='sapskat_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapt001 = db.relationship('SapT001', back_populates='sapt001_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_capsgen', lazy='dynamic', passive_deletes=True)
-
+    capsgen_gstregistration = db.relationship('GstRegistration', back_populates='gstregistration_capsgen', lazy='dynamic', passive_deletes=True)
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
@@ -1089,3 +1089,19 @@ class SapT007s(db.Model):
 
     capsgen_id = db.Column(db.Integer,  nullable=False)
     sapt007s_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt007s')
+
+class GstRegistration(db.Model):
+    _tablename__ = 'gst_registration'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    project_id = db.Column(db.Integer, nullable=False, unique=True)
+    capsgen_id = db.Column(db.Integer, nullable=False)
+    vendor_country = db.Column(db.String(64), nullable=True)
+    vendor_number = db.Column(db.String(16), nullable=True)
+    vendor_city = db.Column(db.String(16), nullable=True)
+    vendor_region = db.Column(db.String(16), nullable=True)
+    # TODO: how to mark this column
+    duplicate_flag = db.Column(db.String(4), nullable=True)
+    gstregistration_capsgen = db.relationship('CapsGen', back_populates='capsgen_gstregistration')
