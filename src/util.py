@@ -48,7 +48,7 @@ def validate_request_data(data, validation):
     # ensures strings are not empty
     for x in validation.keys():
         if validation[x] == 'str':
-            if "".join(e for e in data[x] if e.isalnum()) == '':
+            if "".join(e for e in data[x] if e.isalnum() or e in ['<','>','=']) == '':
                 raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
 
 #===============================================================================

@@ -2,9 +2,11 @@
 Project Endpoints
 '''
 import json
+import pandas as pd
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from functools import reduce
 from src.models import *
 from src.util import validate_request_data
 
@@ -209,6 +211,45 @@ def post_project():
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 201
+
+#===============================================================================
+# APPLY PAREDOWN RULES TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
+@projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
+# @jwt_required
+def apply_paredown_rules(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+
+    try:
+        # GET BASE QUERY if exists
+        query = Project.find_by_id(id)
+        if not query:
+            raise ValueError('Project ID {} does not exist.'.format(id))
+
+        ### PSEUDO CODE:
+
+        # get list of rules associated with core and with project's LoBSec
+        #   do filter on project.project_client.client_client_entities.lob_sector
+        #   with paredownrule.paredown_rule_lob_sectors
+
+        # for each rule associated with project
+        #   for each condition in rule
+        #     for each transaction for filter project - apply paredown rule
+        #       if operator contains then find value in
+        #       else if operator in ['>','<','==','>=','<=','!=']
+        #       else raise Error generic for 500 as DB problem
+
+        db.session.commit()
+        response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
+        response['payload'] = []
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 200
 
 #===============================================================================
 # UPDATE A PROJECT

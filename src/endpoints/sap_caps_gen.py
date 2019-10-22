@@ -16,8 +16,8 @@ from src.models import *
 from config import *
 from sqlalchemy import exists
 from src.util import *
-sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
+sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
 @sap_caps_gen.route('project_path_creation', methods=['POST'])
 def file_path_creation():
@@ -85,8 +85,7 @@ def build_master_tables():
         db.session.add(capsgen)
         db.session.flush()
 
-        mapping = [label.serialize for label in CDM_label.query.all()]
-        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
+        list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
             table_files = []
             #Search for all files that match table
@@ -154,9 +153,7 @@ def rename_scheme():
     try:
         data = request.get_json()
         mapping = [label.serialize for label in CDM_label.query.all()]
-        print(mapping)
-        list_tablenames = list(set([table['mappings'][0]['table_name'] for table in mapping]))
-        print(list_tablenames)
+        list_tablenames = current_app.config['CDM_TABLES']
         for table in list_tablenames:
             renamed_columndata = []
             rename_scheme = {}
@@ -669,19 +666,18 @@ def aps_to_caps():
             CAST( data ->> 'ZBD2P' as TEXT) ZBD2P,
             CAST( data ->> 'NEBTR' as TEXT) NEBTR,
             CAST( data ->> 'EGLLD' as TEXT) EGLLD,
-            case when cast(data ->> 'SHKZG' as TEXT) = 'H' 
-                then -(cast(data ->> 'WRBTR' as FLOAT)) 
-                else cast(data ->> 'WRBTR' as FLOAT) 
+            case when cast(data ->> 'SHKZG' as TEXT) = 'H'
+                then -(cast(data ->> 'WRBTR' as FLOAT))
+                else cast(data ->> 'WRBTR' as FLOAT)
                 end vardocamt,
-            case when cast(data ->> 'SHKZG' as TEXT) = 'H' 
-                then -(cast(data ->> 'DMBTR' as FLOAT)) 
-                else  cast(data ->> 'DMBTR' as FLOAT) 
+            case when cast(data ->> 'SHKZG' as TEXT) = 'H'
+                then -(cast(data ->> 'DMBTR' as FLOAT))
+                else  cast(data ->> 'DMBTR' as FLOAT)
                 end varlocamt,
             *
             into raw_relational
             from raw
         """.format(project_id = data['project_id'])
-
 
         #Generates raw account sum, groups varaccountcode and varapkey, sums on dmbtr, wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for everything else. order by vartranamount
         j18 = """
@@ -698,7 +694,7 @@ def aps_to_caps():
              Sum(Cast(dmbe2 AS FLOAT)) AS DMBE2,
             SUM(vardocamt) as vardocamt,
             SUM(varlocamt) as varlocamt,
-            
+
              l.varapkey,
              Trim(hkont) AS varaccountcode
             FROM
@@ -835,10 +831,10 @@ def aps_to_caps():
                 kalsm,
                 Row_number() OVER( partition BY varapkey, Trim(hkont)
                 ORDER BY
-                mandt, 
-                sgtxt, 
-                bewar, 
-                koart, 
+                mandt,
+                sgtxt,
+                bewar,
+                koart,
                 belnr,
                 rebzj,
                 kunnr,
@@ -1336,11 +1332,8 @@ def aps_to_caps():
             when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and New_Rate_Ind = 'D' then 'F'
             when EFF_RATE = 0.000000000 then 'F'
             else 'T' end ODD_IND,
-    
             --calculation for prov tax ind PROV_TAX_IND <> '         '  'F'
-    
             case when ABS(GST_HST) > 0 then 1 else 0 end GST_COUNT,
-    
             case
             when EFF_RATE >= 6.980000  and  EFF_RATE <= 7.099999 then 'T'
             when EFF_RATE >= 5.980000  and  EFF_RATE <= 6.099999 then 'T'
@@ -1350,7 +1343,6 @@ def aps_to_caps():
             when EFF_RATE >= 12.980000 and  EFF_RATE <= 13.950000 then 'T'
             when EFF_RATE >= 11.980000 and  EFF_RATE <= 12.950000 then 'T'
             else 'F' end CN_FLAG_IND,
-    
             case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'T'
             else 'F' end CN_REP2_IND,
             --prov_ap code to be added
@@ -1360,50 +1352,40 @@ def aps_to_caps():
              when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*5.0000000000)/105.0000000000
             when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*12.0000000000)/112.0000000000
             else 0.5555555555 end EVEN_GST_RATE,
-    
             case when
              New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'PEI-GST 7%'  then ABS(AP_AMT*7.0000000000)/117.7000000000
              when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 6%' then ABS(AP_AMT*6.0000000000)/116.6000000000
             when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 5%' then  ABS(AP_AMT*5.0000000000)/115.5000000000
              else 0.5555555555 end EVEN_GST_PEI_RATE,
-    
             case when
               (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC 7.5%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.5000000000
              when  New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.0000000000
             when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 6%' then  ABS(AP_AMT*6.0000000000)/113.0000000000
             when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN 7%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.0000000000
              else 0.5555555555 end EVEN_GST_BC_RATE,
-    
-    
-    
             case when
             (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 6%-GST 7%' then  ABS(AP_AMT*7.0000000000)/113.0000000000
             when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 6%' then ABS(AP_AMT*6.0000000000)/111.0000000000
             when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 5%' then  ABS(AP_AMT*5.0000000000)/110.0000000000
             else  0.5555555555
             end EVEN_GST_SASK_RATE,
-    
             case when
             (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0000000000
             when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 6%' then  ABS(AP_AMT*6.0000000000)/114.0000000000
             when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 5%' then ABS(AP_AMT*5.0000000000)/113.0000000000
             else  0.5555555555 end EVEN_GST_ORST_RATE,
-    
             case when
             New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'QST 6.48%-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0250000000
             when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 6%' then ABS(AP_AMT*6.0000000000)/113.9500000000
             when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.8750000000
             else 0.5555555555
             end EVEN_GST_QST_RATE,
-    
-    
              case when
              New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000)) - abs(GST_HST)
              when New_Rate_Ind = 'B' then (abs(AP_AMT) - (abs(GST_HST)/0.0600000000)) - abs(GST_HST)
              when New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000)) - abs(GST_HST)
              else 0.00
              end PST_MAT,
-    
              case when
               (New_Rate_Ind = 'A' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST)) * -1
              when (New_Rate_Ind = 'B' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST)) * -1
@@ -1415,7 +1397,6 @@ def aps_to_caps():
              when New_Rate_Ind = 'D' then  (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST))
              else 0.00
              end GST_MAT,
-    
              case when
              New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000))
             when New_Rate_Ind = 'B' then  (abs(AP_AMT) - (abs(GST_HST)/0.0600000000))
@@ -1423,9 +1404,6 @@ def aps_to_caps():
              when New_Rate_Ind = 'D' then  (abs(AP_AMT) - (abs(GST_HST)/0.1200000000))
              else 0.00
              end BROKER_VALUE,
-    
-    
-    
             case when
             AP_AMT = 0 then 0.00000
             else
