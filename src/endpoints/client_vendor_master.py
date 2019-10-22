@@ -19,6 +19,8 @@ def get_client_vendor_master(project_id):
         # check if caps_gen exist, if exist proceed, if not send back error message
         capsgen = CapsGen.query.filter_by(project_id=project_id).order_by(desc(CapsGen.id)).first()
         if capsgen is not None:
+            # one capsgen should only accociate with one fa1 row
+            # TODO: check with john I got multiple results here
             rows = SapLfa1.query.filter_by(capsgen_id=capsgen.id).all()
             client_vendor_data = [row.data for row in rows]
             response['payload'] = client_vendor_data

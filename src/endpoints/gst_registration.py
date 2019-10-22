@@ -2,7 +2,9 @@
 General Endpoints
 '''
 from flask import Blueprint, jsonify
-from src.models import SapLfa1
+from sqlalchemy import func
+from src.models import *
+
 
 gst_registration = Blueprint('gst_registration', __name__)
 #===============================================================================
@@ -15,8 +17,11 @@ def get_gst_registration():
         all_data_count = SapLfa1.query.count()
         if all_data_count < 1:
             code = 404
-            raise ValueError('Non record found')
-        all_data = SapLfa1.query.all()
+            raise ValueError('No record found')
+        # filter get the newset capgs for each project
+        # TODO: dedup lib identify potencial similar project add another column duplicate flag (code)
+        capsgens = db.session.query(func.max(CapsGen.id)).group_by(CapsGen.project_id)
+        all_data = SapLfa1.query.filter(CapsGen.id.in_(capsgens)).all()
         gst_registration_data = [row.data for row in all_data]
         response['payload'] = gst_registration_data
         code = 200
