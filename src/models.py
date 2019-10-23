@@ -514,6 +514,8 @@ class ParedownRule(db.Model):
         return {
             'id': self.id,
             'is_core': self.is_core,
+            'conditions': [i.serialize for i in self.paredown_rule_conditions],
+            'lob_sectors': [i.serialize for i in self.paredown_rule_lob_sectors],
             'code': self.code,
             'comment': self.comment
         }

@@ -16,13 +16,7 @@ paredown = Blueprint('paredown', __name__)
 def get_paredown_rules():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
-        query = ParedownRule.query
-        rules = [i.serialize for i in query.all()]
-
-        condition_query = ParedownRuleCondition.query
-        for rule in rules:
-            rule['conditions'] = [i.serialize for i in condition_query.filter_by(paredown_rule_id=rule['id']).all()]
-        response['payload'] = rules
+        response['payload'] = [i.serialize for i in ParedownRule.query.all()]
 
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
