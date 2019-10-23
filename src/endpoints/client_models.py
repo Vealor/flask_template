@@ -353,7 +353,6 @@ def compare_active_and_pending():
         data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
 
         performance_metrics = {}
-
         for model in [active_model, pending_model]:
 
             lh_model = cm.ClientPredictionModel(model.pickle)
