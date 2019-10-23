@@ -542,6 +542,7 @@ class ParedownRuleCondition(db.Model):
         return {
             'id': self.id,
             'field': self.field,
+            'paredown_rule_id': self.paredown_rule_id,
             'operator': self.operator,
             'value': self.value
         }

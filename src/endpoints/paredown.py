@@ -17,7 +17,13 @@ def get_paredown_rules():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
         query = ParedownRule.query
-        response['payload'] = [i.serialize for i in query.all()]
+        rules = [i.serialize for i in query.all()]
+
+        condition_query = ParedownRuleCondition.query
+        for rule in rules:
+            rule['conditions'] = [i.serialize for i in condition_query.filter_by(paredown_rule_id=rule['id']).all()]
+        response['payload'] = rules
+
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
