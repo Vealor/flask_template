@@ -359,7 +359,7 @@ def compare_active_and_pending():
             predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
             performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
 
-        response['message'] = 'Master model comaprison complete'
+        response['message'] = 'Client model comparison complete'
         response['payload'] = performance_metrics
     except ValueError as e:
         db.session.rollback()
