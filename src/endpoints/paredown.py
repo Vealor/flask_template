@@ -12,11 +12,20 @@ paredown = Blueprint('paredown', __name__)
 #===============================================================================
 # GET ALL Paredown rules
 @paredown.route('/', methods=['GET'])
+@paredown.route('/<int:id>', methods=['GET'])
 # @jwt_required
-def get_paredown_rules():
+def get_paredown_rules(id=None):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
-        response['payload'] = [i.serialize for i in ParedownRule.query.all()]
+
+        if id:
+            rule = ParedownRule.find_by_id(id)
+            if rule:
+                response['payload'] = rule.serialize
+            else:
+                raise ValueError("No paredown rule with ID {}".format(id))
+        else:
+            response['payload'] = [i.serialize for i in ParedownRule.query.all()]
 
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
