@@ -15,17 +15,17 @@ client_models = Blueprint('client_models', __name__)
 #===============================================================================
 # Get all client models
 @client_models.route('/', methods=['GET'])
-@client_models.route('/<path:id>', methods=['GET'])
+@client_models.route('/<int:client_id>', methods=['GET'])
 # @jwt_required
-def get_client_models(id=None):
+def get_client_models(client_id=None):
 
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
         query = ClientModel.query
-        if id:
-            query = query.filter_by(id=id)
-            if not query.first():
-                raise ValueError("No client model with ID {} exists.".format(id))
+        if client_id:
+            query = query.filter_by(client_id=client_id)
+            # if not query:
+            #     raise ValueError("No client model with ID {} exists.".format(id))
 
         response['payload'] = [i.serialize for i in query.all()]
     except ValueError as e:
