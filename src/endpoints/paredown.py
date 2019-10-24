@@ -77,6 +77,14 @@ def create_paredown_rule():
             db.session.add(new_paredown_condition)
             db.session.flush()
 
+        for lob_sec in data['lob_sectors']:
+            new_paredown_lob = ParedownRuleLineOfBusinessSector(
+                lob_sector = lob_sec,
+                paredown_rule_id = new_paredown_rule.id
+            )
+            db.session.add(new_paredown_lob)
+            db.session.flush()
+
         response['message'] = 'New paredown rule ID {} added.'.format(new_paredown_rule.id)
         db.session.commit()
     except ValueError as e:
@@ -132,9 +140,9 @@ def update_paredown_rule(id):
         conditions = ParedownRuleCondition.query.filter_by(paredown_rule_id=id).all()
         for cond in conditions:
             db.session.delete(cond)
+            db.session.flush()
 
-        new_conditions = data['conditions']
-        for cond in new_conditions:
+        for cond in data['conditions']:
             new_paredown_condition = ParedownRuleCondition(
                 field = cond['field'],
                 operator = cond['operator'],
@@ -142,6 +150,19 @@ def update_paredown_rule(id):
                 paredown_rule_id = query.id
             )
             db.session.add(new_paredown_condition)
+            db.session.flush()
+
+        lob_secs = ParedownRuleLineOfBusinessSector.query.filter_by(paredown_rule_id=id).all()
+        for lob_sec in lob_secs:
+            db.session.delete(lob_sec)
+            db.session.flush()
+
+        for lob_sec in data['lob_sectors']:
+            new_paredown_lob = ParedownRuleLineOfBusinessSector(
+                lob_sector = lob_sec,
+                paredown_rule_id = query.id
+            )
+            db.session.add(new_paredown_lob)
             db.session.flush()
 
         db.session.commit()
