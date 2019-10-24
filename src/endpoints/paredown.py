@@ -205,9 +205,11 @@ def update_paredown_rule(id):
         response['message'] = 'Successfully updated Paredown Rule ID {}.'.format(query.id)
 
     except ValueError as e:
+        db.session.rollback()
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
+        db.session.rollback()
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
