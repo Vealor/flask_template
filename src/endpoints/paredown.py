@@ -11,21 +11,19 @@ from src.util import validate_request_data
 paredown = Blueprint('paredown', __name__)
 #===============================================================================
 # GET ALL Paredown rules
-@paredown.route('/', methods=['GET'])
+@paredown.route('/', defaults={'id':None}, methods=['GET'])
 @paredown.route('/<int:id>', methods=['GET'])
 # @jwt_required
-def get_paredown_rules(id=None):
+def get_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     try:
-
+        query = Paredown.query
         if id:
-            rule = ParedownRule.find_by_id(id)
-            if rule:
-                response['payload'] = rule.serialize
-            else:
-                raise ValueError("No paredown rule with ID {}".format(id))
-        else:
-            response['payload'] = [i.serialize for i in ParedownRule.query.all()]
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError("Paredown rule ID {} does not exist.".format(id))
+
+         response['payload'] = [i.serialize for i in query.all()]
 
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
@@ -45,8 +43,8 @@ def create_paredown_rule():
     try:
         # Validate the fields of the new paredown rule
         request_types = {
-            'approver1' : 'int',
-            'approver2' : 'int',
+            #'approver1' : 'int',
+            #'approver2' : 'int',
             'code': 'str',
             'comment': 'str',
             'is_core': 'bool',
@@ -62,16 +60,12 @@ def create_paredown_rule():
             raise ValueError("Cannot create paredown rule with no conditions.")
 
         # Make sure valid user ids are used to approve paredown rules
-        for approver_id in [data['approver1'], data['approver2']]:
-            if approver_id == -1:   # '-1' indicates no approver specified.
-                pass
-            else:
-                user = User.find_by_id(approver_id)
-                if not user:
-                    raise ValueError("User ID {} does not exist.".format(approver_id))
-                else:
-                    if not (user.role == Roles.tax_master or user.is_superuser):
-                        raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+        for approver_id in filter(None, [data['approver1'], data['approver2']]):
+            user = User.find_by_id(approver_id)
+            if not user:
+                raise ValueError("User ID {} does not exist.".format(approver_id))
+            if not (user.role == Roles.tax_master or user.is_superuser):
+                raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
         request_types_conditions = {
             'field': 'str',
