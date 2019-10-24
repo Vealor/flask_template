@@ -40,7 +40,8 @@ def create_paredown_rule():
             'approver2' : 'int',
             'code': 'str',
             'comment': 'str',
-            'is_core': 'bool'
+            'is_core': 'bool',
+            'is_active': 'bool'
         }
         validate_request_data(data, request_types)
 
@@ -76,6 +77,7 @@ def create_paredown_rule():
             approver1 = (None if data['approver1'] == -1 else data['approver1']),
             approver2 = (None if data['approver2'] == -1 else data['approver2']),
             code = data['code'],
+            is_active = data['is_active'],
             is_core = data['is_core'],
             comment = data['comment']
         )
@@ -123,9 +125,12 @@ def update_paredown_rule(id):
     try:
         # Validate the fields of the updated paredown rule
         request_types = {
+            'approver1' : 'int',
+            'approver2' : 'int',
             'code': 'str',
             'comment': 'str',
-            'is_core': 'bool'
+            'is_core': 'bool',
+            'is_active': 'bool'
         }
         validate_request_data(data, request_types)
 
@@ -162,6 +167,7 @@ def update_paredown_rule(id):
             raise ValueError("Pareddown Rule ID {} does not exist.".format(id))
         query.code = data['code']
         query.comment = data['comment']
+        query.is_active = data['is_active']
         query.is_core = data['is_core']
         query.approver1 = (None if data['approver1'] == -1 else data['approver1'])
         query.approver2 = (None if data['approver2'] == -1 else data['approver2'])
