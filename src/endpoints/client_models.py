@@ -310,7 +310,7 @@ def do_validate():
         return jsonify(response), 500
     return jsonify(response), 201
 
-
+#===============================================================================
 # Compare active and pending models
 @client_models.route('/compare/', methods=['POST'])
 # @jwt_required
