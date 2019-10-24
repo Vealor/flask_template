@@ -501,7 +501,10 @@ class Project(db.Model):
 class ParedownRule(db.Model):
 
     __tablename__ = 'paredown_rules'
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    approver1 = db.Column(db.Integer, nullable=True)
+    approver2 = db.Column(db.Integer, nullable=True)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
@@ -512,6 +515,8 @@ class ParedownRule(db.Model):
     @property
     def serialize(self):
         return {
+            'approver1': self.approver1,
+            'approver2': self.approver2,
             'id': self.id,
             'is_core': self.is_core,
             'conditions': [i.serialize for i in self.paredown_rule_conditions],

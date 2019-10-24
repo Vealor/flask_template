@@ -36,6 +36,8 @@ def create_paredown_rule():
     try:
         # Validate the fields of the new paredown rule
         request_types = {
+            'approver1' : 'int',
+            'approver2' : 'int',
             'code': 'str',
             'comment': 'str',
             'is_core': 'bool'
@@ -49,6 +51,18 @@ def create_paredown_rule():
         if len(data['conditions']) == 0:
             raise ValueError("Cannot create paredown rule with no conditions.")
 
+        # Make sure valid user ids are used to approve paredown rules
+        for approver_id in [data['approver1'], data['approver2']]:
+            if approver_id == -1:   # '-1' indicates no approver specified.
+                pass
+            else:
+                user = User.find_by_id(approver_id)
+                if not user:
+                    raise ValueError("User ID {} does not exist.".format(approver_id))
+                else:
+                    if not (user.role == Roles.tax_master or user.is_superuser):
+                        raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+
         request_types_conditions = {
             'field': 'str',
             'operator': 'str'
@@ -59,6 +73,8 @@ def create_paredown_rule():
 
         # Create the new paredown rule
         new_paredown_rule = ParedownRule(
+            approver1 = (None if data['approver1'] == -1 else data['approver1']),
+            approver2 = (None if data['approver2'] == -1 else data['approver2']),
             code = data['code'],
             is_core = data['is_core'],
             comment = data['comment']
@@ -120,6 +136,18 @@ def update_paredown_rule(id):
         if len(data['conditions']) == 0:
             raise ValueError("Cannot create paredown rule with no conditions.")
 
+        # Make sure valid user ids are used to approve paredown rules
+        for approver_id in [data['approver1'], data['approver2']]:
+            if approver_id == -1:   # '-1' indicates no approver specified.
+                pass
+            else:
+                user = User.find_by_id(approver_id)
+                if not user:
+                    raise ValueError("User ID {} does not exist.".format(approver_id))
+                else:
+                    if not (user.role == Roles.tax_master or user.is_superuser):
+                        raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+
         request_types_conditions = {
             'field': 'str',
             'operator': 'str'
@@ -135,6 +163,9 @@ def update_paredown_rule(id):
         query.code = data['code']
         query.comment = data['comment']
         query.is_core = data['is_core']
+        query.approver1 = (None if data['approver1'] == -1 else data['approver1'])
+        query.approver2 = (None if data['approver2'] == -1 else data['approver2'])
+
 
         # Delete and recreate the paredown conditions
         conditions = ParedownRuleCondition.query.filter_by(paredown_rule_id=id).all()
