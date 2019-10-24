@@ -43,8 +43,8 @@ def create_paredown_rule():
     try:
         # Validate the fields of the new paredown rule
         request_types = {
-            #'approver1' : 'int',
-            #'approver2' : 'int',
+            #'approver1_id' : 'int',
+            #'approver2_id' : 'int',
             'code': 'str',
             'comment': 'str',
             'is_core': 'bool',
@@ -60,7 +60,7 @@ def create_paredown_rule():
             raise ValueError("Cannot create paredown rule with no conditions.")
 
         # Make sure valid user ids are used to approve paredown rules
-        for approver_id in filter(None, [data['approver1'], data['approver2']]):
+        for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
             user = User.find_by_id(approver_id)
             if not user:
                 raise ValueError("User ID {} does not exist.".format(approver_id))
@@ -77,8 +77,8 @@ def create_paredown_rule():
 
         # Create the new paredown rule
         new_paredown_rule = ParedownRule(
-            approver1 = data['approver1'],
-            approver2 = data['approver2'],
+            approver1_id = data['approver1_id'],
+            approver2_id = data['approver2_id'],
             code = data['code'],
             is_active = data['is_active'],
             is_core = data['is_core'],
@@ -128,8 +128,8 @@ def update_paredown_rule(id):
     try:
         # Validate the fields of the updated paredown rule
         request_types = {
-            #'approver1' : 'int',
-            #'approver2' : 'int',
+            #'approver1_id' : 'int',
+            #'approver2_id' : 'int',
             'code': 'str',
             'comment': 'str',
             'is_core': 'bool',
@@ -145,7 +145,7 @@ def update_paredown_rule(id):
             raise ValueError("Cannot create paredown rule with no conditions.")
 
         # Make sure valid user ids are used to approve paredown rules
-        for approver_id in filter(None, [data['approver1'], data['approver2']]):
+        for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
             user = User.find_by_id(approver_id)
             if not user:
                 raise ValueError("User ID {} does not exist.".format(approver_id))
@@ -168,8 +168,8 @@ def update_paredown_rule(id):
         query.comment = data['comment']
         query.is_active = data['is_active']
         query.is_core = data['is_core']
-        query.approver1 = data['approver1']
-        query.approver2 = data['approver2']
+        query.approver1_id = data['approver1_id']
+        query.approver2_id = data['approver2_id']
 
 
         # Delete and recreate the paredown conditions
