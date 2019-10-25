@@ -16,6 +16,7 @@ from src.models import *
 from config import *
 from sqlalchemy import exists
 from src.util import *
+from sqlalchemy import create_engine
 
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
 
@@ -83,9 +84,9 @@ def build_master_tables():
             db.session.commit()
         capsgen = CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False)
         db.session.add(capsgen)
-        db.session.flush()
-
+        db.session.commit()
         list_tablenames = current_app.config['CDM_TABLES']
+        engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         for table in list_tablenames:
             table_files = []
             #Search for all files that match table
@@ -93,6 +94,7 @@ def build_master_tables():
                 if re.search(table, file):
                     if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
                         table_files.append(file)
+
             #Load & union files into one master table in memory
             wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
             for index, file in enumerate(table_files):
@@ -109,19 +111,26 @@ def build_master_tables():
 
             #initialize variables for bulk insertion
             referenceclass = eval('Sap' + str(table.lower().capitalize()))
-            bulk_insert_handler = []
+            list_to_insert = []
+            counter = 0
             #bulk insert into database
             with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
-                counter = 0
-                for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
-                    counter += 1
-                    if counter > 1000:
-                        break
-                    dict_to_insert = {'data' : line}
-                    # WARNING: Project id needs to be provided in curl request
-                    dict_to_insert['capsgen_id'] = capsgen.id
-                    bulk_insert_handler.append(dict_to_insert)
-            db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+                header = masterfile.readline()
+                header = header.rstrip('\n').split('#|#')
+
+                for line in masterfile: 
+                    # insert rows chunk by chunk to avoid crashing 
+                    #  NOTE: 20,000 entries use about 4GB ram
+                    if counter >= 200000:
+                        engine.execute(referenceclass.__table__.insert(), list_to_insert)
+                        counter = 0
+                        list_to_insert = []
+                    else:
+                        counter += 1
+                        list_to_insert.append({"capsgen_id": capsgen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
+                
+                if counter > 0:
+                    engine.execute(referenceclass.__table__.insert(), list_to_insert)       
             CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
             db.session.flush()
         response['message'] = 'All tables are successfully committed.'
