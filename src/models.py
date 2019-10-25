@@ -503,16 +503,19 @@ class ParedownRule(db.Model):
     __tablename__ = 'paredown_rules'
     __table_args__ = (
         db.ForeignKeyConstraint(['approver1_id'], ['users.id'], ondelete='SET NULL'),
-        db.ForeignKeyConstraint(['approver2_id'], ['users.id'], ondelete='SET NULL')
+        db.ForeignKeyConstraint(['approver2_id'], ['users.id'], ondelete='SET NULL'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    approver1_id = db.Column(db.Integer, nullable=True) # FK
-    approver2_id = db.Column(db.Integer, nullable=True) # FK
     is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
+
+    approver1_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver1 = db.relationship('User', foreign_keys='ParedownRule.approver1_id') # FK
+    approver2_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver2 = db.relationship('User', foreign_keys='ParedownRule.approver2_id') # FK
 
     paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
