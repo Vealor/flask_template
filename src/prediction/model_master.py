@@ -2,6 +2,7 @@ import pandas as pd
 import pickle
 from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
 
@@ -13,11 +14,14 @@ class MasterPredictionModel(BasePredictionModel):
         else:
             # Define the master model here.
             model_params = {
-                'n_estimators': 100,
-                'max_depth': 5,
-                'class_weight': {1:1.1, 0:1}
+                'class_weight': {1:1.8, 0:1}
                 }
-            self.model = RandomForestClassifier(**model_params)
+            self.model = GridSearchCV(
+                estimator=ExtraTreesClassifier(**model_params),
+                param_grid={'max_depth':[3,4,5], 'n_estimators':[50,100,200,400]},
+                cv=5,
+                scoring='f1'
+                )
             self.is_trained = False
 
 
