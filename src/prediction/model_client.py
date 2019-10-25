@@ -66,6 +66,7 @@ class ClientPredictionModel(BasePredictionModel):
 
         xv,yv = validation_data[predictors], validation_data[target]
         yp = self.predict(xv,predictors)
+        test_set_size = len(yp)
 
         true_negatives, false_positives, false_negatives, true_positives = confusion_matrix(yv,yp).ravel()
         accuracy, recall, precision = 0, 0, 0
@@ -76,4 +77,4 @@ class ClientPredictionModel(BasePredictionModel):
         if (true_positives + false_negatives) != 0:
             precision = true_positives / (true_positives + false_positives)
         yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
-        return {"recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
+        return {"test_set_size": test_set_size, "recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
