@@ -1,5 +1,5 @@
 '''
-General Endpoints
+Tax Rate Endpoints
 '''
 from sqlalchemy import desc
 from flask import Blueprint, jsonify
@@ -7,7 +7,7 @@ from src.models import Project, CapsGen, SapT007s
 
 tax_rate = Blueprint('tax_rate', __name__)
 #===============================================================================
-# General
+# permission check
 @tax_rate.route('/<int:project_id>', methods=['GET'])
 def get_tax_rate_table(project_id):
     try:
@@ -20,8 +20,7 @@ def get_tax_rate_table(project_id):
         capsgen = CapsGen.query.filter_by(project_id=project_id).order_by(desc(CapsGen.id)).first()
         if capsgen is not None:
             rows = SapT007s.query.filter_by(capsgen_id=capsgen.id).all()
-            tax_rate_data = [row.data for row in rows]
-            response['payload'] = tax_rate_data
+            response['payload'] = [row.data for row in rows]
             code = 200
         else:
             code = 404
