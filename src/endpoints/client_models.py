@@ -28,12 +28,8 @@ def get_client_models(id):
             if not query.first():
                  raise ValueError("No client model with ID {} exists.".format(id))
 
-        # If client_id is specified, then return all models with that client id.
-        if 'client_id' in args.keys():
-            if not Client.find_by_id(args['client_id']):
-                raise ValueError("Client ID {} does not exist.".format(args['client_id']))
-            query = query.filter_by(client_id=args['client_id'])
-
+        # If client_id is specified, then return all models for that client
+        query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
         response['payload'] = [i.serialize for i in query.all()]
 
     except ValueError as e:
