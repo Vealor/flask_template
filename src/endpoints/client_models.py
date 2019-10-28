@@ -377,6 +377,36 @@ def compare_active_and_pending():
 
 
 #===============================================================================
+# Update the active model for a client
+@client_models.route('/set_active/<int:client_id>/', defaults={'model_id':None}, methods=['PUT'])
+@client_models.route('/set_active/<int:client_id>/<int:model_id>', methods=['PUT'])
+# @jwt_required
+def set_active_model(client_id,model_id):
+    response = { 'status': 'ok', 'message': '', 'payload': {} }
+
+    try:
+        if not Client.find_by_id(client_id):
+            raise ValueError("Client ID {} does not exist.".format(client_id))
+        if not model_id:
+            pending_model = ClientModel.find_pending_for_client(client_id)
+            if not pending_model:
+                raise ValueError('There is no pending model to compare to the active model.')
+            model_id = pending_model.id
+        ClientModel.set_active_for_client(model_id, client_id)
+        db.session.commit()
+        response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
+    except ValueError as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 400
+    except Exception as e:
+        db.session.rollback()
+        response = { 'status': 'error', 'message': str(e), 'payload': [] }
+        return jsonify(response), 500
+    return jsonify(response), 200
+
+
+#===============================================================================
 # Delete a client model
 @client_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
