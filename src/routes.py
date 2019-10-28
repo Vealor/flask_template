@@ -44,6 +44,10 @@ api.register_blueprint(master_models, url_prefix='/master_models')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# Paredown Endpoints
+from src.endpoints.paredown import paredown
+api.register_blueprint(paredown, url_prefix='/paredown')
+
 # SAP Caps Gen Endpoints
 from src.endpoints.sap_caps_gen import sap_caps_gen
 api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
@@ -64,11 +68,11 @@ api.register_blueprint(vendors, url_prefix='/vendors')
 from src.endpoints.tax_rate import tax_rate
 api.register_blueprint(tax_rate, url_prefix='/tax_rate')
 
-# client vendor master Endpoint
+# Client Vendor master Endpoint
 from src.endpoints.client_vendor_master import client_vendor_master
 api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
-# gst registration Endpoint
+# Gst Registration Endpoint
 from src.endpoints.gst_registration import gst_registration
 api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
