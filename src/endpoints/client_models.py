@@ -14,20 +14,24 @@ from src.util import get_date_obj_from_str, validate_request_data
 client_models = Blueprint('client_models', __name__)
 #===============================================================================
 # Get all client models
-@client_models.route('/', methods=['GET'])
-@client_models.route('/<path:id>', methods=['GET'])
+@client_models.route('/', defaults={'id':None}, methods=['GET'])
+@client_models.route('/<int:id>', methods=['GET'])
 # @jwt_required
-def get_client_models(id=None):
+def get_client_models(id):
 
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
     try:
         query = ClientModel.query
         if id:
             query = query.filter_by(id=id)
             if not query.first():
-                raise ValueError("No client model with ID {} exists.".format(id))
+                 raise ValueError("No client model with ID {} exists.".format(id))
 
+        # If client_id is specified, then return all models for that client
+        query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
         response['payload'] = [i.serialize for i in query.all()]
+
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
