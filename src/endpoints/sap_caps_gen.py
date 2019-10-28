@@ -215,14 +215,14 @@ def build_gst_registration_table():
         # if gst registration for the project already exist -> capsgen alreday populated before 
         # delete the old entry and insert the newset one
         # TODO: check for similary/duplicate projects by comparing attributes
-        deletecheck = GstRegistration.query.filter(GstRegistration.project_id == data['project_id']).first()
-        if deletecheck:
-            db.session.delete(deletecheck)
+        project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == data['project_id']).first()
+        if project_in_gst_registration_table is not None:
+            db.session.delete(project_in_gst_registration_table)
             db.session.commit()
         fa1 = SapLfa1.query.filter_by(capsgen_id=data['capsgen_id']).first()
         if fa1 is not None:
-            gstRegistration = GstRegistration(project_id=data['project_id'], capsgen_id=data['capsgen_id'], vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
-            db.session.add(gstRegistration)
+            gst_registration = GstRegistration(project_id=data['project_id'], capsgen_id=data['capsgen_id'], vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
+            db.session.add(gst_registration)
             db.session.flush()
             code = 201
         else:
