@@ -92,3 +92,37 @@ This script ALSO updates all existing packages.
 
 ### Updating models and creating a new migration
 ```FLASK_ENV='development' flask db migrate```
+
+
+### CAPS Generation ###
+Use curl requests for the following endpoints
+
+Unzipping:
+```
+curl --header "Content-Type: application/json"   --request POST   --data '{"project_id": 1, "file_name": "nexen.zip", "system": "sap"}'   http://localhost:5000/sap_caps_gen/unzipping
+```
+
+Build Master Tables:
+```
+curl --header "Content-Type: application/json" --request POST --data '{"project_id": 1, "file_name": "nexen.zip", "user_id": 1, "system": "sap"}' http://localhost:5000/sap_caps_gen/build_master_tables
+```
+
+Rename Scheme:
+```
+curl --header "Content-Type: application/json" --request POST --data '{"project_id": 1}' http://localhost:5000/sap_caps_gen/rename_scheme
+```
+
+Data quality check:
+```
+curl --header "Content-Type: application/json" --request GET --data '{"project_id": 1}' http://localhost:5000/sap_caps_gen/data_quality_check
+```
+
+j1_j10:
+```
+curl --header "Content-Type: application/json" --request POST --data '{"project_id": 1}' http://localhost:5000/sap_caps_gen/j1_j10
+```
+
+aps_to_caps:
+```
+curl --header "Content-Type: application/json" --request POST --data '{"project_id": 1}' http://localhost:5000/sap_caps_gen/aps_to_caps
+```

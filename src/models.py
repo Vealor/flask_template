@@ -608,6 +608,7 @@ class CapsGen(db.Model):
     capsgen_sapskat = db.relationship('SapSkat', back_populates='sapskat_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapt001 = db.relationship('SapT001', back_populates='sapt001_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_capsgen', lazy='dynamic', passive_deletes=True)
+    capsgen_sapska1 = db.relationship('SapSka1', back_populates='sapska1_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapskb1 = db.relationship('SapSkb1', back_populates='sapskb1_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_sapt003t = db.relationship('SapT003t', back_populates='sapt003t_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_saptbslt = db.relationship('SapTbslt', back_populates='saptbslt_capsgen', lazy='dynamic', passive_deletes=True)
@@ -1127,6 +1128,19 @@ class SapT007s(db.Model):
 
     capsgen_id = db.Column(db.Integer,  nullable=False)
     sapt007s_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt007s')
+
+
+class SapSka1(db.Model):
+    _tablename__ = 'sap_ska1'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    capsgen_id = db.Column(db.Integer,  nullable=False)
+    sapska1_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapska1')
+
 
 class SapSkb1(db.Model):
     _tablename__ = 'sap_skb1'
