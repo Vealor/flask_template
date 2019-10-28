@@ -203,15 +203,12 @@ def rename_scheme():
 @sap_caps_gen.route('/build_gst_registration_table', methods=['POST'])
 def build_gst_registration_table():
     try:
-        code = 500
-        response = {'status': 'ok', 'message': {}, 'payload': {}}
+        response = {'status': 'ok', 'message': '', 'payload': []}
         data = request.get_json()
-        if data['project_id'] is None:
-            code = 400
-            raise Exception("Missing project id.")
-        elif data['capsgen_id'] is None:
-            code = 400
-            raise Exception("Missing caps gen id.")
+        if 'project_id' not in data:
+            raise ValueError("Missing project id.")
+        elif 'capsgen_id' not in data:
+            raise ValueError("Missing caps gen id.")
         # if gst registration for the project already exist -> capsgen alreday populated before 
         # delete the old entry and insert the newset one
         # TODO: check for similary/duplicate projects by comparing attributes
@@ -224,14 +221,17 @@ def build_gst_registration_table():
             gst_registration = GstRegistration(project_id=data['project_id'], capsgen_id=data['capsgen_id'], vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
             db.session.add(gst_registration)
             db.session.flush()
-            code = 201
         else:
-            raise Exception("FA1 does not exist, please run caps gen first.")
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-    return jsonify(response), code
+            raise ValueError("FA1 does not exist, please run caps gen first.")
+    except ValueError as e:
+        db.session.rollback()
+        response = {'status': 'error', 'message': str(e), 'payload': []}
+        return jsonify(response), 400
+    except Exception as e:  
+        db.session.rollback()
+        response = {'status': 'error', 'message': str(e), 'payload': []}
+        return jsonify(response), 500
+    return jsonify(response), 201
 
 
 #this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
