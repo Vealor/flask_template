@@ -46,7 +46,6 @@ def create_paredown_rule():
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
             'code': 'str',
-            'comment': 'str',
             'is_core': 'bool',
             'is_active': 'bool'
         }
