@@ -443,7 +443,7 @@ def j1_j10():
             """.format(capsgen_id = capsgen_id)
 
         j10 = """
-        DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_SKAT_OnlyAP;
+        DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_OnlyAP;
 
         SELECT L.*
         INTO J3_BSEG_BKPF_LFA1_OnlyAP
@@ -451,13 +451,6 @@ def j1_j10():
         INNER JOIN distinctVarAPKey AS R
         ON L.varAPKey = R.varAPKey
         """
-        # j17 =====================================================================
-        # Add a few of andy's extra fields
-        # Add varLocAmt (signed)
-        # Add varDocAmt (signed)
-        # Add sel_acct
-        # Add amounts (unsigned)
-        # Sort by varapkey, then by varLocAmt
 
     # Execute the joins defined above.
         execute(j1revised)
