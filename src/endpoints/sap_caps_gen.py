@@ -14,7 +14,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 from os import path
 from src.models import *
 from config import *
-from sqlalchemy import exists
+from sqlalchemy import exists, desc
 from src.util import *
 
 sap_caps_gen = Blueprint('sap_caps_gen', __name__)
@@ -86,6 +86,7 @@ def build_master_tables():
         db.session.flush()
 
         list_tablenames = current_app.config['CDM_TABLES']
+        #todo: add table to payload so cio can know which tables to view
         for table in list_tablenames:
             table_files = []
             #Search for all files that match table
@@ -136,6 +137,34 @@ def build_master_tables():
     response['payload'] = []
     return jsonify(response), 200
 
+
+@sap_caps_gen.route('/view_tables/<path:project_id>/<path:table>', methods=['GET'])
+def view_tables(project_id, table):
+    response = {'status': 'ok', 'message': {}, 'payload': []}
+    try:
+        query = CapsGen.query
+
+        # project_id filter
+        if project_id is not None and isinstance(project_id, int):
+            project = Project.find_by_id(project_id)
+        else:
+            raise ValueError('Project ID {} does not exist.'.format(project_id))
+
+        capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
+        if not capsgen_id:
+            raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+
+        #table filter
+        if table is not None:
+            tableclass = eval('Sap' + str(table.lower().capitalize()))
+            columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.capsgen_id == capsgen_id).all()
+            response['payload'] = columndata
+            response['message'] = str(table) + ' has been accessed.'
+    except Exception as e:
+        response['status'] = 'error'
+        response['message'] = str(e)
+        return jsonify(response), 400
+    return jsonify(response), 200
 ######################### MAPPING HAPPENS HERE #######################################
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
