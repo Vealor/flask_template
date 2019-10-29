@@ -894,7 +894,7 @@ class Transaction(db.Model):
     gst_code = db.relationship('Code', back_populates='code_gst') #FK
     gst_hst_notes = db.Column(db.String(2048), nullable=True)
     gst_hst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
-    gst_hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    gst_hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     gst_hst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
     gst_coded_by_user = db.relationship('User', back_populates='user_gst_coded_by') # FK
     gst_hst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
@@ -904,7 +904,7 @@ class Transaction(db.Model):
     qst_code = db.relationship('Code', back_populates='code_qst') #FK
     qst_notes = db.Column(db.String(2048), nullable=True)
     qst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
-    qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     qst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
     qst_coded_by_user = db.relationship('User', back_populates='user_qst_coded_by') # FK
     qst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
@@ -914,7 +914,7 @@ class Transaction(db.Model):
     pst_code = db.relationship('Code', back_populates='code_pst') #FK
     pst_notes = db.Column(db.String(2048), nullable=True)
     pst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
-    pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     pst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
     pst_coded_by_user = db.relationship('User', back_populates='user_pst_coded_by') # FK
     pst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
@@ -924,7 +924,7 @@ class Transaction(db.Model):
     apo_code = db.relationship('Code', back_populates='code_apo') #FK
     apo_notes = db.Column(db.String(2048), nullable=True)
     apo_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
-    apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     apo_coded_by_id = db.Column(db.Integer, nullable=True) #FK
     apo_coded_by_user = db.relationship('User', back_populates='user_apo_coded_by') # FK
     apo_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
