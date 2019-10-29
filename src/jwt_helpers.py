@@ -1,26 +1,7 @@
 
-import functools
-from flask import jsonify, abort
-from flask_jwt_extended import (verify_jwt_in_request, get_current_user)
+from flask import jsonify
 from src import jwt
 from src.models import BlacklistToken, User
-
-#===============================================================================
-### Permission Wrapper
-
-def has_permission(roles):
-    def decorator(method):
-        @functools.wraps(method)
-        def f(*args, **kwargs):
-            verify_jwt_in_request()
-            user = get_current_user()
-            if user.is_superuser:
-                return method(*args, **kwargs)
-            if user.is_system_administrator or user.role.value in roles:
-                return method(*args, **kwargs)
-            abort(403)
-        return f
-    return decorator
 
 #===============================================================================
 ### JWT Helpers
