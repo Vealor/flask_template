@@ -525,7 +525,7 @@ class ParedownRule(db.Model):
         return {
             'id': self.id,
             'is_active': self.is_active,
-            'is_core': bool(self.paredown_rule_lob_sectors.count()),
+            'is_core': not bool(self.paredown_rule_lob_sectors.count()),
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
             'lob_sectors': [i.serialize for i in self.paredown_rule_lob_sectors],
             'code': self.code,
