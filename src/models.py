@@ -851,12 +851,21 @@ class Code(db.Model):
     __table_args__ = (
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    code_number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
 
     code_gst = db.relationship('Transaction', back_populates='gst_code', lazy='dynamic')
     code_qst = db.relationship('Transaction', back_populates='qst_code', lazy='dynamic')
     code_pst = db.relationship('Transaction', back_populates='pst_code', lazy='dynamic')
     code_apo = db.relationship('Transaction', back_populates='apo_code', lazy='dynamic')
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'code_number': self.code_number,
+            'description': self.description
+        }
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
