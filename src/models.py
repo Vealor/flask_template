@@ -99,6 +99,9 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
+class ErrorTypes(enum.Enum):
+    temp = "temp"
+
 class Jurisdiction(enum.Enum):
     ab = "Alberta"
     bc = "British Columbia"
@@ -146,6 +149,15 @@ class User(db.Model):
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
     locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
     user_capsgen = db.relationship('CapsGen', back_populates='capsgen_user', lazy='dynamic')
+
+    user_gst_coded_by = db.relationship('Transaction', back_populates='gst_coded_by_user', lazy='dynamic')
+    user_gst_signed_off_by = db.relationship('Transaction', back_populates='gst_signed_off_by_user', lazy='dynamic')
+    user_qst_coded_by = db.relationship('Transaction', back_populates='qst_coded_by_user', lazy='dynamic')
+    user_qst_signed_off_by = db.relationship('Transaction', back_populates='qst_signed_off_by_user', lazy='dynamic')
+    user_pst_coded_by = db.relationship('Transaction', back_populates='pst_coded_by_user', lazy='dynamic')
+    user_pst_signed_off_by = db.relationship('Transaction', back_populates='pst_signed_off_by_user', lazy='dynamic')
+    user_apo_coded_by = db.relationship('Transaction', back_populates='apo_coded_by_user', lazy='dynamic')
+    user_apo_signed_off_by = db.relationship('Transaction', back_populates='apo_signed_off_by_user', lazy='dynamic')
 
     @property
     def serialize(self):
@@ -834,6 +846,18 @@ class MasterModelPerformance(db.Model):
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
 
 ################################################################################
+class Code(db.Model):
+    __tablename__ = 'codes'
+    __table_args__ = (
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    description = db.Column(db.String(2048), nullable=True)
+
+    code_gst = db.relationship('Transaction', back_populates='gst_code', lazy='dynamic')
+    code_qst = db.relationship('Transaction', back_populates='qst_code', lazy='dynamic')
+    code_pst = db.relationship('Transaction', back_populates='pst_code', lazy='dynamic')
+    code_apo = db.relationship('Transaction', back_populates='apo_code', lazy='dynamic')
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     __table_args__ = (
@@ -842,6 +866,19 @@ class Transaction(db.Model):
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
+
+        db.ForeignKeyConstraint(['gst_hst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['gst_hst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['gst_hst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['qst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['qst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['qst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['pst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['pst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['pst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['apo_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['apo_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['apo_signed_off_by_id'], ['users.id']),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -852,7 +889,46 @@ class Transaction(db.Model):
     rbc_recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
-    codes = db.Column(postgresql.JSON, nullable=False)
+
+    gst_hst_code_id = db.Column(db.Integer, nullable=False) #FK
+    gst_code = db.relationship('Code', back_populates='code_gst') #FK
+    gst_hst_notes = db.Column(db.String(2048), nullable=True)
+    gst_hst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
+    gst_hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    gst_hst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    gst_coded_by_user = db.relationship('User', back_populates='user_gst_coded_by') # FK
+    gst_hst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    gst_signed_off_by_user = db.relationship('User', back_populates='user_gst_signed_off_by') # FK
+
+    qst_code_id = db.Column(db.Integer, nullable=False) #FK
+    qst_code = db.relationship('Code', back_populates='code_qst') #FK
+    qst_notes = db.Column(db.String(2048), nullable=True)
+    qst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
+    qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    qst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    qst_coded_by_user = db.relationship('User', back_populates='user_qst_coded_by') # FK
+    qst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    qst_signed_off_by_user = db.relationship('User', back_populates='user_qst_signed_off_by') # FK
+
+    pst_code_id = db.Column(db.Integer, nullable=False) #FK
+    pst_code = db.relationship('Code', back_populates='code_pst') #FK
+    pst_notes = db.Column(db.String(2048), nullable=True)
+    pst_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
+    pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    pst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    pst_coded_by_user = db.relationship('User', back_populates='user_pst_coded_by') # FK
+    pst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    pst_signed_off_by_user = db.relationship('User', back_populates='user_pst_signed_off_by') # FK
+
+    apo_code_id = db.Column(db.Integer, nullable=False) #FK
+    apo_code = db.relationship('Code', back_populates='code_apo') #FK
+    apo_notes = db.Column(db.String(2048), nullable=True)
+    apo_recoveries = db.Column(db.Float, nullable=False, default=0.0, server_default=u'(0.0)')
+    apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=False)
+    apo_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    apo_coded_by_user = db.relationship('User', back_populates='user_apo_coded_by') # FK
+    apo_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    apo_signed_off_by_user = db.relationship('User', back_populates='user_apo_signed_off_by') # FK
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     locked_transaction_user = db.relationship('User', back_populates='locked_transactions') # FK
