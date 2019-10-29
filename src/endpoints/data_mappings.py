@@ -1,5 +1,5 @@
 '''
-Code Endpoints
+DataMapping Endpoints
 '''
 import json
 import random
@@ -8,24 +8,25 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
-codes = Blueprint('codes', __name__)
+data_mappings = Blueprint('data_mappings', __name__)
 #===============================================================================
-# GET ALL CODES
-@codes.route('/', methods=['GET'])
+# GET ALL DATA MAPPINGS
+@data_mappings.route('/', methods=['GET'])
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_codes():
+def get_data_mappings():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
-    query = Code.query
+    query = DataMapping.query
     # Set ORDER
-    query = query.order_by('code_number')
+    query = query.order_by('project_id')
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
     response['payload'] = [i.serialize for i in query.all()]
+
     return jsonify(response)

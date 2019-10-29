@@ -16,9 +16,9 @@ fxrates = Blueprint('fxrates', __name__)
 #===============================================================================
 # General
 @fxrates.route('/', methods=['GET'])
-def insert_fxrates_data():
+def get_fxrates():
     response = {'status': 'ok', 'message': '', 'payload': []}
-    
+
     query = FXRates.query.order_by(desc(FXRates.date_id)).first().serialize
     #need assistance on timezones
     if query['date_id'] < datetime.datetime.now().date():

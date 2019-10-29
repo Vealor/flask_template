@@ -20,6 +20,10 @@ api.register_blueprint(clients, url_prefix='/clients')
 from src.endpoints.client_models import client_models
 api.register_blueprint(client_models, url_prefix='/client_models')
 
+# DataMapping Endpoints
+from src.endpoints.data_mappings import data_mappings
+api.register_blueprint(data_mappings, url_prefix='/data_mappings')
+
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')

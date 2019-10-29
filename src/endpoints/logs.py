@@ -15,7 +15,7 @@ logs = Blueprint('logs', __name__)
 # @jwt_required
 # PERMISSION IT ADMIN
 @exception_wrapper()
-def default():
+def get_logs():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
