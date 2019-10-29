@@ -502,20 +502,20 @@ class ParedownRule(db.Model):
 
     __tablename__ = 'paredown_rules'
     __table_args__ = (
-        db.ForeignKeyConstraint(['approver1_id'], ['users.id'], ondelete='SET NULL'),
-        db.ForeignKeyConstraint(['approver2_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['paredown_rule_approver1_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
+        db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
-    approver1_id = db.Column(db.Integer, nullable=True) # FK
-    paredown_rule_approver1 = db.relationship('User', foreign_keys='ParedownRule.approver1_id') # FK
-    approver2_id = db.Column(db.Integer, nullable=True) # FK
-    paredown_rule_approver2 = db.relationship('User', foreign_keys='ParedownRule.approver2_id') # FK
+    paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
+    paredown_rule_approver2_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver2_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver2_id') # FK
 
     paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
     paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
@@ -523,15 +523,17 @@ class ParedownRule(db.Model):
     @property
     def serialize(self):
         return {
-            'approver1_id': self.approver1_id,
-            'approver2_id': self.approver2_id,
             'id': self.id,
             'is_active': self.is_active,
-            'is_core': self.is_core,
+            'is_core': bool(self.paredown_rule_lob_sectors.count()),
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
             'lob_sectors': [i.serialize for i in self.paredown_rule_lob_sectors],
             'code': self.code,
-            'comment': self.comment
+            'comment': self.comment,
+            'approver1_id': self.paredown_rule_approver1_id,
+            'approver1_username': self.paredown_rule_approver1_user.username if self.paredown_rule_approver1_id else None,
+            'approver2_id': self.paredown_rule_approver2_id,
+            'approver2_username': self.paredown_rule_approver2_user.username if self.paredown_rule_approver2_id else None
         }
 
     @classmethod

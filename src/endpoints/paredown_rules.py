@@ -8,20 +8,29 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from src.models import *
 from src.util import validate_request_data
 
-paredown = Blueprint('paredown', __name__)
+paredown_rules = Blueprint('paredown_rules', __name__)
 #===============================================================================
 # GET ALL Paredown rules
-@paredown.route('/', defaults={'id':None}, methods=['GET'])
-@paredown.route('/<int:id>', methods=['GET'])
+@paredown_rules.route('/', defaults={'id':None}, methods=['GET'])
+@paredown_rules.route('/<int:id>', methods=['GET'])
 # @jwt_required
 def get_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+    
     try:
         query = ParedownRule.query
         if id:
             query = query.filter_by(id=id)
             if not query.first():
                 raise ValueError("Paredown rule ID {} does not exist.".format(id))
+        # Set ORDER
+        query = query.order_by('id')
+        # Set LIMIT
+        query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+        # Set OFFSET
+        query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
 
         response['payload'] = [i.serialize for i in query.all()]
 
@@ -35,7 +44,7 @@ def get_paredown_rules(id):
 
 #===============================================================================
 # Create Paredown rules
-@paredown.route('/', methods=['POST'])
+@paredown_rules.route('/', methods=['POST'])
 # @jwt_required
 def create_paredown_rule():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -119,7 +128,7 @@ def create_paredown_rule():
 
 #===============================================================================
 # Update a Paredown rule
-@paredown.route('/<int:id>', methods=['PUT'])
+@paredown_rules.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 def update_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -215,7 +224,7 @@ def update_paredown_rule(id):
 
 #===============================================================================
 # DELETE A PAREDOWN RULE
-@paredown.route('/<int:id>', methods=['DELETE'])
+@paredown_rules.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 def delete_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
