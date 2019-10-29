@@ -287,12 +287,17 @@ class Client(db.Model):
 
     @property
     def serialize(self):
+        active_model = [m for m in self.client_client_models if m.status.value == Activity.active.value]
+        pending_model = [m for m in self.client_client_models if m.status.value == Activity.pending.value]
         return {
             'id': self.id,
             'name': self.name,
             'created': self.created,
             'client_entities': [i.serialize for i in self.client_client_entities],
-            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects]
+            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects],
+            'client_inactive_models': [m.serialize for m in self.client_client_models if m.status.value == Activity.inactive.value],
+            'client_pending_model': pending_model[0].serialize if pending_model else None,
+            'client_active_model': active_model[0].serialize if active_model else None
         }
 
     @classmethod
