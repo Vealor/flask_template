@@ -17,7 +17,7 @@ paredown_rules = Blueprint('paredown_rules', __name__)
 def get_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-    
+
     try:
         query = ParedownRule.query
         if id:
@@ -55,7 +55,6 @@ def create_paredown_rule():
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
             'code': 'str',
-            'is_core': 'bool',
             'is_active': 'bool'
         }
         validate_request_data(data, request_types)
@@ -85,11 +84,10 @@ def create_paredown_rule():
 
         # Create the new paredown rule
         new_paredown_rule = ParedownRule(
-            approver1_id = data['approver1_id'],
-            approver2_id = data['approver2_id'],
+            paredown_rule_approver1_id = data['approver1_id'],
+            paredown_rule_approver2_id = data['approver2_id'],
             code = data['code'],
             is_active = data['is_active'],
-            is_core = data['is_core'],
             comment = data['comment']
         )
         db.session.add(new_paredown_rule)
@@ -140,7 +138,6 @@ def update_paredown_rule(id):
             #'approver2_id' : 'int',
             'code': 'str',
             'comment': 'str',
-            'is_core': 'bool',
             'is_active': 'bool'
         }
         validate_request_data(data, request_types)
@@ -175,9 +172,8 @@ def update_paredown_rule(id):
         query.code = data['code']
         query.comment = data['comment']
         query.is_active = data['is_active']
-        query.is_core = data['is_core']
-        query.approver1_id = data['approver1_id']
-        query.approver2_id = data['approver2_id']
+        query.paredown_rule_approver1_id = data['approver1_id']
+        query.paredown_rule_approver2_id = data['approver2_id']
 
 
         # Delete and recreate the paredown conditions
