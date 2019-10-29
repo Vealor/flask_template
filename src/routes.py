@@ -71,35 +71,35 @@ api.register_blueprint(vendors, url_prefix='/vendors')
 # Bad Request
 @api.errorhandler(400)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 400', 'payload': [], 'message': e.description}
     return jsonify(response), 400
 # Unauthorized
 @api.errorhandler(401)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 401', 'payload': [], 'message': e.description}
     return jsonify(response), 401
 # Forbidden
 @api.errorhandler(403)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 403', 'payload': [], 'message': e.description}
     return jsonify(response), 403
 # Not Found
 @api.errorhandler(404)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 404', 'payload': [], 'message': e.description}
     return jsonify(response), 404
 # Method Not Allowed
 @api.errorhandler(405)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 405', 'payload': [], 'message': e.description}
     return jsonify(response), 405
 # Unprocessable Entity
 @api.errorhandler(422)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}
+    response = { 'status': 'Error 422', 'payload': [], 'message': e.description}
     return jsonify(response), 422
 # Server Error
 @api.errorhandler(500)
 def _handle_server_error(e):
-    response = { 'status': 'error', 'payload': [], 'message': e.description}#'500 Server Error:  Please contact an Administrator.'}
+    response = { 'status': 'Error 500', 'payload': [], 'message': e.description}#'500 Server Error:  Please contact an Administrator.'}
     return jsonify(response), 500
