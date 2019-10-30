@@ -1,6 +1,8 @@
 import enum
+import re
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
+from sqlalchemy import TypeDecorator
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
@@ -8,25 +10,22 @@ from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, B
 db = SQLAlchemy()
 
 ################################################################################
-# TRIGGERS
-# event.listen(
-#     paredown_rules,
-#     'after_create',
-#     DDL("""
-#
-#     """)
-# )
-#
-#
-#
-# paredown_rules_trigger = DDL("""
-#     CREAT TRIGGER paredown_rules_is_core_check BEFORE INSERT OR UPDATE
-#     ON paredown_rules
-#     FOR EACH ROW EXECUTE PROCEDURE
-#     paredown_rules_procedure()
-# """)
-# tbl = ParedownRule.__table__
-# event.listen(tbl, 'after_create', trig_ddl.execute_if(dialect='postgresql'))
+# CUSTOM TYPES
+
+class ArrayOfEnum(TypeDecorator):
+    impl = postgresql.ARRAY
+    # def bind_expression(self, bindvalue):
+    #     return sa.cast(bindvalue, self)
+    def result_processor(self, dialect, coltype):
+        super_rp = super(ArrayOfEnum, self).result_processor(dialect, coltype)
+        def handle_raw_string(value):
+            inner = re.match(r"^{(.*)}$", value).group(1)
+            return inner.split(",") if inner else []
+        def process(value):
+            if value is None:
+                return None
+            return [ i.serialize for i in super_rp(handle_raw_string(value))]
+        return process
 
 ################################################################################
 # ENUMS
@@ -526,7 +525,7 @@ class ParedownRule(db.Model):
         db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
         db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
         db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
-        db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
+        # db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
     )
 
 
@@ -536,7 +535,7 @@ class ParedownRule(db.Model):
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
-    lob_sectors = db.Column(db.ARRAY(db.Enum(LineOfBusinessSectors)), nullable=True, server_default='{}')
+    lob_sectors = db.Column(ArrayOfEnum(postgresql.ENUM(LineOfBusinessSectors)), nullable=True)
 
     paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
     paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
@@ -552,7 +551,7 @@ class ParedownRule(db.Model):
             'is_core': self.is_core,
             'is_active': self.is_active,
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
-            # 'lob_sectors': [i.serialize for i in self.paredown_rule_lob_sectors],
+            'lob_sectors': self.lob_sectors,
             'code': self.code,
             'comment': self.comment,
             'approver1_id': self.paredown_rule_approver1_id,

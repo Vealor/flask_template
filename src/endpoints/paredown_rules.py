@@ -31,9 +31,7 @@ def get_paredown_rules(id):
         # Set OFFSET
         query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-
         response['payload'] = [i.serialize for i in query.all()]
-
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
