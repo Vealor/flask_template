@@ -54,13 +54,10 @@ def create_paredown_rule():
         request_types = {
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
-            'code': 'str',
+            'code': 'int',
             'is_active': 'bool'
         }
         validate_request_data(data, request_types)
-
-        if data['code'] == '':
-            raise ValueError("Cannot create paredown rule with no code.")
 
         # Validate each condition of the new paredown rule
         if len(data['conditions']) == 0:
@@ -136,13 +133,10 @@ def update_paredown_rule(id):
         request_types = {
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
-            'code': 'str',
+            'code': 'int',
             'is_active': 'bool'
         }
         validate_request_data(data, request_types)
-
-        if data['code'] == '':
-            raise ValueError("Cannot create paredown rule with no code.")
 
         # Validate each condition of the new paredown rule
         if len(data['conditions']) == 0:
