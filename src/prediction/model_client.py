@@ -42,6 +42,7 @@ class ClientPredictionModel(BasePredictionModel):
             X, y = SMOTE().fit_sample(X, y)
 
         # Train the model here.
+        print("Training model. Please wait.")
         self.model.fit(X,y)
         self.model = self.model.best_estimator_
         self.model_params = dict(self.model.get_params())
