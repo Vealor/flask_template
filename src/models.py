@@ -658,6 +658,13 @@ class CapsGen(db.Model):
     capsgen_sapt005t = db.relationship('SapT005t', back_populates='sapt005t_capsgen', lazy='dynamic', passive_deletes=True)
     capsgen_saptinct = db.relationship('SapTinct', back_populates='saptinct_capsgen', lazy='dynamic', passive_deletes=True)
 
+class DataParams(db.Model):
+    _tablename_ = 'data_params'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
+    data_param_project = db.relationship('Project', back_populates='project_data_param')
+
+
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
@@ -703,6 +710,13 @@ class CDM_label(db.Model):
             "length": self.length,
             "caps_interface": self.caps_interface,
             "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
+        }
+    @property
+    def paredown_columns_serialize(self):
+        return {
+            "script_label": self.script_label,
+            "display_name": self.display_name,
+            "caps_interface": self.caps_interface,
         }
 
 ################################################################################
