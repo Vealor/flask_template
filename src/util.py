@@ -4,6 +4,7 @@ import os
 import re
 import sendgrid
 import zipfile
+import shutil
 from flask import current_app
 
 #==============================================================================
@@ -77,23 +78,46 @@ def send_mail(user_email, subject, content):
 #===============================================================================
 # Unzips all SAP source data text files from a nested zip file.
 def source_data_unzipper(data, response):
-    def extract_nested_zip(zippedFile, toFolder):
+
+    def extract_nested_zip(zippedFile, toFolder, outputPath):
         try:
             with zipfile.ZipFile(zippedFile, 'r') as zfile:
-                zfile.extractall(path=toFolder)
+                zfile.extractall(path=outputPath)
             os.remove(zippedFile)
             for root, dirs, files in os.walk(toFolder):
                 for filename in files:
                     if re.search(r'\.(?i)ZIP$', filename):
                         fileSpec = os.path.join(root, filename)
-                        extract_nested_zip(fileSpec, root)
+                        extract_nested_zip(fileSpec, root, outputPath)
         except NotImplementedError:
             raise Exception(str(zippedFile) + ' has compression errors. Please fix')
+
+    def move_nested_folder(currentfolder, outputPath):
+        try:
+            for root, dirs, files in os.walk(currentfolder):
+                for filename in files:
+                    if re.search(r'\.(?i)TXT$', filename):
+                        os.rename(os.path.join(root, filename), os.path.join(outputPath, filename))
+                for dir in dirs:
+                    move_nested_folder(dir, outputPath)
+        except OSError as e:
+            raise Exception(str(e))
+    
+    def remove_empty_folders(inPath):
+        try:
+            for root, dirs, files in os.walk(inPath):
+                for dir in dirs:
+                    shutil.rmtree(os.path.join(root, dir))
+        except OSError as e:
+            raise Exception(e)
+
     if os.environ['FLASK_ENV'] == 'development':
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         if data['file_name'].lower().endswith('.zip'):
-            extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path)
+            extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path, current_output_path)
+            move_nested_folder(current_output_path, current_output_path)
+            remove_empty_folders(current_output_path)
         else:
             raise Exception(str(data['file_name']) + 'does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
