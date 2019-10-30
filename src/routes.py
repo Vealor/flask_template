@@ -24,6 +24,10 @@ api.register_blueprint(client_models, url_prefix='/client_models')
 from src.endpoints.data_mappings import data_mappings
 api.register_blueprint(data_mappings, url_prefix='/data_mappings')
 
+# ClientModel Endpoints
+from src.endpoints.data_params import data_params
+api.register_blueprint(data_params, url_prefix='/data_params')
+
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
@@ -55,7 +59,6 @@ api.register_blueprint(projects, url_prefix='/projects')
 # SAP Caps Gen Endpoints
 from src.endpoints.sap_caps_gen import sap_caps_gen
 api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
-
 
 # Transaction Endpoints
 from src.endpoints.transactions import transactions

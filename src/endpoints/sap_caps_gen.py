@@ -152,6 +152,8 @@ def view_tables(project_id, table):
         response['message'] = str(table) + ' has been accessed.'
 
     return jsonify(response), 200
+
+    
 ######################### MAPPING HAPPENS HERE #######################################
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.

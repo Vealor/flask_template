@@ -129,6 +129,19 @@ class Jurisdiction(enum.Enum):
     def list(cls):
         return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
 
+class Operator(enum.Enum):
+    equals = "="
+    greater_than_equals = ">="
+    less_than_equals = "<="
+    greater_than = ">"
+    less_than = "<"
+
+class Process(enum.Enum):
+    aps_to_caps = "APS to CAPS"
+    generate_aps = "Generate AP Subledger"
+    caps_calculations = "CAPS Calculation fields"
+
+
 ################################################################################
 # AUTH User and Token models
 class User(db.Model):
@@ -389,6 +402,7 @@ class Project(db.Model):
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
     project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
+    project_data_param = db.relationship('Project', back_populates='data_param_project')
 
     has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -660,9 +674,20 @@ class CapsGen(db.Model):
 
 class DataParams(db.Model):
     _tablename_ = 'data_params'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    process = db.Column(db.Enum(Process), nullable=False)
+    param = db.Column(db.String, nullable=False)
+    operator = db.Column(db.Enum(Operator), nullable=False)
+    value = db.Column(postgresql.ARRAY(db.String), nullable=True)
+    is_many = db.Column(db.Boolean, nullable=False)
+
     project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
     data_param_project = db.relationship('Project', back_populates='project_data_param')
+
+
 
 
 class DataMapping(db.Model):
@@ -716,7 +741,7 @@ class CDM_label(db.Model):
         return {
             "script_label": self.script_label,
             "display_name": self.display_name,
-            "caps_interface": self.caps_interface,
+            "caps_interface": self.caps_interface
         }
 
 ################################################################################

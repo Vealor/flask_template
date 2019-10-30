@@ -8,7 +8,7 @@ data_params = Blueprint('data_params', __name__)
 
 @data_params.route('/data_params/<path:project_id>', methods=['GET'])
 @exception_wrapper()
-def view_tables(project_id):
+def get_params(project_id):
     response = {'status': 'ok', 'message': {}, 'payload': []}
 
     query = data_params.query
@@ -33,10 +33,10 @@ def view_tables(project_id):
     return jsonify(response), 200
 
 
-@projects.route('/<path:id>', methods=['PUT'])
+@data_params.route('/<path:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
-def update_project(id):
+def update_params(id):
     data = request.get_json()
 
     # input validation
@@ -52,3 +52,5 @@ def update_project(id):
         'engagement_scope': 'dict'
     }
     validate_request_data(data, request_types)
+
+    return jsonify(response), 200
