@@ -137,7 +137,6 @@ def update_paredown_rule(id):
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
             'code': 'str',
-            'comment': 'str',
             'is_active': 'bool'
         }
         validate_request_data(data, request_types)
