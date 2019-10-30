@@ -80,12 +80,16 @@ def create_paredown_rule():
             validate_request_data(cond, request_types_conditions)
 
         # Create the new paredown rule
+        for lob_sec in data['lob_sectors']:
+            if lob_sec not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified lob_sec does not exist.')
         new_paredown_rule = ParedownRule(
             paredown_rule_approver1_id = data['approver1_id'],
             paredown_rule_approver2_id = data['approver2_id'],
             code = data['code'],
             is_active = data['is_active'],
-            comment = data['comment']
+            comment = data['comment'],
+            lob_sectors = data['lob_sectors']
         )
         db.session.add(new_paredown_rule)
         db.session.flush()
@@ -99,14 +103,6 @@ def create_paredown_rule():
                 paredown_rule_id = new_paredown_rule.id
             )
             db.session.add(new_paredown_condition)
-            db.session.flush()
-
-        for lob_sec in data['lob_sectors']:
-            new_paredown_lob = ParedownRuleLineOfBusinessSector(
-                lob_sector = lob_sec,
-                paredown_rule_id = new_paredown_rule.id
-            )
-            db.session.add(new_paredown_lob)
             db.session.flush()
 
         response['message'] = 'New paredown rule ID {} added.'.format(new_paredown_rule.id)
@@ -167,7 +163,10 @@ def update_paredown_rule(id):
         query.is_active = data['is_active']
         query.paredown_rule_approver1_id = data['approver1_id']
         query.paredown_rule_approver2_id = data['approver2_id']
-
+        for lob_sec in data['lob_sectors']:
+            if lob_sec not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified lob_sec does not exist.')
+        query.lob_sectors = data['lob_sectors']
 
         # Delete and recreate the paredown conditions
         conditions = ParedownRuleCondition.query.filter_by(paredown_rule_id=id).all()
@@ -183,19 +182,6 @@ def update_paredown_rule(id):
                 paredown_rule_id = query.id
             )
             db.session.add(new_paredown_condition)
-            db.session.flush()
-
-        lob_secs = ParedownRuleLineOfBusinessSector.query.filter_by(paredown_rule_id=id).all()
-        for lob_sec in lob_secs:
-            db.session.delete(lob_sec)
-            db.session.flush()
-
-        for lob_sec in data['lob_sectors']:
-            new_paredown_lob = ParedownRuleLineOfBusinessSector(
-                lob_sector = lob_sec,
-                paredown_rule_id = query.id
-            )
-            db.session.add(new_paredown_lob)
             db.session.flush()
 
         db.session.commit()
