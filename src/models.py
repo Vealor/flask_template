@@ -531,7 +531,7 @@ class ParedownRule(db.Model):
 
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='t', nullable=False)
+    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
