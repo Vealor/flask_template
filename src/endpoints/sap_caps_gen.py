@@ -216,13 +216,13 @@ def build_gst_registration_table():
         if project_in_gst_registration_table is not None:
             db.session.delete(project_in_gst_registration_table)
             db.session.commit()
-        fa1 = SapLfa1.query.filter_by(capsgen_id=data['capsgen_id']).first()
-        if fa1 is not None:
+        lfa1_result = SapLfa1.query.filter_by(capsgen_id=data['capsgen_id']).first()
+        if lfa1_result is not None:
             gst_registration = GstRegistration(project_id=data['project_id'], capsgen_id=data['capsgen_id'], vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
             db.session.add(gst_registration)
             db.session.flush()
         else:
-            raise ValueError("FA1 does not exist, please run caps gen first.")
+            raise ValueError("LFA1 does not exist, please run caps gen first.")
     except ValueError as e:
         db.session.rollback()
         response = {'status': 'error', 'message': str(e), 'payload': []}
