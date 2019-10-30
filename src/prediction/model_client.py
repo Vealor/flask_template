@@ -4,7 +4,7 @@ from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score, fbeta_score, make_scorer
 
 class ClientPredictionModel(BasePredictionModel):
 
@@ -12,14 +12,16 @@ class ClientPredictionModel(BasePredictionModel):
         if model_pickle:
             super().__init__(model_pickle)
         else:
-            model_params = {
-                'class_weight': {1:1.1, 0:1}
-                }
+            model_params = {}
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
-                param_grid={'max_depth':[3,4,5], 'n_estimators':[50,100,200,400]},
+                param_grid={
+                    'max_depth':[3,4,5],
+                    'n_estimators':[50,100,200,400],
+                    'class_weight': [{1:x, 0:1} for x in [1, 1.5, 2]]
+                    },
                 cv=5,
-                scoring='f1'
+                scoring=make_scorer(fbeta_score, beta=5)
                 )
             self.is_trained = False
 

@@ -2,8 +2,10 @@ import pandas as pd
 import pickle
 from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+from sklearn.metrics import fbeta_score, make_scorer
 
 class MasterPredictionModel(BasePredictionModel):
 
@@ -12,12 +14,18 @@ class MasterPredictionModel(BasePredictionModel):
             super().__init__(model_pickle)
         else:
             # Define the master model here.
-            model_params = {
-                'n_estimators': 100,
-                'max_depth': 5,
-                'class_weight': {1:1.1, 0:1}
-                }
-            self.model = RandomForestClassifier(**model_params)
+            model_params = {}
+
+            self.model = GridSearchCV(
+                estimator=ExtraTreesClassifier(**model_params),
+                param_grid={
+                    'max_depth':[3,5,7],
+                    'n_estimators':[100,200,400],
+                    'class_weight': [{1:x, 0:1} for x in [1, 1.5, 2]]
+                },
+                cv=5,
+                scoring=make_scorer(fbeta_score, beta=5)
+                )
             self.is_trained = False
 
 
@@ -37,7 +45,10 @@ class MasterPredictionModel(BasePredictionModel):
             X, y = SMOTE().fit_sample(X, y)
 
         # Train the model here.
+        print("Training model. Please wait.")
         self.model.fit(X,y)
+        self.model = self.model.best_estimator_
+        self.model_params = dict(self.model.get_params())
         self.is_trained = True
         print("Model trained.")
 
