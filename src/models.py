@@ -499,15 +499,16 @@ class Project(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRule(db.Model):
-
     __tablename__ = 'paredown_rules'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_approver1_id'], ['users.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
         db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
+        db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
@@ -524,8 +525,8 @@ class ParedownRule(db.Model):
     def serialize(self):
         return {
             'id': self.id,
+            'is_core': self.is_core,
             'is_active': self.is_active,
-            'is_core': not bool(self.paredown_rule_lob_sectors.count()),
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
             'lob_sectors': [i.serialize for i in self.paredown_rule_lob_sectors],
             'code': self.code,
@@ -541,7 +542,6 @@ class ParedownRule(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRuleCondition(db.Model):
-
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
