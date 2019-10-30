@@ -48,9 +48,9 @@ def preprocessing_predict(df,predictors,for_validation=False):
 
     # Add missing one-hot encoding columns from predictors, filled with zeros
     missing_cols = list(set(one_hot_predictors) - set(df_onehot.columns))
-    for col in missing_cols:
-        df_onehot[col] = 0
-        print('Missing col: {}'.format(col))
+    #for col in missing_cols:
+    #    df_onehot[col] = 0
+    #    print('Missing col: {}'.format(col))
 
     # Remove extra one-hot encoding columns that are not in predictors
     extra_cols = list(set(df_onehot.columns) - set(one_hot_predictors))
