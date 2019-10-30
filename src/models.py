@@ -525,7 +525,7 @@ class ParedownRule(db.Model):
         db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
         db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
         db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
-        # db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
+        db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
     )
 
 
@@ -551,7 +551,7 @@ class ParedownRule(db.Model):
             'is_core': self.is_core,
             'is_active': self.is_active,
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
-            'lob_sectors': self.lob_sectors,
+            'lob_sectors': self.lob_sectors if self.lob_sectors else [],
             'code': self.code,
             'comment': self.comment,
             'approver1_id': self.paredown_rule_approver1_id,
