@@ -622,6 +622,7 @@ class CapsGen(db.Model):
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_completed = db.Column(db.Boolean, unique=False, nullable=False, default=False, server_default='f')
 
     user_id = db.Column(db.Integer, nullable=True) #FK
