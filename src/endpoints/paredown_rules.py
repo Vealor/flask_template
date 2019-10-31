@@ -107,7 +107,7 @@ def create_paredown_rule():
             db.session.add(new_paredown_condition)
             db.session.flush()
 
-        response['message'] = 'New paredown rule ID {} added.'.format(new_paredown_rule.id)
+        response['message'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
         db.session.commit()
     except ValueError as e:
         db.session.rollback()
@@ -162,6 +162,7 @@ def update_paredown_rule(id):
             raise ValueError("Pareddown Rule ID {} does not exist.".format(id))
         query.code = data['code']
         query.comment = data['comment']
+        query.is_core = data['is_core']
         query.is_active = data['is_active']
         query.paredown_rule_approver1_id = data['approver1_id']
         query.paredown_rule_approver2_id = data['approver2_id']
