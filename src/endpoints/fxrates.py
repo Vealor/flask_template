@@ -16,7 +16,7 @@ fxrates = Blueprint('fxrates', __name__)
 #===============================================================================
 # GET AND UPDATE FXRATES
 @fxrates.route('/', methods=['GET'])
-@exception_wrapper
+@exception_wrapper()
 def get_fxrates():
     response = {'status': 'ok', 'message': '', 'payload': []}
 
