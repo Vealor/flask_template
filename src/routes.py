@@ -40,9 +40,9 @@ api.register_blueprint(logs, url_prefix='/logs')
 from src.endpoints.master_models import master_models
 api.register_blueprint(master_models, url_prefix='/master_models')
 
-# Paredown Endpoints
-from src.endpoints.paredown import paredown
-api.register_blueprint(paredown, url_prefix='/paredown')
+# ParedownRule Endpoints
+from src.endpoints.paredown_rules import paredown_rules
+api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
 
 # Project Endpoints
 from src.endpoints.projects import projects

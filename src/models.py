@@ -1,11 +1,31 @@
 import enum
+import re
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
+from sqlalchemy import TypeDecorator, cast
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
 
 db = SQLAlchemy()
+
+################################################################################
+# CUSTOM TYPES
+
+class ArrayOfEnum(TypeDecorator):
+    impl = postgresql.ARRAY
+    def bind_expression(self, bindvalue):
+        return cast(bindvalue, self)
+    def result_processor(self, dialect, coltype):
+        super_rp = super(ArrayOfEnum, self).result_processor(dialect, coltype)
+        def handle_raw_string(value):
+            inner = re.match(r"^{(.*)}$", value).group(1)
+            return inner.split(",") if inner else []
+        def process(value):
+            if value is None:
+                return None
+            return [ i.serialize for i in super_rp(handle_raw_string(value))]
+        return process
 
 ################################################################################
 # ENUMS
@@ -499,23 +519,45 @@ class Project(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRule(db.Model):
-
     __tablename__ = 'paredown_rules'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['paredown_rule_approver1_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
+        db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
+        db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
+        db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
+    )
+
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
+    lob_sectors = db.Column(ArrayOfEnum(postgresql.ENUM(LineOfBusinessSectors)), nullable=True)
+
+    paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
+    paredown_rule_approver2_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver2_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver2_id') # FK
+
     paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
-    paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
 
     @property
     def serialize(self):
         return {
             'id': self.id,
             'is_core': self.is_core,
+            'is_active': self.is_active,
+            'conditions': [i.serialize for i in self.paredown_rule_conditions],
+            'lob_sectors': self.lob_sectors if self.lob_sectors else [],
             'code': self.code,
-            'comment': self.comment
+            'comment': self.comment,
+            'approver1_id': self.paredown_rule_approver1_id,
+            'approver1_username': self.paredown_rule_approver1_user.username if self.paredown_rule_approver1_id else None,
+            'approver2_id': self.paredown_rule_approver2_id,
+            'approver2_username': self.paredown_rule_approver2_user.username if self.paredown_rule_approver2_id else None
         }
 
     @classmethod
@@ -523,7 +565,6 @@ class ParedownRule(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRuleCondition(db.Model):
-
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
@@ -545,25 +586,6 @@ class ParedownRuleCondition(db.Model):
             'paredown_rule_id': self.paredown_rule_id,
             'operator': self.operator,
             'value': self.value
-        }
-
-class ParedownRuleLineOfBusinessSector(db.Model):
-    __tablename__ = 'paredown_rule_lob_sector'
-    __table_args__ = (
-        db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
-        db.UniqueConstraint('paredown_rule_id', 'lob_sector', name='paredown_rule_lob_sector_unique_constraint'),
-    )
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
-
-    paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
-    lob_sector_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_lob_sectors')
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'lob_sector': self.lob_sector.serialize
         }
 
 class Vendor(db.Model):

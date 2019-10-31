@@ -3,27 +3,37 @@ Paredown Endpoints
 '''
 import json
 import random
+import sqlalchemy
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from sqlalchemy.dialects import postgresql
 from src.models import *
 from src.util import validate_request_data
 
-paredown = Blueprint('paredown', __name__)
+paredown_rules = Blueprint('paredown_rules', __name__)
 #===============================================================================
 # GET ALL Paredown rules
-@paredown.route('/', methods=['GET'])
+@paredown_rules.route('/', defaults={'id':None}, methods=['GET'])
+@paredown_rules.route('/<int:id>', methods=['GET'])
 # @jwt_required
-def get_paredown_rules():
+def get_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
     try:
         query = ParedownRule.query
-        rules = [i.serialize for i in query.all()]
+        if id:
+            query = query.filter_by(id=id)
+            if not query.first():
+                raise ValueError("Paredown rule ID {} does not exist.".format(id))
+        # Set ORDER
+        query = query.order_by('id')
+        # Set LIMIT
+        query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+        # Set OFFSET
+        query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-        condition_query = ParedownRuleCondition.query
-        for rule in rules:
-            rule['conditions'] = [i.serialize for i in condition_query.filter_by(paredown_rule_id=rule['id']).all()]
-        response['payload'] = rules
-
+        response['payload'] = [i.serialize for i in query.all()]
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
@@ -34,40 +44,54 @@ def get_paredown_rules():
 
 #===============================================================================
 # Create Paredown rules
-@paredown.route('/', methods=['POST'])
+@paredown_rules.route('/', methods=['POST'])
 # @jwt_required
 def create_paredown_rule():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
     try:
-        # Validate the fields of the new paredown rule
         request_types = {
-            'code': 'str',
-            'comment': 'str',
-            'is_core': 'bool'
+            #'approver1_id' : 'int',
+            #'approver2_id' : 'int',
+            'code': 'int',
+            'is_active': 'bool'
         }
         validate_request_data(data, request_types)
 
-        if data['code'] == '':
-            raise ValueError("Cannot create paredown rule with no code.")
-
-        # Validate each condition of the new paredown rule
         if len(data['conditions']) == 0:
             raise ValueError("Cannot create paredown rule with no conditions.")
-
         request_types_conditions = {
             'field': 'str',
             'operator': 'str'
         }
-
         for cond in data['conditions']:
             validate_request_data(cond, request_types_conditions)
 
+        # Make sure valid user ids are used to approve paredown rules
+        for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
+            user = User.find_by_id(approver_id)
+            if not user:
+                raise ValueError("User ID {} does not exist.".format(approver_id))
+            if not (user.role == Roles.tax_master or user.is_superuser):
+                raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+
+
+        lob_sectors = []
         # Create the new paredown rule
+        for lob_sec in data['lob_sectors']:
+            if lob_sec not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified lob_sec does not exist.')
+            if LineOfBusinessSectors[lob_sec] not in lob_sectors:
+                lob_sectors.append(LineOfBusinessSectors[lob_sec])
+
         new_paredown_rule = ParedownRule(
+            paredown_rule_approver1_id = data['approver1_id'],
+            paredown_rule_approver2_id = data['approver2_id'],
             code = data['code'],
             is_core = data['is_core'],
-            comment = data['comment']
+            is_active = data['is_active'],
+            comment = data['comment'],
+            lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
         )
         db.session.add(new_paredown_rule)
         db.session.flush()
@@ -83,7 +107,7 @@ def create_paredown_rule():
             db.session.add(new_paredown_condition)
             db.session.flush()
 
-        response['message'] = 'New paredown rule ID {} added.'.format(new_paredown_rule.id)
+        response['message'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
         db.session.commit()
     except ValueError as e:
         db.session.rollback()
@@ -97,7 +121,7 @@ def create_paredown_rule():
 
 #===============================================================================
 # Update a Paredown rule
-@paredown.route('/<int:id>', methods=['PUT'])
+@paredown_rules.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 def update_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -105,18 +129,24 @@ def update_paredown_rule(id):
     try:
         # Validate the fields of the updated paredown rule
         request_types = {
-            'code': 'str',
-            'comment': 'str',
-            'is_core': 'bool'
+            #'approver1_id' : 'int',
+            #'approver2_id' : 'int',
+            'code': 'int',
+            'is_active': 'bool'
         }
         validate_request_data(data, request_types)
-
-        if data['code'] == '':
-            raise ValueError("Cannot create paredown rule with no code.")
 
         # Validate each condition of the new paredown rule
         if len(data['conditions']) == 0:
             raise ValueError("Cannot create paredown rule with no conditions.")
+
+        # Make sure valid user ids are used to approve paredown rules
+        for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
+            user = User.find_by_id(approver_id)
+            if not user:
+                raise ValueError("User ID {} does not exist.".format(approver_id))
+            if not (user.role == Roles.tax_master or user.is_superuser):
+                raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
         request_types_conditions = {
             'field': 'str',
@@ -133,14 +163,26 @@ def update_paredown_rule(id):
         query.code = data['code']
         query.comment = data['comment']
         query.is_core = data['is_core']
+        query.is_active = data['is_active']
+        query.paredown_rule_approver1_id = data['approver1_id']
+        query.paredown_rule_approver2_id = data['approver2_id']
+
+        lob_sectors = []
+        # Create the new paredown rule
+        for lob_sec in data['lob_sectors']:
+            if lob_sec not in LineOfBusinessSectors.__members__:
+                raise ValueError('Specified lob_sec does not exist.')
+            if LineOfBusinessSectors[lob_sec] not in lob_sectors:
+                lob_sectors.append(LineOfBusinessSectors[lob_sec])
+        query.lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
 
         # Delete and recreate the paredown conditions
         conditions = ParedownRuleCondition.query.filter_by(paredown_rule_id=id).all()
         for cond in conditions:
             db.session.delete(cond)
+            db.session.flush()
 
-        new_conditions = data['conditions']
-        for cond in new_conditions:
+        for cond in data['conditions']:
             new_paredown_condition = ParedownRuleCondition(
                 field = cond['field'],
                 operator = cond['operator'],
@@ -154,16 +196,18 @@ def update_paredown_rule(id):
         response['message'] = 'Successfully updated Paredown Rule ID {}.'.format(query.id)
 
     except ValueError as e:
+        db.session.rollback()
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 400
     except Exception as e:
+        db.session.rollback()
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 200
 
 #===============================================================================
 # DELETE A PAREDOWN RULE
-@paredown.route('/<int:id>', methods=['DELETE'])
+@paredown_rules.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 def delete_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
