@@ -14,8 +14,9 @@ from src.wrappers import has_permission, exception_wrapper
 
 fxrates = Blueprint('fxrates', __name__)
 #===============================================================================
-# General
+# GET AND UPDATE FXRATES
 @fxrates.route('/', methods=['GET'])
+@exception_wrapper
 def get_fxrates():
     response = {'status': 'ok', 'message': '', 'payload': []}
 
