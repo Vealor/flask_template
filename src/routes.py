@@ -12,7 +12,7 @@ api.register_blueprint(general, url_prefix='/')
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
 
-# SAP Caps Gen Endpoints
+# CapsGen Endpoints
 from src.endpoints.caps_gen import caps_gen
 api.register_blueprint(caps_gen, url_prefix='/caps_gen')
 
@@ -23,6 +23,10 @@ api.register_blueprint(clients, url_prefix='/clients')
 # ClientModel Endpoints
 from src.endpoints.client_models import client_models
 api.register_blueprint(client_models, url_prefix='/client_models')
+
+# Client Vendor Master Endpoint
+from src.endpoints.client_vendor_master import client_vendor_master
+api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
 # DataMapping Endpoints
 from src.endpoints.data_mappings import data_mappings
@@ -35,6 +39,10 @@ api.register_blueprint(data_params, url_prefix='/data_params')
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
+
+# Gst Registration Endpoint
+from src.endpoints.gst_registration import gst_registration
+api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
@@ -52,9 +60,9 @@ api.register_blueprint(logs, url_prefix='/logs')
 from src.endpoints.master_models import master_models
 api.register_blueprint(master_models, url_prefix='/master_models')
 
-# Paredown Endpoints
-from src.endpoints.paredown import paredown
-api.register_blueprint(paredown, url_prefix='/paredown')
+# ParedownRule Endpoints
+from src.endpoints.paredown_rules import paredown_rules
+api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
 
 # Project Endpoints
 from src.endpoints.projects import projects
@@ -71,6 +79,10 @@ api.register_blueprint(users, url_prefix='/users')
 # Vendor Endpoints
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
+
+# Tax Rate Endpoint
+from src.endpoints.tax_rate import tax_rate
+api.register_blueprint(tax_rate, url_prefix='/tax_rate')
 
 #===============================================================================
 # Error Handling
