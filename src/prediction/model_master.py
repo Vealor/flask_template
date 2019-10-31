@@ -80,4 +80,10 @@ class MasterPredictionModel(BasePredictionModel):
         yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
         roc_auc = roc_auc_score(yv,yp_prob)
 
-        return {"n_valid_data": n_valid_data, "recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc": roc_auc}
+        return {
+            "n_valid_data": n_valid_data,
+            "recall": recall,
+            "precision": precision,
+            "accuracy": accuracy,
+            "roc_auc": roc_auc
+            }
