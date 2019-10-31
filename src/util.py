@@ -36,14 +36,16 @@ def validate_request_data(data, validation):
     if not isinstance(data, dict):
         raise ValueError('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
-    if [x for x in validation.keys() if not x in data.keys()]:
-        raise ValueError('Request is missing required keys.')
+    missing_vars = [x for x in validation.keys() if not x in data.keys()]
+    if missing_vars:
+        raise ValueError('Request is missing required keys: {}'.format(missing_vars))
 
     # Esures that the datatypes specified in validation match the types in data.
     # Example Available types:
     #   int, float, bool, str, list, tuple, dict, class, object
-    if [x for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]:
-        raise ValueError('Request contains improper data types for keys.')
+    vars = [x + " (" + validation[x] + ")" for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]
+    if vars:
+        raise ValueError('Request contains improper data types for keys: {}'.format(vars))
 
     # ensures strings are not empty
     for x in validation.keys():
@@ -102,5 +104,3 @@ def source_data_unzipper(data, response):
     else:
         raise Exception('Environ not present. Choose development or production')
     return response
-
-
