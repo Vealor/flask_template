@@ -694,7 +694,7 @@ class CapsGen(db.Model):
     caps_gen_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapt005t = db.relationship('SapT005t', back_populates='sapt005t_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_saptinct = db.relationship('SapTinct', back_populates='saptinct_caps_gen', lazy='dynamic', passive_deletes=True)
-    capsgen_gstregistration = db.relationship('GstRegistration', back_populates='gstregistration_caps_gen', lazy='dynamic', passive_deletes=True)
+    capsgen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
 
 class DataParams(db.Model):
     _tablename_ = 'data_params'
@@ -1305,7 +1305,7 @@ class GstRegistration(db.Model):
     vendor_region = db.Column(db.String(16), nullable=True)
     # TODO: how to mark this column
     duplicate_flag = db.Column(db.String(4), nullable=True)
-    gstregistration_capsgen = db.relationship('CapsGen', back_populates='capsgen_gstregistration')
+    gst_registration_capsgen = db.relationship('CapsGen', back_populates='capsgen_gst_registration')
 
 class SapSkb1(db.Model):
     _tablename__ = 'sap_skb1'

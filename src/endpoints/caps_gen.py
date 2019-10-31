@@ -1,5 +1,5 @@
 '''
-sap_caps_gen endpoints
+CapsGen endpoints
 '''
 import csv
 import datetime
@@ -20,25 +20,23 @@ from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
 #===============================================================================
-
-
-
-
-
-#===============================================================================
-@sap_caps_gen.route('project_path_creation', methods=['POST'])
+# Data Source Page
+# upload data when pressing `Next`
+@caps_gen.route('/init', methods=['POST'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
-def file_path_creation():
+def init_caps_gen():
     response = {'status': 'ok', 'message': '', 'payload': []}
-
     data = request.get_json()
-    if not isinstance(data, dict):
-        raise Exception('data is not a dict')
     request_types = {
         'project_id': 'int',
+        'file_name': 'str',
         'system': 'str'
     }
     validate_request_data(data, request_types)
+
+    ### DEV => do local directory creation if required
     if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
         print('path does not exist, creating project')
         os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
@@ -47,47 +45,31 @@ def file_path_creation():
             os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
     else:
         raise Exception('Path has already been created for project')
+    ### Hopefully raises "ERROR UPLOADING DATA"
 
-    return jsonify(response), 200
 
-#This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
-#The endpoint can go through nested folders/zips.
-@sap_caps_gen.route('/unzipping', methods=['POST'])
-@exception_wrapper()
-def unzipping():
-    response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
+    ### DEV/PROD => data unzipping
     try:
-        data = request.get_json()
-        if not isinstance(data, dict):
-            raise Exception('data is not a dict')
-        request_types = {
-            'project_id' : 'int',
-            'file_name': 'str',
-            'system': 'str'
-        }
-        validate_request_data(data, request_types)
-        source_data_unzipper(data, response)
+        source_data_unzipper(data, response) # pass filename here?
     except Exception as e:
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         raise Exception(e)
-    return jsonify(response), 200
+    ###
 
-#MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
-@sap_caps_gen.route('/build_master_tables', methods=['POST'])
-@exception_wrapper()
-def build_master_tables():
-    response = {'status': 'ok', 'message': {}, 'payload': {}}
-
-    data = request.get_json()
-    deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
-    if deletecheck:
-        db.session.delete(deletecheck)
-        db.session.commit()
-    capsgen = CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False)
+    ### DEV/PROD => Create CapsGen entitiy in DB
+    # do before unzipping and store path in CapsGen?
+    # will fail without login!
+    capsgen = CapsGen(
+        user_id=current_user.id,
+        project_id=data['project_id'],
+        is_completed=False
+    )
     db.session.add(capsgen)
     db.session.flush()
+    ### will fail without login
 
+    ### DEV/PROD => make master tables
     list_tablenames = current_app.config['CDM_TABLES']
     #todo: add table to payload so cio can know which tables to view
     for table in list_tablenames:
@@ -128,43 +110,179 @@ def build_master_tables():
         db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
         CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
         db.session.flush()
-    response['message'] = 'All tables are successfully committed.'
+    ###
+
     db.session.commit()
+    response['message'] = 'Data successfully uploaded and CapsGen initialized.'
     return jsonify(response), 200
-
-
-@sap_caps_gen.route('/view_tables/<path:project_id>/<path:table>', methods=['GET'])
+#===============================================================================
+# View Tables Page
+# upload data when pressing `Next`
+@caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
-def view_tables(project_id, table):
-    response = {'status': 'ok', 'message': {}, 'payload': []}
+def view_tables(id, table):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
 
-    query = CapsGen.query
 
-    # project_id filter
-    if project_id is not None and isinstance(project_id, int):
-        project = Project.find_by_id(project_id)
-    else:
-        raise ValueError('Project ID {} does not exist.'.format(project_id))
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-    if not capsgen_id:
-        raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+    # capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
+    # if not capsgen_id:
+    #     raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
 
     #table filter
-    if table is not None:
-        tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.capsgen_id == capsgen_id).all()
-        response['payload'] = columndata
-        response['message'] = str(table) + ' has been accessed.'
-
+    tableclass = eval('Sap' + str(table.lower().capitalize()))
+    columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id).all()
+    response['payload'] = columndata
+    response['message'] = ''
     return jsonify(response), 200
+
+
+#===============================================================================
+# @caps_gen.route('project_path_creation', methods=['POST'])
+# @exception_wrapper()
+# def file_path_creation():
+#     response = {'status': 'ok', 'message': '', 'payload': []}
+#
+#     data = request.get_json()
+#     if not isinstance(data, dict):
+#         raise Exception('data is not a dict')
+#     request_types = {
+#         'project_id': 'int',
+#         'system': 'str'
+#     }
+#     validate_request_data(data, request_types)
+#     if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
+#         print('path does not exist, creating project')
+#         os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
+#         folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+#         for folder in folders:
+#             os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
+#     else:
+#         raise Exception('Path has already been created for project')
+#
+#     return jsonify(response), 200
+
+#This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
+#The endpoint can go through nested folders/zips.
+# @caps_gen.route('/unzipping', methods=['POST'])
+# @exception_wrapper()
+# def unzipping():
+#     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
+#     try:
+#         data = request.get_json()
+#         if not isinstance(data, dict):
+#             raise Exception('data is not a dict')
+#         request_types = {
+#             'project_id' : 'int',
+#             'file_name': 'str',
+#             'system': 'str'
+#         }
+#         validate_request_data(data, request_types)
+#         source_data_unzipper(data, response)
+#     except Exception as e:
+#         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+#         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
+#         raise Exception(e)
+#     return jsonify(response), 200
+
+#MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
+# @caps_gen.route('/build_master_tables', methods=['POST'])
+# @exception_wrapper()
+# def build_master_tables():
+#     response = {'status': 'ok', 'message': {}, 'payload': {}}
+#
+#     # data = request.get_json()
+#     # deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
+#     # if deletecheck:
+#     #     db.session.delete(deletecheck)
+#     #     db.session.commit()
+#     # capsgen = CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False)
+#     # db.session.add(capsgen)
+#     # db.session.flush()
+#
+#     list_tablenames = current_app.config['CDM_TABLES']
+#     #todo: add table to payload so cio can know which tables to view
+#     for table in list_tablenames:
+#         table_files = []
+#         #Search for all files that match table
+#         for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
+#             if re.search(table, file):
+#                 if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
+#                     table_files.append(file)
+#         #Load & union files into one master table in memory
+#         wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
+#         for index, file in enumerate(table_files):
+#             if index == 0:
+#                 with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
+#                     wfd.write(fd.read().encode())
+#             else:
+#                 # for all future files
+#                 with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
+#                     #   strip header
+#                     next(fd)
+#                     wfd.write(fd.read().encode())
+#         wfd.close()
+#
+#         #initialize variables for bulk insertion
+#         referenceclass = eval('Sap' + str(table.lower().capitalize()))
+#         bulk_insert_handler = []
+#         #bulk insert into database
+#         with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
+#             counter = 0
+#             for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
+#                 counter += 1
+#                 if counter > 1000:
+#                     break
+#                 dict_to_insert = {'data' : line}
+#                 # WARNING: Project id needs to be provided in curl request
+#                 dict_to_insert['capsgen_id'] = capsgen.id
+#                 bulk_insert_handler.append(dict_to_insert)
+#         db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+#         CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
+#         db.session.flush()
+#     response['message'] = 'All tables are successfully committed.'
+#     db.session.commit()
+#     return jsonify(response), 200
+
+
+# @caps_gen.route('/view_tables/<path:project_id>/<path:table>', methods=['GET'])
+# @exception_wrapper()
+# def view_tables(project_id, table):
+#     response = {'status': 'ok', 'message': {}, 'payload': []}
+#
+#     query = CapsGen.query
+#
+#     # project_id filter
+#     if project_id is not None and isinstance(project_id, int):
+#         project = Project.find_by_id(project_id)
+#     else:
+#         raise ValueError('Project ID {} does not exist.'.format(project_id))
+#
+#     capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
+#     if not capsgen_id:
+#         raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+#
+#     #table filter
+#     if table is not None:
+#         tableclass = eval('Sap' + str(table.lower().capitalize()))
+#         columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.capsgen_id == capsgen_id).all()
+#         response['payload'] = columndata
+#         response['message'] = str(table) + ' has been accessed.'
+#
+#     return jsonify(response), 200
 
 
 ######################### MAPPING HAPPENS HERE #######################################
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
 #the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in.
-@sap_caps_gen.route('/rename_scheme', methods=['POST'])
+@caps_gen.route('/rename_scheme', methods=['POST'])
 @exception_wrapper()
 def rename_scheme():
     response = {'status': 'ok', 'message': {}, 'payload': []}
@@ -207,7 +325,7 @@ def rename_scheme():
 
 
 #this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
-@sap_caps_gen.route('/data_quality_check', methods=['GET'])
+@caps_gen.route('/data_quality_check', methods=['GET'])
 @exception_wrapper()
 def data_quality_check():
     def regex_serializer(row):
@@ -290,7 +408,7 @@ def data_quality_check():
     return jsonify(response), 200
 
 #j1 to j10 joins to create APS
-@sap_caps_gen.route('/j1_j10', methods=['POST'])
+@caps_gen.route('/j1_j10', methods=['POST'])
 @exception_wrapper()
 def j1_j10():
     def execute(query):
@@ -512,7 +630,7 @@ def j1_j10():
     return jsonify(response), 200
 
 #This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details.
-@sap_caps_gen.route('/aps_quality_check', methods=['GET'])
+@caps_gen.route('/aps_quality_check', methods=['GET'])
 @exception_wrapper()
 def aps_quality_check():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -520,7 +638,7 @@ def aps_quality_check():
     return jsonify(response), 200
 
 # see feature branch 72-aps_to_caps for more info
-@sap_caps_gen.route('/APS_to_CAPS', methods=['GET'])
+@caps_gen.route('/APS_to_CAPS', methods=['GET'])
 @exception_wrapper()
 def aps_to_caps():
     def execute(query):

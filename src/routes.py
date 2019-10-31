@@ -68,6 +68,10 @@ api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# Tax Rate Endpoint
+from src.endpoints.tax_rates import tax_rates
+api.register_blueprint(tax_rates, url_prefix='/tax_rates')
+
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
 api.register_blueprint(transactions, url_prefix='/transactions')
@@ -80,9 +84,6 @@ api.register_blueprint(users, url_prefix='/users')
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
-# Tax Rate Endpoint
-from src.endpoints.tax_rate import tax_rate
-api.register_blueprint(tax_rate, url_prefix='/tax_rate')
 
 #===============================================================================
 # Error Handling
