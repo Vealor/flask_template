@@ -40,16 +40,17 @@ api.register_blueprint(logs, url_prefix='/logs')
 from src.endpoints.master_models import master_models
 api.register_blueprint(master_models, url_prefix='/master_models')
 
+# ParedownRule Endpoints
+from src.endpoints.paredown_rules import paredown_rules
+api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
+
 # Project Endpoints
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
-# Paredown Endpoints
-from src.endpoints.paredown import paredown
-api.register_blueprint(paredown, url_prefix='/paredown')
-
 # SAP Caps Gen Endpoints
 from src.endpoints.sap_caps_gen import sap_caps_gen
+api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 
 # Transaction Endpoints
