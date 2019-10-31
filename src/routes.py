@@ -51,7 +51,7 @@ api.register_blueprint(projects, url_prefix='/projects')
 # SAP Caps Gen Endpoints
 from src.endpoints.sap_caps_gen import sap_caps_gen
 api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
-
+api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
 
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
@@ -64,6 +64,18 @@ api.register_blueprint(users, url_prefix='/users')
 # Vendor Endpoints
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
+
+# Tax Rate Endpoint
+from src.endpoints.tax_rate import tax_rate
+api.register_blueprint(tax_rate, url_prefix='/tax_rate')
+
+# Client Vendor master Endpoint
+from src.endpoints.client_vendor_master import client_vendor_master
+api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
+
+# Gst Registration Endpoint
+from src.endpoints.gst_registration import gst_registration
+api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
 #===============================================================================
 # Error Handling

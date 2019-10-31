@@ -78,6 +78,7 @@ psql -h localhost -U itra itra_db -c "
   insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 3);
   insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 3);
   insert into user_project (user_id, project_id) values (1, 1);
+  insert into gst_registration(project_id, capsgen_id) values (1,1);
 
   update users set req_pass_reset = 'f';
   update users set is_superuser = 'y' where id = 1;
