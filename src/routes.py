@@ -12,6 +12,10 @@ api.register_blueprint(general, url_prefix='/')
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
 
+# SAP Caps Gen Endpoints
+from src.endpoints.caps_gen import caps_gen
+api.register_blueprint(caps_gen, url_prefix='/caps_gen')
+
 # Client Endpoints
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
@@ -55,10 +59,6 @@ api.register_blueprint(paredown, url_prefix='/paredown')
 # Project Endpoints
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
-
-# SAP Caps Gen Endpoints
-from src.endpoints.caps_gen import caps_gen
-api.register_blueprint(caps_gen, url_prefix='/caps_gen')
 
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
