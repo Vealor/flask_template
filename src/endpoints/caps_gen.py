@@ -20,6 +20,39 @@ from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
 #===============================================================================
+# GET ALL CAPS GEN
+@caps_gen.route('/', defaults={'id':None}, methods=['GET'])
+@caps_gen.route('/<path:id>', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def get_caps_gens(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query
+    # ID filter
+    if id is not None:
+        query = query.filter_by(id=id)
+        if not query.first():
+            raise ValueError('ID {} does not exist.'.format(id))
+    # Set ORDER
+    query = query.order_by('created')
+    # Set LIMIT
+    query = query.filter_by(project_id = args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
+    response['message'] = ''
+    response['payload'] = [i.serialize for i in query.all()]
+
+    return jsonify(response), 200
+
+#===============================================================================
+#===============================================================================
+#===============================================================================
 # Data Source Page
 # upload data when pressing `Next`
 @caps_gen.route('/init', methods=['POST'])
@@ -66,7 +99,9 @@ def init_caps_gen():
         is_completed=False
     )
 
+
     # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
+    #   Take all current CDM and make mappings for each of the CDM labels
 
     db.session.add(capsgen)
     db.session.commit()

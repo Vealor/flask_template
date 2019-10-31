@@ -16,7 +16,7 @@ jurisdictions = Blueprint('jurisdictions', __name__)
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def default():
+def get_jurisdictions():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['payload'] = Jurisdiction.list()
     return jsonify(response)
