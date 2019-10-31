@@ -2,7 +2,7 @@ import enum
 import re
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
-from sqlalchemy import TypeDecorator
+from sqlalchemy import TypeDecorator, cast
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
@@ -14,8 +14,8 @@ db = SQLAlchemy()
 
 class ArrayOfEnum(TypeDecorator):
     impl = postgresql.ARRAY
-    # def bind_expression(self, bindvalue):
-    #     return sa.cast(bindvalue, self)
+    def bind_expression(self, bindvalue):
+        return cast(bindvalue, self)
     def result_processor(self, dialect, coltype):
         super_rp = super(ArrayOfEnum, self).result_processor(dialect, coltype)
         def handle_raw_string(value):

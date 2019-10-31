@@ -3,8 +3,10 @@ Paredown Endpoints
 '''
 import json
 import random
+import sqlalchemy
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from sqlalchemy.dialects import postgresql
 from src.models import *
 from src.util import validate_request_data
 
@@ -48,7 +50,6 @@ def create_paredown_rule():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
     try:
-        # Validate the fields of the new paredown rule
         request_types = {
             #'approver1_id' : 'int',
             #'approver2_id' : 'int',
@@ -57,9 +58,14 @@ def create_paredown_rule():
         }
         validate_request_data(data, request_types)
 
-        # Validate each condition of the new paredown rule
         if len(data['conditions']) == 0:
             raise ValueError("Cannot create paredown rule with no conditions.")
+        request_types_conditions = {
+            'field': 'str',
+            'operator': 'str'
+        }
+        for cond in data['conditions']:
+            validate_request_data(cond, request_types_conditions)
 
         # Make sure valid user ids are used to approve paredown rules
         for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
@@ -69,25 +75,23 @@ def create_paredown_rule():
             if not (user.role == Roles.tax_master or user.is_superuser):
                 raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
-        request_types_conditions = {
-            'field': 'str',
-            'operator': 'str'
-        }
 
-        for cond in data['conditions']:
-            validate_request_data(cond, request_types_conditions)
-
+        lob_sectors = []
         # Create the new paredown rule
         for lob_sec in data['lob_sectors']:
             if lob_sec not in LineOfBusinessSectors.__members__:
                 raise ValueError('Specified lob_sec does not exist.')
+            if LineOfBusinessSectors[lob_sec] not in lob_sectors:
+                lob_sectors.append(LineOfBusinessSectors[lob_sec])
+
         new_paredown_rule = ParedownRule(
             paredown_rule_approver1_id = data['approver1_id'],
             paredown_rule_approver2_id = data['approver2_id'],
             code = data['code'],
+            is_core = data['is_core'],
             is_active = data['is_active'],
             comment = data['comment'],
-            lob_sectors = data['lob_sectors']
+            lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
         )
         db.session.add(new_paredown_rule)
         db.session.flush()
@@ -161,10 +165,15 @@ def update_paredown_rule(id):
         query.is_active = data['is_active']
         query.paredown_rule_approver1_id = data['approver1_id']
         query.paredown_rule_approver2_id = data['approver2_id']
+
+        lob_sectors = []
+        # Create the new paredown rule
         for lob_sec in data['lob_sectors']:
             if lob_sec not in LineOfBusinessSectors.__members__:
                 raise ValueError('Specified lob_sec does not exist.')
-        query.lob_sectors = data['lob_sectors']
+            if LineOfBusinessSectors[lob_sec] not in lob_sectors:
+                lob_sectors.append(LineOfBusinessSectors[lob_sec])
+        query.lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
 
         # Delete and recreate the paredown conditions
         conditions = ParedownRuleCondition.query.filter_by(paredown_rule_id=id).all()
