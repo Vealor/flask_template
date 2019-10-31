@@ -420,9 +420,8 @@ class Project(db.Model):
 
     project_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
-    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
-    project_data_param = db.relationship('Project', back_populates='data_param_project')
+    project_data_params = db.relationship('DataParam', back_populates='data_param_project', lazy='dynamic', passive_deletes=True)
 
     has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -653,6 +652,8 @@ class CapsGen(db.Model):
     project_id = db.Column(db.Integer, unique=True, nullable=False) # FK
     caps_gen_project = db.relationship('Project', back_populates='project_caps_gen')
 
+    caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
+
     caps_gen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_caps_gen', lazy='dynamic', passive_deletes=True)
@@ -694,13 +695,26 @@ class CapsGen(db.Model):
     caps_gen_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapt005t = db.relationship('SapT005t', back_populates='sapt005t_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_saptinct = db.relationship('SapTinct', back_populates='saptinct_caps_gen', lazy='dynamic', passive_deletes=True)
-    capsgen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
 
-class DataParams(db.Model):
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'data_mappings': [i.serialize for i in self.caps_gen_data_mappings]
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+class DataParam(db.Model):
     _tablename_ = 'data_params'
     __table_args__ = (
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-        )
+    )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     process = db.Column(db.Enum(Process), nullable=False)
     param = db.Column(db.String, nullable=False)
@@ -709,21 +723,22 @@ class DataParams(db.Model):
     is_many = db.Column(db.Boolean, nullable=False)
 
     project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
-    data_param_project = db.relationship('Project', back_populates='project_data_param')
+    data_param_project = db.relationship('Project', back_populates='project_data_params')
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
-        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
     )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     column_name = db.Column(db.String(256), nullable=False)
     table_name = db.Column(db.String(256), nullable=False)
 
-    project_id = db.Column(db.Integer, nullable=False, primary_key=True) # FK
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
 
-    cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
+    cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
     data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
 
     @property
@@ -1293,19 +1308,26 @@ class SapT007s(db.Model):
 class GstRegistration(db.Model):
     _tablename__ = 'gst_registration'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    project_id = db.Column(db.Integer, nullable=False, unique=True)
-    capsgen_id = db.Column(db.Integer, nullable=False)
     vendor_country = db.Column(db.String(64), nullable=True)
     vendor_number = db.Column(db.String(16), nullable=True)
     vendor_city = db.Column(db.String(16), nullable=True)
     vendor_region = db.Column(db.String(16), nullable=True)
     # TODO: how to mark this column
     duplicate_flag = db.Column(db.String(4), nullable=True)
-    gst_registration_capsgen = db.relationship('CapsGen', back_populates='capsgen_gst_registration')
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    gst_registration_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_gst_registration') # FK
+
+    @property
+    def serialize(self):
+        return {
+            "id": self.id,
+            "project_id": self.gst_registration_caps_gen.project_id
+        }
 
 class SapSkb1(db.Model):
     _tablename__ = 'sap_skb1'

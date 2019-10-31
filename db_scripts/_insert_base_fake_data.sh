@@ -14,7 +14,7 @@ PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values (E'I\'m a lumberjack and I\'m okay', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('trees bro', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('fish n oceans n shit', 3, 1, 1);
-  insert into capsgen (user_id, project_id, is_completed) values (1, 1, False);
+  insert into caps_gen (user_id, project_id, is_completed) values (1, 1, False);
   insert into fx_rates (date, usdtocad) values ('2010-01-01', 1.56);
   insert into fx_rates (date, usdtocad) values ('2010-01-02', 1.57);
   insert into vendors (name) values ('miner buyer');
@@ -31,7 +31,7 @@ PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   insert into transactions (data, vendor_id, project_id) values ('{}', 1, 3);
   insert into transactions (data, vendor_id, project_id) values ('{}', 2, 3);
   insert into user_project (user_id, project_id) values (1, 1);
-  insert into gst_registration(project_id, capsgen_id) values (1,1);
+  insert into gst_registration(caps_gen_id) values (1);
 
   update users set req_pass_reset = 'f';
   update users set is_superuser = 'y' where id = 1;

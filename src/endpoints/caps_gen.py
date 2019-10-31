@@ -14,7 +14,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 from os import path
 from src.models import *
 from config import *
-from sqlalchemy import exists, desc
+from sqlalchemy import exists, desc, create_engine
 from src.util import *
 from src.wrappers import has_permission, exception_wrapper
 
@@ -65,12 +65,16 @@ def init_caps_gen():
         project_id=data['project_id'],
         is_completed=False
     )
+
+    # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
+
     db.session.add(capsgen)
-    db.session.flush()
+    db.session.commit()
     ### will fail without login
 
     ### DEV/PROD => make master tables
     list_tablenames = current_app.config['CDM_TABLES']
+    engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
     #todo: add table to payload so cio can know which tables to view
     for table in list_tablenames:
         table_files = []
@@ -95,19 +99,25 @@ def init_caps_gen():
 
         #initialize variables for bulk insertion
         referenceclass = eval('Sap' + str(table.lower().capitalize()))
-        bulk_insert_handler = []
+        list_to_insert = []
+        counter = 0
         #bulk insert into database
         with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
-            counter = 0
-            for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
-                counter += 1
-                if counter > 1000:
-                    break
-                dict_to_insert = {'data' : line}
-                # WARNING: Project id needs to be provided in curl request
-                dict_to_insert['capsgen_id'] = capsgen.id
-                bulk_insert_handler.append(dict_to_insert)
-        db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
+            header = masterfile.readline()
+            header = header.rstrip('\n').split('#|#')
+            for line in masterfile:
+                # insert rows chunk by chunk to avoid crashing
+                #  NOTE: 20,000 entries use about 4GB ram
+                if counter >= 200000:
+                    engine.execute(referenceclass.__table__.insert(), list_to_insert)
+                    counter = 0
+                    list_to_insert = []
+                else:
+                    counter += 1
+                    list_to_insert.append({"capsgen_id": capsgen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
+            if counter > 0:
+                engine.execute(referenceclass.__table__.insert(), list_to_insert)
+
         CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
         db.session.flush()
     ###
@@ -115,180 +125,27 @@ def init_caps_gen():
     db.session.commit()
     response['message'] = 'Data successfully uploaded and CapsGen initialized.'
     return jsonify(response), 200
+
 #===============================================================================
-# View Tables Page
-# upload data when pressing `Next`
-@caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
+
+#>>> DO MAPPING with mapping endpoints
+
+#===============================================================================
+# Apply Mappings Button
+# upload data when pressing `Apply` and build gst registration for caps gen
+# renames columns as per mapping. Do not run this yet if you plan to execute J1
+# to J10; as the joins are currently hardcoded to their original names.
+# the top priority is to complete caps; and CDM is not final yet so CDM labels
+# will not be written in.
+@caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def view_tables(id, table):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
-
-
-    query = CapsGen.query.filter_by(id=id)
-    if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
-
-    # capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-    # if not capsgen_id:
-    #     raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
-
-    #table filter
-    tableclass = eval('Sap' + str(table.lower().capitalize()))
-    columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id).all()
-    response['payload'] = columndata
-    response['message'] = ''
-    return jsonify(response), 200
-
-
-#===============================================================================
-# @caps_gen.route('project_path_creation', methods=['POST'])
-# @exception_wrapper()
-# def file_path_creation():
-#     response = {'status': 'ok', 'message': '', 'payload': []}
-#
-#     data = request.get_json()
-#     if not isinstance(data, dict):
-#         raise Exception('data is not a dict')
-#     request_types = {
-#         'project_id': 'int',
-#         'system': 'str'
-#     }
-#     validate_request_data(data, request_types)
-#     if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
-#         print('path does not exist, creating project')
-#         os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
-#         folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-#         for folder in folders:
-#             os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
-#     else:
-#         raise Exception('Path has already been created for project')
-#
-#     return jsonify(response), 200
-
-#This takes the source data, in the form of a zip file, located in caps_gen_raw, and unzips it into caps_gen_unzipped.
-#The endpoint can go through nested folders/zips.
-# @caps_gen.route('/unzipping', methods=['POST'])
-# @exception_wrapper()
-# def unzipping():
-#     response = {'status': 'ok', 'message': '', 'payload': {'files_skipped': []}}
-#     try:
-#         data = request.get_json()
-#         if not isinstance(data, dict):
-#             raise Exception('data is not a dict')
-#         request_types = {
-#             'project_id' : 'int',
-#             'file_name': 'str',
-#             'system': 'str'
-#         }
-#         validate_request_data(data, request_types)
-#         source_data_unzipper(data, response)
-#     except Exception as e:
-#         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-#         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
-#         raise Exception(e)
-#     return jsonify(response), 200
-
-#MAPPING HAPPENS: The CDM labels + Data Mappings table needs to be populated. See db_refresh.sh
-# @caps_gen.route('/build_master_tables', methods=['POST'])
-# @exception_wrapper()
-# def build_master_tables():
-#     response = {'status': 'ok', 'message': {}, 'payload': {}}
-#
-#     # data = request.get_json()
-#     # deletecheck = CapsGen.query.filter(CapsGen.project_id == data['project_id']).first()
-#     # if deletecheck:
-#     #     db.session.delete(deletecheck)
-#     #     db.session.commit()
-#     # capsgen = CapsGen(user_id=data['user_id'], project_id=data['project_id'], is_completed=False)
-#     # db.session.add(capsgen)
-#     # db.session.flush()
-#
-#     list_tablenames = current_app.config['CDM_TABLES']
-#     #todo: add table to payload so cio can know which tables to view
-#     for table in list_tablenames:
-#         table_files = []
-#         #Search for all files that match table
-#         for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
-#             if re.search(table, file):
-#                 if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
-#                     table_files.append(file)
-#         #Load & union files into one master table in memory
-#         wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
-#         for index, file in enumerate(table_files):
-#             if index == 0:
-#                 with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
-#                     wfd.write(fd.read().encode())
-#             else:
-#                 # for all future files
-#                 with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
-#                     #   strip header
-#                     next(fd)
-#                     wfd.write(fd.read().encode())
-#         wfd.close()
-#
-#         #initialize variables for bulk insertion
-#         referenceclass = eval('Sap' + str(table.lower().capitalize()))
-#         bulk_insert_handler = []
-#         #bulk insert into database
-#         with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
-#             counter = 0
-#             for line in csv.DictReader((line.replace('#|#', 'ø') for line in masterfile), delimiter='ø', quoting=csv.QUOTE_NONE):
-#                 counter += 1
-#                 if counter > 1000:
-#                     break
-#                 dict_to_insert = {'data' : line}
-#                 # WARNING: Project id needs to be provided in curl request
-#                 dict_to_insert['capsgen_id'] = capsgen.id
-#                 bulk_insert_handler.append(dict_to_insert)
-#         db.session.bulk_insert_mappings(referenceclass, bulk_insert_handler)
-#         CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
-#         db.session.flush()
-#     response['message'] = 'All tables are successfully committed.'
-#     db.session.commit()
-#     return jsonify(response), 200
-
-
-# @caps_gen.route('/view_tables/<path:project_id>/<path:table>', methods=['GET'])
-# @exception_wrapper()
-# def view_tables(project_id, table):
-#     response = {'status': 'ok', 'message': {}, 'payload': []}
-#
-#     query = CapsGen.query
-#
-#     # project_id filter
-#     if project_id is not None and isinstance(project_id, int):
-#         project = Project.find_by_id(project_id)
-#     else:
-#         raise ValueError('Project ID {} does not exist.'.format(project_id))
-#
-#     capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-#     if not capsgen_id:
-#         raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
-#
-#     #table filter
-#     if table is not None:
-#         tableclass = eval('Sap' + str(table.lower().capitalize()))
-#         columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.capsgen_id == capsgen_id).all()
-#         response['payload'] = columndata
-#         response['message'] = str(table) + ' has been accessed.'
-#
-#     return jsonify(response), 200
-
-
-######################### MAPPING HAPPENS HERE #######################################
-
-#renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
-#the top priority is to complete caps; and CDM is not final yet so CDM labels will not be written in.
-@caps_gen.route('/rename_scheme', methods=['POST'])
-@exception_wrapper()
-def rename_scheme():
+def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': {}, 'payload': []}
     response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
-
     data = request.get_json()
+
     mapping = [label.serialize for label in CDM_label.query.all()]
     list_tablenames = current_app.config['CDM_TABLES']
     for table in list_tablenames:
@@ -321,21 +178,63 @@ def rename_scheme():
         db.session.bulk_update_mappings(tableclass, renamed_columndata)
     db.session.commit()
 
+    # TODO: check for similary/duplicate projects by comparing attributes
+    project_id = (CapsGen.find_by_id(id)).project_id
+    project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
+    if project_in_gst_registration_table is not None:
+        db.session.delete(project_in_gst_registration_table)
+        db.session.commit()
+    lfa1_result = SapLfa1.query.filter_by(capsgen_id=id).first()
+    if lfa1_result is not None:
+        gst_registration = GstRegistration(project_id=project_id, capsgen_id=id, vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
+        db.session.add(gst_registration)
+        db.session.flush()
+    else:
+        raise ValueError("LFA1 does not exist, please run caps gen first.")
+
     return jsonify(response), 200
 
-
-#this performs 3 quality checks - checking for validity (regex), completeness (nulls/total cols), uniqueness (uniqueness of specified key grouping from data dictionary)
-@caps_gen.route('/data_quality_check', methods=['GET'])
+#===============================================================================
+# View Tables Page
+@caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
-def data_quality_check():
-    def regex_serializer(row):
-        return {
-            'data' : row.data
-        }
-    def unique_key_serializer(row, unique_keys):
-        return {
-            "unique_key" : [row.data[x] for x in unique_keys]
-        }
+def view_tables(id, table):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    # capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
+    # if not capsgen_id:
+    #     raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+
+    #table filter
+    tableclass = eval('Sap' + str(table.lower().capitalize()))
+    columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id).all()
+    response['payload'] = columndata
+    response['message'] = ''
+    return jsonify(response), 200
+
+#===============================================================================
+# Data Quality Check
+# this performs 3 quality checks - checking for validity (regex), completeness
+# (nulls/total cols), uniqueness (uniqueness of specified key grouping from data
+# dictionary)
+@caps_gen.route('/<int:id>/data_quality_check', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def data_quality_check(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
     def data_dictionary(mapping, table):
         rename_dict = {}
@@ -382,9 +281,9 @@ def data_quality_check():
         if unique_keys:
             unique_key_checker = []
             for row in data:
-                row = unique_key_serializer(row, unique_keys)
+                row = [row.data[x] for x in unique_keys]
                 ''.join(row)
-                unique_key_checker.append(row['unique_key'])
+                unique_key_checker.append(row)
             c = Counter(map(tuple, unique_key_checker))
             dups = [k for k, v in c.items() if v > 1]
         #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
@@ -397,7 +296,7 @@ def data_quality_check():
             data_dictionary_results[table] = {'uniqueness': 100}
         ### validity check ###
         for column in compiled_data_dictionary.keys():
-            query = [regex_serializer(row)['data'][column] for row in data]
+            query = [row.data[column] for row in data]
             if compiled_data_dictionary[column]['regex']:
                 data_dictionary_results[table][column] = {
                     'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
@@ -407,22 +306,34 @@ def data_quality_check():
     response['payload'] = data_dictionary_results
     return jsonify(response), 200
 
-#j1 to j10 joins to create APS
-@caps_gen.route('/j1_j10', methods=['POST'])
+#===============================================================================
+# Data to APS
+# j1 to j10 joins to create APS j1_j10
+@caps_gen.route('/<int:id>/data_to_aps', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
-def j1_j10():
+def data_to_aps(id):
+    response = { 'status': 'ok', 'message': {}, 'payload': {} }
+    # response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+    project_id = (query.first()).projet_id
+
     def execute(query):
-        print(str(datetime.datetime.now()))
-        print("Executing...")
+        # print(str(datetime.datetime.now()))
+        # print("Executing...")
         result = db.session.execute(query)
-        print("Committing...")
+        # print("Committing...")
         db.session.commit()
-        print("Done.")
-        return 'query execute successful'
+        # print("Done.")
+        # return 'query execute successful'
+        return
 
-    response = {'status': 'ok', 'message': {}, 'payload': {}}
 
-    data = request.get_json()
     j1 = """DROP TABLE IF EXISTS JOIN_BKPF_T001_MSTR;
     select
     L.*,
@@ -434,7 +345,7 @@ def j1_j10():
     inner join
     (select * from sap_t001 where CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) as R
     on CAST(L.data -> 'BUKRS' AS TEXT) = cast(R.data -> 'BUKRS' AS TEXT)
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
 
     j2 = """DROP TABLE IF EXISTS BSEG_AP;
@@ -444,7 +355,7 @@ def j1_j10():
     cast('' as text) AS varMultiVND,
     cast('' as text) as varSupplier_No
     into  BSEG_AP
-    from (select * from sap_bseg where project_id = {project_id}) as L""".format(project_id = data['project_id'])
+    from (select * from sap_bseg where project_id = {project_id}) as L""".format(project_id = project_id)
 
     # Set the
     j3 = """
@@ -463,8 +374,9 @@ def j1_j10():
     FROM distinctVarAPKeyVendorAcctNum AS L
     GROUP BY varAPKey
     HAVING COUNT(*) >  1
-    """.format(project_id = data['project_id'])
-#Update Vendor Account Number for each varAPKey if Vendor Account Number is null with the first vendor account number
+    """.format(project_id = project_id)
+    # Update Vendor Account Number for each varAPKey if Vendor Account Number
+    # is null with the first vendor account number
     j5 = """
     DROP TABLE IF EXISTS bseg_ap_final;
     select
@@ -480,7 +392,7 @@ def j1_j10():
     on L.varapkey = R1.varapkey
     left join (select cast('Multi_Vendor' as TEXT) as varMultiVND, varapkey from distinctvarAPkeymultivendor) as R2
     on L.varapkey = R2.varapkey
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j6 = """
     DROP TABLE IF EXISTS J1_BSEG_BKPF;
@@ -498,7 +410,7 @@ def j1_j10():
     FROM BSEG_AP_final AS L
     INNER JOIN JOIN_BKPF_T001_MSTR AS R
     ON L.varAPKey = R.varAPKey
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j7 = """
     DROP TABLE IF EXISTS J2_BSEG_BKPF_LFA1;
@@ -509,7 +421,7 @@ def j1_j10():
     FROM J1_BSEG_BKPF AS L
     LEFT JOIN (SELECT * FROM sap_lfa1 WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) AS R
     ON LTRIM(RTRIM(L.data ->> 'LIFNR')) = LTRIM(RTRIM(R.data ->> 'LIFNR'))
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j8 = """
     DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_SKAT;
@@ -520,7 +432,7 @@ def j1_j10():
     LEFT JOIN (SELECT  * FROM sap_skat WHERE CAST(data ->> 'SPRAS' AS TEXT) = 'EN' and project_id = {project_id}) AS R
     ON LTRIM(RTRIM(L.KTOPL)) = LTRIM(RTRIM(R.data ->> 'KTOPL'))
                    AND LTRIM(RTRIM(L.data ->> 'SAKNR')) = LTRIM(RTRIM(R.data ->> 'SAKNR'))
-        """.format(project_id = data['project_id'])
+        """.format(project_id = project_id)
 
     j9 = """
     DROP TABLE IF EXISTS distinctVarAPKey;
@@ -530,7 +442,7 @@ def j1_j10():
     FROM sap_bseg AS L
     WHERE cast(L.data ->> 'KOART' as text) = 'K' and project_id = {project_id}
     GROUP BY L.data ->> 'BUKRS', L.data ->> 'BELNR', L.data ->> 'GJAHR'
-        """.format(project_id = data['project_id'])
+        """.format(project_id = project_id)
 
     j10 = """
     DROP TABLE IF EXISTS J4_BSEG_BKPF_LFA1_SKAT_OnlyAP;
@@ -540,18 +452,18 @@ def j1_j10():
     FROM J3_BSEG_BKPF_LFA1_SKAT AS L
     INNER JOIN distinctVarAPKey AS R
     ON L.varAPKey = R.varAPKey
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j11 = """
-    DROP TABLE IF EXISTS J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO;
+        DROP TABLE IF EXISTS J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO;
 
-    SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
-    INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
-    FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
-    LEFT JOIN (SELECT * FROM sap_ekpo where project_id = {project_id}) AS R
-    ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
-                   AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
-    """.format(project_id = data['project_id'])
+        SELECT L.*, R.data ->> 'TXZ01' as TXZ01, R.data ->> 'MATNR' AS MATNR2
+        INTO J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO
+        FROM J4_BSEG_BKPF_LFA1_SKAT_OnlyAP AS L
+        LEFT JOIN (SELECT * FROM sap_ekpo where project_id = {project_id}) AS R
+        ON L.data ->> 'EBELN' = R.data ->> 'EBELN'
+                       AND L.data ->> 'EBELP' = R.data ->> 'EBELP'
+    """.format(project_id = project_id)
 
     j12 = """
     DROP TABLE IF EXISTS J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT;
@@ -561,7 +473,7 @@ def j1_j10():
     FROM J5_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO AS L
     LEFT JOIN (SELECT * FROM sap_makt WHERE cast( data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id}) AS R
     ON L.MATNR2 = R.data ->> 'MATNR'
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j13 = """
     DROP TABLE IF EXISTS J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR;
@@ -571,7 +483,7 @@ def j1_j10():
     FROM J6_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT AS L
     LEFT JOIN (SELECT *, CONCAT(data ->> 'ZBUKR', '_', data ->> 'VBLNR', '_', data ->> 'GJAHR') AS varAPKey FROM sap_payr where project_id = {project_id}) AS R
     ON L.varAPKey = R.varAPKey
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j14 = """
           DROP TABLE IF EXISTS J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT;
@@ -581,7 +493,7 @@ def j1_j10():
     FROM J8_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR AS L
     LEFT JOIN (select cast(data as json) from (SELECT distinct cast(data as text) FROM sap_cskt WHERE cast( data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id})  R )AS R
     ON L.data ->> 'KOSTL' = R.data ->> 'KOSTL'
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     j15 = """
     DROP TABLE IF EXISTS J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007;
@@ -591,7 +503,7 @@ def j1_j10():
     FROM J9_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT AS L
     LEFT JOIN (SELECT  * FROM sap_t007s WHERE LTRIM(RTRIM(cast(data ->> 'KALSM' as text))) = 'ZTAXCA' AND cast(data ->> 'SPRAS' as text) = 'EN' and project_id = {project_id}) AS R
     ON L.data ->> 'MWSKZ' = R.data ->> 'MWSKZ'
-    """.format(project_id = data['project_id'])
+    """.format(project_id = project_id)
 
     ## WARNING: Not every client uses these document types consistently.
     j16 = """
@@ -610,7 +522,7 @@ def j1_j10():
     # Add amounts (unsigned)
     # Sort by varapkey, then by varLocAmt
 
-# Execute the joins defined above.
+    # Execute the joins defined above.
     execute(j1)
     execute(j2)
     execute(j3)
@@ -629,28 +541,72 @@ def j1_j10():
     execute(j16)
     return jsonify(response), 200
 
-#This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details.
-@caps_gen.route('/aps_quality_check', methods=['GET'])
+#===============================================================================
+# View APS Page
+@caps_gen.route('/<int:id>/view_aps', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def view_aps(id, table):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    # TODO: PULL FROM APS TABLE FILTER ON SPECIFIC CAPSGEN ID
+
+    return jsonify(response), 200
+
+#===============================================================================
+# APS Quality Check
+# This is the check that needs to be done to see whether vardocamt and varlocamt
+# net to 0. This is referring to GL netting to 0. Ask Andy for more details.
+@caps_gen.route('/<int:id>/aps_quality_check', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
 def aps_quality_check():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    response['VERSION'] = current_app.config['VERSION']
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+    project_id = (query.first()).projet_id
+
+    # TODO: APS QUALITY CHECK AND GL NET CHECK
+
     return jsonify(response), 200
 
+#===============================================================================
+# APS to CAPS
 # see feature branch 72-aps_to_caps for more info
-@caps_gen.route('/APS_to_CAPS', methods=['GET'])
+@caps_gen.route('/<int:id>/aps_to_caps', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
 def aps_to_caps():
-    def execute(query):
-        print(str(datetime.datetime.now()))
-        print("Executing...")
-        result = db.session.execute(query)
-        print("Committing...")
-        db.session.commit()
-        print("Done.")
-        return 'query execute successful'
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
 
-    response = {'status': 'ok', 'message': {}, 'payload': {}}
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+    project_id = (query.first()).projet_id
+
+    def execute(query):
+        # print(str(datetime.datetime.now()))
+        # print("Executing...")
+        result = db.session.execute(query)
+        # print("Committing...")
+        db.session.commit()
+        # print("Done.")
+        # return 'query execute successful'
+        return
+
+
     j17 = """
         DROP TABLE IF EXISTS raw_relational;
         select
@@ -1649,7 +1605,43 @@ def aps_to_caps():
     inner join caps_no_attributes
     on caps_no_attributes.varapkey = transaction_attributes.varapkey
     """
-    response['message'] = ''
-    response['payload'] = []
+
+    return jsonify(response), 200
+
+#===============================================================================
+# View CAPS Page
+@caps_gen.route('/<int:id>/view_caps', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def view_caps(id, table):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    # TODO: PULL FROM CAPS TABLES FILTER ON SPECIFIC CAPSGEN ID
+
+    return jsonify(response), 200
+
+#===============================================================================
+# CAPS to Transactions
+# This transforms all approved caps_gen tables to Transactions for the project
+@caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def caps_to_transactions():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+    project_id = (query.first()).projet_id
+
+    # TODO: transform caps to transactions
 
     return jsonify(response), 200

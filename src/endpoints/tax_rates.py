@@ -2,7 +2,7 @@
 Tax Rate Endpoints
 '''
 from sqlalchemy import desc
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
@@ -24,7 +24,7 @@ def get_tax_rates():
         raise ValueError('Project does not exist.')
 
     # check if caps_gen exist, if exist proceed, if not send back error message
-    capsgen = CapsGen.query.filter_by(project_id=project_id).order_by(desc(CapsGen.id)).first()
+    capsgen = CapsGen.query.filter_by(project_id=args['project_id']).order_by(desc(CapsGen.id)).first()
     if not capsgen:
         raise ValueError("Caps has not been generated, Please generate caps first.")
     rows = SapT007s.query.filter_by(capsgen_id=capsgen.id).all()
