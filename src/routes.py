@@ -57,8 +57,8 @@ from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
 # SAP Caps Gen Endpoints
-from src.endpoints.sap_caps_gen import sap_caps_gen
-api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
+from src.endpoints.caps_gen import caps_gen
+api.register_blueprint(caps_gen, url_prefix='/caps_gen')
 
 # Transaction Endpoints
 from src.endpoints.transactions import transactions

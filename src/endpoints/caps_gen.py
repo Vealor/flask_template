@@ -18,7 +18,13 @@ from sqlalchemy import exists, desc
 from src.util import *
 from src.wrappers import has_permission, exception_wrapper
 
-sap_caps_gen = Blueprint('sap_caps_gen', __name__)
+caps_gen = Blueprint('caps_gen', __name__)
+#===============================================================================
+
+
+
+
+
 #===============================================================================
 @sap_caps_gen.route('project_path_creation', methods=['POST'])
 @exception_wrapper()
@@ -153,7 +159,7 @@ def view_tables(project_id, table):
 
     return jsonify(response), 200
 
-    
+
 ######################### MAPPING HAPPENS HERE #######################################
 
 #renames columns as per mapping. Do not run this yet if you plan to execute J1 to J10; as the joins are currently hardcoded to their original names.
