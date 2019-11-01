@@ -15,7 +15,9 @@ from os import path
 from src.models import *
 from config import *
 from sqlalchemy import exists, desc, create_engine
+from sqlalchemy.inspection import inspect
 from src.util import *
+from src.errors import *
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -211,19 +213,19 @@ def init_caps_gen():
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_master_table_headers(id, table):
+def get_master_table_headers(id):
+    def get_column_name(caps_data):
+        return caps_data['data'].keys()
+
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
-    # get all data from all tables for given capsgen and format as:
-    # `table_name::column_name` in a single list to return
-    # or [ {'table_name': 'burks', 'column_name': 'potato'} ]
-
-    response['payload'] = []
+    # get all data from all tables for given capsgen 
+    response['payload'] = [{'name' :table.partition('sap')[2], 'headers': list(map(get_column_name, value))} for table, value in query.first().serialize['caps_data'].items()]
     return jsonify(response), 200
 
 #===============================================================================
