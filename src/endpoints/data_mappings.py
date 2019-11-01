@@ -6,6 +6,7 @@ import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from src.models import *
+from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 data_mappings = Blueprint('data_mappings', __name__)
@@ -52,18 +53,25 @@ def update_data_mapping(id):
     data = request.get_json()
 
     request_types = {
+        'table_name': 'str',
+        'column_name': 'str'
     }
     validate_request_data(data, request_types)
 
     # UPDATE data mapping
     query = DataMapping.find_by_id(id)
     if not query:
-        raise ValueError('User ID {} does not exist.'.format(id))
+        raise ValueError('Data Mapping ID {} does not exist.'.format(id))
 
+    query.table_name = data['table_name']
     query.column_name = data['column_name']
 
     db.session.commit()
     response['message'] = 'Updated data_mapping with id {}'.format(id)
     response['payload'] = [DataMapping.find_by_id(id).serialize]
-
     return jsonify(response)
+
+#===============================================================================
+# DELETE DATA MAPPING
+
+# not done as mappings are only deleted through project deletion
