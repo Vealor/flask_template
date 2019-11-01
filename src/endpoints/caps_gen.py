@@ -10,7 +10,7 @@ import zipfile
 import requests
 from collections import Counter
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from os import path
 from src.models import *
 from config import *
@@ -56,7 +56,7 @@ def get_caps_gens(id):
 # Data Source Page
 # upload data when pressing `Next`
 @caps_gen.route('/init', methods=['POST'])
-# @jwt_required
+@jwt_required
 # @has_permission([])
 @exception_wrapper()
 def init_caps_gen():
@@ -98,8 +98,7 @@ def init_caps_gen():
     # check if another capsgen in process
     capsgen = CapsGen(
         user_id=current_user.id,
-        project_id=data['project_id'],
-        is_completed=False
+        project_id=data['project_id']
     )
     db.session.add(capsgen)
     db.session.flush()
@@ -167,10 +166,14 @@ def init_caps_gen():
         #     db.session.flush()
         ###
 
+        # get data from blob and put into capsgen tables
+
         db.session.commit()
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
     except Exception as e:
         # delete created caps_gen
+        db.session.delete(capsgen)
+        db.session.commit()
         raise Exception(e)
 
     return jsonify(response), 200

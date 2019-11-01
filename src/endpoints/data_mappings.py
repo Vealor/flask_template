@@ -20,6 +20,10 @@ def get_data_mappings():
     args = request.args.to_dict()
 
     query = DataMapping.query
+    if 'caps_gen_id' not in args.keys():
+        raise ValueError('Please specify a caps_gen_id ID as an argument for the data_mappings query.')
+    query = query.filter_by(caps_gen_id=args['caps_gen_id'])
+
     # Set ORDER
     query = query.order_by('caps_gen_id')
     # Set LIMIT
