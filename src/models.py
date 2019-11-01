@@ -711,51 +711,51 @@ class CapsGen(db.Model):
             'user_id': self.user_id,
             'project_id': self.project_id,
             'project_name': self.caps_gen_project.name,
-            # 'data_mappings': [i.serialize for i in self.caps_gen_data_mappings],
-            # 'caps_data': {
-            #     'caps_gen_sapaufk': caps_data_serialize(self.caps_gen_sapaufk),
-            #     'caps_gen_sapbkpf': caps_data_serialize(self.caps_gen_sapbkpf),
-            #     'caps_gen_sapbsak': caps_data_serialize(self.caps_gen_sapbsak),
-            #     'caps_gen_sapbseg': caps_data_serialize(self.caps_gen_sapbseg),
-            #     'caps_gen_sapcepct': caps_data_serialize(self.caps_gen_sapcepct),
-            #     'caps_gen_sapcsks': caps_data_serialize(self.caps_gen_sapcsks),
-            #     'caps_gen_sapcskt': caps_data_serialize(self.caps_gen_sapcskt),
-            #     'caps_gen_sapekko': caps_data_serialize(self.caps_gen_sapekko),
-            #     'caps_gen_sapekpo': caps_data_serialize(self.caps_gen_sapekpo),
-            #     'caps_gen_sapiflot': caps_data_serialize(self.caps_gen_sapiflot),
-            #     'caps_gen_sapiloa': caps_data_serialize(self.caps_gen_sapiloa),
-            #     'caps_gen_saplfa1': caps_data_serialize(self.caps_gen_saplfa1),
-            #     'caps_gen_sapmakt': caps_data_serialize(self.caps_gen_sapmakt),
-            #     'caps_gen_sapmara': caps_data_serialize(self.caps_gen_sapmara),
-            #     'caps_gen_sappayr': caps_data_serialize(self.caps_gen_sappayr),
-            #     'caps_gen_sapproj': caps_data_serialize(self.caps_gen_sapproj),
-            #     'caps_gen_sapprps': caps_data_serialize(self.caps_gen_sapprps),
-            #     'caps_gen_sapregup': caps_data_serialize(self.caps_gen_sapregup),
-            #     'caps_gen_sapskat': caps_data_serialize(self.caps_gen_sapskat),
-            #     'caps_gen_sapt001': caps_data_serialize(self.caps_gen_sapt001),
-            #     'caps_gen_sapt007s': caps_data_serialize(self.caps_gen_sapt007s),
-            #     'caps_gen_sapskb1': caps_data_serialize(self.caps_gen_sapskb1),
-            #     'caps_gen_sapt003t': caps_data_serialize(self.caps_gen_sapt003t),
-            #     'caps_gen_saptbslt': caps_data_serialize(self.caps_gen_saptbslt),
-            #     'caps_gen_saptgsbt': caps_data_serialize(self.caps_gen_saptgsbt),
-            #     'caps_gen_saplfas': caps_data_serialize(self.caps_gen_saplfas),
-            #     'caps_gen_saplfm1': caps_data_serialize(self.caps_gen_saplfm1),
-            #     'caps_gen_saptoa01': caps_data_serialize(self.caps_gen_saptoa01),
-            #     'caps_gen_sapt024e': caps_data_serialize(self.caps_gen_sapt024e),
-            #     'caps_gen_sapmlan': caps_data_serialize(self.caps_gen_sapmlan),
-            #     'caps_gen_sapmseg': caps_data_serialize(self.caps_gen_sapmseg),
-            #     'caps_gen_sapt001l': caps_data_serialize(self.caps_gen_sapt001l),
-            #     'caps_gen_sapt006a': caps_data_serialize(self.caps_gen_sapt006a),
-            #     'caps_gen_sapt023t': caps_data_serialize(self.caps_gen_sapt023t),
-            #     'caps_gen_saptskmt': caps_data_serialize(self.caps_gen_saptskmt),
-            #     'caps_gen_sapt005s': caps_data_serialize(self.caps_gen_sapt005s),
-            #     'caps_gen_sapt007a': caps_data_serialize(self.caps_gen_sapt007a),
-            #     'caps_gen_sapttxjt': caps_data_serialize(self.caps_gen_sapttxjt),
-            #     'caps_gen_sapt001w': caps_data_serialize(self.caps_gen_sapt001w),
-            #     'caps_gen_sapt005t': caps_data_serialize(self.caps_gen_sapt005t),
-            #     'caps_gen_saptinct': caps_data_serialize(self.caps_gen_saptinct),
-            #     'caps_gen_gst_registration': [i.serialize for i in self.caps_gen_gst_registration]
-            # }
+            'gst_registration': [i.serialize for i in self.caps_gen_gst_registration],
+            'data_mappings': [i.serialize for i in self.caps_gen_data_mappings],
+            'caps_data': {
+                'caps_gen_sapaufk': caps_data_serialize(self.caps_gen_sapaufk),
+                'caps_gen_sapbkpf': caps_data_serialize(self.caps_gen_sapbkpf),
+                'caps_gen_sapbsak': caps_data_serialize(self.caps_gen_sapbsak),
+                'caps_gen_sapbseg': caps_data_serialize(self.caps_gen_sapbseg),
+                'caps_gen_sapcepct': caps_data_serialize(self.caps_gen_sapcepct),
+                'caps_gen_sapcsks': caps_data_serialize(self.caps_gen_sapcsks),
+                'caps_gen_sapcskt': caps_data_serialize(self.caps_gen_sapcskt),
+                'caps_gen_sapekko': caps_data_serialize(self.caps_gen_sapekko),
+                'caps_gen_sapekpo': caps_data_serialize(self.caps_gen_sapekpo),
+                'caps_gen_sapiflot': caps_data_serialize(self.caps_gen_sapiflot),
+                'caps_gen_sapiloa': caps_data_serialize(self.caps_gen_sapiloa),
+                'caps_gen_saplfa1': caps_data_serialize(self.caps_gen_saplfa1),
+                'caps_gen_sapmakt': caps_data_serialize(self.caps_gen_sapmakt),
+                'caps_gen_sapmara': caps_data_serialize(self.caps_gen_sapmara),
+                'caps_gen_sappayr': caps_data_serialize(self.caps_gen_sappayr),
+                'caps_gen_sapproj': caps_data_serialize(self.caps_gen_sapproj),
+                'caps_gen_sapprps': caps_data_serialize(self.caps_gen_sapprps),
+                'caps_gen_sapregup': caps_data_serialize(self.caps_gen_sapregup),
+                'caps_gen_sapskat': caps_data_serialize(self.caps_gen_sapskat),
+                'caps_gen_sapt001': caps_data_serialize(self.caps_gen_sapt001),
+                'caps_gen_sapt007s': caps_data_serialize(self.caps_gen_sapt007s),
+                'caps_gen_sapskb1': caps_data_serialize(self.caps_gen_sapskb1),
+                'caps_gen_sapt003t': caps_data_serialize(self.caps_gen_sapt003t),
+                'caps_gen_saptbslt': caps_data_serialize(self.caps_gen_saptbslt),
+                'caps_gen_saptgsbt': caps_data_serialize(self.caps_gen_saptgsbt),
+                'caps_gen_saplfas': caps_data_serialize(self.caps_gen_saplfas),
+                'caps_gen_saplfm1': caps_data_serialize(self.caps_gen_saplfm1),
+                'caps_gen_saptoa01': caps_data_serialize(self.caps_gen_saptoa01),
+                'caps_gen_sapt024e': caps_data_serialize(self.caps_gen_sapt024e),
+                'caps_gen_sapmlan': caps_data_serialize(self.caps_gen_sapmlan),
+                'caps_gen_sapmseg': caps_data_serialize(self.caps_gen_sapmseg),
+                'caps_gen_sapt001l': caps_data_serialize(self.caps_gen_sapt001l),
+                'caps_gen_sapt006a': caps_data_serialize(self.caps_gen_sapt006a),
+                'caps_gen_sapt023t': caps_data_serialize(self.caps_gen_sapt023t),
+                'caps_gen_saptskmt': caps_data_serialize(self.caps_gen_saptskmt),
+                'caps_gen_sapt005s': caps_data_serialize(self.caps_gen_sapt005s),
+                'caps_gen_sapt007a': caps_data_serialize(self.caps_gen_sapt007a),
+                'caps_gen_sapttxjt': caps_data_serialize(self.caps_gen_sapttxjt),
+                'caps_gen_sapt001w': caps_data_serialize(self.caps_gen_sapt001w),
+                'caps_gen_sapt005t': caps_data_serialize(self.caps_gen_sapt005t),
+                'caps_gen_saptinct': caps_data_serialize(self.caps_gen_saptinct)
+            }
         }
 
     @classmethod
@@ -800,7 +800,9 @@ class DataMapping(db.Model):
             'id': self.id,
             'caps_gen_id': self.caps_gen_id,
             'label': self.cdm_label_script_label,
-            'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None
+            'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
+            'table_name': self.table_name,
+            'column_name': self.column_name
         }
 
     @classmethod
@@ -828,21 +830,23 @@ class CDMLabel(db.Model):
     @property
     def serialize(self):
         return {
-            "script_label": self.script_label,
-            "display_name": self.display_name,
-            "is_calculated": self.is_calculated,
-            "is_unique": self.is_unique,
-            "datatype": self.datatype.name,
-            "length": self.length,
-            "caps_interface": self.caps_interface.value if self.caps_interface else None,
-            # "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
+            'script_label': self.script_label,
+            'is_active': self.is_active,
+            'display_name': self.display_name,
+
+            'is_calculated': self.is_calculated,
+            'is_unique': self.is_unique,
+            'datatype': self.datatype.name,
+            'length': self.length,
+            'precision': self.precision,
+            'caps_interface': self.caps_interface.value if self.caps_interface else None,
         }
     @property
     def paredown_columns_serialize(self):
         return {
-            "script_label": self.script_label,
-            "display_name": self.display_name,
-            "caps_interface": self.caps_interface
+            'script_label': self.script_label,
+            'display_name': self.display_name,
+            'caps_interface': self.caps_interface
         }
 
 ################################################################################

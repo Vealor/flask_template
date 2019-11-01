@@ -95,12 +95,28 @@ def init_caps_gen():
     # do before unzipping and store path in CapsGen?
     # will fail without login!
 
-    # check if another capsgen in process
-    capsgen = CapsGen(
-        user_id=current_user.id,
-        project_id=data['project_id']
-    )
-    db.session.add(capsgen)
+
+
+    # in_progress = CapsGen.query.filter_by(is_completed=False).first()
+    # if in_progress:
+    #     raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
+    # capsgen = CapsGen(
+    #     user_id=current_user.id,
+    #     project_id=data['project_id']
+    # )
+    # db.session.add(capsgen)
+    # db.session.flush()
+
+
+    labels = [i.script_label for i in CDMLabel.query.all()]
+    print(labels)
+
+    for label in labels:
+        new_mapping = DataMapping(
+            caps_gen_id = 1,#capsgen.id,
+            cdm_label_script_label = label
+        )
+        db.session.add(new_mapping)
     db.session.flush()
 
     # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
