@@ -1171,6 +1171,18 @@ class GstRegistration(db.Model):
             "project_id": self.gst_registration_caps_gen.project_id
         }
 
+class SapAps(db.Model):
+    _tablename__ = 'sap_aps'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    # TODO: John add columns here
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapbseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbseg') # FK
+
 class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'
     __table_args__ = (
