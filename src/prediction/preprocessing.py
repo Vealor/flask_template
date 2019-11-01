@@ -5,8 +5,9 @@ def preprocessing_train(df,**kwargs):
     # Drop the pare down data and code columns, do one-hot encoding, remove duplicate columns.
     THRESHOLD_DROP_ROWS = 2
     df = df.dropna(thresh=THRESHOLD_DROP_ROWS)
-    df = df[df['Schedule'] != 'pare down']
-    df = df.drop(['Schedule'], 1)
+    if 'Schedule' in df.columns:
+        df = df[df['Schedule'] != 'pare down']
+        df = df.drop(['Schedule'], 1)
     df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
     df = df.drop(['Code'], 1)
     low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
@@ -27,13 +28,14 @@ def preprocessing_train(df,**kwargs):
 # Define the preprocessing routine here
 def preprocessing_predict(df,predictors,for_validation=False):
     # Drop the pare down data and code columns, do one-hot encoding, remove duplicate columns.
-    df = df[df['Schedule'] != 'pare down']
-    df = df.drop(['Schedule'], 1)
+    if 'Schedule' in df.columns:
+        df = df[df['Schedule'] != 'pare down']
+        df = df.drop(['Schedule'], 1)
 
     if for_validation:
         df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
+        df = df.drop(['Code'], 1)
 
-    df = df.drop(['Code'], 1)
     low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
 
     df_onehot = df[low_cardinality_columns]
@@ -50,12 +52,10 @@ def preprocessing_predict(df,predictors,for_validation=False):
     missing_cols = list(set(one_hot_predictors) - set(df_onehot.columns))
     for col in missing_cols:
        df_onehot[col] = 0
-    #    print('Missing col: {}'.format(col))
 
     # Remove extra one-hot encoding columns that are not in predictors
     extra_cols = list(set(df_onehot.columns) - set(one_hot_predictors))
     df_onehot = df_onehot.drop(extra_cols,1)
-    print('Dropped {}'.format(extra_cols))
 
     df = pd.concat([df,df_onehot],axis=1)
     df = df.loc[:, ~df.columns.duplicated()]
