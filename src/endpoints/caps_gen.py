@@ -22,7 +22,7 @@ caps_gen = Blueprint('caps_gen', __name__)
 #===============================================================================
 # GET ALL CAPS GEN
 @caps_gen.route('/', defaults={'id':None}, methods=['GET'])
-@caps_gen.route('/<path:id>', methods=['GET'])
+@caps_gen.route('/<int:id>', methods=['GET'])
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
@@ -49,6 +49,28 @@ def get_caps_gens(id):
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
+
+#===============================================================================
+# DELETE A CAPS GEN
+@caps_gen.route('/<int:id>', methods=['DELETE'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def delete_caps_gens(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+
+    query = CapsGen.query.filter_by(id=id).first()
+    if not query:
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    # TODO: make sure user deleting capsgen is the user that made it!
+    caps_gen = query.serialize
+    db.session.delete(query)
+    db.session.commit()
+    response['message'] = 'Deleted caps_gen id {}.'.format(caps_gen['id'])
+    response['payload'] = [caps_gen]
+    return jsonify(response), 200
+
 
 #===============================================================================
 #===============================================================================
@@ -97,38 +119,26 @@ def init_caps_gen():
 
 
 
-    # in_progress = CapsGen.query.filter_by(is_completed=False).first()
-    # if in_progress:
-    #     raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
-    # capsgen = CapsGen(
-    #     user_id=current_user.id,
-    #     project_id=data['project_id']
-    # )
-    # db.session.add(capsgen)
-    # db.session.flush()
-
+    # TODO: change for project specific is_completed
+    in_progress = CapsGen.query.filter_by(is_completed=False).first()
+    if in_progress:
+        raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
+    capsgen = CapsGen(
+        user_id=current_user.id,
+        project_id=data['project_id']
+    )
+    db.session.add(capsgen)
+    db.session.flush()
 
     labels = [i.script_label for i in CDMLabel.query.all()]
-    print(labels)
-
     for label in labels:
         new_mapping = DataMapping(
-            caps_gen_id = 1,#capsgen.id,
+            caps_gen_id = capsgen.id,
             cdm_label_script_label = label
         )
         db.session.add(new_mapping)
-    db.session.flush()
+    db.session.commit()
 
-    # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
-    #   Take all current CDM and make mappings for each of the CDM labels
-
-    # for each script_label in cdm_labels
-    #   make a datamapping linking to that and the fresh capsgen
-
-
-
-    db.session.commit() # change to flush
-    ### will fail without login
     try:
 
 
@@ -216,7 +226,6 @@ def get_master_table_headers(id, table):
     response['payload'] = []
     return jsonify(response), 200
 
-
 #===============================================================================
 
 #>>> DO MAPPING with mapping endpoints
@@ -267,7 +276,8 @@ def apply_mappings_build_gst_registration(id):
             response['renaming']['status'] = 'error'
             raise Exception(response['renaming'])
         db.session.bulk_update_mappings(tableclass, renamed_columndata)
-    db.session.commit()
+    db.session.flush()
+
 
     # TODO: check for similary/duplicate projects by comparing attributes
     project_id = (CapsGen.find_by_id(id)).project_id
@@ -283,6 +293,7 @@ def apply_mappings_build_gst_registration(id):
     else:
         raise ValueError("LFA1 does not exist, please run caps gen first.")
 
+    db.session.commit()
     return jsonify(response), 200
 
 #===============================================================================
@@ -646,8 +657,7 @@ def view_aps(id, table):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    # TODO: PULL FROM APS TABLE FILTER ON SPECIFIC CAPSGEN ID
-
+    response['payload'] = [SapAps.query.filter_by(caps_gen_id = ).all()]
     return jsonify(response), 200
 
 #===============================================================================
@@ -1728,11 +1738,13 @@ def caps_to_transactions():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
-    query = CapsGen.query.filter_by(id=id)
-    if not query.first():
+    capsgen = CapsGen.query.filter_by(id=id)
+    if not capsgen.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).projet_id
+    project_id = (capsgen.first()).projet_id
 
     # TODO: transform caps to transactions
 
+    capsgen.is_complete = True
+    db.session.commit()
     return jsonify(response), 200
