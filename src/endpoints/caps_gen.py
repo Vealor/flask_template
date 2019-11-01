@@ -224,7 +224,7 @@ def get_master_table_headers(id):
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
-    # get all data from all tables for given capsgen 
+    # get all data from all tables for given capsgen
     response['payload'] = [{'name' :table.partition('sap')[2], 'headers': list(map(get_column_name, value))} for table, value in query.first().serialize['caps_data'].items()]
     return jsonify(response), 200
 
@@ -651,7 +651,7 @@ def data_to_aps(id):
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def view_aps(id, table):
+def view_aps(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -659,7 +659,7 @@ def view_aps(id, table):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    response['payload'] = [SapAps.query.filter_by(caps_gen_id = ).all()]
+    response['payload'] = [SapAps.query.filter_by(caps_gen_id = id).all()]
     return jsonify(response), 200
 
 #===============================================================================
@@ -670,7 +670,7 @@ def view_aps(id, table):
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def aps_quality_check():
+def aps_quality_check(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -690,7 +690,7 @@ def aps_quality_check():
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def aps_to_caps():
+def aps_to_caps(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -1717,7 +1717,7 @@ def aps_to_caps():
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def view_caps(id, table):
+def view_caps(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -1736,7 +1736,7 @@ def view_caps(id, table):
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def caps_to_transactions():
+def caps_to_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
