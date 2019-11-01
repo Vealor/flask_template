@@ -94,21 +94,28 @@ def init_caps_gen():
     ### DEV/PROD => Create CapsGen entitiy in DB
     # do before unzipping and store path in CapsGen?
     # will fail without login!
+
+    # check if another capsgen in process
     capsgen = CapsGen(
         user_id=current_user.id,
         project_id=data['project_id'],
         is_completed=False
     )
-
-
-
-
     db.session.add(capsgen)
-    db.session.commit()
+    db.session.flush()
+
+    # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
+    #   Take all current CDM and make mappings for each of the CDM labels
+
+    # for each script_label in cdm_labels
+    #   make a datamapping linking to that and the fresh capsgen
+
+
+
+    db.session.commit() # change to flush
     ### will fail without login
     try:
-        # TODO: CAPSGEN AUTO CREATE BASE MAPPINGS
-        #   Take all current CDM and make mappings for each of the CDM labels
+
 
         ### DEV/PROD => make master tables
         # list_tablenames = current_app.config['CDM_TABLES']
@@ -167,6 +174,7 @@ def init_caps_gen():
         raise Exception(e)
 
     return jsonify(response), 200
+
 #===============================================================================
 # Master Table headers  `table_name::column_name` list
 # get master table data from caps_gen tables
