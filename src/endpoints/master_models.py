@@ -20,6 +20,7 @@ master_models = Blueprint('master_models', __name__)
 def get_master_models(id=None):
 
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
     try:
         query = MasterModel.query
         if id:
@@ -27,6 +28,7 @@ def get_master_models(id=None):
             if not query.first():
                 raise ValueError("No master model with ID {} exists.".format(id))
 
+        query = query.filter_by(status = Activity.active.value) if ('active_only' in args.keys() and args['active_only'] == 'true') else query
         response['payload'] = [i.serialize for i in query.all()]
     except ValueError as e:
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
