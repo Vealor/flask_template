@@ -8,6 +8,11 @@ source activate
 rm ./migrations/versions/*.py 2> /dev/null
 FLASK_ENV='development' flask db migrate
 sleep 2
+# CRITICAL ORDER DO NOT MODIFY #################################################
+sed -i 's/src.models.ArrayOfEnum/ArrayOfEnum/g' ./migrations/versions/*.py
+sed -i 's/from sqlalchemy.dialects import postgresql/from sqlalchemy.dialects import postgresql\nfrom src.models import ArrayOfEnum/g' ./migrations/versions/*.py
+sed -i 's/ENUM/postgresql.ENUM/g' ./migrations/versions/*.py
+################################################################################
 FLASK_ENV='development' flask db upgrade
 
 read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue once started" && printf "\n"
@@ -73,6 +78,7 @@ psql -h localhost -U itra itra_db -c "
   insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 1, 3);
   insert into transactions (data, codes, vendor_id, project_id) values ('{}', '{}', 2, 3);
   insert into user_project (user_id, project_id) values (1, 1);
+  insert into gst_registration(project_id, capsgen_id) values (1,1);
 
   update users set req_pass_reset = 'f';
   update users set is_superuser = 'y' where id = 1;
