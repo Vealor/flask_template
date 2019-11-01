@@ -4,7 +4,7 @@ from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score, fbeta_score, make_scorer
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, fbeta_score, make_scorer
 
 class ClientPredictionModel(BasePredictionModel):
 
@@ -12,6 +12,7 @@ class ClientPredictionModel(BasePredictionModel):
         if model_pickle:
             super().__init__(model_pickle)
         else:
+            #Define the client model here
             model_params = {}
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
@@ -69,14 +70,19 @@ class ClientPredictionModel(BasePredictionModel):
 
         xv,yv = validation_data[predictors], validation_data[target]
         yp = self.predict(xv,predictors)
+        n_valid_data = len(yp)
 
-        true_negatives, false_positives, false_negatives, true_positives = confusion_matrix(yv,yp).ravel()
-        accuracy, recall, precision = 0, 0, 0
-        if len(yp) != 0:
-            accuracy = (true_positives + true_negatives) / len(yp)
-        if (true_positives + false_negatives) != 0:
-            recall = true_positives / (true_positives + false_negatives)
-        if (true_positives + false_negatives) != 0:
-            precision = true_positives / (true_positives + false_positives)
+        recall = recall_score(yv,yp)
+        precision = precision_score(yv,yp)
+        accuracy = accuracy_score(yv,yp)
+
         yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
-        return {"recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
+        roc_auc = roc_auc_score(yv,yp_prob)
+
+        return {
+            "n_valid_data": n_valid_data,
+            "recall": recall,
+            "precision": precision,
+            "accuracy": accuracy,
+            "roc_auc": roc_auc
+            }
