@@ -779,29 +779,41 @@ class DataMapping(db.Model):
         db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    column_name = db.Column(db.String(256), nullable=False)
-    table_name = db.Column(db.String(256), nullable=False)
+
+    column_name = db.Column(db.String(256), nullable=True, default='')
+    table_name = db.Column(db.String(256), nullable=True, default='')
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
 
     cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
+    data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings') # FK
 
     @property
     def serialize(self):
         return {
-            self.table_name: [{"column_name": self.column_name, "script_label" : self.cdm_label_script_label}]
+            'id': self.id,
+            'label': self.cdm_label_script_label,
+            'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None
         }
 
-class CDM_label(db.Model):
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+class CDMLabel(db.Model):
     __tablename__ = 'cdm_labels'
+    # data mapping
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
+    is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, server_default='t')
     display_name = db.Column(db.String(256), nullable=True)
+
+    # data dictionary
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
     datatype = db.Column(db.Enum(Datatype), nullable=False)
-    length = db.Column(db.String(256), nullable=False)
+    length = db.Column(db.Integer, nullable=False, default=0, server_default='0')
+    precision = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     caps_interface = db.Column(db.Enum(Caps_Interface), nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
 
@@ -814,10 +826,10 @@ class CDM_label(db.Model):
             "display_name": self.display_name,
             "is_calculated": self.is_calculated,
             "is_unique": self.is_unique,
-            "datatype": self.datatype,
+            "datatype": self.datatype.name,
             "length": self.length,
-            "caps_interface": self.caps_interface,
-            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
+            "caps_interface": self.caps_interface.value if self.caps_interface else None,
+            # "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
         }
     @property
     def paredown_columns_serialize(self):

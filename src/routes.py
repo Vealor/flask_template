@@ -17,6 +17,10 @@ from src.endpoints.caps_gen import caps_gen
 api.register_blueprint(caps_gen, url_prefix='/caps_gen')
 
 # Client Endpoints
+from src.endpoints.cdm_labels import cdm_labels
+api.register_blueprint(cdm_labels, url_prefix='/cdm_labels')
+
+# Client Endpoints
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
 
