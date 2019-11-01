@@ -21,12 +21,45 @@ def get_data_mappings():
 
     query = DataMapping.query
     # Set ORDER
-    query = query.order_by('project_id')
+    query = query.order_by('caps_gen_id')
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
     response['payload'] = [i.serialize for i in query.all()]
+
+    return jsonify(response)
+
+#===============================================================================
+# CREATE NEW DATA MAPPING
+
+# not done as new mappings can't be created
+# they are made during the CAPSGen process in /caps_gen/init
+
+#===============================================================================
+# UPDATE DATA MAPPING
+@data_mappings.route('/<int:id>', methods=['PUT'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def update_data_mapping(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+
+    request_types = {
+    }
+    validate_request_data(data, request_types)
+
+    # UPDATE data mapping
+    query = DataMapping.find_by_id(id)
+    if not query:
+        raise ValueError('User ID {} does not exist.'.format(id))
+
+    query.column_name = data['column_name']
+
+    db.session.commit()
+    response['message'] = 'Updated data_mapping with id {}'.format(id)
+    response['payload'] = [DataMapping.find_by_id(id).serialize]
 
     return jsonify(response)
