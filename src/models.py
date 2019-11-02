@@ -998,11 +998,6 @@ class Code(db.Model):
     code_number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
 
-    # code_gst = db.relationship('Transaction', back_populates='gst_code', lazy='dynamic')
-    # code_qst = db.relationship('Transaction', back_populates='qst_code', lazy='dynamic')
-    # code_pst = db.relationship('Transaction', back_populates='pst_code', lazy='dynamic')
-    # code_apo = db.relationship('Transaction', back_populates='apo_code', lazy='dynamic')
-
     @property
     def serialize(self):
         return {
@@ -1010,6 +1005,21 @@ class Code(db.Model):
             'code_number': self.code_number,
             'description': self.description
         }
+
+class ErrorCategory(db.Model):
+    __tablename__ = 'error_categories'
+    __table_args__ = (
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    description = db.Column(db.String(2048), nullable=True)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'description': self.description
+        }
+
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'

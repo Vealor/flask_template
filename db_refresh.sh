@@ -26,5 +26,8 @@ sleep 1 && echo -e "$BASE\tInserting paredown rules" && sleep 1
 sleep 1 && echo -e "$BASE\tInserting CDM labels" && sleep 1
 ./db_scripts/insert_cdm_labels.sh
 
+sleep 1 && echo -e "$BASE\tInserting Codes" && sleep 1
+./db_scripts/insert_codes.sh
+
 sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings" && sleep 1
 ./db_scripts/_insert_nexen_data_mappings.sh
