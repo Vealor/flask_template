@@ -656,6 +656,7 @@ class CapsGen(db.Model):
     caps_gen_project = db.relationship('Project', back_populates='project_caps_gen')
 
     caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcaps = db.relationship('SapAufk', back_populates='sapcaps_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapaps = db.relationship('SapAufk', back_populates='sapaps_caps_gen', lazy='dynamic', passive_deletes=True)
 
     caps_gen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_caps_gen', lazy='dynamic', passive_deletes=True)
@@ -1180,6 +1181,25 @@ class GstRegistration(db.Model):
         return {
             "id": self.id,
             "project_id": self.gst_registration_caps_gen.project_id
+        }
+
+class SapCaps(db.Model):
+    _tablename__ = 'sap_caps'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    # TODO: John add columns here
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps') # FK
+
+    @property
+    def serialize(self):
+        return {
+            "id": self.id,
+            "caps_gen_id": self.caps_gen_id
         }
 
 class SapAps(db.Model):

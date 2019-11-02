@@ -1,3 +1,5 @@
+#!/bin/bash
+
 PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   INSERT INTO codes(code_number, description) VALUES (101, 'Missed ITC');
   INSERT INTO codes(code_number, description) VALUES (102, 'Missed ITR');
