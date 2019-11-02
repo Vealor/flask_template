@@ -656,8 +656,8 @@ class CapsGen(db.Model):
     caps_gen_project = db.relationship('Project', back_populates='project_caps_gen')
 
     caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
-    caps_gen_sapcaps = db.relationship('SapAufk', back_populates='sapcaps_caps_gen', lazy='dynamic', passive_deletes=True)
-    caps_gen_sapaps = db.relationship('SapAufk', back_populates='sapaps_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcaps = db.relationship('SapCaps', back_populates='sapcaps_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapaps = db.relationship('SapAps', back_populates='sapaps_caps_gen', lazy='dynamic', passive_deletes=True)
 
     caps_gen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_caps_gen', lazy='dynamic', passive_deletes=True)
