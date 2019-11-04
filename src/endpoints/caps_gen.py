@@ -198,6 +198,7 @@ def init_caps_gen():
 
         db.session.commit()
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
+        response['payload'] = [CapsGen.find_by_id(capsgen.id)]
     except Exception as e:
         # delete created caps_gen
         db.session.delete(capsgen)
