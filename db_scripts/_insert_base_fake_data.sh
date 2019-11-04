@@ -14,6 +14,7 @@ PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values (E'I\'m a lumberjack and I\'m okay', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('trees bro', 3, 1, 1);
   insert into projects (name, client_id, engagement_partner_id, engagement_manager_id) values ('fish n oceans n shit', 3, 1, 1);
+  insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, False);
   insert into fx_rates (date, usdtocad) values ('2010-01-01', 1.56);
   insert into fx_rates (date, usdtocad) values ('2010-01-02', 1.57);

@@ -792,8 +792,8 @@ class DataMapping(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    column_name = db.Column(db.String(256), nullable=True, default='')
-    table_name = db.Column(db.String(256), nullable=True, default='')
+    column_name = db.Column(db.String(256), nullable=True, default='', server_default='')
+    table_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
@@ -821,7 +821,7 @@ class CDMLabel(db.Model):
     # data mapping
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, server_default='t')
-    display_name = db.Column(db.String(256), nullable=True)
+    display_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
     # data dictionary
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
