@@ -452,6 +452,16 @@ def j1_j10():
         ON L.varAPKey = R.varAPKey
         """
 
+        j11 = """
+        select L.*,
+        R.data ->> 't001_bukrs_key' as t001_bukrs_key,
+        R.data ->> 'co_name' as co_name,
+        R.data ->> 'KTOPL'  as t001_ktopl
+        from (select * from j3_BSEG_BKPF_LFA1_OnlyAP where cast(data ->> 'fiscal_year_gl' as text) = '2013') as L
+        left join (select * from sap_t001 where capsgen_id = {capsgen_id}) as R
+        on L.data ->> 'co_code_gl' = R.data ->> 't001_bukrs_key
+        """.format(capsgen_id = capsgen_id)
+
     # Execute the joins defined above.
         execute(j1revised)
         execute(j2revised)
@@ -1222,7 +1232,7 @@ def caps_to_erd_1():
         into caps_1
         from caps as L
         left join (select * from sap_tbslt where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'post_key_gl' = R.data ->> 'tbslt_bschl_key'
+        on L.post_key_gl = R.data ->> 'tbslt_bschl_key'
         """
         #Join T001
         j17 = """
@@ -1237,79 +1247,79 @@ def caps_to_erd_1():
         left join (select * from sap_T001 where capsgen_id = {capsgen_id}) as R
         on L.data ->> 'co_code_gl' = R.data ->> 't001_bukrs_key'
         """
-        #Join T005S
-        j18 = """
-        drop table if exists caps_3;
-
-        select   L.*,
-        R.data ->> 't005s_bland_key' as t005s_bland_key,
-        R.data ->> 'prov_tx_code_tx' as prov_tx_code_tx,
-        R.data ->> 't005s_land1_key' as t005s_land1_key
-        into caps_3
-        from caps_2 as L
-        left join (select * from sap_t005s where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'GRIRG' = R.data ->> 't005s_bland_key'
-        """
-        # #Join CSKS to CSKT
-        # j19 = """
-        # drop table if exists j1_csks_cskt;
+        #Join T005S: GRIRG does not exist
+        # j18 = """
+        # drop table if exists caps_3;
         #
-        # select L.data ->> 'csks_kokrs_key' as csks_kokrs_key,
-        # L.data ->> 'csks_kostl_key' as csks_kostl_key,
-        # L.data ->> 'csks_datbi_key' as csks_datbi_key,
-        # L.data ->> 'cost_ctr_tx_jur' as cost_ctr_tx_jur,
-        # R.data ->> 'cskt_spras_key' as cskt_spras_key,
-        # R.data ->> 'cskt_kokrs_key' as cskt_kokrs_key,
-        # R.data ->> 'cskt_datbi_key' as cskt_datbi_key,
-        # R.data ->> 'cskt_kostl_key' as cskt_kostl_key,
-        # R.data ->> 'cost_ctr_name' as cost_ctr_name,
-        # R.data ->> 'cost_ctr_descr' as cost_ctr_descr
-        # into j1_csks_cskt
-        # from (select * from sap_csks where capsgen_id = {capsgen_id}) as L
-        # left join (select * from sap_cskt where capsgen_id = {capsgen_id}) as R
-        # on L.data ->> 'csks_kokrs_key' = R.data ->> 'cskt_kokrs_key'
-        # and L.data ->> 'csks_kostl_key' = R.data ->> 'cskt_kostl_key'
+        # select   L.*,
+        # R.data ->> 't005s_bland_key' as t005s_bland_key,
+        # R.data ->> 'prov_tx_code_tx' as prov_tx_code_tx,
+        # R.data ->> 't005s_land1_key' as t005s_land1_key
+        # into caps_3
+        # from caps_2 as L
+        # left join (select * from sap_t005s where capsgen_id = {capsgen_id}) as R
+        # on L.data ->> 'GRIRG' = R.data ->> 't005s_bland_key'
         # """
-        # #join CAPS to CSKS CSKT
-        # j20 = """
-        # drop table if exists caps_4;
-        # select L.*,
-        # R.*
-        # into caps_4
-        # from (select * from caps_3) as L
-        # left join (select * from j1_csks_cskt) as R
-        # on L.data ->> 'control_area_gl' = R.csks_kokrs_key
-        # """
-        # #join CEPC and CEPCT
-        # j21 = """
-        # drop table if exists j1_CEPC_CEPCT;
-        # select
-        # L.data ->> 'cepc_datbi_key' as cepc_datbi_key,
-        # L.data ->> 'cepc_kokrs_key' as cepc_kokrs_key,
-        # L.data ->> 'cepc_prctr_key' as cepc_prctr_key,
-        # L.data ->> 'profit_ctr_tx_jur' as profit_ctr_tx_jur,
-        # L.data ->> 'datab' as datab,
-        # R.data ->> 'profit_ctr_name' as profit_ctr_name,
-        # R.data ->> 'profit_ctr_descr' as profit_ctr_descr,
-        # R.data ->> 'cepct_prctr_key' as cepct_prctr_key,
-        # R.data ->> 'cepct_spras_key' as cepct_spras_key,
-        # R.data ->> 'KOKRS' as KOKRS
-        # into j1_CEPC_CEPCT
-        # from (select * from sap_cepc where capsgen_id = {capsgen_id}) as L
-        # left join (select * from sap_cepct where capsgen_id = {capsgen_id}) as R
-        # on L.data ->> 'cepc_prctr_key' = R.data ->> 'cepct_prctr_key'
-        # and L.data ->> 'cepc_kokrs_key' = R.data ->> 'KOKRS'
-        # """
-        # #join CAPS with j1_CEPC_CEPCT
-        # j22 = """
-        # drop table if exists caps_5;
-        # select L.*,
-        # R.*
-        # into caps_5
-        # from caps_4 as L
-        # left join (select * from j1_CEPC_CEPCT) as R
-        # on L.data ->> 'profit_ctr_num' = R.cepc_prctr_key
-        # and L.data ->> 'bseg_budat_key' = R.cepc_datbi_key
+        #Join CSKS to CSKT
+        j19 = """
+        drop table if exists j1_csks_cskt;
+
+        select L.data ->> 'csks_kokrs_key' as csks_kokrs_key,
+        L.data ->> 'csks_kostl_key' as csks_kostl_key,
+        L.data ->> 'csks_datbi_key' as csks_datbi_key,
+        L.data ->> 'cost_ctr_tx_jur' as cost_ctr_tx_jur,
+        R.data ->> 'cskt_spras_key' as cskt_spras_key,
+        R.data ->> 'cskt_kokrs_key' as cskt_kokrs_key,
+        R.data ->> 'cskt_datbi_key' as cskt_datbi_key,
+        R.data ->> 'cskt_kostl_key' as cskt_kostl_key,
+        R.data ->> 'cost_ctr_name' as cost_ctr_name,
+        R.data ->> 'cost_ctr_descr' as cost_ctr_descr
+        into j1_csks_cskt
+        from (select * from sap_csks where capsgen_id = {capsgen_id}) as L
+        left join (select * from sap_cskt where capsgen_id = {capsgen_id}) as R
+        on L.data ->> 'csks_kokrs_key' = R.data ->> 'cskt_kokrs_key'
+        and L.data ->> 'csks_kostl_key' = R.data ->> 'cskt_kostl_key'
+        """
+        # #join CAPS to CSKS CSKT #control_area_gl does not exist
+        j20 = """
+        drop table if exists caps_4;
+        select L.*,
+        R.*
+        into caps_4
+        from (select * from caps_3) as L
+        left join (select * from j1_csks_cskt) as R
+        on L.control_area_gl = R.csks_kokrs_key
+        """
+        #join CEPC and CEPCT
+        j21 = """
+        drop table if exists j1_CEPC_CEPCT;
+        select
+        L.data ->> 'cepc_datbi_key' as cepc_datbi_key,
+        L.data ->> 'cepc_kokrs_key' as cepc_kokrs_key,
+        L.data ->> 'cepc_prctr_key' as cepc_prctr_key,
+        L.data ->> 'profit_ctr_tx_jur' as profit_ctr_tx_jur,
+        L.data ->> 'datab' as datab,
+        R.data ->> 'profit_ctr_name' as profit_ctr_name,
+        R.data ->> 'profit_ctr_descr' as profit_ctr_descr,
+        R.data ->> 'cepct_prctr_key' as cepct_prctr_key,
+        R.data ->> 'cepct_spras_key' as cepct_spras_key,
+        R.data ->> 'KOKRS' as KOKRS
+        into j1_CEPC_CEPCT
+        from (select * from sap_cepc where capsgen_id = {capsgen_id}) as L
+        left join (select * from sap_cepct where capsgen_id = {capsgen_id}) as R
+        on L.data ->> 'cepc_prctr_key' = R.data ->> 'cepct_prctr_key'
+        and L.data ->> 'cepc_kokrs_key' = R.data ->> 'KOKRS'
+        """
+        #join CAPS with j1_CEPC_CEPCT
+        j22 = """
+        drop table if exists caps_5;
+        select L.*,
+        R.*
+        into caps_5
+        from caps_4 as L
+        left join (select * from j1_CEPC_CEPCT) as R
+        on L.data ->> 'profit_ctr_num' = R.cepc_prctr_key
+        and L.data ->> 'bseg_budat_key' = R.cepc_datbi_key
         #"""
 
         j23 = """
@@ -1378,7 +1388,7 @@ def caps_to_erd_1():
         into caps_4
         from caps_3 as L
         left join j3_PRPS_PROJ_TTXJT_T001W as R
-        on L.data ->> 'wbs_gl' = R.prps_pspnr_key
+        on L.wbs_gl = R.prps_pspnr_key
         """
 
         # j27 = """
@@ -1408,18 +1418,18 @@ def caps_to_erd_1():
         # on L.data ->> 'bseg_mwsk3_key' = R.t007s_mwskz_key
         # """
         #Join caps to TTXJT
-        j29 = """
-        drop table if exists caps_5;
-        select L.*,
-        R.data ->> 'ttxjt_kalsm_key' as ttxjt_kalsm_key
-        R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key
-        R.data ->> 'tx_jur_descr_tx' as tx_jur_descr_tx
-        R.data ->> 'ttxjt_txjcd_key' as ttxjt_txjcd_key
-        into caps_5
-        from caps_4 as L
-        left join (select * from sap_ttxjt where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'tax_jur_gl' = R.data ->> 'ttxjt_txjcd_key'
-        """.format(capsgen_id = capsgen_id)
+        # j29 = """
+        # drop table if exists caps_5;
+        # select L.*,
+        # R.data ->> 'ttxjt_kalsm_key' as ttxjt_kalsm_key,
+        # R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key,
+        # R.data ->> 'tx_jur_descr_tx' as tx_jur_descr_tx,
+        # R.data ->> 'ttxjt_txjcd_key' as ttxjt_txjcd_key
+        # into caps_5
+        # from caps_4 as L
+        # left join (select * from sap_ttxjt where capsgen_id = {capsgen_id}) as R
+        # on L.tax_jur_gl = R.data ->> 'ttxjt_txjcd_key'
+        # """.format(capsgen_id = capsgen_id)
         #Join SKA1 to SKAT
         # j30 = """
         # drop table if exists J1_SKA1_SKAT;
@@ -1557,35 +1567,34 @@ def caps_to_erd_1():
         #Join REGUP to EKPO
         j35 = """
         drop table if exists j3_regup_t001_lfa1_ekpo;
-        select L.*,
-        R.data ->> 'ekpo_ebeln_key' as ekpo_ebeln_key,
-        R.data ->> 'ekpo_ebelp_key' as ekpo_ebeln_key
+        select L.*
         into j3_regup_t001_lfa1_ekpo
         from J2_REGUP_T001_LFA1 as L
         left join (select * from sap_ekpo where capsgen_id = {capsgen_id}) as R
-        on L.regup_ebeln_key = R.ekpo_ebeln_key
+        on L.regup_ebeln_key = R.data ->> 'ekpo_ebeln_key'
         and
-        L.regup_ebelp_key = R.ekpo_ebelp_key
+        L.regup_ebelp_key = R.data ->> 'ekpo_ebelp_key'
         """
 
         j36 = """
         drop table if exists J3_SKB1_REGUP_T001_LFA1_EKPO;
-        select L.*,
+        select L.data ->> 'ska1_bukrs_key' as skb1_bukrs_key,
+        L.data ->> 'skb1_saknr_key' as skb1_saknr_key,
         R.*
-        into J3_SKB1_SKA1_SKAT_REGUP_T001_LFA1_EKPO
-        from (select * from sap_skb1 where capsgen_id = {capsgen_id}) as L
+        into J3_SKB1_REGUP_T001_LFA1_EKPO
+        from (select * from sap_skb1 where capsgen_id = 9) as L
         left join (select * from j3_regup_t001_lfa1_ekpo) as R
         on L.data ->> 'skb1_bukrs_key' = R.regup_bukrs_key
         and
         L.data ->> 'skb1_saknr_key' = R.regup_saknr_key
         """
-
+        #Join CAPS to SKB1 REGUP + tables, remove t001 table b/c duplicate
         j37 = """
-        drop table if exists caps_6
+        drop table if exists caps_5;
         select L.*,
         R.*
-        into caps_6
-        from caps_5 as L
+        into caps_5
+        from caps_4 as L
         left join J3_SKB1_REGUP_T001_LFA1_EKPO as R
         on L.co_code_gl = R.skb1_bukrs_key
         and
@@ -1662,7 +1671,7 @@ def caps_to_erd_2():
         R.data ->> 't005t_land1_key' as t005t_land1_key,
         R.data ->> 'cntry_name' as cntry_name,
         R.data ->> 't005t_spras_key' as t005t_spras_key
-        into j3_lfa_lfm1_lfas_t005t
+        into j3_lfa1_lfm1_lfas_t005t
         from j2_lfa1_lfm1_lfas as L
         left join (select * from sap_t005t where capsgen_id = {capsgen_id}) as R
         on L.lfa1_land1_key = R.data ->> 't005t_land1_key'
@@ -1688,40 +1697,66 @@ def caps_to_erd_2():
         select
         L.*,
         R.data ->> 'bsak_augbl_key' as bsak_augbl_key,
-        R.data ->> 'bsak_augdt_key as bsak_augdt_key,
-        R.data ->> 'bsak_belnr_key as bsak_belnr_key,
-        R.data ->> 'bsak_bukrs_key as bsak_bukrs_key,
-        R.data ->> 'bsak_buzei_key as bsak_buzei_key,
-        R.data ->> 'bsak_gjahr_key as bsak_gjahr_key,
-        R.data ->> 'bsak_lifnr_key as bsak_lifnr_key,
-        R.data ->> 'spec_trnx_type_gl as spec_trnx_type_gl,
-        R.data ->> 'spec_indicator_gl as spec_indicator_gl,
-        R.data ->> 'cash_disc_percent_1_gl as cash_disc_percent_1_gl,
-        R.data ->> 'cash_disc_days_1_gl as cash_disc_days_1_gl,
-        R.data ->> 'cash_disc_percent_2_gl as cash_disc_percent_2_gl,
-        R.data ->> 'cash_disc_days_2_gl as cash_disc_days_2_gl,
-        R.data ->> 'pymt_period_gl as pymt_period_gl,
-        R.data ->> 'pymt_terms_gl as pymt_terms_gl,
-        R.data ->> 'assign_num_gl as assign_num_gl
+        R.data ->> 'bsak_augdt_key' as bsak_augdt_key,
+        R.data ->> 'bsak_belnr_key' as bsak_belnr_key,
+        R.data ->> 'bsak_bukrs_key' as bsak_bukrs_key,
+        R.data ->> 'bsak_buzei_key' as bsak_buzei_key,
+        R.data ->> 'bsak_gjahr_key' as bsak_gjahr_key,
+        R.data ->> 'bsak_lifnr_key' as bsak_lifnr_key,
+        R.data ->> 'spec_trnx_type_gl' as spec_trnx_type_gl,
+        R.data ->> 'spec_indicator_gl' as spec_indicator_gl,
+        R.data ->> 'cash_disc_percent_1_gl' as cash_disc_percent_1_gl,
+        R.data ->> 'cash_disc_days_1_gl' as cash_disc_days_1_gl,
+        R.data ->> 'cash_disc_percent_2_gl' as cash_disc_percent_2_gl,
+        R.data ->> 'cash_disc_days_2_gl' as cash_disc_days_2_gl,
+        R.data ->> 'pymt_period_gl' as pymt_period_gl,
+        R.data ->> 'pymt_terms_gl' as pymt_terms_gl,
+        R.data ->> 'assign_num_gl' as assign_num_gl
         into j4_lfa1_lfm1_lfas_t005t_bsak
         from j3_lfa_lfm1_lfas_t005t as L
         left join (select * from sap_bsak where capsgen_id = {capsgen_id}) as R
         on L.lfa1_lifnr_key = R.bsak_lifnr_key
         """
         #Join LFA1+LFM1+LFAS+T005T+bsak on CAPS
+        #dropped vend name, vend_region, lfa1_land1_key, vend_city, lfa1_lifnr_key,
         j7 = """
-        drop table if exists caps_7;
+        drop table if exists caps_6;
         select
         L.*,
-        R.*
-        into caps_7
-        from caps_6 as L
+        R.lfm1_ekorg_key,
+        R.incoterms1,
+        R.incoterms2,
+        R.lfm1_lifnr_key,
+        R.lfas_lifnr_key,
+        R.lfas_land1_key,
+        R.lfas_stceg_key,
+        R.t005t_land1_key,
+        R.cntry_name,
+        R.t005t_spras_key,
+        R.bsak_augbl_key,
+        R.bsak_augdt_key,
+        R.bsak_belnr_key,
+        R.bsak_bukrs_key,
+        R.bsak_buzei_key,
+        R.bsak_gjahr_key,
+        R.bsak_lifnr_key,
+        R.spec_trnx_type_gl,
+        R.spec_indicator_gl,
+        R.cash_disc_percent_1_gl,
+        R.cash_disc_days_1_gl,
+        R.cash_disc_percent_2_gl,
+        R.cash_disc_days_2_gl,
+        R.pymt_period_gl,
+        R.pymt_terms_gl,
+        R.assign_num_gl
+        into caps_6
+        from caps_5 as L
         left join (select * from j4_lfa1_lfm1_lfas_t005t_bsak) as R
         on L.vend_num = R.lfa1_lifnr_key
         """
 
         j8 = """
-        drop table if exists j1_MARA_TSKMT;
+            drop table if exists j1_MARA_TSKMT;
         select
         L.data ->> 'ean_upc_num_mat' as ean_upc_num_mat,
         L.data ->> 'mara_gewei_key' as mara_gewei_key,
@@ -1741,47 +1776,11 @@ def caps_to_erd_2():
         R.data ->> 'mat_tx_class_descr_mat' as mat_tx_class_descr_mat
         into j1_MARA_TSKMT
         from (select * from sap_mara where capsgen_id = {capsgen_id}) as L
-        left join (select * from tskmt where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'mara_taxkm_key' = R.data ->> 'tskmt_taxkm_key'
+        left join (select * from sap_tskmt where capsgen_id = {capsgen_id}) as R
+        on L.data ->> 'mat_tx_class_mat' = R.data ->> 'tskmt_taxkm_key'
         ;
         """
 
-        j9 = """
-        drop table if exists J2_MARA_TSKMT_T023T;
-        select
-        L.*,
-        R.data ->> 't023t_matkl_key' as t023t_matkl_key,
-        R.data ->> 't023t_spras_key' as t023t_spras_key,
-        R.data ->> 'mat_group_descr_mat' as mat_group_descr_mat
-        into J2_MARA_TSKMT_T023T
-        from J1_MARA_TSKMT as L
-        left join (select * from sap_t023t where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'mara_matkl_key' = R.data ->> 't023t_matkl_key';
-        """
-
-        j10 = """
-        drop table if exists j1_MARA_TSKMT;
-        select
-        L.data ->> 'ean_upc_num_mat' as ean_upc_num_mat,
-        L.data ->> 'mara_gewei_key' as mara_gewei_key,
-        L.data ->> 'mat_orig_ctry_mat' as mat_orig_ctry_mat,
-        L.data ->> 'mara_magrv_key' as mara_magrv_key,
-        L.data ->> 'mara_matkl_key' as mara_matkl_key,
-        L.data ->> 'mara_matnr_key' as mara_matnr_key,
-        L.data ->> 'mara_mfrnr_key' as mara_mfrnr_key,
-        L.data ->> 'ean_categ_mat' as ean_categ_mat,
-        L.data ->> 'mat_tx_class_mat' as mat_tx_class_mat,
-        L.data ->> 'mara_voleh_key' as mara_voleh_key,
-        R.data ->> 'tskmt_spras_key' as tskmt_spras_key,
-        R.data ->> 'tskmt_tatyp_key' as tskmt_tatyp_key,
-        R.data ->> 'tskmt_taxkm_key' as tskmt_taxkm_key,
-        R.data ->> 'mat_tx_class_descr_mat' as mat_tx_class_descr_mat
-        into j1_MARA_TSKMT
-        from (select * from sap_mara where capsgen_id = {capsgen_id}) as L
-        left join (select * from tskmt where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'mara_taxkm_key' = R.data ->> 'tskmt_taxkm_key'
-        ;
-        """
         j11 = """
         drop table if exists J2_MARA_TSKMT_T023T;
         select
@@ -1792,7 +1791,7 @@ def caps_to_erd_2():
         into J2_MARA_TSKMT_T023T
         from J1_MARA_TSKMT as L
         left join (select * from sap_t023t where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'mara_matkl_key' = R.data ->> 't023t_matkl_key';
+         on L.mara_matkl_key = R.data ->> 't023t_matkl_key';
         """
 
         j12 = """
@@ -1813,24 +1812,21 @@ def caps_to_erd_2():
         select
         L.*,
         R.data ->> 'mat_descr_mat'as mat_descr_mat,
-        R.data ->> 'makt_matnr_key' as makt_matnr_key,
+        R.data ->> 'makt_matnr_key' as makt_matnr_key
         into J4_MARA_TSKMT_T023T_T006A_MAKT
         from J3_MARA_TSKMT_T023T_T006A as L
         left join (select * from sap_makt where capsgen_id = {capsgen_id}) as R
         on L.mara_matnr_key = R.data ->> 'makt_matnr_key'
         """
-
+        #Join MLAN to T005T, remove T005t columns because they are duplicate
         j14 = """
-        drop table if exists J1_MLAN_T005T;
+            drop table if exists J1_MLAN_T005T;
         select
         L.data ->> 'mat_dept_ctry_mat' as mat_dept_ctry_mat,
         L.data ->> 'mlan_matnr_key' as mlan_matnr_key,
         L.data ->> 'mat_tx_ind_mat' as mat_tx_ind_mat,
         L.data ->> 'TAXM1' as TAXM1,
-        L.data ->> 'TAXm2' as TAXM2,
-        R.t005t_land1_key,
-        R.cntry_name,
-        R.t005t_spras_key
+        L.data ->> 'TAXm2' as TAXM2
         into J1_MLAN_T005T
         from (select * from sap_t005t where capsgen_id = {capsgen_id}) as L
         left join (select * from sap_mlan where capsgen_id = {capsgen_id}) as R
@@ -1849,19 +1845,19 @@ def caps_to_erd_2():
         """
 
         j16 = """
-        drop table if exists caps_8;
+        drop table if exists caps_7;
         select
         L.*,
         R.*
-        into caps_8
-        from caps_7 as L
+        into caps_7
+        from caps_6 as L
         left join J5_MARA_TSKMT_T023T_T006A_MAKT_MLAN_T005T as R
-        on L.data ->> 'material_num_gl' = R.mara_matnr_key
+        on L.material_num_gl = R.mara_matnr_key
         """
 
 
 
-
+        #removed T001W columns as they were duplicate
         j16 = """
         drop table if exists J1_MSEG_T001W;
         select
@@ -1872,10 +1868,7 @@ def caps_to_erd_2():
         L.data ->> 'mseg_ebeln_key' as mseg_ebeln_key,
         L.data ->> 'mseg_ebelp_key' as mseg_ebelp_key,
         L.data ->> 'matnr' as matnr,
-        L.data ->> 'umwrk' as umwrk,
-        R.data ->> 'plant_name_plant' as plant_name_plant,
-        R.data ->> 'plant_tx_jur_plant' as plant_tx_jur_plant,
-        R.data ->> 't001w_werks_key' as t001w_werks_key
+        L.data ->> 'umwrk' as umwrk
         into j1_MSEG_T001W
         from (select * from sap_mseg where capsgen_id = {capsgen_id}) as L
         left join (select * from sap_t001w where capsgen_id = {capsgen_id}) as R
@@ -1886,17 +1879,17 @@ def caps_to_erd_2():
 
         #Join EKKO to T024E
         j17 = """
-        drop table if exists J1_EKKO_T024E;
+            drop table if exists J1_EKKO_T024E;
         select
         L.data ->> 'ekko_ebeln_key' as ekko_ebeln_key,
         L.data ->> 'punch_grp_po' as punch_grp_po,
         L.data ->> 'punch_org_po' as punch_org_po,
-        L.data ->> 'handover_loc_po',
-        L.data ->> 'vend_phone',
-        L.data ->> 'vend_person',
-        L.data ->> 'STCEG' as STCEG,
-        R.data ->> 't024e_ekorg_key',
-        R.data ->> 'purch_org_descr_po'
+        L.data ->> 'handover_loc_po' as handover_loc_po,
+        L.data ->> 'vend_phone' as vend_phone,
+        L.data ->> 'vend_person' as vend_person,
+        L.data ->> 'STCEG' as ekko_stceg_key,
+        R.data ->> 't024e_ekorg_key' as t024e_ekorg_key,
+        R.data ->> 'purch_org_descr_po' as purch_org_descr_po
         into j1_EKKO_T024E
         from (select * from sap_ekko where capsgen_id = {capsgen_id}) as L
         left join (select * from sap_t024e where capsgen_id = {capsgen_id}) as R
@@ -1914,12 +1907,12 @@ def caps_to_erd_2():
         L.data ->> 'po_tx_code_po' as po_tx_code_po,
         L.data ->> 'plant_num' as plant_num,
         L.data ->> 'po_tx_jur' as po_tx_jur,
-        L.data ->> 'po_item_descr' as po_item_descr
+        L.data ->> 'po_item_descr' as po_item_descr,
         R.data ->> 'stor_loc_desc_mat' as stor_loc_desc_mat,
         R.data ->> 'stor_loc_mat' as stor_loc_mat,
         R.data ->> 'stor_plant_mat' as stor_plant_mat
         into J1_EKPO_T001L
-        from (select * from sap_ekpo) where capsgen_id = {capsgen_id}) as L
+        from (select * from sap_ekpo where capsgen_id = {capsgen_id}) as L
         left join (select * from sap_t001l where capsgen_id = {capsgen_id}) as R
         on L.data ->> 'plant_num' = R.data ->> 'stor_plant_mat'
         and
@@ -1939,14 +1932,11 @@ def caps_to_erd_2():
         # left join (select * from sap_T001w where capsgen_id = {capsgen_id}) as R
         # on L.data ->> '' = R.data ->> 't001w_werks_key'
 
+        #Join EKPO T001L to TTXJT, but removed select fields because duplicate ttxjt
         j20 = """
         drop table if exists J2_EKPO_T001L_TTXJT;
         select
-        L.*,
-        R.data ->> 'ttxjt_kalsm_key' as ttxjt_kalsm_key,
-        R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key,
-        R.data ->> 'tx_jur_descr_tx' as tx_jur_descr_tx,
-        R.data ->> 'ttxjt_txjcd_key' as ttxjt_txjcd_key
+        L.*
         into J2_EKPO_T001L_TTXJT
         from J1_EKPO_T001L as L
         left join (select * from sap_t001l where capsgen_id = {capsgen_id}) as R
@@ -1961,7 +1951,7 @@ def caps_to_erd_2():
         into J3_EKPO_T001L_TTXJT_MSEG_T001W
         from J2_EKPO_T001L_TTXJT as L
         left join J1_MSEG_T001W as R
-        on L.data ->> 'ekpo_ebeln_key' = R.data ->> 'mseg_ebeln_key'
+        on L.ekpo_ebeln_key = R.mseg_ebeln_key
         AND
         L.ekpo_ebelp_key = R.mseg_ebelp_key
         """
@@ -1971,20 +1961,21 @@ def caps_to_erd_2():
         L.*,
         R.*
         into J3_EKPO_T001L_TTXJT_MSEG_T001W_EKKO_T024E
-        from J2_EKPO_T001L_TTXJT as L
+        from J3_EKPO_T001L_TTXJT_MSEG_T001W as L
         left join J1_EKKO_T024E as R
         on L.ekpo_ebeln_key = R.ekko_ebeln_key
         """
 
         j22 = """
-        drop table if exists caps_9;
+        drop table if exists caps_8;
         select
         L.*,
         R.*
-        into caps_9
-        from caps_8 as L
-        left join j4_lfa1_lfm1_lfas_t005t_bsak as R
-        on L.data ->> 'vend_num' = R.lfa1_lifnr_key
+        into caps_8
+        from caps_7 as L
+        left join J3_EKPO_T001L_TTXJT_MSEG_T001W_EKKO_T024E as R
+        on L.bseg_ebelp_key = R.ekpo_ebelp_key
+		and L.po_doc_num = R.ekpo_ebeln_key
         """
 
 
