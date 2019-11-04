@@ -1,11 +1,31 @@
 import enum
+import re
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256 as sha256
+from sqlalchemy import TypeDecorator, cast
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, Date, DateTime, VARCHAR, Float, Integer, BLOB, DATE
 
 db = SQLAlchemy()
+
+################################################################################
+# CUSTOM TYPES
+
+class ArrayOfEnum(TypeDecorator):
+    impl = postgresql.ARRAY
+    def bind_expression(self, bindvalue):
+        return cast(bindvalue, self)
+    def result_processor(self, dialect, coltype):
+        super_rp = super(ArrayOfEnum, self).result_processor(dialect, coltype)
+        def handle_raw_string(value):
+            inner = re.match(r"^{(.*)}$", value).group(1)
+            return inner.split(",") if inner else []
+        def process(value):
+            if value is None:
+                return None
+            return [ i.serialize for i in super_rp(handle_raw_string(value))]
+        return process
 
 ################################################################################
 # ENUMS
@@ -99,6 +119,9 @@ class Datatype(enum.Enum):
     dt_int = Integer
     dt_blob = BLOB
 
+class ErrorTypes(enum.Enum):
+    temp = "temp"
+
 class Jurisdiction(enum.Enum):
     ab = "Alberta"
     bc = "British Columbia"
@@ -126,6 +149,19 @@ class Jurisdiction(enum.Enum):
     def list(cls):
         return list(map(lambda c: {'code':c.name,'name':c.value}, cls))
 
+class Operator(enum.Enum):
+    equals = "="
+    greater_than_equals = ">="
+    less_than_equals = "<="
+    greater_than = ">"
+    less_than = "<"
+
+class Process(enum.Enum):
+    aps_to_caps = "APS to CAPS"
+    generate_aps = "Generate AP Subledger"
+    caps_calculations = "CAPS Calculation fields"
+
+
 ################################################################################
 # AUTH User and Token models
 class User(db.Model):
@@ -144,8 +180,16 @@ class User(db.Model):
 
     user_projects = db.relationship('UserProject', back_populates='user_project_user', lazy='dynamic', passive_deletes=True)
     user_logs = db.relationship('Log', back_populates='log_user', lazy='dynamic')
-    locked_transactions = db.relationship('Transaction', back_populates='locked_transaction_user', lazy='dynamic')
-    user_capsgen = db.relationship('CapsGen', back_populates='capsgen_user', lazy='dynamic')
+    user_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_user', lazy='dynamic')
+
+    # user_gst_coded_by = db.relationship('Transaction', back_populates='gst_coded_by_user', lazy='dynamic')
+    # user_gst_signed_off_by = db.relationship('Transaction', back_populates='gst_signed_off_by_user', lazy='dynamic')
+    # user_qst_coded_by = db.relationship('Transaction', back_populates='qst_coded_by_user', lazy='dynamic')
+    # user_qst_signed_off_by = db.relationship('Transaction', back_populates='qst_signed_off_by_user', lazy='dynamic')
+    # user_pst_coded_by = db.relationship('Transaction', back_populates='pst_coded_by_user', lazy='dynamic')
+    # user_pst_signed_off_by = db.relationship('Transaction', back_populates='pst_signed_off_by_user', lazy='dynamic')
+    # user_apo_coded_by = db.relationship('Transaction', back_populates='apo_coded_by_user', lazy='dynamic')
+    # user_apo_signed_off_by = db.relationship('Transaction', back_populates='apo_signed_off_by_user', lazy='dynamic')
 
     @property
     def serialize(self):
@@ -374,10 +418,10 @@ class Project(db.Model):
     engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
     engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
 
-    project_capsgen = db.relationship('CapsGen', back_populates='capsgen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
+    project_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
-    project_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_project', lazy='dynamic', passive_deletes=True)
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
+    project_data_params = db.relationship('DataParam', back_populates='data_param_project', lazy='dynamic', passive_deletes=True)
 
     has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -499,21 +543,52 @@ class Project(db.Model):
         return cls.query.filter_by(id = id).first()
 
 class ParedownRule(db.Model):
-    # these rules are only either core, or for a lob_sector
-    # there are no project specific rules
     __tablename__ = 'paredown_rules'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['paredown_rule_approver1_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
+        db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
+        db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
+        db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
+    )
+
+
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
+    lob_sectors = db.Column(ArrayOfEnum(postgresql.ENUM(LineOfBusinessSectors)), nullable=True)
+
+    paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
+    paredown_rule_approver2_id = db.Column(db.Integer, nullable=True) # FK
+    paredown_rule_approver2_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver2_id') # FK
+
     paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
-    paredown_rule_lob_sectors = db.relationship('ParedownRuleLineOfBusinessSector', back_populates='lob_sector_paredown_rule', lazy='dynamic', passive_deletes=True)
-    #TODO add in rule saving data
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'is_core': self.is_core,
+            'is_active': self.is_active,
+            'conditions': [i.serialize for i in self.paredown_rule_conditions],
+            'lob_sectors': self.lob_sectors if self.lob_sectors else [],
+            'code': self.code,
+            'comment': self.comment,
+            'approver1_id': self.paredown_rule_approver1_id,
+            'approver1_username': self.paredown_rule_approver1_user.username if self.paredown_rule_approver1_id else None,
+            'approver2_id': self.paredown_rule_approver2_id,
+            'approver2_username': self.paredown_rule_approver2_user.username if self.paredown_rule_approver2_id else None
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
 
 class ParedownRuleCondition(db.Model):
-    # these rules are only either core, or for a lob_sector
-    # there are no project specific rules
     __tablename__ = 'paredown_rules_conditions'
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
@@ -527,25 +602,14 @@ class ParedownRuleCondition(db.Model):
     paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
     paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions') #FK
 
-    #TODO add in rule saving data
-
-class ParedownRuleLineOfBusinessSector(db.Model):
-    __tablename__ = 'paredown_rule_lob_sector'
-    __table_args__ = (
-        db.ForeignKeyConstraint(['paredown_rule_id'], ['paredown_rules.id'], ondelete='CASCADE'),
-        db.UniqueConstraint('paredown_rule_id', 'lob_sector', name='paredown_rule_lob_sector_unique_constraint'),
-    )
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
-
-    paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
-    lob_sector_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_lob_sectors')
-
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'lob_sector': self.lob_sector.serialize
+            'field': self.field,
+            'paredown_rule_id': self.paredown_rule_id,
+            'operator': self.operator,
+            'value': self.value
         }
 
 class Vendor(db.Model):
@@ -573,92 +637,193 @@ class Vendor(db.Model):
 
 
 class CapsGen(db.Model):
-    __tablename__ = 'capsgen'
+    __tablename__ = 'caps_gen'
     __table_args__ = (
         db.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_completed = db.Column(db.Boolean, unique=False, nullable=False, default=False, server_default='f')
+    __table_args__ += (
+        db.Index('caps_gen_unique_completed', is_completed, unique=True, postgresql_where=(is_completed==False)),
+    )
 
     user_id = db.Column(db.Integer, nullable=True) #FK
-    capsgen_user = db.relationship('User', back_populates='user_capsgen')
+    caps_gen_user = db.relationship('User', back_populates='user_caps_gen')
 
-    project_id = db.Column(db.Integer, unique=True, nullable=False) # FK
-    capsgen_project = db.relationship('Project', back_populates='project_capsgen')
+    project_id = db.Column(db.Integer, nullable=False) # FK
+    caps_gen_project = db.relationship('Project', back_populates='project_caps_gen')
 
-    capsgen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapekko = db.relationship('SapEkko', back_populates='sapekko_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapmara = db.relationship('SapMara', back_populates='sapmara_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sappayr = db.relationship('SapPayr', back_populates='sappayr_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapproj = db.relationship('SapProj', back_populates='sapproj_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapprps = db.relationship('SapPrps', back_populates='sapprps_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapregup = db.relationship('SapRegup', back_populates='sapregup_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapskat = db.relationship('SapSkat', back_populates='sapskat_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt001 = db.relationship('SapT001', back_populates='sapt001_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapska1 = db.relationship('SapSka1', back_populates='sapska1_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapskb1 = db.relationship('SapSkb1', back_populates='sapskb1_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt003t = db.relationship('SapT003t', back_populates='sapt003t_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saptbslt = db.relationship('SapTbslt', back_populates='saptbslt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saptgsbt = db.relationship('SapTgsbt', back_populates='saptgsbt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saplfas = db.relationship('SapLfas', back_populates='saplfas_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saplfm1 = db.relationship('SapLfm1', back_populates='saplfm1_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saptoa01 = db.relationship('SapToa01', back_populates='saptoa01_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt024e = db.relationship('SapT024e', back_populates='sapt024e_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapmlan = db.relationship('SapMlan', back_populates='sapmlan_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapmseg = db.relationship('SapMseg', back_populates='sapmseg_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt001l = db.relationship('SapT001l', back_populates='sapt001l_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt006a = db.relationship('SapT006a', back_populates='sapt006a_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt023t = db.relationship('SapT023t', back_populates='sapt023t_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saptskmt = db.relationship('SapTskmt', back_populates='saptskmt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt005s = db.relationship('SapT005s', back_populates='sapt005s_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt007a = db.relationship('SapT007a', back_populates='sapt007a_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapttxjt = db.relationship('SapTtxjt', back_populates='sapttxjt_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_sapt005t = db.relationship('SapT005t', back_populates='sapt005t_capsgen', lazy='dynamic', passive_deletes=True)
-    capsgen_saptinct = db.relationship('SapTinct', back_populates='saptinct_capsgen', lazy='dynamic', passive_deletes=True)
+    caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcaps = db.relationship('SapCaps', back_populates='sapcaps_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapaps = db.relationship('SapAps', back_populates='sapaps_caps_gen', lazy='dynamic', passive_deletes=True)
+
+    caps_gen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapbseg = db.relationship('SapBseg', back_populates='sapbseg_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcepct = db.relationship('SapCepct', back_populates='sapcepct_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcsks = db.relationship('SapCsks', back_populates='sapcsks_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapcskt = db.relationship('SapCskt', back_populates='sapcskt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapekko = db.relationship('SapEkko', back_populates='sapekko_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapekpo = db.relationship('SapEkpo', back_populates='sapekpo_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapiflot = db.relationship('SapIflot', back_populates='sapiflot_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapiloa = db.relationship('SapIloa', back_populates='sapiloa_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saplfa1 = db.relationship('SapLfa1', back_populates='saplfa1_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapmakt = db.relationship('SapMakt', back_populates='sapmakt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapmara = db.relationship('SapMara', back_populates='sapmara_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sappayr = db.relationship('SapPayr', back_populates='sappayr_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapproj = db.relationship('SapProj', back_populates='sapproj_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapprps = db.relationship('SapPrps', back_populates='sapprps_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapregup = db.relationship('SapRegup', back_populates='sapregup_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapskat = db.relationship('SapSkat', back_populates='sapskat_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt001 = db.relationship('SapT001', back_populates='sapt001_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapskb1 = db.relationship('SapSkb1', back_populates='sapskb1_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt003t = db.relationship('SapT003t', back_populates='sapt003t_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saptbslt = db.relationship('SapTbslt', back_populates='saptbslt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saptgsbt = db.relationship('SapTgsbt', back_populates='saptgsbt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saplfas = db.relationship('SapLfas', back_populates='saplfas_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saplfm1 = db.relationship('SapLfm1', back_populates='saplfm1_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saptoa01 = db.relationship('SapToa01', back_populates='saptoa01_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt024e = db.relationship('SapT024e', back_populates='sapt024e_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapmlan = db.relationship('SapMlan', back_populates='sapmlan_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapmseg = db.relationship('SapMseg', back_populates='sapmseg_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt001l = db.relationship('SapT001l', back_populates='sapt001l_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt006a = db.relationship('SapT006a', back_populates='sapt006a_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt023t = db.relationship('SapT023t', back_populates='sapt023t_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saptskmt = db.relationship('SapTskmt', back_populates='saptskmt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt005s = db.relationship('SapT005s', back_populates='sapt005s_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt007a = db.relationship('SapT007a', back_populates='sapt007a_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapttxjt = db.relationship('SapTtxjt', back_populates='sapttxjt_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt001w = db.relationship('SapT001w', back_populates='sapt001w_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapt005t = db.relationship('SapT005t', back_populates='sapt005t_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_saptinct = db.relationship('SapTinct', back_populates='saptinct_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
+
+    @property
+    def serialize(self):
+        def caps_data_serialize(caps_data):
+            return [{ 'id': i.id, 'data': i.data } for i in caps_data]
+        return {
+            'id': self.id,
+            'created': self.created,
+            'is_completed': self.is_completed,
+            'user_id': self.user_id,
+            'project_id': self.project_id,
+            'project_name': self.caps_gen_project.name,
+            'gst_registration': [i.serialize for i in self.caps_gen_gst_registration],
+            'data_mappings': [i.serialize for i in self.caps_gen_data_mappings],
+            'caps_data': {
+                'caps_gen_sapaufk': caps_data_serialize(self.caps_gen_sapaufk),
+                'caps_gen_sapbkpf': caps_data_serialize(self.caps_gen_sapbkpf),
+                'caps_gen_sapbsak': caps_data_serialize(self.caps_gen_sapbsak),
+                'caps_gen_sapbseg': caps_data_serialize(self.caps_gen_sapbseg),
+                'caps_gen_sapcepct': caps_data_serialize(self.caps_gen_sapcepct),
+                'caps_gen_sapcsks': caps_data_serialize(self.caps_gen_sapcsks),
+                'caps_gen_sapcskt': caps_data_serialize(self.caps_gen_sapcskt),
+                'caps_gen_sapekko': caps_data_serialize(self.caps_gen_sapekko),
+                'caps_gen_sapekpo': caps_data_serialize(self.caps_gen_sapekpo),
+                'caps_gen_sapiflot': caps_data_serialize(self.caps_gen_sapiflot),
+                'caps_gen_sapiloa': caps_data_serialize(self.caps_gen_sapiloa),
+                'caps_gen_saplfa1': caps_data_serialize(self.caps_gen_saplfa1),
+                'caps_gen_sapmakt': caps_data_serialize(self.caps_gen_sapmakt),
+                'caps_gen_sapmara': caps_data_serialize(self.caps_gen_sapmara),
+                'caps_gen_sappayr': caps_data_serialize(self.caps_gen_sappayr),
+                'caps_gen_sapproj': caps_data_serialize(self.caps_gen_sapproj),
+                'caps_gen_sapprps': caps_data_serialize(self.caps_gen_sapprps),
+                'caps_gen_sapregup': caps_data_serialize(self.caps_gen_sapregup),
+                'caps_gen_sapskat': caps_data_serialize(self.caps_gen_sapskat),
+                'caps_gen_sapt001': caps_data_serialize(self.caps_gen_sapt001),
+                'caps_gen_sapt007s': caps_data_serialize(self.caps_gen_sapt007s),
+                'caps_gen_sapskb1': caps_data_serialize(self.caps_gen_sapskb1),
+                'caps_gen_sapt003t': caps_data_serialize(self.caps_gen_sapt003t),
+                'caps_gen_saptbslt': caps_data_serialize(self.caps_gen_saptbslt),
+                'caps_gen_saptgsbt': caps_data_serialize(self.caps_gen_saptgsbt),
+                'caps_gen_saplfas': caps_data_serialize(self.caps_gen_saplfas),
+                'caps_gen_saplfm1': caps_data_serialize(self.caps_gen_saplfm1),
+                'caps_gen_saptoa01': caps_data_serialize(self.caps_gen_saptoa01),
+                'caps_gen_sapt024e': caps_data_serialize(self.caps_gen_sapt024e),
+                'caps_gen_sapmlan': caps_data_serialize(self.caps_gen_sapmlan),
+                'caps_gen_sapmseg': caps_data_serialize(self.caps_gen_sapmseg),
+                'caps_gen_sapt001l': caps_data_serialize(self.caps_gen_sapt001l),
+                'caps_gen_sapt006a': caps_data_serialize(self.caps_gen_sapt006a),
+                'caps_gen_sapt023t': caps_data_serialize(self.caps_gen_sapt023t),
+                'caps_gen_saptskmt': caps_data_serialize(self.caps_gen_saptskmt),
+                'caps_gen_sapt005s': caps_data_serialize(self.caps_gen_sapt005s),
+                'caps_gen_sapt007a': caps_data_serialize(self.caps_gen_sapt007a),
+                'caps_gen_sapttxjt': caps_data_serialize(self.caps_gen_sapttxjt),
+                'caps_gen_sapt001w': caps_data_serialize(self.caps_gen_sapt001w),
+                'caps_gen_sapt005t': caps_data_serialize(self.caps_gen_sapt005t),
+                'caps_gen_saptinct': caps_data_serialize(self.caps_gen_saptinct)
+            }
+        }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+class DataParam(db.Model):
+    _tablename_ = 'data_params'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    process = db.Column(db.Enum(Process), nullable=False)
+    param = db.Column(db.String, nullable=False)
+    operator = db.Column(db.Enum(Operator), nullable=False)
+    value = db.Column(postgresql.ARRAY(db.String), nullable=True)
+    is_many = db.Column(db.Boolean, nullable=False)
+
+    project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
+    data_param_project = db.relationship('Project', back_populates='project_data_params')
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
-        db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['cdm_label_script_label'], ['cdm_labels.script_label']),
     )
-    column_name = db.Column(db.String(256), nullable=False)
-    table_name = db.Column(db.String(256), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    project_id = db.Column(db.Integer, nullable=False, primary_key=True) # FK
-    data_mapping_project = db.relationship('Project', back_populates='project_data_mappings') # FK
+    column_name = db.Column(db.String(256), nullable=True, default='')
+    table_name = db.Column(db.String(256), nullable=True, default='')
 
-    cdm_label_script_label = db.Column(db.String(256), nullable=False, primary_key=True) # FK
-    data_mapping_cdm_label = db.relationship('CDM_label', back_populates='cdm_label_data_mappings') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
+
+    cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
+    data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings') # FK
 
     @property
     def serialize(self):
         return {
-            self.table_name: [{"column_name": self.column_name, "script_label" : self.cdm_label_script_label}]
+            'id': self.id,
+            'caps_gen_id': self.caps_gen_id,
+            'label': self.cdm_label_script_label,
+            'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
+            'table_name': self.table_name,
+            'column_name': self.column_name
         }
 
-class CDM_label(db.Model):
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
+class CDMLabel(db.Model):
     __tablename__ = 'cdm_labels'
+    # data mapping
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
+    is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, server_default='t')
     display_name = db.Column(db.String(256), nullable=True)
+
+    # data dictionary
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
     datatype = db.Column(db.Enum(Datatype), nullable=False)
-    length = db.Column(db.String(256), nullable=False)
+    length = db.Column(db.Integer, nullable=False, default=0, server_default='0')
+    precision = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     caps_interface = db.Column(db.Enum(Caps_Interface), nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
 
@@ -667,14 +832,23 @@ class CDM_label(db.Model):
     @property
     def serialize(self):
         return {
-            "script_label": self.script_label,
-            "display_name": self.display_name,
-            "is_calculated": self.is_calculated,
-            "is_unique": self.is_unique,
-            "datatype": self.datatype,
-            "length": self.length,
-            "caps_interface": self.caps_interface,
-            "mappings": [{"column_name": map.column_name, "table_name": map.table_name} for map in self.cdm_label_data_mappings.all()]
+            'script_label': self.script_label,
+            'is_active': self.is_active,
+            'display_name': self.display_name,
+
+            'is_calculated': self.is_calculated,
+            'is_unique': self.is_unique,
+            'datatype': self.datatype.name,
+            'length': self.length,
+            'precision': self.precision,
+            'caps_interface': self.caps_interface.value if self.caps_interface else None,
+        }
+    @property
+    def paredown_columns_serialize(self):
+        return {
+            'script_label': self.script_label,
+            'display_name': self.display_name,
+            'caps_interface': self.caps_interface
         }
 
 ################################################################################
@@ -817,6 +991,37 @@ class MasterModelPerformance(db.Model):
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
 
 ################################################################################
+class Code(db.Model):
+    __tablename__ = 'codes'
+    __table_args__ = (
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    code_number = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.String(2048), nullable=True)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'code_number': self.code_number,
+            'description': self.description
+        }
+
+class ErrorCategory(db.Model):
+    __tablename__ = 'error_categories'
+    __table_args__ = (
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    description = db.Column(db.String(2048), nullable=True)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'description': self.description
+        }
+
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     __table_args__ = (
@@ -825,6 +1030,19 @@ class Transaction(db.Model):
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
+
+        db.ForeignKeyConstraint(['gst_hst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['gst_hst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['gst_hst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['qst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['qst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['qst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['pst_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['pst_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['pst_signed_off_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['apo_code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['apo_coded_by_id'], ['users.id']),
+        db.ForeignKeyConstraint(['apo_signed_off_by_id'], ['users.id']),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -835,10 +1053,49 @@ class Transaction(db.Model):
     rbc_recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
-    codes = db.Column(postgresql.JSON, nullable=False)
+
+    gst_hst_code_id = db.Column(db.Integer, nullable=True) #FK
+    gst_code = db.relationship('Code', foreign_keys='Transaction.gst_hst_code_id') #FK
+    gst_hst_notes = db.Column(db.String(2048), nullable=True)
+    gst_hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    gst_hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
+    gst_hst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    gst_coded_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_coded_by_id') # FK
+    gst_hst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    gst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_signed_off_by_id') # FK
+
+    qst_code_id = db.Column(db.Integer, nullable=True) #FK
+    qst_code = db.relationship('Code', foreign_keys='Transaction.qst_code_id') #FK
+    qst_notes = db.Column(db.String(2048), nullable=True)
+    qst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
+    qst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    qst_coded_by_user = db.relationship('User', foreign_keys='Transaction.qst_coded_by_id') # FK
+    qst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id') # FK
+
+    pst_code_id = db.Column(db.Integer, nullable=True) #FK
+    pst_code = db.relationship('Code', foreign_keys='Transaction.pst_code_id') #FK
+    pst_notes = db.Column(db.String(2048), nullable=True)
+    pst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
+    pst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    pst_coded_by_user = db.relationship('User', foreign_keys='Transaction.pst_coded_by_id') # FK
+    pst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id') # FK
+
+    apo_code_id = db.Column(db.Integer, nullable=True) #FK
+    apo_code = db.relationship('Code', foreign_keys='Transaction.apo_code_id') #FK
+    apo_notes = db.Column(db.String(2048), nullable=True)
+    apo_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
+    apo_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    apo_coded_by_user = db.relationship('User', foreign_keys='Transaction.apo_coded_by_id') # FK
+    apo_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    apo_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.apo_signed_off_by_id') # FK
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    locked_transaction_user = db.relationship('User', back_populates='locked_transactions') # FK
+    locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id') # FK
 
     vendor_id = db.Column(db.Integer, nullable=False) # FK
     transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions') # FK
@@ -897,237 +1154,303 @@ class FXRates(db.Model):
     @property
     def serialize(self):
         return {
-            'date_id': self.date_id,
+            'id': self.id,
+            'date': self.date,
             'usdtocad': self.usdtocad
+        }
+
+class GstRegistration(db.Model):
+    _tablename__ = 'gst_registration'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    vendor_country = db.Column(db.String(64), nullable=True)
+    vendor_number = db.Column(db.String(16), nullable=True)
+    vendor_city = db.Column(db.String(16), nullable=True)
+    vendor_region = db.Column(db.String(16), nullable=True)
+    # TODO: how to mark this column
+    duplicate_flag = db.Column(db.String(4), nullable=True)
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    gst_registration_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_gst_registration') # FK
+
+    @property
+    def serialize(self):
+        return {
+            "id": self.id,
+            "project_id": self.gst_registration_caps_gen.project_id
+        }
+
+class SapCaps(db.Model):
+    _tablename__ = 'sap_caps'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    # TODO: John add columns here
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps') # FK
+
+    @property
+    def serialize(self):
+        return {
+            "id": self.id,
+            "caps_gen_id": self.caps_gen_id
+        }
+
+class SapAps(db.Model):
+    _tablename__ = 'sap_aps'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    # TODO: John add columns here
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaps') # FK
+
+    @property
+    def serialize(self):
+        return {
+            "id": self.id,
+            "caps_gen_id": self.caps_gen_id
         }
 
 class SapBseg(db.Model):
     _tablename__ = 'sap_bseg'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapbseg_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbseg')
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapbseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbseg') # FK
 
 class SapAufk(db.Model):
     _tablename__ = 'sap_aufk'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapaufk_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapaufk')
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapaufk_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaufk') # FK
 
 class SapBkpf(db.Model):
     _tablename__ = 'sap_bkpf'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapbkpf_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbkpf')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapbkpf_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbkpf') # FK
 
 class SapRegup(db.Model):
     _tablename__ = 'sap_regup'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapregup_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapregup')
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapregup_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapregup') # FK
 
 class SapCepct(db.Model):
     _tablename__ = 'sap_cepct'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapcepct_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcepct')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapcepct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepct') # FK
 
 class SapCskt(db.Model):
     _tablename__ = 'sap_cskt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapcskt_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcskt')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapcskt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcskt') # FK
 
 class SapEkpo(db.Model):
     _tablename__ = 'sap_ekpo'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapekpo_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapekpo')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapekpo_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekpo') # FK
 
 class SapPayr(db.Model):
     _tablename__ = 'sap_payr'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sappayr_capsgen = db.relationship('CapsGen', back_populates='capsgen_sappayr')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sappayr_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sappayr') # FK
 
 class SapBsak(db.Model):
     _tablename__ = 'sap_bsak'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapbsak_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapbsak')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapbsak_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbsak') # FK
 
 class SapCsks(db.Model):
     _tablename__ = 'sap_csks'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapcsks_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapcsks')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapcsks_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcsks') # FK
 
 class SapEkko(db.Model):
     _tablename__ = 'sap_ekko'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapekko_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapekko')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapekko_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekko') # FK
 
 class SapIflot(db.Model):
     _tablename__ = 'sap_iflot'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapiflot_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapiflot')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapiflot_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiflot') # FK
 
 class SapIloa(db.Model):
     _tablename__ = 'sap_iloa'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapiloa_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapiloa')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapiloa_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiloa') # FK
 
 class SapSkat(db.Model):
     _tablename__ = 'sap_skat'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    sapskat_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapskat')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sapskat_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskat') # FK
 
 class SapLfa1(db.Model):
     _tablename__ = 'sap_lfa1'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer, nullable=False)
-    saplfa1_capsgen = db.relationship('CapsGen', back_populates='capsgen_saplfa1')
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    saplfa1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfa1') # FK
 
 class SapMakt(db.Model):
     _tablename__ = 'sap_makt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapmakt_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmakt')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapmakt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmakt') # FK
 
 class SapMara(db.Model):
     _tablename__ = 'sap_mara'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapmara_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmara')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapmara_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmara') # FK
 
 class SapProj(db.Model):
     _tablename__ = 'sap_proj'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapproj_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapproj')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapproj_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapproj') # FK
 
 class SapPrps(db.Model):
     _tablename__ = 'sap_prps'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapprps_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapprps')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapprps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapprps') # FK
 
 class SapT001(db.Model):
     _tablename__ = 'sap_t001'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt001_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt001')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt001_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001') # FK
 
 class SapT007s(db.Model):
     _tablename__ = 'sap_t007s'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt007s_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt007s')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt007s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007s') # FK
 
 
 class SapSka1(db.Model):
@@ -1145,219 +1468,219 @@ class SapSka1(db.Model):
 class SapSkb1(db.Model):
     _tablename__ = 'sap_skb1'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapskb1_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapskb1')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapskb1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskb1') # FK
 
 class SapT003t(db.Model):
     _tablename__ = 'sap_t003t'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt003t_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt003t')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt003t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt003t') # FK
 
 class SapTbslt(db.Model):
     _tablename__ = 'sap_tbslt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saptbslt_capsgen = db.relationship('CapsGen', back_populates='capsgen_saptbslt')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saptbslt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptbslt') # FK
 
 class SapTgsbt(db.Model):
     _tablename__ = 'sap_tbslt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saptgsbt_capsgen = db.relationship('CapsGen', back_populates='capsgen_saptgsbt')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saptgsbt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptgsbt') # FK
 
 class SapLfas(db.Model):
     _tablename__ = 'sap_lfas'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saplfas_capsgen = db.relationship('CapsGen', back_populates='capsgen_saplfas')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saplfas_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfas') # FK
 
 class SapLfm1(db.Model):
     _tablename__ = 'sap_lfm1'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saplfm1_capsgen = db.relationship('CapsGen', back_populates='capsgen_saplfm1')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saplfm1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfm1') # FK
 
 class SapT024e(db.Model):
     _tablename__ = 'sap_t024e'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt024e_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt024e')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt024e_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024e') # FK
 
 class SapToa01(db.Model):
     _tablename__ = 'sap_toa01'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saptoa01_capsgen = db.relationship('CapsGen', back_populates='capsgen_saptoa01')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saptoa01_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptoa01') # FK
 
 class SapMlan(db.Model):
     _tablename__ = 'sap_mlan'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapmlan_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmlan')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapmlan_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmlan') # FK
 
 class SapMseg(db.Model):
     _tablename__ = 'sap_mseg'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapmseg_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapmseg')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapmseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmseg') # FK
 
 class SapT001l(db.Model):
     _tablename__ = 'sap_t001l'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt001l_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt001l')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt001l_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001l') # FK
 
 class SapT006a(db.Model):
     _tablename__ = 'sap_t006a'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt006a_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt006a')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt006a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt006a') # FK
 
 class SapT023t(db.Model):
     _tablename__ = 'sap_t023t'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt023t_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt023t')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt023t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt023t') # FK
 
 class SapTskmt(db.Model):
     _tablename__ = 'sap_tskmt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saptskmt_capsgen = db.relationship('CapsGen', back_populates='capsgen_saptskmt')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saptskmt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptskmt') # FK
 
 class SapT005s(db.Model):
     _tablename__ = 'sap_t005s'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt005s_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt005s')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt005s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005s') # FK
 
 class SapT007a(db.Model):
     _tablename__ = 'sap_t007a'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt007a_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt007a')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt007a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007a') # FK
 
 class SapTtxjt(db.Model):
     _tablename__ = 'sap_ttxjt'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapttxjt_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapttxjt')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapttxjt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapttxjt') # FK
 
 class SapT001w(db.Model):
     _tablename__ = 'sap_t001w'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt001w_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt001w')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt001w_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001w') # FK
 
 class SapT005t(db.Model):
     _tablename__ = 'sap_t005t'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapt005t_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapt005t')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    sapt005t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005t') # FK
 
 class SapTinct(db.Model):
     _tablename__ = 'sap_tinct'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    saptinct_capsgen = db.relationship('CapsGen', back_populates='capsgen_saptinct')
+    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
+    saptinct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptinct') # FK
