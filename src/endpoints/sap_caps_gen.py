@@ -1291,36 +1291,36 @@ def caps_to_erd_1():
         on L.control_area_gl = R.csks_kokrs_key
         """
         #join CEPC and CEPCT
-        j21 = """
-        drop table if exists j1_CEPC_CEPCT;
-        select
-        L.data ->> 'cepc_datbi_key' as cepc_datbi_key,
-        L.data ->> 'cepc_kokrs_key' as cepc_kokrs_key,
-        L.data ->> 'cepc_prctr_key' as cepc_prctr_key,
-        L.data ->> 'profit_ctr_tx_jur' as profit_ctr_tx_jur,
-        L.data ->> 'datab' as datab,
-        R.data ->> 'profit_ctr_name' as profit_ctr_name,
-        R.data ->> 'profit_ctr_descr' as profit_ctr_descr,
-        R.data ->> 'cepct_prctr_key' as cepct_prctr_key,
-        R.data ->> 'cepct_spras_key' as cepct_spras_key,
-        R.data ->> 'KOKRS' as KOKRS
-        into j1_CEPC_CEPCT
-        from (select * from sap_cepc where capsgen_id = {capsgen_id}) as L
-        left join (select * from sap_cepct where capsgen_id = {capsgen_id}) as R
-        on L.data ->> 'cepc_prctr_key' = R.data ->> 'cepct_prctr_key'
-        and L.data ->> 'cepc_kokrs_key' = R.data ->> 'KOKRS'
-        """
+        # j21 = """
+        # drop table if exists j1_CEPC_CEPCT;
+        # select
+        # L.data ->> 'cepc_datbi_key' as cepc_datbi_key,
+        # L.data ->> 'cepc_kokrs_key' as cepc_kokrs_key,
+        # L.data ->> 'cepc_prctr_key' as cepc_prctr_key,
+        # L.data ->> 'profit_ctr_tx_jur' as profit_ctr_tx_jur,
+        # L.data ->> 'datab' as datab,
+        # R.data ->> 'profit_ctr_name' as profit_ctr_name,
+        # R.data ->> 'profit_ctr_descr' as profit_ctr_descr,
+        # R.data ->> 'cepct_prctr_key' as cepct_prctr_key,
+        # R.data ->> 'cepct_spras_key' as cepct_spras_key,
+        # R.data ->> 'KOKRS' as KOKRS
+        # into j1_CEPC_CEPCT
+        # from (select * from sap_cepc where capsgen_id = {capsgen_id}) as L
+        # left join (select * from sap_cepct where capsgen_id = {capsgen_id}) as R
+        # on L.data ->> 'cepc_prctr_key' = R.data ->> 'cepct_prctr_key'
+        # and L.data ->> 'cepc_kokrs_key' = R.data ->> 'KOKRS'
+        # """
         #join CAPS with j1_CEPC_CEPCT
-        j22 = """
-        drop table if exists caps_5;
-        select L.*,
-        R.*
-        into caps_5
-        from caps_4 as L
-        left join (select * from j1_CEPC_CEPCT) as R
-        on L.data ->> 'profit_ctr_num' = R.cepc_prctr_key
-        and L.data ->> 'bseg_budat_key' = R.cepc_datbi_key
-        #"""
+        # j22 = """
+        # drop table if exists caps_5;
+        # select L.*,
+        # R.*
+        # into caps_5
+        # from caps_4 as L
+        # left join (select * from j1_CEPC_CEPCT) as R
+        # on L.data ->> 'profit_ctr_num' = R.cepc_prctr_key
+        # and L.data ->> 'bseg_budat_key' = R.cepc_datbi_key
+        # #"""
 
         j23 = """
         drop table if exists j1_PRPS_PROJ;
