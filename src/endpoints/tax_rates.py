@@ -1,5 +1,5 @@
 '''
-Client Vendor Mater Endpoints
+Tax Rate Endpoints
 '''
 from sqlalchemy import desc
 from flask import Blueprint, jsonify, request
@@ -7,15 +7,15 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
-client_vendor_master = Blueprint('client_vendor_master', __name__)
+tax_rates = Blueprint('tax_rates', __name__)
 #===============================================================================
-# Get ClientVendorMaster information for project
-@client_vendor_master.route('/', methods=['GET'])
+# Get Tax Rates
+@tax_rates.route('/', methods=['GET'])
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_client_vendor_master(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+def get_tax_rates():
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     if 'project_id' not in args.keys():
@@ -23,12 +23,11 @@ def get_client_vendor_master(id):
     if not Project.find_by_id(args['project_id']):
         raise ValueError('Project does not exist.')
 
-    query = CapsGen.query.order_by(desc(CapsGen.created))
-    query = query.filter_by(project_id=args['project_id'])
-    capsgen = query.first()
+    # check if caps_gen exist, if exist proceed, if not send back error message
+    capsgen = CapsGen.query.filter_by(project_id=args['project_id']).order_by(desc(CapsGen.id)).first()
     if not capsgen:
-        raise ValueError('There is no CapsGen for this project.')
-    rows = SapLfa1.query.filter_by(capsgen_id=capsgen.id).all()
+        raise ValueError("Caps has not been generated, Please generate caps first.")
+    rows = SapT007s.query.filter_by(capsgen_id=capsgen.id).all()
     response['payload'] = [row.data for row in rows]
 
     return jsonify(response), 200
