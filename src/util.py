@@ -104,7 +104,7 @@ def source_data_unzipper(data, response):
                     move_nested_folder(dir, outputPath)
         except OSError as e:
             raise Exception(str(e))
-    
+
     def remove_empty_folders(inPath):
         try:
             for root, dirs, files in os.walk(inPath):
@@ -121,7 +121,7 @@ def source_data_unzipper(data, response):
             move_nested_folder(current_output_path, current_output_path)
             remove_empty_folders(current_output_path)
         else:
-            raise Exception(str(data['file_name']) + 'does not end with .zip')
+            raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
         #use blob storage
         pass
