@@ -847,20 +847,6 @@ def aps_to_caps(id):
         on L.data ->> 'co_code_gl' = R.data ->> 't001_bukrs_key
         """.format(capsgen_id = capsgen_id)
 
-    # Execute the joins defined above.
-        execute(j1revised)
-        execute(j2revised)
-        execute(j3revised)
-        execute(j4revised)
-        execute(j5revised)
-        execute(j6revised)
-        execute(j7revised)
-        execute(j8revised)
-        response['message'] = ''
-        response['payload'] = []
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
     return jsonify(response), 200
 
 #This is the check that needs to be done to see whether vardocamt and varlocamt net to 0. This is referring to GL netting to 0. Ask Andy for more details.
@@ -868,16 +854,7 @@ def aps_to_caps(id):
 def aps_quality_check():
     response = {
         "VERSION": current_app.config['VERSION']
-    }
-    try:
-        response['VERSION'] = current_app.config['VERSION']
-        response['message'] = ''
-        response['payload'] = []
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = str(e)
-        response['payload'] = []
-        return jsonify(response), 400
+
     return jsonify(response)
 
 # see feature branch 72-aps_to_caps for more info
@@ -896,131 +873,131 @@ def aps_to_caps():
         response = {'status': 'ok', 'message': {}, 'payload': {}}
         j17 = """
             drop table if exists aps_relational;
-select
-L.data ->> 'MANDT' as MANDT,
-L.data ->> 'BUZID' as BUZID,
-L.data ->> 'AUGDT' as AUGDT,
-L.data ->> 'AUGCP' as AUGCP,
-L.data ->> 'AUGBL' as AUGBL,
-L.data ->> 'KOART' as KOART,
-L.data ->> 'UMSKZ' as UMSKZ,
-L.data ->> 'UMSKS' as UMSKS,
-L.data ->> 'ZUMSK' as ZUMSK,
-L.data ->> 'SHKZG' as SHKZG,
-L.data ->> 'QSSKZ' as QSSKZ,
-L.data ->> 'KZBTR' as KZBTR,
-L.data ->> 'PSWBT' as PSWBT,
-L.data ->> 'PSWSL' as PSWSL,
-L.data ->> 'HWBAS' as HWBAS,
-L.data ->> 'TXGRP' as TXGRP,
-L.data ->> 'KTOSL' as KTOSL,
-L.data ->> 'QSSHB' as QSSHB,
-L.data ->> 'ZUONR' as ZUONR,
-L.data ->> 'VBUND' as VBUND,
-L.data ->> 'BEWAR' as BEWAR,
-L.data ->> 'VORGN' as VORGN,
-L.data ->> 'AUFNR' as AUFNR,
-L.data ->> 'ANBWA' as ANBWA,
-L.data ->> 'XUMSW' as XUMSW,
-L.data ->> 'XCPDD' as XCPDD,
-L.data ->> 'XAUTO' as XAUTO,
-L.data ->> 'XZAHL' as XZAHL,
-L.data ->> 'SAKNR' as SAKNR,
-L.data ->> 'XBILK' as XBILK,
-L.data ->> 'GVTYP' as GVTYP,
-L.data ->> 'ZFBDT' as ZFBDT,
-L.data ->> 'ZTERM' as ZTERM,
-L.data ->> 'ZBD1T' as ZBD1T,
-L.data ->> 'ZBD2T' as ZBD2T,
-L.data ->> 'ZBD3T' as ZBD3T,
-L.data ->> 'ZBD1P' as ZBD1P,
-L.data ->> 'ZBD2P' as ZBD2P,
-L.data ->> 'SKFBT' as SKFBT,
-L.data ->> 'SKNTO' as SKNTO,
-L.data ->> 'ZLSCH' as ZLSCH,
-L.data ->> 'NEBTR' as NEBTR,
-L.data ->> 'REBZG' as REBZG,
-L.data ->> 'REBZJ' as REBZJ,
-L.data ->> 'REBZZ' as REBZZ,
-L.data ->> 'QSFBT' as QSFBT,
-L.data ->> 'WERKS' as WERKS,
-L.data ->> 'MENGE' as MENGE,
-L.data ->> 'MEINS' as MEINS,
-L.data ->> 'ERFME' as ERFME,
-L.data ->> 'BWKEY' as BWKEY,
-L.data ->> 'BWTAR' as BWTAR,
-L.data ->> 'BUSTW' as BUSTW,
-L.data ->> 'STCEG' as STCEG,
-L.data ->> 'EGLLD' as EGLLD,
-L.data ->> 'XHKOM' as XHKOM,
-L.data ->> 'NPLNR' as NPLNR,
-L.data ->> 'AUFPL' as AUFPL,
-L.data ->> 'APLZL' as APLZL,
-L.data ->> 'DMBE2' as DMBE2,
-L.data ->> 'HWMET' as HWMET,
-L.data ->> 'XRAGL' as XRAGL,
-L.data ->> 'XNEGP' as XNEGP,
-L.data ->> 'KIDNO' as KIDNO,
-L.data ->> 'FKBER_LONG' as FKBER_LONG,
-L.data ->> 'AUGGJ' as AUGGJ,
-L.data ->> 'SEGMENT' as SEGMENT,
-L.data ->> 'TAXPS' as TAXPS,
-L.data ->> 'main_asset_num' as main_asset_num,
-L.data ->> 'asset_sub_num' as asset_sub_num,
-L.data ->> 'gl_doc_num' as gl_doc_num,
-L.data ->> 'post_key_gl' as post_key_gl,
-L.data ->> 'co_code_gl' as co_code_gl,
-L.data ->> 'bseg_buzei_key' as bseg_buzei_key,
-L.data ->> 'amount_local_ccy' as amount_local_ccy,
-L.data ->> 'po_doc_num' as po_doc_num,
-L.data ->> 'bseg_ebelp_key' as bseg_ebelp_key,
-L.data ->> 'func_area_gl' as func_area_gl,
-L.data ->> 'fiscal_year_gl' as fiscal_year_gl,
-L.data ->> 'bus_area_dept_num_gl' as bus_area_dept_num_gl,
-L.data ->> 'largest_debit_half_acct_num_gl' as largest_debit_half_acct_num_gl,
-L.data ->> 'cost_ctr_num_gl' as cost_ctr_num_gl,
-L.data ->> 'cx_num' as cx_num,
-L.data ->> 'material_num_gl' as material_num_gl,
-L.data ->> 'po_tax_code_gl' as po_tax_code_gl,
-L.data ->> 'gst_hst_qst_pst_local_ccy' as gst_hst_qst_pst_local_ccy,
-L.data ->> 'bseg_pargb_key' as bseg_pargb_key,
-L.data ->> 'profit_ctr_num' as profit_ctr_num,
-L.data ->> 'wbs_gl' as wbs_gl,
-L.data ->> 'item_descr_gl' as item_descr_gl,
-L.data ->> 'tax_jur_gl' as tax_jur_gl,
-L.data ->> 'sales_doc_num_gl' as sales_doc_num_gl,
-L.data ->> 'billing_doc_num' as billing_doc_num,
-L.data ->> 'gst_hst_pst_qst_doc_ccy' as gst_hst_pst_qst_doc_ccy,
-L.data ->> 'ap_ar_amt_doc_ccy' as ap_ar_amt_doc_ccy,
-L.varapkey,
-L.vend_num,
-L.varmultivnd,
-L.doc_type_gl,
-L.inv_date,
-L.inv_num,
-L.ccy,
-L.fiscal_period_gl,
-L.cputm,
-L.fx_rate,
-L.trnx_code_gl,
-L.ktopl,
-L.vend_name,
-L.name2,
-L.lfa1_land1_key,
-L.vend_region,
-L.vend_city,
-L.pstlz,
-L.stras,
-R.vardocamt,
-R.varlocamt
-into aps_relational
-from
-aps as L
-left join
-(select id,
- -(cast(data ->> 'ap_ar_amt_doc_ccy' as FLOAT)) as vardocamt,
- -(cast(data ->> 'amount_local_ccy' as FLOAT)) as varlocamt
- from aps where cast(data ->> 'SHKZG' as TEXT) = 'H') as R on L.id = R.id
+    select
+    L.data ->> 'MANDT' as MANDT,
+    L.data ->> 'BUZID' as BUZID,
+    L.data ->> 'AUGDT' as AUGDT,
+    L.data ->> 'AUGCP' as AUGCP,
+    L.data ->> 'AUGBL' as AUGBL,
+    L.data ->> 'KOART' as KOART,
+    L.data ->> 'UMSKZ' as UMSKZ,
+    L.data ->> 'UMSKS' as UMSKS,
+    L.data ->> 'ZUMSK' as ZUMSK,
+    L.data ->> 'SHKZG' as SHKZG,
+    L.data ->> 'QSSKZ' as QSSKZ,
+    L.data ->> 'KZBTR' as KZBTR,
+    L.data ->> 'PSWBT' as PSWBT,
+    L.data ->> 'PSWSL' as PSWSL,
+    L.data ->> 'HWBAS' as HWBAS,
+    L.data ->> 'TXGRP' as TXGRP,
+    L.data ->> 'KTOSL' as KTOSL,
+    L.data ->> 'QSSHB' as QSSHB,
+    L.data ->> 'ZUONR' as ZUONR,
+    L.data ->> 'VBUND' as VBUND,
+    L.data ->> 'BEWAR' as BEWAR,
+    L.data ->> 'VORGN' as VORGN,
+    L.data ->> 'AUFNR' as AUFNR,
+    L.data ->> 'ANBWA' as ANBWA,
+    L.data ->> 'XUMSW' as XUMSW,
+    L.data ->> 'XCPDD' as XCPDD,
+    L.data ->> 'XAUTO' as XAUTO,
+    L.data ->> 'XZAHL' as XZAHL,
+    L.data ->> 'SAKNR' as SAKNR,
+    L.data ->> 'XBILK' as XBILK,
+    L.data ->> 'GVTYP' as GVTYP,
+    L.data ->> 'ZFBDT' as ZFBDT,
+    L.data ->> 'ZTERM' as ZTERM,
+    L.data ->> 'ZBD1T' as ZBD1T,
+    L.data ->> 'ZBD2T' as ZBD2T,
+    L.data ->> 'ZBD3T' as ZBD3T,
+    L.data ->> 'ZBD1P' as ZBD1P,
+    L.data ->> 'ZBD2P' as ZBD2P,
+    L.data ->> 'SKFBT' as SKFBT,
+    L.data ->> 'SKNTO' as SKNTO,
+    L.data ->> 'ZLSCH' as ZLSCH,
+    L.data ->> 'NEBTR' as NEBTR,
+    L.data ->> 'REBZG' as REBZG,
+    L.data ->> 'REBZJ' as REBZJ,
+    L.data ->> 'REBZZ' as REBZZ,
+    L.data ->> 'QSFBT' as QSFBT,
+    L.data ->> 'WERKS' as WERKS,
+    L.data ->> 'MENGE' as MENGE,
+    L.data ->> 'MEINS' as MEINS,
+    L.data ->> 'ERFME' as ERFME,
+    L.data ->> 'BWKEY' as BWKEY,
+    L.data ->> 'BWTAR' as BWTAR,
+    L.data ->> 'BUSTW' as BUSTW,
+    L.data ->> 'STCEG' as STCEG,
+    L.data ->> 'EGLLD' as EGLLD,
+    L.data ->> 'XHKOM' as XHKOM,
+    L.data ->> 'NPLNR' as NPLNR,
+    L.data ->> 'AUFPL' as AUFPL,
+    L.data ->> 'APLZL' as APLZL,
+    L.data ->> 'DMBE2' as DMBE2,
+    L.data ->> 'HWMET' as HWMET,
+    L.data ->> 'XRAGL' as XRAGL,
+    L.data ->> 'XNEGP' as XNEGP,
+    L.data ->> 'KIDNO' as KIDNO,
+    L.data ->> 'FKBER_LONG' as FKBER_LONG,
+    L.data ->> 'AUGGJ' as AUGGJ,
+    L.data ->> 'SEGMENT' as SEGMENT,
+    L.data ->> 'TAXPS' as TAXPS,
+    L.data ->> 'main_asset_num' as main_asset_num,
+    L.data ->> 'asset_sub_num' as asset_sub_num,
+    L.data ->> 'gl_doc_num' as gl_doc_num,
+    L.data ->> 'post_key_gl' as post_key_gl,
+    L.data ->> 'co_code_gl' as co_code_gl,
+    L.data ->> 'bseg_buzei_key' as bseg_buzei_key,
+    L.data ->> 'amount_local_ccy' as amount_local_ccy,
+    L.data ->> 'po_doc_num' as po_doc_num,
+    L.data ->> 'bseg_ebelp_key' as bseg_ebelp_key,
+    L.data ->> 'func_area_gl' as func_area_gl,
+    L.data ->> 'fiscal_year_gl' as fiscal_year_gl,
+    L.data ->> 'bus_area_dept_num_gl' as bus_area_dept_num_gl,
+    L.data ->> 'largest_debit_half_acct_num_gl' as largest_debit_half_acct_num_gl,
+    L.data ->> 'cost_ctr_num_gl' as cost_ctr_num_gl,
+    L.data ->> 'cx_num' as cx_num,
+    L.data ->> 'material_num_gl' as material_num_gl,
+    L.data ->> 'po_tax_code_gl' as po_tax_code_gl,
+    L.data ->> 'gst_hst_qst_pst_local_ccy' as gst_hst_qst_pst_local_ccy,
+    L.data ->> 'bseg_pargb_key' as bseg_pargb_key,
+    L.data ->> 'profit_ctr_num' as profit_ctr_num,
+    L.data ->> 'wbs_gl' as wbs_gl,
+    L.data ->> 'item_descr_gl' as item_descr_gl,
+    L.data ->> 'tax_jur_gl' as tax_jur_gl,
+    L.data ->> 'sales_doc_num_gl' as sales_doc_num_gl,
+    L.data ->> 'billing_doc_num' as billing_doc_num,
+    L.data ->> 'gst_hst_pst_qst_doc_ccy' as gst_hst_pst_qst_doc_ccy,
+    L.data ->> 'ap_ar_amt_doc_ccy' as ap_ar_amt_doc_ccy,
+    L.varapkey,
+    L.vend_num,
+    L.varmultivnd,
+    L.doc_type_gl,
+    L.inv_date,
+    L.inv_num,
+    L.ccy,
+    L.fiscal_period_gl,
+    L.cputm,
+    L.fx_rate,
+    L.trnx_code_gl,
+    L.ktopl,
+    L.vend_name,
+    L.name2,
+    L.lfa1_land1_key,
+    L.vend_region,
+    L.vend_city,
+    L.pstlz,
+    L.stras,
+    R.vardocamt,
+    R.varlocamt
+    into aps_relational
+    from
+    aps as L
+    left join
+    (select id,
+     -(cast(data ->> 'ap_ar_amt_doc_ccy' as FLOAT)) as vardocamt,
+     -(cast(data ->> 'amount_local_ccy' as FLOAT)) as varlocamt
+     from aps where cast(data ->> 'SHKZG' as TEXT) = 'H') as R on L.id = R.id
         """.format(project_id = data['project_id'])
 
         #Generates raw account sum, groups varaccountcode and varapkey, sums on dmbtr, wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for everything else. order by vartranamount
@@ -1598,7 +1575,6 @@ inv_date,
               """
 
 def caps_to_erd_1():
-    try:
         #Join TBSLT
         j16 = """
         drop table if exists caps_1;
@@ -2360,7 +2336,6 @@ def caps_to_erd_2():
 
 @sap_caps_gen.route('caps_calculations', methods=['POST'])
 def caps_erd_calculations():
-    try:
         j99 = """
         ## WARNING: Not every client uses these document types consistently.
         DROP TABLE IF EXISTS RAW;
@@ -2633,7 +2608,6 @@ def caps_erd_calculations():
         inner join caps_no_attributes
         on caps_no_attributes.varapkey = transaction_attributes.varapkey
         """
-
     return jsonify(response), 200
 
 #===============================================================================
