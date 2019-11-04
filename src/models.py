@@ -1452,6 +1452,19 @@ class SapT007s(db.Model):
     caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
     sapt007s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007s') # FK
 
+
+class SapSka1(db.Model):
+    _tablename__ = 'sap_ska1'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    data = db.Column(postgresql.JSON, nullable=False)
+
+    capsgen_id = db.Column(db.Integer,  nullable=False)
+    sapska1_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapska1')
+
+
 class SapSkb1(db.Model):
     _tablename__ = 'sap_skb1'
     __table_args__ = (
