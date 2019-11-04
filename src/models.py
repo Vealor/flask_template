@@ -808,8 +808,7 @@ class DataMapping(db.Model):
             'caps_gen_id': self.caps_gen_id,
             'label': self.cdm_label_script_label,
             'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
-            'table_name': self.table_name,
-            'column_name': self.column_name
+            'table_column_name': [{'table_name': self.table_name, 'column_name': self.column_name}] if self.table_name and self.column_name else [],
         }
 
     @classmethod
