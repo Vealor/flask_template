@@ -8,6 +8,7 @@ import os
 import re
 import zipfile
 import requests
+import itertools
 from collections import Counter
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
@@ -216,7 +217,7 @@ def init_caps_gen():
 @exception_wrapper()
 def get_master_table_headers(id):
     def get_column_name(caps_data):
-        return caps_data['data'].keys()
+        return list(caps_data['data'].keys())
 
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -226,7 +227,7 @@ def get_master_table_headers(id):
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     # get all data from all tables for given capsgen
-    response['payload'] = [{'name' :table.partition('sap')[2], 'headers': list(map(get_column_name, value))} for table, value in query.first().serialize['caps_data'].items()]
+    response['payload'] = [{'name' :table.partition('sap')[2], 'headers':  list(itertools.chain.from_iterable(list(map(get_column_name, value))))} for table, value in query.first().serialize['caps_data'].items()]
     return jsonify(response), 200
 
 #===============================================================================
