@@ -33,7 +33,6 @@ def get_clients(id):
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-    response['message'] = ''
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200

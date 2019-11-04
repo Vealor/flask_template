@@ -15,18 +15,27 @@ from src.wrappers import has_permission, exception_wrapper
 master_models = Blueprint('master_models', __name__)
 #===============================================================================
 # Get all master models
-@master_models.route('/', methods=['GET'])
+@master_models.route('/', defaults={'id':None}, methods=['GET'])
 @master_models.route('/<path:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def get_master_models(id=None):
+def get_master_models(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
 
     query = MasterModel.query
     if id:
         query = query.filter_by(id=id)
         if not query.first():
             raise ValueError("No master model with ID {} exists.".format(id))
+
+    # Set ORDER
+    query = query.order_by('id')
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
 
     response['payload'] = [i.serialize for i in query.all()]
 
