@@ -61,6 +61,19 @@ class TestingConfig(Config):
     # Statement for enabling the development environment
     DEBUG = False
 
+    POSTGRES = {
+        'user': 'itra',
+        'pw': 'LHDEV1234',
+        'db': 'itra_db',
+        'host': 'localhost',
+        'port': '5432',
+    }
+
+    CDM_TABLES = ['BKPF', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
+                  'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
+                  'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
+                  'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
+
     # Use a secure, unique and absolutely secret key for signing the data.
     # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
     # Secret key for signing cookies
