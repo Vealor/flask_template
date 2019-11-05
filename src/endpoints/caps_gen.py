@@ -10,6 +10,7 @@ import zipfile
 import requests
 import itertools
 from collections import Counter
+from azure.storage.file import FileService
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from os import path
@@ -82,6 +83,37 @@ def delete_caps_gens(id):
 #===============================================================================
 # Data Source Page
 # upload data when pressing `Next`
+
+@caps_gen.route('/project_path_creation', methods=['POST'])
+@jwt_required
+# @has_permission([])
+@exception_wrapper()
+def project_path_creation():
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    data = request.get_json()
+    request_types = {
+        'project_id': 'int',
+        'system': 'str'
+    }
+    validate_request_data(data, request_types)
+
+
+    project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
+    project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
+
+    if data['project_id'] not in project_dirs:
+        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                            directory_name='{project_id}'.format(project_id = data['project_id']))
+        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                            directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
+        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                            directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
+        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                            directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
+    else:
+        raise ValueError('Path {} has been created for this project'.format(str(data['project_id'])))
+    return jsonify(response), 200
+
 @caps_gen.route('/init', methods=['POST'])
 @jwt_required
 # @has_permission([])
@@ -96,6 +128,7 @@ def init_caps_gen():
     }
     validate_request_data(data, request_types)
 
+    source_data_unzipper(data, response, data['project_id'])
 
     ### DEV => do local directory creation if required
     # if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
@@ -117,6 +150,7 @@ def init_caps_gen():
     #     list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
     #     raise Exception(e)
     ###
+
 
     ### DEV/PROD => Create CapsGen entitiy in DB
     # do before unzipping and store path in CapsGen?
