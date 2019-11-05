@@ -21,7 +21,7 @@ from sqlalchemy.inspection import inspect
 from src.caps_gen.to_aps import *
 from src.caps_gen.to_caps import *
 from src.errors import *
-from src.util import *
+from src.util import project_path_create, source_data_unzipper, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -92,11 +92,11 @@ def project_path_creation():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
     request_types = {
-        'project_id': 'int',
-        'system': 'str'
+        'project_id': ['int'],
+        'system': ['str']
     }
     validate_request_data(data, request_types)
-    project_path_create(data, response)
+    response = project_path_create(data, response)
     return jsonify(response), 200
 
 @caps_gen.route('/init', methods=['POST'])
@@ -107,9 +107,9 @@ def init_caps_gen():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
     request_types = {
-        'project_id': 'int',
-        'file_name': 'str',
-        'system': 'str'
+        'project_id': ['int'],
+        'file_name': ['str'],
+        'system': ['str']
     }
     validate_request_data(data, request_types)
     in_progress = CapsGen.query.filter_by(is_completed=False).first()
@@ -297,9 +297,9 @@ def apply_mappings_build_gst_registration(id):
     response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
     data = request.get_json()
     request_types = {
-        'project_id': 'int',
-        'file_name': 'str',
-        'system': 'str'
+        'project_id': ['int'],
+        'file_name': ['str'],
+        'system': ['str']
     }
     validate_request_data(data, request_types)
     mapping = [label.serialize for label in DataMapping.query.filter(DataMapping.caps_gen_id == id).all()]

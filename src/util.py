@@ -43,15 +43,25 @@ def validate_request_data(data, validation):
 
     # Esures that the datatypes specified in validation match the types in data.
     # Example Available types:
-    #   int, float, bool, str, list, tuple, dict, class, object
-    vars = [x + " (" + validation[x] + ")" for x in validation.keys() if not isinstance(data[x], eval(validation[x]))]
-    if vars:
-        raise ValueError('Request contains improper data types for keys: {}'.format(vars))
+    #   int, float, bool, str, list, tuple, dict, class, object, '', NoneType
+    for key in validation.keys():
+        valid = False
+        for datatype in validation[key]:
+            if datatype == 'NoneType':
+                if isinstance(data[key],(str, type(None))):
+                    valid = True
+            elif datatype == '':
+                if data[key] == '':
+                    valid = True
+            elif isinstance(data[key], eval(datatype)):
+                valid = True
+        if not valid:
+            raise ValueError('Request contains improper data types for key {}.'.format(key))
 
-    # ensures strings are not empty
-    for x in validation.keys():
-        if validation[x] == 'str':
-            if "".join(e for e in data[x] if e.isalnum() or e in ['<','>','=']) == '':
+    # ensures strings are not empty unless specified
+    for key in validation.keys():
+        if 'str' in validation[key] and not ("" in validation[key] or 'NoneType' in validation[key]):
+            if "".join(e for e in data[key] if e.isalnum() or e in ['<','>','=']) == '':
                 raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
 
 #===============================================================================

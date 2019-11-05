@@ -48,7 +48,7 @@ def post_vendor():
 
     # input validation
     request_types = {
-        'name': 'str'
+        'name': ['str']
     }
     validate_request_data(data, request_types)
 
@@ -77,7 +77,7 @@ def update_vendor(id):
 
     # input validation
     request_types = {
-        'name': 'str'
+        'name': ['str']
     }
     validate_request_data(data, request_types)
 

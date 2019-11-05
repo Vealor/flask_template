@@ -52,10 +52,10 @@ def do_train():
 
     # validate input
     request_types = {
-        'train_data_start_date': 'str',
-        'train_data_end_date': 'str',
-        'test_data_start_date': 'str',
-        'test_data_end_date': 'str'
+        'train_data_start_date': ['str'],
+        'train_data_end_date': ['str'],
+        'test_data_start_date': ['str'],
+        'test_data_end_date': ['str']
     }
     validate_request_data(data, request_types)
 
@@ -175,7 +175,7 @@ def do_predict():
 
     # input validation
     request_types = {
-        'project_id': 'int',
+        'project_id': ['int'],
     }
     validate_request_data(data, request_types)
 

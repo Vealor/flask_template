@@ -48,14 +48,14 @@ def post_client():
 
     # input validation
     request_types = {
-        'name': 'str',
-        'client_entities': 'list'
+        'name': ['str'],
+        'client_entities': ['list']
     }
     validate_request_data(data, request_types)
     client_entity_types = {
-        'company_code': 'str',
-        'lob_sector': 'str',
-        'jurisdictions': 'list'
+        'company_code': ['str'],
+        'lob_sector': ['str'],
+        'jurisdictions': ['list']
     }
     for entity in data['client_entities']:
         validate_request_data(entity, client_entity_types)
@@ -116,15 +116,14 @@ def update_client(id):
 
     # input validation
     request_types = {
-        'name': 'str',
-        'client_entities': 'list'
+        'name': ['str'],
+        'client_entities': ['list']
     }
     validate_request_data(data, request_types)
     client_entity_types = {
-        # 'id': 'int',
-        'company_code': 'str',
-        'lob_sector': 'str',
-        'jurisdictions': 'list'
+        'company_code': ['str'],
+        'lob_sector': ['str'],
+        'jurisdictions': ['list']
     }
     for entity in data['client_entities']:
         validate_request_data(entity, client_entity_types)
