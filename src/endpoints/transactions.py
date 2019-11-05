@@ -134,7 +134,7 @@ def update_transaction(id):
     # TODO: make sure user has access to the project
     # input validation
     request_types = {
-        'codes': 'dict'
+        'codes': ['dict']
     }
     validate_request_data(data, request_types)
 

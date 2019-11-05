@@ -31,8 +31,9 @@ def get_client_models(id):
 
     # If client_id is specified, then return all models for that client
     query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
+
     response['payload'] = [i.serialize for i in query.all()]
-    
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -46,11 +47,11 @@ def do_train():
 
     # validate input
     request_types = {
-        'client_id': 'int',
-        'train_data_start_date': 'str',
-        'train_data_end_date': 'str',
-        'test_data_start_date': 'str',
-        'test_data_end_date': 'str'
+        'client_id': ['int'],
+        'train_data_start_date': ['str'],
+        'train_data_end_date': ['str'],
+        'test_data_start_date': ['str'],
+        'test_data_end_date': ['str']
     }
     validate_request_data(data, request_types)
 
@@ -182,7 +183,7 @@ def do_predict():
 
     # input validation
     request_types = {
-        'project_id': 'int',
+        'project_id': ['int'],
     }
     validate_request_data(data, request_types)
 

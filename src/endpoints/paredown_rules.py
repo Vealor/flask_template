@@ -47,18 +47,18 @@ def create_paredown_rule():
     data = request.get_json()
 
     request_types = {
-        #'approver1_id' : 'int',
-        #'approver2_id' : 'int',
-        'code': 'int',
-        'is_active': 'bool'
+        'approver1_id' : ['int','NoneType'],
+        'approver2_id' : ['int','NoneType'],
+        'code': ['int'],
+        'is_active': ['bool']
     }
     validate_request_data(data, request_types)
 
     if len(data['conditions']) == 0:
         raise ValueError("Cannot create paredown rule with no conditions.")
     request_types_conditions = {
-        'field': 'str',
-        'operator': 'str'
+        'field': ['str'],
+        'operator': ['str']
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
@@ -121,15 +121,15 @@ def update_paredown_rule(id):
     if len(data['conditions']) == 0:
         raise ValueError("Cannot update paredown rule with no conditions.")
     request_types = {
-        #'approver1_id' : 'int',
-        #'approver2_id' : 'int',
-        'code': 'int',
-        'is_active': 'bool'
+        'approver1_id' : ['int','NoneType'],
+        'approver2_id' : ['int','NoneType'],
+        'code': ['int'],
+        'is_active': ['bool']
     }
     validate_request_data(data, request_types)
     request_types_conditions = {
-        'field': 'str',
-        'operator': 'str'
+        'field': ['str'],
+        'operator': ['str']
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
