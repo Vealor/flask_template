@@ -256,7 +256,7 @@ def get_master_table_headers(id):
                     if column_name in mappings[table_name]:
                         column_names.remove(column_name)
 
-    response['playload'] = headers
+    response['payload'] = headers
     # response['payload'] = [list(itertools.chain.from_iterable(list(map(get_column_name, value)))) for table, value in query.first().serialize['caps_data'].items()]
     return jsonify(response), 200
 
