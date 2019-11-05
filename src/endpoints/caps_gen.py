@@ -96,22 +96,7 @@ def project_path_creation():
         'system': 'str'
     }
     validate_request_data(data, request_types)
-
-
-    project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
-    project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
-
-    if data['project_id'] not in project_dirs:
-        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                            directory_name='{project_id}'.format(project_id = data['project_id']))
-        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                            directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
-        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                            directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
-        current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                            directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
-    else:
-        raise ValueError('Path {} has been created for this project'.format(str(data['project_id'])))
+    project_path_create(data, response)
     return jsonify(response), 200
 
 @caps_gen.route('/init', methods=['POST'])
@@ -131,27 +116,18 @@ def init_caps_gen():
     if in_progress:
         raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
 
-    source_data_unzipper(data, response, data['project_id'])
-
+    try:
+        source_data_unzipper(data, response) # pass filename here?
+    except Exception as e:
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
+        raise Exception(e)
+    print('unzipping complete')
     ### DEV => do local directory creation if required
-    # if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
-    #     print('path does not exist, creating project')
-    #     os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
-    #     folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-    #     for folder in folders:
-    #         os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
-    # else:
-    #     raise Exception('Path has already been created for project')
     ### Hopefully raises "ERROR UPLOADING DATA"
 
 
     ### DEV/PROD => data unzipping
-    # try:
-    #     source_data_unzipper(data, response) # pass filename here?
-    # except Exception as e:
-    #     current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-    #     list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
-    #     raise Exception(e)
     ###
 
 
@@ -180,56 +156,54 @@ def init_caps_gen():
     db.session.commit()
 
     try:
-
-
         ### DEV/PROD => make master tables
-        # list_tablenames = current_app.config['CDM_TABLES']
-        # engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
-        # #todo: add table to payload so cio can know which tables to view
-        # for table in list_tablenames:
-        #     table_files = []
-        #     #Search for all files that match table
-        #     for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
-        #         if re.search(table, file):
-        #             if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
-        #                 table_files.append(file)
-        #     #Load & union files into one master table in memory
-        #     wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
-        #     for index, file in enumerate(table_files):
-        #         if index == 0:
-        #             with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
-        #                 wfd.write(fd.read().encode())
-        #         else:
-        #             # for all future files
-        #             with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
-        #                 #   strip header
-        #                 next(fd)
-        #                 wfd.write(fd.read().encode())
-        #     wfd.close()
-        #
-        #     #initialize variables for bulk insertion
-        #     referenceclass = eval('Sap' + str(table.lower().capitalize()))
-        #     list_to_insert = []
-        #     counter = 0
-        #     #bulk insert into database
-        #     with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
-        #         header = masterfile.readline()
-        #         header = header.rstrip('\n').split('#|#')
-        #         for line in masterfile:
-        #             # insert rows chunk by chunk to avoid crashing
-        #             #  NOTE: 20,000 entries use about 4GB ram
-        #             if counter >= 200000:
-        #                 engine.execute(referenceclass.__table__.insert(), list_to_insert)
-        #                 counter = 0
-        #                 list_to_insert = []
-        #             else:
-        #                 counter += 1
-        #                 list_to_insert.append({"caps_gen_id": caps_gen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
-        #         if counter > 0:
-        #             engine.execute(referenceclass.__table__.insert(), list_to_insert)
-        #
-        #     CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
-        #     db.session.flush()
+        list_tablenames = current_app.config['CDM_TABLES']
+        engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
+        #todo: add table to payload so cio can know which tables to view
+        for table in list_tablenames:
+            table_files = []
+            #Search for all files that match table
+            for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
+                if re.search(table, file):
+                    if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
+                        table_files.append(file)
+            #Load & union files into one master table in memory
+            wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
+            for index, file in enumerate(table_files):
+                if index == 0:
+                    with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
+                        wfd.write(fd.read().encode())
+                else:
+                    # for all future files
+                    with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
+                        #   strip header
+                        next(fd)
+                        wfd.write(fd.read().encode())
+            wfd.close()
+
+            #initialize variables for bulk insertion
+            referenceclass = eval('Sap' + str(table.lower().capitalize()))
+            list_to_insert = []
+            counter = 0
+            #bulk insert into database
+            with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), 'caps_gen_master', '{}_MASTER.txt'.format(table)), 'r', encoding='utf-8-sig') as masterfile:
+                header = masterfile.readline()
+                header = header.rstrip('\n').split('#|#')
+                for line in masterfile:
+                    # insert rows chunk by chunk to avoid crashing
+                    #  NOTE: 20,000 entries use about 4GB ram
+                    if counter >= 200000:
+                        engine.execute(referenceclass.__table__.insert(), list_to_insert)
+                        counter = 0
+                        list_to_insert = []
+                    else:
+                        counter += 1
+                        list_to_insert.append({"caps_gen_id": caps_gen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
+                if counter > 0:
+                    engine.execute(referenceclass.__table__.insert(), list_to_insert)
+
+            CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
+            db.session.flush()
         ###
 
         # get data from blob and put into caps_gen tables
@@ -237,6 +211,10 @@ def init_caps_gen():
         #####
 
         db.session.commit()
+
+        ## Remove data from caps_gen_unzipped
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
     except Exception as e:
@@ -311,13 +289,21 @@ def get_master_table_headers(id):
 # the top priority is to complete caps; and CDM is not final yet so CDM labels
 # will not be written in.
 @caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
-# @jwt_required
+#@jwt_required
 # @has_permission([])
 @exception_wrapper()
 def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': {}, 'payload': []}
     response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
     data = request.get_json()
+    request_types = {
+        'project_id': 'int',
+        'file_name': 'str',
+        'system': 'str'
+    }
+    validate_request_data(data, request_types)
+    mapping = [label.serialize for label in DataMapping.query.filter(DataMapping.caps_gen_id == id).all()]
+    print(mapping[0:10])
 
     mapping = [label.serialize for label in CDMLabel.query.all()]
     list_tablenames = current_app.config['CDM_TABLES']

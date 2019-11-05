@@ -79,7 +79,7 @@ def send_mail(user_email, subject, content):
 
 #===============================================================================
 # Unzips all SAP source data text files from a nested zip file.
-def source_data_unzipper(data, response, project_id):
+def source_data_unzipper(data, response):
 
     def extract_nested_zip(zippedFile, toFolder, outputPath):
         try:
@@ -114,13 +114,11 @@ def source_data_unzipper(data, response, project_id):
             raise Exception(e)
 
     if os.environ['FLASK_ENV'] == 'development':
-        #https://itrauat.file.core.windows.net/caps-gen-processing/6
-        current_input_path = 'https://itrauat.file.core.windows.net/caps-gen-processing/{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = project_id, CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION'])
-        current_output_path = 'https://itrauat.file.core.windows.net/caps-gen-processing/{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = project_id, CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION'])
+        current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         if data['file_name'].lower().endswith('.zip'):
             extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path, current_output_path)
             move_nested_folder(current_output_path, current_output_path)
-            remove_empty_folders(current_output_path)
         else:
             raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
@@ -128,4 +126,37 @@ def source_data_unzipper(data, response, project_id):
         pass
     else:
         raise Exception('Environ not present. Choose development or production')
+    return response
+
+
+#===============================================================================
+# Unzips all SAP source data text files from a nested zip file.
+
+def project_path_create(data, response):
+    if os.environ['FLASK_ENV'] == 'development':
+        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
+            print('path does not exist, creating project')
+            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
+            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+            for folder in folders:
+                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
+        else:
+            raise Exception('Path has already been created for project')
+    elif os.environ['FLASK_ENV'] == 'production':
+        project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
+        project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
+
+        if data['project_id'] not in project_dirs:
+            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                                directory_name='{project_id}'.format(project_id = data['project_id']))
+            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                                directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
+            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                                directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
+            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+                                                                directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
+        else:
+            raise ValueError('Path {} has been created for this project'.format(str(data['project_id'])))
+    else:
+        raise ValueError('Environ not present. Choose development or production')
     return response
