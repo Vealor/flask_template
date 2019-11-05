@@ -114,8 +114,8 @@ def do_train():
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
-    performance_metrics = lh_model.validate(data_valid,predictors,target)
+    data_valid = preprocessing_predict(data_valid, predictors, for_validation=True)
+    performance_metrics = lh_model.validate(data_valid, predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],
         'precision': performance_metrics['precision'],
@@ -132,7 +132,7 @@ def do_train():
     active_model = MasterModel.find_active()
     if active_model:
         lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+        performance_metrics_old = lh_model_old.validate(data_valid, predictors, target)
         model_performance_dict_old = {
             'master_model_id': active_model.id,
             'accuracy': performance_metrics_old['accuracy'],
@@ -201,7 +201,7 @@ def do_predict():
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
     project_transactions.update({Transaction.is_predicted : True})
-    for tr,pr in zip(project_transactions,probability_recoverable):
+    for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
 
     db.session.commit()

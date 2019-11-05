@@ -120,15 +120,15 @@ def do_train():
 
     target = "Target"
     predictors = list(set(data_train.columns) - set([target]))
-    lh_model.train(data_train,predictors,target)
+    lh_model.train(data_train, predictors, target)
     # Update the model entry with the hyperparameters and pickle
     entry.pickle = lh_model.as_pickle()
     entry.hyper_p = {'predictors': predictors, 'target': target}
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
-    performance_metrics = lh_model.validate(data_valid,predictors,target)
+    data_valid = preprocessing_predict(data_valid, predictors, for_validation=True)
+    performance_metrics = lh_model.validate(data_valid, predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],
         'precision': performance_metrics['precision'],
@@ -146,7 +146,7 @@ def do_train():
     active_model = ClientModel.find_active_for_client(data['client_id'])
     if active_model:
         lh_model_old = cm.ClientPredictionModel(active_model.pickle)
-        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+        performance_metrics_old = lh_model_old.validate(data_valid, predictors, target)
         model_performance_dict_old = {
             'client_model_id': active_model.id,
             'accuracy': performance_metrics_old['accuracy'],
