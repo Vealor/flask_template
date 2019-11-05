@@ -340,7 +340,6 @@ def compare_active_and_pending():
 
         performance_metrics = {}
         for model in [active_model, pending_model]:
-
             lh_model = cm.ClientPredictionModel(model.pickle)
             predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
             performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)

@@ -32,7 +32,7 @@ def get_master_models(id=None):
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
-    
+
 
 #===============================================================================
 # Train a new master model.
@@ -321,7 +321,6 @@ def compare_active_and_pending():
 
         performance_metrics = {}
         for model in [active_model, pending_model]:
-
             lh_model = mm.MasterPredictionModel(model.pickle)
             predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
             performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
