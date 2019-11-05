@@ -802,6 +802,10 @@ class DataMapping(db.Model):
     cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
     data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings') # FK
 
+    __table_args__ += (
+        db.Index('caps_gen_mapping_col_table_unique', caps_gen_id, column_name, table_name, unique=True, postgresql_where=(db.and_(column_name!='', table_name!=''))),
+    )
+
     @property
     def serialize(self):
         return {
