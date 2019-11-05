@@ -233,6 +233,13 @@ def init_caps_gen():
 # @has_permission([])
 @exception_wrapper()
 def get_master_table_headers(id):
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
+
     def get_column_name(table, caps_data):
         return [{'table_name': table, 'column_name': header } for header in list(caps_data['data'].keys())]
 
@@ -246,35 +253,35 @@ def get_master_table_headers(id):
     #     return True
 
 
-    response = {'status': 'ok', 'message': '', 'payload': []}
-    args = request.args.to_dict()
-
-    query = CapsGen.query.filter_by(id=id)
-    if not query.first():
-        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-
-    mappings = {}
-    for i in DataMapping.query.filter_by(caps_gen_id=id).all():
-        if i.serialize['table_column_name']:
-            table_column_name = i.serialize['table_column_name']
-            table_name = table_column_name[0]['table_name'].lower()
-            if table_name in mappings.keys():
-                mappings[table_name] = mappings[table_name] + [table_column_name[0]['column_name'].lower()]
-            else:
-                mappings[table_name] = [table_column_name[0]['column_name'].lower()]
-
-    # get all data from all tables for given caps_gen
+    mappings = [i.serialize for i in DataMapping.query.filter_by(caps_gen_id=id).all()]
     headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().serialize['caps_data'].items()]
-    # get rid of the mapped headers
-    for table_header in headers:
-        for table_name in table_header.keys():
-            if table_name in mappings.keys():
-                for column_name in table_header[table_name]:
-                    if column_name in mappings[table_name]:
-                        column_names.remove(column_name)
+    for mapping in mappings:
+        if mapping['table_column_name']:
+            for header in headers:
+                header.update({list(header.keys())[0]: [x for x in header[list(header.keys())[0]] if x != mapping['table_column_name'][0]]})
 
-    response['payload'] = headers
+    # mappings = {}
+    # for i in DataMapping.query.filter_by(caps_gen_id=id).all():
+    #     if i.serialize['table_column_name']:
+    #         table_column_name = i.serialize['table_column_name']
+    #         table_name = table_column_name[0]['table_name'].lower()
+    #         if table_name in mappings.keys():
+    #             mappings[table_name] = mappings[table_name] + [table_column_name[0]['column_name'].lower()]
+    #         else:
+    #             mappings[table_name] = [table_column_name[0]['column_name'].lower()]
+    #
+    # # get all data from all tables for given caps_gen
+    # headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().serialize['caps_data'].items()]
+    # # get rid of the mapped headers
+    # for table_header in headers:
+    #     for table_name in table_header.keys():
+    #         if table_name in mappings.keys():
+    #             for column_name in table_header[table_name]:
+    #                 if column_name in mappings[table_name]:
+    #                     column_names.remove(column_name)
+    #
     # response['payload'] = [list(itertools.chain.from_iterable(list(map(get_column_name, value)))) for table, value in query.first().serialize['caps_data'].items()]
+    response['payload'] = headers
     return jsonify(response), 200
 
 #===============================================================================
