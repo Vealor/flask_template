@@ -155,6 +155,7 @@ class Operator(enum.Enum):
     less_than_equals = "<="
     greater_than = ">"
     less_than = "<"
+    contains = 'contains'
 
 class Process(enum.Enum):
     aps_to_caps = "APS to CAPS"
