@@ -13,7 +13,7 @@ clients = Blueprint('clients', __name__)
 #===============================================================================
 # GET ALL CLIENT
 @clients.route('/', defaults={'id':None}, methods=['GET'])
-@clients.route('/<path:id>', methods=['GET'])
+@clients.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
 def get_clients(id):
@@ -107,7 +107,7 @@ def post_client():
 
 #===============================================================================
 # UPDATE A CLIENT
-@clients.route('/<path:id>', methods=['PUT'])
+@clients.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 def update_client(id):
@@ -220,7 +220,7 @@ def update_client(id):
 
 #===============================================================================
 # DELETE A CLIENT
-@clients.route('/<path:id>', methods=['DELETE'])
+@clients.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
 def delete_client(id):

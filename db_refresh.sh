@@ -2,7 +2,7 @@
 
 
 DB_URL=localhost #1
-FLASK_ENV='development' #2  development, testing, production
+FLASK_ENV=development #2  development, testing, production
 
 USERNAME=itra #3
 DATABASE=itra_db #4
