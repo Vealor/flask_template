@@ -57,6 +57,21 @@ class DevelopmentConfig(Config):
                   'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
     FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
 
+class TestingConfig(Config):
+    # Statement for enabling the development environment
+    DEBUG = False
+
+    # Use a secure, unique and absolutely secret key for signing the data.
+    # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
+    # Secret key for signing cookies
+    # SECRET_KEY = os.environ['SECRET_KEY']
+    # JWT Secret Key
+    # JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+
+    # SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    # DATABASE_CONNECT_OPTIONS = {}
+
 class ProductionConfig(Config):
     # Statement for enabling the development environment
     DEBUG = False
