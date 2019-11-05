@@ -72,13 +72,13 @@ def post_project():
 
     # input validation
     request_types = {
-        'name': 'str',
-        'client_id': 'int',
-        'project_users': 'list',
-        'engagement_partner_id': 'int',
-        'engagement_manager_id': 'int',
-        'tax_scope': 'dict',
-        'engagement_scope': 'dict'
+        'name': ['str'],
+        'client_id': ['int'],
+        'project_users': ['list'],
+        'engagement_partner_id': ['int'],
+        'engagement_manager_id': ['int'],
+        'tax_scope': ['dict'],
+        'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
     # scope key checking
@@ -236,15 +236,15 @@ def update_project(id):
 
     # input validation
     request_types = {
-        'name': 'str',
-        'is_paredown_locked': 'bool',
-        'is_completed': 'bool',
-        'client_id': 'int',
-        'project_users': 'list',
-        'engagement_partner_id': 'int',
-        'engagement_manager_id': 'int',
-        'tax_scope': 'dict',
-        'engagement_scope': 'dict'
+        'name': ['str'],
+        'is_paredown_locked': ['bool'],
+        'is_completed': ['bool'],
+        'client_id': ['int'],
+        'project_users': ['list'],
+        'engagement_partner_id': ['int'],
+        'engagement_manager_id': ['int'],
+        'tax_scope': ['dict'],
+        'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
     # scope key checking

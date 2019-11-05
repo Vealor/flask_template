@@ -259,6 +259,7 @@ PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','BEZEI',1,'incoterms1_descr');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','INCO1',1,'tinct_inco1_key');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','SPRAS',1,'tinct_spras_key');
+  INSERT INTO sap_aufk(caps_Gen_id, data) VALUES (2,'{\"vegie\": \"tomato\",\"color\": \"red\"}');
   INSERT INTO sap_bkpf(caps_gen_id, data) VALUES (1,'{\"vegie\": \"tomato\",\"color\": \"red\"}');
   INSERT INTO sap_bsak(caps_gen_id, data) VALUES (1,'{\"vegie\": \"tomato\",\"color\": \"red\"}');
   INSERT INTO sap_bsak(caps_gen_id, data) VALUES (1,'{\"vegie\": \"potato\",\"color\": \"brown\"}');

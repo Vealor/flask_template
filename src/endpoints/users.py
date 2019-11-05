@@ -48,13 +48,13 @@ def post_user():
 
     # input validation
     request_types = {
-        'username': 'str',
-        'password': 'str',
-        'email': 'str',
-        'initials': 'str',
-        'first_name': 'str',
-        'last_name': 'str',
-        'role': 'str'
+        'username': ['str'],
+        'password': ['str'],
+        'email': ['str'],
+        'initials': ['str'],
+        'first_name': ['str'],
+        'last_name': ['str'],
+        'role': ['str']
     }
     validate_request_data(data, request_types)
     # check if this username exists
@@ -104,12 +104,12 @@ def update_user(id):
 
     # input validation
     request_types = {
-        'username': 'str',
-        'email': 'str',
-        'initials': 'str',
-        'first_name': 'str',
-        'last_name': 'str',
-        'role': 'str' # TODO: if user does not have correct role, do not do this
+        'username': ['str'],
+        'email': ['str'],
+        'initials': ['str'],
+        'first_name': ['str'],
+        'last_name': ['str'],
+        'role': ['str'] # TODO: if user does not have correct role, do not do this
     }
     validate_request_data(data, request_types)
 
@@ -157,7 +157,7 @@ def check_password(id):
 
     # input validation
     request_types = {
-        'password': 'str'
+        'password': ['str']
     }
     validate_request_data(data, request_types)
 
@@ -182,10 +182,15 @@ def update_user_password(id):
 
     # input validation
     request_types = {
-        'password': 'str',
-        'newpassword': 'str',
+        'password': ['str'],
+        'newpassword': ['str'],
     }
     validate_request_data(data, request_types)
+
+    # password strength
+    # if len(data['newpassword']) < 8:
+    #     raise InputError("Password length must be greater than 8.")
+    # if
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):

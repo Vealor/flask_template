@@ -53,8 +53,8 @@ def update_data_mapping(id):
     data = request.get_json()
 
     request_types = {
-        'table_name': 'str',
-        'column_name': 'str'
+        'table_name': ['str',''],
+        'column_name': ['str','']
     }
     validate_request_data(data, request_types)
 
