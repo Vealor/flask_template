@@ -119,5 +119,4 @@ sqlite3.db
 db_commands
 .idea
 .idea/*
-caps_gen_processing/*
 migrations/versions
