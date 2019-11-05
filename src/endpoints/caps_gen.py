@@ -96,6 +96,7 @@ def project_path_creation():
         'system': ['str']
     }
     validate_request_data(data, request_types)
+    #todo: If project path creation fails, we need to create rollback code. 
     response = project_path_create(data, response)
     return jsonify(response), 200
 
@@ -322,7 +323,7 @@ def apply_mappings_build_gst_registration(id):
             if mapping[index]['mappings'][0]['table_name'] == table:
                 rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
         tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == data['project_id']).all()
+        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id).all()
         print(len(columndata))
         for row in columndata:
             row = { "id": row.id, "data": row.data }
