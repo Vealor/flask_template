@@ -12,6 +12,14 @@ api.register_blueprint(general, url_prefix='/')
 from src.endpoints.auth import auth
 api.register_blueprint(auth, url_prefix='/auth')
 
+# CapsGen Endpoints
+from src.endpoints.caps_gen import caps_gen
+api.register_blueprint(caps_gen, url_prefix='/caps_gen')
+
+# Client Endpoints
+from src.endpoints.cdm_labels import cdm_labels
+api.register_blueprint(cdm_labels, url_prefix='/cdm_labels')
+
 # Client Endpoints
 from src.endpoints.clients import clients
 api.register_blueprint(clients, url_prefix='/clients')
@@ -20,9 +28,25 @@ api.register_blueprint(clients, url_prefix='/clients')
 from src.endpoints.client_models import client_models
 api.register_blueprint(client_models, url_prefix='/client_models')
 
+# Client Vendor Master Endpoint
+from src.endpoints.client_vendor_master import client_vendor_master
+api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
+
+# DataMapping Endpoints
+from src.endpoints.data_mappings import data_mappings
+api.register_blueprint(data_mappings, url_prefix='/data_mappings')
+
+# ClientModel Endpoints
+from src.endpoints.data_params import data_params
+api.register_blueprint(data_params, url_prefix='/data_params')
+
 # FXrates Endpoints
 from src.endpoints.fxrates import fxrates
 api.register_blueprint(fxrates, url_prefix='/fxrates')
+
+# Gst Registration Endpoint
+from src.endpoints.gst_registration import gst_registration
+api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
 # Jurisdiction Endpoints
 from src.endpoints.jurisdictions import jurisdictions
@@ -48,10 +72,9 @@ api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
-# SAP Caps Gen Endpoints
-from src.endpoints.sap_caps_gen import sap_caps_gen
-api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
-api.register_blueprint(sap_caps_gen, url_prefix='/sap_caps_gen')
+# Tax Rate Endpoint
+from src.endpoints.tax_rates import tax_rates
+api.register_blueprint(tax_rates, url_prefix='/tax_rates')
 
 # Transaction Endpoints
 from src.endpoints.transactions import transactions
@@ -65,17 +88,6 @@ api.register_blueprint(users, url_prefix='/users')
 from src.endpoints.vendors import vendors
 api.register_blueprint(vendors, url_prefix='/vendors')
 
-# Tax Rate Endpoint
-from src.endpoints.tax_rate import tax_rate
-api.register_blueprint(tax_rate, url_prefix='/tax_rate')
-
-# Client Vendor master Endpoint
-from src.endpoints.client_vendor_master import client_vendor_master
-api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
-
-# Gst Registration Endpoint
-from src.endpoints.gst_registration import gst_registration
-api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 
 #===============================================================================
 # Error Handling
@@ -83,35 +95,35 @@ api.register_blueprint(gst_registration, url_prefix='/gst_registration')
 # Bad Request
 @api.errorhandler(400)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 400', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 400', 'payload': [], 'message': e.description}
     return jsonify(response), 400
 # Unauthorized
 @api.errorhandler(401)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 401', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 401', 'payload': [], 'message': e.description}
     return jsonify(response), 401
 # Forbidden
 @api.errorhandler(403)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 403', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 403', 'payload': [], 'message': e.description}
     return jsonify(response), 403
 # Not Found
 @api.errorhandler(404)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 404', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 404', 'payload': [], 'message': e.description}
     return jsonify(response), 404
 # Method Not Allowed
 @api.errorhandler(405)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 405', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 405', 'payload': [], 'message': e.description}
     return jsonify(response), 405
 # Unprocessable Entity
 @api.errorhandler(422)
 def _handle_endpoint_error(e):
-    response = { 'status': 'error 422', 'payload': [], 'message': str(e)}
+    response = { 'status': 'Error 422', 'payload': [], 'message': e.description}
     return jsonify(response), 422
 # Server Error
 @api.errorhandler(500)
 def _handle_server_error(e):
-    response = { 'status': 'error 500', 'payload': [], 'message': '500 Server Error:  Please contact an Administrator.'}
+    response = { 'status': 'Error 500', 'payload': [], 'message': e.description}#'500 Server Error:  Please contact an Administrator.'}
     return jsonify(response), 500

@@ -1,5 +1,5 @@
 '''
-Log Endpoints
+Code Endpoints
 '''
 import json
 import random
@@ -8,25 +8,24 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
-logs = Blueprint('logs', __name__)
+codes = Blueprint('codes', __name__)
 #===============================================================================
-# GET ALL LOGS
-@logs.route('/', methods=['GET'])
+# GET ALL CODES
+@codes.route('/', methods=['GET'])
 # @jwt_required
-# PERMISSION IT ADMIN
+# @has_permission([])
 @exception_wrapper()
-def get_logs():
+def get_codes():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
-    query = Log.query
+    query = Code.query
     # Set ORDER
-    query = query.order_by('timestamp')
+    query = query.order_by('code_number')
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
     response['payload'] = [i.serialize for i in query.all()]
-
     return jsonify(response)
