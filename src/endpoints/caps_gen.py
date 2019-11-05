@@ -127,6 +127,9 @@ def init_caps_gen():
         'system': 'str'
     }
     validate_request_data(data, request_types)
+    in_progress = CapsGen.query.filter_by(is_completed=False).first()
+    if in_progress:
+        raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
 
     source_data_unzipper(data, response, data['project_id'])
 
@@ -159,9 +162,7 @@ def init_caps_gen():
 
 
     # TODO: change for project specific is_completed
-    in_progress = CapsGen.query.filter_by(is_completed=False).first()
-    if in_progress:
-        raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
+
     caps_gen = CapsGen(
         user_id=current_user.id,
         project_id=data['project_id']
