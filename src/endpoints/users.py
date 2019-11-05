@@ -187,6 +187,11 @@ def update_user_password(id):
     }
     validate_request_data(data, request_types)
 
+    # password strength
+    # if len(data['newpassword']) < 8:
+    #     raise InputError("Password length must be greater than 8.")
+    # if
+
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
         response['status'] = 'error'

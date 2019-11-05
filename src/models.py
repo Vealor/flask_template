@@ -617,29 +617,6 @@ class ParedownRuleCondition(db.Model):
             'value': self.value
         }
 
-class Vendor(db.Model):
-    __tablename__ = 'vendors'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-
-    vendor_transactions = db.relationship('Transaction', back_populates='transaction_vendor')
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'vendor_transactions': [i.id for i in self.vendor_transactions]
-        }
-
-    @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id = id).first()
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
-
 
 class CapsGen(db.Model):
     __tablename__ = 'caps_gen'
@@ -784,6 +761,18 @@ class DataParam(db.Model):
 
     project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
     data_param_project = db.relationship('Project', back_populates='project_data_params')
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'process': self.process.value,
+            'param': self.param,
+            'operator': self.operator.value,
+            'value': [float(x) if re.match('^\d+(?:\.\d+)?$', x) else x for x in self.value],
+            'is_many': self.is_many,
+            'project_id': self.project_id
+        }
 
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
@@ -1037,7 +1026,6 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     __table_args__ = (
         db.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ondelete='SET NULL'),
-        db.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
@@ -1107,9 +1095,6 @@ class Transaction(db.Model):
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id') # FK
-
-    vendor_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions') # FK
 
     project_id = db.Column(db.Integer, nullable=False) # FK
     transaction_project = db.relationship('Project', back_populates='project_transactions') # FK

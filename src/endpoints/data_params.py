@@ -5,32 +5,53 @@ from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
 data_params = Blueprint('data_params', __name__)
-
-@data_params.route('/<path:project_id>', methods=['GET'])
+#===============================================================================
+# GET ALL DATA PARAMS
+@data_params.route('/', defaults={'id':None}, methods=['GET'])
+@data_params.route('/<int:id>', methods=['GET'])
+# @jwt_required
+# @has_permission([])
 @exception_wrapper()
-def get_params(project_id):
-    response = {'status': 'ok', 'message': {}, 'payload': []}
+def get_transactions(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
 
-    query = data_params.query
-
-    # project_id filter
-    if project_id is not None and isinstance(project_id, int):
-        project = Project.find_by_id(project_id)
+    # TODO: make sure user has access to the project
+    query = DataParam.query
+    if id is None:
+        if 'project_id' not in args.keys():
+            raise ValueError('Please specify a Project ID as an argument for the data_params query.')
+        query = query.filter_by(project_id=args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
     else:
-        raise ValueError('Project ID {} does not exist.'.format(project_id))
+        # ID filter
+        query = query.filter_by(id=id)
+        if not query.first():
+            raise ValueError('Data Parameter ID {} does not exist.'.format(id))
 
-    capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-    if not capsgen_id:
-        raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+    # Set ORDER
+    query = query.order_by('id')
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-    #table filter
-    if table is not None:
-        tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.capsgen_id == capsgen_id).all()
-        response['payload'] = columndata
-        response['message'] = str(table) + ' has been accessed.'
+    response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
+
+
+
+
+
+# only need get and update
+# need to add base creation of params for a project on post project
+# update does only value and is_many:
+#   value = db.Column(postgresql.ARRAY(db.String), nullable=True)
+#   is_many = db.Column(db.Boolean, nullable=False)
+
+
+
+
 
 
 # @data_params.route('/<path:id>', methods=['PUT'])
