@@ -795,12 +795,24 @@ class DataMapping(db.Model):
         db.Index('caps_gen_mapping_col_table_unique', caps_gen_id, column_name, table_name, unique=True, postgresql_where=(db.and_(column_name!='', table_name!=''))),
     )
 
+    # @property
+    # def serialize(self):
+    #     return {
+    #         'id': self.id,
+    #         'caps_gen_id': self.caps_gen_id,
+    #         'label': self.cdm_label_script_label,
+    #         'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
+    #         'table_column_name': [{'table_name': self.table_name, 'column_name': self.column_name}] if self.table_name and self.column_name else [],
+    #     }
+
     @property
     def serialize(self):
         return {
             'id': self.id,
             'caps_gen_id': self.caps_gen_id,
             'label': self.cdm_label_script_label,
+            'table_name': [{'column_name': self.column_name, 'label': self.cdm_label_script_label}],
+
             'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
             'table_column_name': [{'table_name': self.table_name, 'column_name': self.column_name}] if self.table_name and self.column_name else [],
         }
