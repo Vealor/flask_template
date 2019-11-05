@@ -17,6 +17,9 @@ CORS(api, supports_credentials=True)
 if api.config['ENV'] == 'development':
     print(bcolours.OKGREEN + "\n %% DEV %% \n"+ bcolours.ENDC)
     api.config.from_object('config.DevelopmentConfig')
+elif api.config['ENV'] == 'testing':
+    print(bcolours.WARNING + "\n %% TEST %% \n"+ bcolours.ENDC)
+    api.config.from_object('config.TestingConfig')
 elif api.config['ENV'] == 'production':
     print(bcolours.OKBLUE + "\n %% PROD %% \n"+ bcolours.ENDC)
     api.config.from_object('config.ProductionConfig')
