@@ -187,10 +187,15 @@ def update_user_password(id):
     }
     validate_request_data(data, request_types)
 
-    # password strength
+    # password strength checking
     # if len(data['newpassword']) < 8:
     #     raise InputError("Password length must be greater than 8.")
-    # if
+    # if not any(x.isupper() for x in data['newpassword']):
+    #     raise InputError("Password must contain a capital letter.")
+    # if not any(x.lower() for x in data['newpassword']):
+    #     raise InputError("Password must contain a lowercase letter.")
+    # if not any(x.isdigit() for x in data['newpassword']):
+    #     raise InputError("Password must contain a number.")
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):

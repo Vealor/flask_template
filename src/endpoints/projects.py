@@ -186,6 +186,20 @@ def post_project():
             user_project_project = new_project,
         )
         db.session.add(new_user_project)
+    db.session.flush()
+
+    # Add all project parameters
+    # TODO: ADD MORE PARAMS (JOHN)
+    db.session.add(
+        DataParam(
+            project_id = 1,
+            process = 'aps_to_caps',
+            param = 'potato',
+            operator = Operator.equals,
+            value = ['test', '123', '123.345'],
+            is_many = True
+        )
+    )
 
     db.session.commit()
     response['message'] = 'Created project {}'.format(data['name'])
