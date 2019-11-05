@@ -35,6 +35,7 @@ def get_client_models(id):
 
     return jsonify(response), 200
 
+
 #===============================================================================
 # Train a new client model.
 @client_models.route('/train/', methods=['POST'])
@@ -101,7 +102,6 @@ def do_train():
     db.session.flush()
     model_id = entry.id
     lh_model = cm.ClientPredictionModel()
-    client_projects = [p.id for p in Project.query.filter_by(client_id = data['client_id']).distinct()]
     transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
     # Train the instantiated model and edit the db entry
@@ -171,6 +171,7 @@ def do_train():
 
     return jsonify(response), 201
 
+
 #===============================================================================
 # Predict transactions for a project using the active client model
 @client_models.route('/predict/', methods=['POST'])
@@ -236,7 +237,6 @@ def do_validate():
     data = request.get_json()
 
     try:
-
         # validate input
         request_types = {
             'test_data_start_date': 'str',
@@ -260,7 +260,6 @@ def do_validate():
 
         lh_model_old = cm.ClientPredictionModel(active_model.pickle)
         predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-
 
         # Pull the transaction data into a dataframe
         test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
@@ -295,6 +294,7 @@ def do_validate():
         response = { 'status': 'error', 'message': str(e), 'payload': [] }
         return jsonify(response), 500
     return jsonify(response), 201
+
 
 #===============================================================================
 # Compare active and pending models

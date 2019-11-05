@@ -32,6 +32,7 @@ def get_master_models(id=None):
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
+    
 
 #===============================================================================
 # Train a new master model.
@@ -156,6 +157,7 @@ def do_train():
 
     return jsonify(response), 201
 
+
 #===============================================================================
 # Predict transactions for a project using the active master
 @master_models.route('/predict/', methods=['POST'])
@@ -210,6 +212,7 @@ def do_predict():
 
     return jsonify(response), 201
 
+
 #===============================================================================
 # Validate the active master model.
 @master_models.route('/validate/', methods=['POST'])
@@ -240,7 +243,6 @@ def do_validate():
 
         lh_model_old = mm.MasterPredictionModel(active_model.pickle)
         predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-
 
         # Pull the transaction data into a dataframe
         test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
