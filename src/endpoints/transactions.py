@@ -6,6 +6,7 @@ import json
 import random
 from flask import Blueprint, current_app, jsonify, request, abort
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from src.errors import *
 from src.models import *
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -123,7 +124,7 @@ def unlock_transaction(id):
 
 #===============================================================================
 # UPDATE A TRANSACTION information
-@transactions.route('/<path:id>', methods=['PUT'])
+@transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
 # @has_permission([])
 @exception_wrapper()

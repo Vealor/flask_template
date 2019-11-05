@@ -1,7 +1,13 @@
+'''
+DataParam Endpoints
+'''
 import json
 import random
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from src.errors import *
 from src.models import *
+from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 data_params = Blueprint('data_params', __name__)
@@ -12,7 +18,7 @@ data_params = Blueprint('data_params', __name__)
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_transactions(id):
+def get_data_params(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -39,39 +45,35 @@ def get_transactions(id):
 
     return jsonify(response), 200
 
+#===============================================================================
+# UPDATE A TRANSACTION information
+@data_params.route('/<int:id>', methods=['PUT'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def update_data_params(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
 
+    # TODO: make sure user has access to the project
+    # input validation
+    request_types = {
+        'value': ['list'],
+        'is_many': ['bool']
+    }
+    validate_request_data(data, request_types)
+    if [x for x in data['value'] if not isinstance(x, str)]:
+        raise InputError("Value data must be a list of strings.")
 
+    # UPDATE user
+    query = DataParam.find_by_id(id)
+    if not query:
+        raise ValueError('Data Parameter ID {} does not exist.'.format(id))
 
+    query.value = data['value']
+    query.is_many = data['is_many']
 
-# only need get and update
-# need to add base creation of params for a project on post project
-# update does only value and is_many:
-#   value = db.Column(postgresql.ARRAY(db.String), nullable=True)
-#   is_many = db.Column(db.Boolean, nullable=False)
+    db.session.commit()
+    response['payload'] = [DataParam.find_by_id(id).serialize]
 
-
-
-
-
-
-# @data_params.route('/<path:id>', methods=['PUT'])
-# # @jwt_required
-# @exception_wrapper()
-# def update_params(id):
-#     data = request.get_json()
-#
-#     # input validation
-#     request_types = {
-#         'name': ['str'],
-#         'is_paredown_locked': ['bool'],
-#         'is_completed': ['bool'],
-#         'client_id': ['int'],
-#         'project_users': ['list'],
-#         'engagement_partner_id': ['int'],
-#         'engagement_manager_id': ['int'],
-#         'tax_scope': ['dict'],
-#         'engagement_scope': ['dict']
-#     }
-#     validate_request_data(data, request_types)
-#
-#     return jsonify(response), 200
+    return jsonify(response), 200

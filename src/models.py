@@ -774,6 +774,10 @@ class DataParam(db.Model):
             'project_id': self.project_id
         }
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
