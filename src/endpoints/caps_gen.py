@@ -68,7 +68,7 @@ def delete_caps_gens(id):
     if not query:
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    # TODO: make sure user deleting capsgen is the user that made it!
+    # TODO: make sure user deleting caps_gen is the user that made it!
     caps_gen = query.serialize
     db.session.delete(query)
     db.session.commit()
@@ -128,17 +128,17 @@ def init_caps_gen():
     in_progress = CapsGen.query.filter_by(is_completed=False).first()
     if in_progress:
         raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
-    capsgen = CapsGen(
+    caps_gen = CapsGen(
         user_id=current_user.id,
         project_id=data['project_id']
     )
-    db.session.add(capsgen)
+    db.session.add(caps_gen)
     db.session.flush()
 
     labels = [i.script_label for i in CDMLabel.query.all()]
     for label in labels:
         new_mapping = DataMapping(
-            caps_gen_id = capsgen.id,
+            caps_gen_id = caps_gen.id,
             cdm_label_script_label = label
         )
         db.session.add(new_mapping)
@@ -189,7 +189,7 @@ def init_caps_gen():
         #                 list_to_insert = []
         #             else:
         #                 counter += 1
-        #                 list_to_insert.append({"capsgen_id": capsgen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
+        #                 list_to_insert.append({"caps_gen_id": caps_gen.id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
         #         if counter > 0:
         #             engine.execute(referenceclass.__table__.insert(), list_to_insert)
         #
@@ -197,16 +197,16 @@ def init_caps_gen():
         #     db.session.flush()
         ###
 
-        # get data from blob and put into capsgen tables
+        # get data from blob and put into caps_gen tables
 
         #####
 
         db.session.commit()
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
-        response['payload'] = [CapsGen.find_by_id(capsgen.id).serialize]
+        response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
     except Exception as e:
         # delete created caps_gen
-        db.session.delete(capsgen)
+        db.session.delete(caps_gen)
         db.session.commit()
         raise Exception(e)
 
@@ -250,7 +250,7 @@ def get_master_table_headers(id):
             else:
                 mappings[table_name] = [table_column_name[0]['column_name'].lower()]
 
-    # get all data from all tables for given capsgen
+    # get all data from all tables for given caps_gen
     headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().serialize['caps_data'].items()]
     # get rid of the mapped headers
     for table_header in headers:
@@ -294,7 +294,7 @@ def apply_mappings_build_gst_registration(id):
             if mapping[index]['mappings'][0]['table_name'] == table:
                 rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
         tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.capsgen_id == data['project_id']).all()
+        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == data['project_id']).all()
         print(len(columndata))
         for row in columndata:
             row = { "id": row.id, "data": row.data }
@@ -323,9 +323,9 @@ def apply_mappings_build_gst_registration(id):
     if project_in_gst_registration_table is not None:
         db.session.delete(project_in_gst_registration_table)
         db.session.commit()
-    lfa1_result = SapLfa1.query.filter_by(capsgen_id=id).first()
+    lfa1_result = SapLfa1.query.filter_by(caps_gen_id=id).first()
     if lfa1_result is not None:
-        gst_registration = GstRegistration(project_id=project_id, capsgen_id=id, vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
+        gst_registration = GstRegistration(project_id=project_id, caps_gen_id=id, vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
         db.session.add(gst_registration)
         db.session.flush()
     else:
@@ -348,8 +348,8 @@ def view_tables(id, table):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    # capsgen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-    # if not capsgen_id:
+    # caps_gen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
+    # if not caps_gen_id:
     #     raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
 
     #table filter
@@ -414,7 +414,7 @@ def data_quality_check(id):
         tableclass = eval('Sap' + str(table.lower().capitalize()))
         compiled_data_dictionary = data_dictionary(CDM_query, table)
         data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
-            tableclass.capsgen_id == data['project_id']).all()
+            tableclass.caps_gen_id == data['project_id']).all()
         ### UNIQUENESS CHECK ###
         #The argument should be set to true when some of is_unique column in CDM labels is set to True.
         unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
@@ -594,7 +594,7 @@ def aps_to_caps(id):
     execute(j63())
     execute(j64())
     execute(j65())
-    
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -626,13 +626,13 @@ def caps_to_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
-    capsgen = CapsGen.query.filter_by(id=id)
-    if not capsgen.first():
+    caps_gen = CapsGen.query.filter_by(id=id)
+    if not caps_gen.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (capsgen.first()).projet_id
+    project_id = (caps_gen.first()).projet_id
 
     # TODO: transform caps to transactions
 
-    capsgen.is_complete = True
+    caps_gen.is_complete = True
     db.session.commit()
     return jsonify(response), 200
