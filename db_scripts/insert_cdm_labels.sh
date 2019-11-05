@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
+PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('bkpf_belnr_key',NULL,'FALSE','TRUE','dt_varchar',10,'repetition','accounting');
   INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('doc_type_gl','Doc Type (GL)','FALSE','FALSE','dt_varchar',2,'caps_advanced','accounting');
   INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('inv_date','Inv Date','FALSE','FALSE','dt_varchar',8,'caps_basic','accounting');

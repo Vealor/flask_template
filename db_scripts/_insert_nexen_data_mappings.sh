@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
+PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BKPF','BELNR',1,'bkpf_belnr_key');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BKPF','BLART',1,'doc_type_gl');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BKPF','BLDAT',1,'inv_date');

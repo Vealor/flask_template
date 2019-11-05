@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
+PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into logs (action, affected_entity, details, user_id) values('create', 'everything', 'such detail', 1);
   insert into clients (name) values ('mining corp');
   insert into clients (name) values ('mining corp two');
