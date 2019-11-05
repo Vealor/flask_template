@@ -84,10 +84,6 @@ api.register_blueprint(transactions, url_prefix='/transactions')
 from src.endpoints.users import users
 api.register_blueprint(users, url_prefix='/users')
 
-# Vendor Endpoints
-from src.endpoints.vendors import vendors
-api.register_blueprint(vendors, url_prefix='/vendors')
-
 
 #===============================================================================
 # Error Handling

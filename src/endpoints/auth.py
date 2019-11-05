@@ -22,8 +22,8 @@ def reset():
     data = request.get_json()
 
     request_types = {
-        'username': 'str',
-        'email': 'str',
+        'username': ['str'],
+        'email': ['str'],
     }
     validate_request_data(data, request_types)
 
@@ -57,8 +57,8 @@ def login():
     data = request.get_json()
 
     request_types = {
-        'username': 'str',
-        'password': 'str',
+        'username': ['str'],
+        'password': ['str'],
     }
     validate_request_data(data, request_types)
 

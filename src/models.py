@@ -331,12 +331,17 @@ class Client(db.Model):
 
     @property
     def serialize(self):
+        active_model = [m for m in self.client_client_models if m.status.value == Activity.active.value]
+        pending_model = [m for m in self.client_client_models if m.status.value == Activity.pending.value]
         return {
             'id': self.id,
             'name': self.name,
             'created': self.created,
             'client_entities': [i.serialize for i in self.client_client_entities],
-            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects]
+            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects],
+            'client_inactive_models': [m.serialize for m in self.client_client_models if m.status.value == Activity.inactive.value],
+            'client_pending_model': pending_model[0].serialize if pending_model else None,
+            'client_active_model': active_model[0].serialize if active_model else None
         }
 
     @classmethod
@@ -547,20 +552,20 @@ class ParedownRule(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(['paredown_rule_approver1_id'], ['users.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['paredown_rule_approver2_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
         db.CheckConstraint('paredown_rule_approver1_id != paredown_rule_approver2_id'),
         db.CheckConstraint('is_core or (not is_core and not (bool(paredown_rule_approver1_id) or bool(paredown_rule_approver2_id)))'),
         db.CheckConstraint('((is_core and not coalesce(array_length(lob_sectors, 1), 0) > 0) or (not is_core and coalesce(array_length(lob_sectors, 1), 0) > 0))'),
     )
-
-
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     is_core = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_active = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    code = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(128), nullable=True)
 
     lob_sectors = db.Column(ArrayOfEnum(postgresql.ENUM(LineOfBusinessSectors)), nullable=True)
 
+    code_id = db.Column(db.Integer, nullable=False) # FK
+    paredown_rule_code = db.relationship('Code', back_populates='code_paredown_rules')
     paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
     paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
     paredown_rule_approver2_id = db.Column(db.Integer, nullable=True) # FK
@@ -576,7 +581,7 @@ class ParedownRule(db.Model):
             'is_active': self.is_active,
             'conditions': [i.serialize for i in self.paredown_rule_conditions],
             'lob_sectors': self.lob_sectors if self.lob_sectors else [],
-            'code': self.code,
+            'code': self.paredown_rule_code.serialize,
             'comment': self.comment,
             'approver1_id': self.paredown_rule_approver1_id,
             'approver1_username': self.paredown_rule_approver1_user.username if self.paredown_rule_approver1_id else None,
@@ -611,29 +616,6 @@ class ParedownRuleCondition(db.Model):
             'operator': self.operator,
             'value': self.value
         }
-
-class Vendor(db.Model):
-    __tablename__ = 'vendors'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(128), unique=True, nullable=False)
-
-    vendor_transactions = db.relationship('Transaction', back_populates='transaction_vendor')
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'vendor_transactions': [i.id for i in self.vendor_transactions]
-        }
-
-    @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id = id).first()
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filter_by(name = name).first()
 
 
 class CapsGen(db.Model):
@@ -680,6 +662,7 @@ class CapsGen(db.Model):
     caps_gen_sapskat = db.relationship('SapSkat', back_populates='sapskat_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapt001 = db.relationship('SapT001', back_populates='sapt001_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapt007s = db.relationship('SapT007s', back_populates='sapt007s_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sapska1 = db.relationship('SapSka1', back_populates='sapska1_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapskb1 = db.relationship('SapSkb1', back_populates='sapskb1_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapt003t = db.relationship('SapT003t', back_populates='sapt003t_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_saptbslt = db.relationship('SapTbslt', back_populates='saptbslt_caps_gen', lazy='dynamic', passive_deletes=True)
@@ -779,6 +762,18 @@ class DataParam(db.Model):
     project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
     data_param_project = db.relationship('Project', back_populates='project_data_params')
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'process': self.process.value,
+            'param': self.param,
+            'operator': self.operator.value,
+            'value': [float(x) if re.match('^\d+(?:\.\d+)?$', x) else x for x in self.value],
+            'is_many': self.is_many,
+            'project_id': self.project_id
+        }
+
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
     __table_args__ = (
@@ -787,14 +782,18 @@ class DataMapping(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    column_name = db.Column(db.String(256), nullable=True, default='')
-    table_name = db.Column(db.String(256), nullable=True, default='')
+    column_name = db.Column(db.String(256), nullable=True, default='', server_default='')
+    table_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
 
     cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
     data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings') # FK
+
+    __table_args__ += (
+        db.Index('caps_gen_mapping_col_table_unique', caps_gen_id, column_name, table_name, unique=True, postgresql_where=(db.and_(column_name!='', table_name!=''))),
+    )
 
     @property
     def serialize(self):
@@ -803,8 +802,7 @@ class DataMapping(db.Model):
             'caps_gen_id': self.caps_gen_id,
             'label': self.cdm_label_script_label,
             'display_name': self.data_mapping_cdm_label.display_name if self.data_mapping_cdm_label.display_name else None,
-            'table_name': self.table_name,
-            'column_name': self.column_name
+            'table_column_name': [{'table_name': self.table_name, 'column_name': self.column_name}] if self.table_name and self.column_name else [],
         }
 
     @classmethod
@@ -816,7 +814,7 @@ class CDMLabel(db.Model):
     # data mapping
     script_label = db.Column(db.String(256), primary_key=True, nullable=False)
     is_active = db.Column(db.Boolean, unique=False, nullable=False, default=True, server_default='t')
-    display_name = db.Column(db.String(256), nullable=True)
+    display_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
     # data dictionary
     is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
@@ -999,6 +997,8 @@ class Code(db.Model):
     code_number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
 
+    code_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_code', lazy='dynamic')
+
     @property
     def serialize(self):
         return {
@@ -1026,7 +1026,6 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     __table_args__ = (
         db.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ondelete='SET NULL'),
-        db.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
@@ -1096,9 +1095,6 @@ class Transaction(db.Model):
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id') # FK
-
-    vendor_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_vendor = db.relationship('Vendor', back_populates='vendor_transactions') # FK
 
     project_id = db.Column(db.Integer, nullable=False) # FK
     transaction_project = db.relationship('Project', back_populates='project_transactions') # FK
@@ -1456,13 +1452,13 @@ class SapT007s(db.Model):
 class SapSka1(db.Model):
     _tablename__ = 'sap_ska1'
     __table_args__ = (
-        db.ForeignKeyConstraint(['capsgen_id'], ['capsgen.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    capsgen_id = db.Column(db.Integer,  nullable=False)
-    sapska1_capsgen = db.relationship('CapsGen', back_populates='capsgen_sapska1')
+    caps_gen_id = db.Column(db.Integer,  nullable=False)
+    sapska1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapska1')
 
 
 class SapSkb1(db.Model):
