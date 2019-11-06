@@ -716,11 +716,9 @@ class CapsGen(db.Model):
             'caps_gen_sapt007a','caps_gen_sapttxjt','caps_gen_sapt001w',
             'caps_gen_sapt005t','caps_gen_saptinct'
         ]
-        output = {
-            'caps_data': {}
-        }
+        output = {}
         for table in table_list:
-            output['caps_data'][table] = list(eval('self.'+table).first().data.keys()) if eval('self.'+table).first() else []
+            output[table] = list(eval('self.'+table).first().data.keys()) if eval('self.'+table).first() else []
         return output
 
     @property

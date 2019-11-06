@@ -249,14 +249,26 @@ def get_master_table_headers(id):
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
-    def get_column_name(table, caps_data):
-        return [{'table_name': table, 'column_name': header } for header in caps_data]
     mappings = [i.serialize for i in DataMapping.query.filter_by(caps_gen_id=id).all()]
-    headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().get_headers['caps_data'].items()]
+
+    headers = []
+    header_data = query.first().get_headers
+    for key in header_data.keys():
+        header_set = { key: [] }
+        for item in header_data[key]:
+            header_set[key].append({'table_name': key, 'column_name': item })
+        headers.append(header_set)
+
+    # def get_column_name(table, caps_data):
+    #     return [{'table_name': table, 'column_name': header } for header in caps_data]
+    #
+    # headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().get_headers['caps_data'].items()]
     for mapping in mappings:
         if mapping['table_column_name']:
             for header in headers:
                 header.update({list(header.keys())[0]: [x for x in header[list(header.keys())[0]] if x != mapping['table_column_name'][0]]})
+
+
     response['payload'] = headers
 
     return jsonify(response), 200
