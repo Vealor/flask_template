@@ -9,6 +9,7 @@ import re
 import zipfile
 import requests
 import itertools
+import collections
 from collections import Counter
 from azure.storage.file import FileService
 from flask import Blueprint, current_app, jsonify, request
@@ -454,80 +455,168 @@ def view_tables(id, table):
 @exception_wrapper()
 def data_quality_check(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    def data_dictionary(mapping, table):
-        rename_dict = {}
-        for index, elem in enumerate(mapping):
-            if mapping[index]['mappings'][0]['table_name'] == table:
-                rename_dict.update({mapping[index]['script_label']: {
-                    'is_calculated': mapping[index]['is_calculated'],
-                    'is_required': mapping[index]['is_required'],
-                    'is_unique': mapping[index]['is_unique'],
-                    'regex': mapping[index]['regex'],
-                }})
-        return rename_dict
+    # final_result =  {"bseg": [{'validity': {'score':,'results':[]}}]]}
+    # groups = db.session.query(DataMapping.id).group_by(DataMapping.table_name)
+    # print(groups)
+    mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
+    #  [ 'table_name' : ['unique_keys', 'unique _key']]
+    final_result = {}
+    for table, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
+        table_name = "sap_" + table
+        mapped_columns = [ mapping.cdm_label_script_label  for mapping in group ]
+    
+        query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
+        unique_keys = [ row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
+        datatypes = [ {row[0]: row[1].name} for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()]
 
-    def validity_check(result, regex):
-        validity_response = {}
-        results = list(filter(re.compile(regex).match, result))
-        validity_response['results'] = results
-        validity_response['final_score'] = 100 - (len(validity_response['results'])/len(column))
-        return validity_response
+        completeness_score_query_string = '''
+        select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from {table_name} where caps_gen_id = {caps_gen_id}; 
+        '''.format(column_name = mapped_columns[0], table_name = table_name, caps_gen_id = id)
 
-    def completeness_check(result):
-        completeness_response = {}
-        counter = 0
-        results = [elem for elem in result if elem == '' or elem == None]
-        completeness_response['final_score'] =  (len(results) / len(result)) * 100
-        return completeness_response
+        names = ','.join(['data ->> \''+ column +'\'' for column in mapped_columns])
+        uniquenss_score_query_string = '''
+        select round((count(distinct(CONCAT({column_names})))::decimal / count(*)::decimal), 2) as uniqueness_score from {table_name} where caps_gen_id = {caps_gen_id};
+        '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
 
-    response = {'status': 'ok', 'message': {}, 'payload': []}
-    data_dictionary_results = {}
-    uniqueness_response = {}
+        repetition_query_string = '''
+        select CONCAT({column_names}) as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by CONCAT({column_names}) HAVING count(*) > 1
+        '''.format(column_names = names, caps_gen_id = id)
+        print('sql')
+        c = db.session.execute(completeness_score_query_string).first()
+        u = db.session.execute(uniquenss_score_query_string).first()
+        r = db.session.execute(repetition_query_string)
+        print('yaya')
+        final_result[table] = { 
+                                'completeness': {'score': float(c[0])},
+                                'uniqueness': {'score': float(u[0]), 'key_name': unique_keys, 'repetition':[rep[0] for rep in r]}
+                              }
+        print("done")
 
-    data = request.get_json()
-    CDM_query = [label.serialize for label in CDMLabel.query.all()]
-    list_tablenames = list(set([table['mappings'][0]['table_name'] for table in CDM_query if table['mappings']]))
-    for table in list_tablenames:
-        data_dictionary_results[table] = {}
-        tableclass = eval('Sap' + str(table.lower().capitalize()))
-        compiled_data_dictionary = data_dictionary(CDM_query, table)
-        data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
-            tableclass.caps_gen_id == data['project_id']).all()
-        ### UNIQUENESS CHECK ###
-        #The argument should be set to true when some of is_unique column in CDM labels is set to True.
-        unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
-        if unique_keys:
-            unique_key_checker = []
-            for row in data:
-                row = [row.data[x] for x in unique_keys]
-                ''.join(row)
-                unique_key_checker.append(row)
-            c = Counter(map(tuple, unique_key_checker))
-            dups = [k for k, v in c.items() if v > 1]
-        #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
-        if len(dups) > 1:
-            uniqueness_response['results'] = dups
-            uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
-            data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
-        else:
-            uniqueness_response['final_score'] = 100
-            data_dictionary_results[table] = {'uniqueness': 100}
-        ### validity check ###
-        for column in compiled_data_dictionary.keys():
-            query = [row.data[column] for row in data]
-            if compiled_data_dictionary[column]['regex']:
-                data_dictionary_results[table][column] = {
-                    'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
-        ###completeness check ###
-            data_dictionary_results[table][column] = {
-                'completeness': completeness_check(query)}
-    response['payload'] = data_dictionary_results
+    print(final_result)
+    
+    # table_names = [ 'sap_'+mapping.table_name.lower() for mapping in mappings] 
+    # for table_name in table_names:
+    #     if mapping
+   
+    # query = query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype'))
+    # unique_labels = query.filter_by(is_unique = True).all()
+    # data_types = query.all()
+
+    def merge_dicts(dicts):
+        res = collections.defaultdict(list)
+        for d in dicts:
+            for k, v in d.iteritems():
+                res[k].append(v)
+        return res
+    # def data_dictionary(mapping, table):
+    #     rename_dict = {}
+    #     for index, elem in enumerate(mapping):
+    #         if mapping[index]['mappings'][0]['table_name'] == table:
+    #             rename_dict.update({mapping[index]['script_label']: {
+    #                 'is_calculated': mapping[index]['is_calculated'],
+    #                 'is_required': mapping[index]['is_required'],
+    #                 'is_unique': mapping[index]['is_unique'],
+    #                 'regex': mapping[index]['regex'],
+    #             }})
+    #     return rename_dict
+
+    # def validity_check(result, regex):
+    #     validity_response = {}
+    #     results = list(filter(re.compile(regex).match, result))
+    #     validity_response['results'] = results
+    #     validity_response['final_score'] = 100 - (len(validity_response['results'])/len(column))
+    #     return validity_response
+
+    # def completeness_check(result):
+    #     completeness_response = {}
+    #     counter = 0
+    #     results = [elem for elem in result if elem == '' or elem == None]
+    #     completeness_response['final_score'] =  (len(results) / len(result)) * 100
+    #     return completeness_response
+
+    # response = {'status': 'ok', 'message': {}, 'payload': []}
+    # data_dictionary_results = {}
+    # # uniqueness_response = {}
+    # mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
+    #  CDMLabel.query.filter_by()
+    # for mapping in mappings:
+    #     table_to_check = "Sap"+(mapping.table_name).lower().capitalize()
+    #     table_class = eval(table_to_check)
+    #     data_dictionary_results[table_to_check] = {}
+    #     data = [row.data for row in table_class.query.filter_by(caps_gen_id = id).all()]
+    #     print(data)
+    #     # data_in_table = table_class.query.with_entities(getattr(table_class, 'id'), getattr(table_class, 'data')).filter(
+    #         # table_class.caps_gen_id == id).all()
+       
+    # # data = request.get_json()
+    # cmd_labels = [label.serialize for label in CDMLabel.query.all()]
+    # # unique_keys = { label["script_label"] : 0 for label in cmd_labels if label["is_unique"] is True }
+    # # key_data_types = {  label["script_label"]: db.enum(label["datatype"])  for label in cmd_labels }
+    # unique_keys = {'vegie':0}
+    # key_data_types = {'vegie':}
+    # print(key_data_types)
+    # print(unique_keys)
+    # # print(data_in_table)
+    # merged_dicts = merge_dicts(data)
+    # count_total = 0
+    # count_failed_unique = 0
+    # count_failed_datatype = 0
+    # for k, values in merged_dicts:
+    #     count_total += len(values)
+    #     if len(values) > 1:
+    #         count_failed_unique += len(values)
+    #         # put data in result
+    #     for value in values:
+    #        if type(value) is not key_data_types[k]:
+    #            count_failed_datatype += 1
+               
+    # print(merged_dicts)
+        #  merge_dicts()
+        # for unique_key in unique_keys:
+        #     if unique_key in row.keys():
+        #         unique_keys[unique_key] += 1
+
+
+    # for table in list_tablenames:
+    #     data_dictionary_results[table] = {}
+    #     tableclass = eval('Sap' + str(table.lower().capitalize()))
+    #     compiled_data_dictionary = data_dictionary(CDM_query, table)
+    #     data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
+    #         tableclass.caps_gen_id == id).all()
+    #     ### UNIQUENESS CHECK ###
+    #     #The argument should be set to true when some of is_unique column in CDM labels is set to True.
+    #     unique_keys = [x for x in compiled_data_dictionary if compiled_data_dictionary[x]['is_unique'] == False]
+    #     if unique_keys:
+    #         unique_key_checker = []
+    #         for row in data:
+    #             row = [row.data[x] for x in unique_keys]
+    #             ''.join(row)
+    #             unique_key_checker.append(row)
+    #         c = Counter(map(tuple, unique_key_checker))
+    #         dups = [k for k, v in c.items() if v > 1]
+    #     #if there are no unique keys, line below will bug out, saying its not being referenced. This is because dups above never runs so the var does not initialize.
+    #     if len(dups) > 1:
+    #         uniqueness_response['results'] = dups
+    #         uniqueness_response['final_score'] = 100 - (len(dups)/tableclass.query.count())
+    #         data_dictionary_results[table] = {'uniqueness' : uniqueness_response}
+    #     else:
+    #         uniqueness_response['final_score'] = 100
+    #         data_dictionary_results[table] = {'uniqueness': 100}
+    #     ### validity check ###
+    #     for column in compiled_data_dictionary.keys():
+    #         query = [row.data[column] for row in data]
+    #         if compiled_data_dictionary[column]['regex']:
+    #             data_dictionary_results[table][column] = {
+    #                 'regex': validity_check(query, compiled_data_dictionary[column]['regex'])}
+    #     ###completeness check ###
+    #         data_dictionary_results[table][column] = {
+    #             'completeness': completeness_check(query)}
+    response['payload'] = final_result
     return jsonify(response), 200
 
 #===============================================================================
