@@ -60,9 +60,9 @@ class TestingConfig(Config):
 
     POSTGRES = {
         'user': 'itra',
-        'pw': 'LHDEV1234',
+        'pw': 'Kpmg1234$',
         'db': 'itra_db',
-        'host': 'localhost',
+        'host': 'itra-uat-sql.postgres.database.azure.com',
         'port': '5432',
     }
 
