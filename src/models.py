@@ -1120,7 +1120,6 @@ class Transaction(db.Model):
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
             'data': self.data,
-            'codes': self.codes,
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
