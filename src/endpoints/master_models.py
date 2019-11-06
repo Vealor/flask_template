@@ -294,7 +294,7 @@ def do_validate():
 
 #===============================================================================
 # Compare active and pending models
-@master_models.route('/compare/', methods=['POST'])
+@master_models.route('/compare/', methods=['GET'])
 # @jwt_required
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
