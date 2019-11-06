@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 DB_URL=localhost #1
 FLASK_ENV=development #2  development, testing, production
 
@@ -9,6 +8,16 @@ DATABASE=itra_db #4
 PASSWORD=LHDEV1234 #5
 
 BACKEND=http://localhost #6
+
+
+#DB_URL=itra-uat-sql.postgres.database.azure.com #1
+#FLASK_ENV=testing #2  development, testing, production
+
+#USERNAME=lh_admin_tax@itra-uat-sql.postgres.database.azure.com #3
+#DATABASE=itra_db #4
+#PASSWORD=Kpmg1234@ #5
+
+#BACKEND=http://localhost #6
 
 
 ################################################################################
