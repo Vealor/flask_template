@@ -1007,6 +1007,10 @@ class Code(db.Model):
 
     code_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_code', lazy='dynamic')
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
     @property
     def serialize(self):
         return {
@@ -1014,6 +1018,7 @@ class Code(db.Model):
             'code_number': self.code_number,
             'description': self.description
         }
+
 
 class ErrorCategory(db.Model):
     __tablename__ = 'error_categories'
@@ -1124,7 +1129,7 @@ class Transaction(db.Model):
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
             'data': self.data,
-            'codes': self.codes,
+            'gst_code': self.gst_code,
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
