@@ -1007,6 +1007,10 @@ class Code(db.Model):
             'description': self.description
         }
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
 class ErrorCategory(db.Model):
     __tablename__ = 'error_categories'
     __table_args__ = (
