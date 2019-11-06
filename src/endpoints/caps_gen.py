@@ -431,14 +431,15 @@ def view_tables(id, table):
 
     #table filter
     tableclass = eval('Sap' + str(table.lower().capitalize()))
-    query = tableclass.query.with_entities(getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id)
+    print(tableclass)
+    query = tableclass.query.filter_by(caps_gen_id = id)
+
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-    columndata = query.all()
-    response['payload'] = columndata
+    response['payload'] = [i.data for i in query.all()]
 
     return jsonify(response), 200
 
