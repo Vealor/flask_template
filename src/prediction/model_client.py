@@ -17,7 +17,7 @@ class ClientPredictionModel(BasePredictionModel):
                 }
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
-                param_grid={'max_depth':[3,4,5], 'n_estimators':[50,100,200,400]},
+                param_grid={'max_depth':[3,5], 'n_estimators':[50,100,200]},
                 cv=5,
                 scoring='f1'
                 )
@@ -35,6 +35,9 @@ class ClientPredictionModel(BasePredictionModel):
         # If there is a significant class imbalance, do some synthetic over_sampling
         X = training_data[predictors]
         y = training_data[target]
+
+        if y.value_counts().nunique() < 2:
+            raise Exception("Error: Only one target class represented in training data.")
         if y.value_counts()[1] < 0.2*len(y):
             print("Balancing classes...")
             X, y = SMOTE().fit_sample(X, y)

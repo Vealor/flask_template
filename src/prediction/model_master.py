@@ -18,7 +18,7 @@ class MasterPredictionModel(BasePredictionModel):
                 }
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
-                param_grid={'max_depth':[3,4,5], 'n_estimators':[50,100,200,400]},
+                param_grid={'max_depth':[3,5], 'n_estimators':[50,100]},
                 cv=5,
                 scoring='f1'
                 )
