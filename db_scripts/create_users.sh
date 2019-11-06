@@ -9,7 +9,7 @@ function make_user () {
     "first_name":"'$5'",
     "last_name":"'$6'",
     "role":"'$7'"
-  }' http://$8:5000/users
+  }' $8:5000/users
 }
 make_user "test" "test" "lh_test_user@test.test" "TEST" "test_first" "test_last" "tax_master" $6
 

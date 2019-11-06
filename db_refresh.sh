@@ -8,7 +8,7 @@ USERNAME=itra #3
 DATABASE=itra_db #4
 PASSWORD=LHDEV1234 #5
 
-BACKEND=localhost #6
+BACKEND=http://localhost #6
 
 
 ################################################################################
