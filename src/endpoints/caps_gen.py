@@ -212,7 +212,6 @@ def init_caps_gen():
                 if counter > 0:
                     engine.execute(referenceclass.__table__.insert(), list_to_insert)
 
-            CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
             db.session.flush()
         ###
 
@@ -299,7 +298,6 @@ def apply_mappings_build_gst_registration(id):
         'system': ['str']
     }
     validate_request_data(data, request_types)
-
 
     # response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
 
@@ -388,7 +386,30 @@ def apply_mappings_build_gst_registration(id):
     # else:
     #     raise ValueError("LFA1 does not exist, please run caps gen first.")
 
-    db.session.commit()
+    # db.session.commit()
+    response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
+
+    return jsonify(response), 200
+
+
+#===============================================================================
+# View Tables Page
+@caps_gen.route('/<int:id>/get_tables', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def get_tables(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    tables = query.first().get_tables
+
+    response['payload'] = tables
+
     return jsonify(response), 200
 
 #===============================================================================

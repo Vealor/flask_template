@@ -695,29 +695,34 @@ class CapsGen(db.Model):
     caps_gen_saptinct = db.relationship('SapTinct', back_populates='saptinct_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
 
+    table_list = [
+        'caps_gen_sapaufk','caps_gen_sapbkpf','caps_gen_sapbsak',
+        'caps_gen_sapbseg','caps_gen_sapcepc','caps_gen_sapcepct',
+        'caps_gen_sapcsks','caps_gen_sapcskt','caps_gen_sapekko',
+        'caps_gen_sapekpo','caps_gen_sapiflot','caps_gen_sapiloa',
+        'caps_gen_saplfa1','caps_gen_sapmakt','caps_gen_sapmara',
+        'caps_gen_sappayr','caps_gen_sapproj','caps_gen_sapprps',
+        'caps_gen_sapregup','caps_gen_sapt042zt','caps_gen_sapj_1atodct',
+        'caps_gen_sapskat','caps_gen_sapt001','caps_gen_sapt007s',
+        'caps_gen_sapskb1','caps_gen_sapt003t','caps_gen_saptbslt',
+        'caps_gen_saptcurt','caps_gen_saptgsbt','caps_gen_saplfas',
+        'caps_gen_saplfm1','caps_gen_saptoa01','caps_gen_sapt024',
+        'caps_gen_sapt024e','caps_gen_sapmlan','caps_gen_sapmseg',
+        'caps_gen_sapt001l','caps_gen_sapt006a','caps_gen_saptmkm1t',
+        'caps_gen_saptntpb','caps_gen_sapt023t','caps_gen_saptskmt',
+        'caps_gen_saptvegrt','caps_gen_saptvtyt','caps_gen_sapt005s',
+        'caps_gen_sapt007a','caps_gen_sapttxjt','caps_gen_sapt001w',
+        'caps_gen_sapt005t','caps_gen_saptinct'
+    ]
+
+    @property
+    def get_tables(self):
+        return [i.partition('sap')[2].lower() for i in self.table_list]
+
     @property
     def get_headers(self):
-        table_list = [
-            'caps_gen_sapaufk','caps_gen_sapbkpf','caps_gen_sapbsak',
-            'caps_gen_sapbseg','caps_gen_sapcepc','caps_gen_sapcepct',
-            'caps_gen_sapcsks','caps_gen_sapcskt','caps_gen_sapekko',
-            'caps_gen_sapekpo','caps_gen_sapiflot','caps_gen_sapiloa',
-            'caps_gen_saplfa1','caps_gen_sapmakt','caps_gen_sapmara',
-            'caps_gen_sappayr','caps_gen_sapproj','caps_gen_sapprps',
-            'caps_gen_sapregup','caps_gen_sapt042zt','caps_gen_sapj_1atodct',
-            'caps_gen_sapskat','caps_gen_sapt001','caps_gen_sapt007s',
-            'caps_gen_sapskb1','caps_gen_sapt003t','caps_gen_saptbslt',
-            'caps_gen_saptcurt','caps_gen_saptgsbt','caps_gen_saplfas',
-            'caps_gen_saplfm1','caps_gen_saptoa01','caps_gen_sapt024',
-            'caps_gen_sapt024e','caps_gen_sapmlan','caps_gen_sapmseg',
-            'caps_gen_sapt001l','caps_gen_sapt006a','caps_gen_saptmkm1t',
-            'caps_gen_saptntpb','caps_gen_sapt023t','caps_gen_saptskmt',
-            'caps_gen_saptvegrt','caps_gen_saptvtyt','caps_gen_sapt005s',
-            'caps_gen_sapt007a','caps_gen_sapttxjt','caps_gen_sapt001w',
-            'caps_gen_sapt005t','caps_gen_saptinct'
-        ]
         output = {}
-        for table in table_list:
+        for table in self.table_list:
             output[table] = list(eval('self.'+table).first().data.keys()) if eval('self.'+table).first() else []
         return output
 
