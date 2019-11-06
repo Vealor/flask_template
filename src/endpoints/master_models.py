@@ -350,7 +350,7 @@ def compare_active_and_pending():
 #===============================================================================
 # Update the active master model
 @master_models.route('/set_active/', defaults={'model_id':None}, methods=['PUT'])
-@master_models.route('/set_active/<int:model_id>', methods=['PUT'])
+@master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }

@@ -363,7 +363,7 @@ def compare_active_and_pending():
 @client_models.route('/set_active/', defaults={'model_id':None}, methods=['PUT'])
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
-def set_active_model(client_id,model_id):
+def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
     try:
