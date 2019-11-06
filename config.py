@@ -25,7 +25,7 @@ class Config(object):
 class DevelopmentConfig(Config):
     # Statement for enabling the development environment
     DEBUG = True
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(day=1)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=6)
 
     # Use a secure, unique and absolutely secret key for signing the data.
