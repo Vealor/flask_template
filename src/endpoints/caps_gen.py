@@ -390,6 +390,27 @@ def apply_mappings_build_gst_registration(id):
 
     return jsonify(response), 200
 
+
+#===============================================================================
+# View Tables Page
+@caps_gen.route('/<int:id>/get_tables', methods=['GET'])
+# @jwt_required
+# @has_permission([])
+@exception_wrapper()
+def get_tables(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = CapsGen.query.filter_by(id=id)
+    if not query.first():
+        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+
+    tables = query.first().get_tables
+
+    response['payload'] = tables
+
+    return jsonify(response), 200
+
 #===============================================================================
 # View Tables Page
 @caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
