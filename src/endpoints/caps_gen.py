@@ -324,8 +324,8 @@ def apply_mappings_build_gst_registration(id):
             if mapping.column_name in newdata.keys():
                 newdata[mapping.cdm_label_script_label] = newdata.pop(mapping.column_name)
             row.data = newdata
-
     db.session.commit()
+
     # mapping = [label.serialize for label in CDMLabel.query.all()]
     #
     #
@@ -363,7 +363,21 @@ def apply_mappings_build_gst_registration(id):
 
 
     # BUILD GST REGISTRATION
-    # TODO: check for similary/duplicate projects by comparing attributes
+    # TODO: V2 check for similary/duplicate projects by comparing attributes
+    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    for vendor in gst_data:
+        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+        gst_entry = GstRegistration(
+            caps_gen_id = id,
+            vendor_country=vendor['lfa1_land1_key'],
+            vendor_number=vendor['lfa1_lifnr_key'],
+            vendor_city=vendor['vend_city'],
+            vendor_region=vendor['vend_region']
+        )
+        db.session.add(gst_entry)
+    db.session.commit()
+
     # project_id = (CapsGen.find_by_id(id)).project_id
     # project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
     # if project_in_gst_registration_table is not None:
@@ -371,13 +385,20 @@ def apply_mappings_build_gst_registration(id):
     #     db.session.commit()
     # lfa1_result = SapLfa1.query.filter_by(caps_gen_id=id).first()
     # if lfa1_result is not None:
-    #     gst_registration = GstRegistration(project_id=project_id, caps_gen_id=id, vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
+    #     gst_registration = GstRegistration(
+    #         project_id=project_id,
+    #         caps_gen_id=id,
+    #         vendor_country=fa1.data['LAND1'],
+    #         vendor_number=fa1.data['LIFNR'],
+    #         vendor_city=fa1.data['ORT01'],
+    #         vendor_region=fa1.data['REGIO']
+    #     )
     #     db.session.add(gst_registration)
     #     db.session.flush()
     # else:
     #     raise ValueError("LFA1 does not exist, please run caps gen first.")
-    #
-    # db.session.commit()
+
+    db.session.commit()
     return jsonify(response), 200
 
 #===============================================================================
