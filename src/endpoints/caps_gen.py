@@ -96,7 +96,7 @@ def project_path_creation():
         'system': ['str']
     }
     validate_request_data(data, request_types)
-    #todo: If project path creation fails, we need to create rollback code. 
+    #todo: If project path creation fails, we need to create rollback code.
     response = project_path_create(data, response)
     return jsonify(response), 200
 
