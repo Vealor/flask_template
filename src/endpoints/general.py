@@ -15,6 +15,4 @@ general = Blueprint('general', __name__)
 def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['VERSION'] = current_app.config['VERSION']
-
-    response = CapsGen.query.filter_by(id=3).first().get_headers
     return jsonify(response)
