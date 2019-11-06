@@ -182,6 +182,14 @@ def init_caps_gen():
                         wfd.write(fd.read().encode())
             wfd.close()
 
+
+            # for file in directory:
+            #   get first line of file as headers
+            #   build base dictionary with headers and blank data
+            #   for each other line in file:
+            #       take base dict and populate and add
+            #       after 1000, commit
+
             #initialize variables for bulk insertion
             referenceclass = eval('Sap' + str(table.lower().capitalize()))
             list_to_insert = []
@@ -255,7 +263,7 @@ def get_master_table_headers(id):
 
 
     mappings = [i.serialize for i in DataMapping.query.filter_by(caps_gen_id=id).all()]
-    headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().serialize['caps_data'].items()]
+    headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().get_headers['caps_data'].items()]
     for mapping in mappings:
         if mapping['table_column_name']:
             for header in headers:

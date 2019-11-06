@@ -16,5 +16,5 @@ def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['VERSION'] = current_app.config['VERSION']
 
-    print((Code.query.filter_by(code_number=210).first()).serialize['id'])
+    response = CapsGen.query.filter_by(id=3).first().get_headers
     return jsonify(response)
