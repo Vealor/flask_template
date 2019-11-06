@@ -105,11 +105,13 @@ def do_train():
     train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
     train_entries = [tr.serialize['data'] for tr in train_transactions]
     data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
+    data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
     print("TRAIN DATA LEN: {}".format(len(data_train)))
 
     test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
     test_entries = [tr.serialize['data'] for tr in test_transactions]
     data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+    data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
     print("TEST DATA LEN: {}".format(len(data_valid)))
 
     # Training =================================
@@ -124,8 +126,8 @@ def do_train():
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    data_valid = preprocessing_predict(data_valid, predictors, for_validation=True)
-    performance_metrics = lh_model.validate(data_valid, predictors, target)
+    performance_metrics = lh_model.validate(
+        preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],
         'precision': performance_metrics['precision'],
@@ -142,7 +144,9 @@ def do_train():
     active_model = MasterModel.find_active()
     if active_model:
         lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        performance_metrics_old = lh_model_old.validate(data_valid, predictors, target)
+        predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+        performance_metrics_old = lh_model_old.validate(
+            preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
         model_performance_dict_old = {
             'master_model_id': active_model.id,
             'accuracy': performance_metrics_old['accuracy'],

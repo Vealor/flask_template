@@ -31,9 +31,7 @@ def get_client_models(id):
 
     # If client_id is specified, then return all models for that client
     query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
-
     response['payload'] = [i.serialize for i in query.all()]
-
     return jsonify(response), 200
 
 
@@ -45,7 +43,6 @@ def get_client_models(id):
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
-
     # validate input
     request_types = {
         'client_id': ['int'],
@@ -109,11 +106,13 @@ def do_train():
     train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
     train_entries = [tr.serialize['data'] for tr in train_transactions]
     data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
+    data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
     print("TRAIN DATA LEN: {}".format(len(data_train)))
 
     test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
     test_entries = [tr.serialize['data'] for tr in test_transactions]
     data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+    data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
     print("TEST DATA LEN: {}".format(len(data_valid)))
 
     # Training =================================
@@ -122,14 +121,15 @@ def do_train():
     target = "Target"
     predictors = list(set(data_train.columns) - set([target]))
     lh_model.train(data_train, predictors, target)
+
     # Update the model entry with the hyperparameters and pickle
     entry.pickle = lh_model.as_pickle()
     entry.hyper_p = {'predictors': predictors, 'target': target}
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    data_valid = preprocessing_predict(data_valid, predictors, for_validation=True)
-    performance_metrics = lh_model.validate(data_valid, predictors, target)
+    performance_metrics = lh_model.validate(
+        preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],
         'precision': performance_metrics['precision'],
@@ -144,10 +144,12 @@ def do_train():
 
     # If there is an active model for this client, check to compare performance
     # Else, automatically push newly trained model to active
+
     active_model = ClientModel.find_active_for_client(data['client_id'])
     if active_model:
         lh_model_old = cm.ClientPredictionModel(active_model.pickle)
-        performance_metrics_old = lh_model_old.validate(data_valid, predictors, target)
+        predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+        performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
         model_performance_dict_old = {
             'client_model_id': active_model.id,
             'accuracy': performance_metrics_old['accuracy'],
