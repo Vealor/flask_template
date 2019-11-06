@@ -298,7 +298,6 @@ def apply_mappings_build_gst_registration(id):
     }
     validate_request_data(data, request_types)
 
-
     # response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
 
     # APPLY MAPPINGS
@@ -386,7 +385,9 @@ def apply_mappings_build_gst_registration(id):
     # else:
     #     raise ValueError("LFA1 does not exist, please run caps gen first.")
 
-    db.session.commit()
+    # db.session.commit()
+    response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
+
     return jsonify(response), 200
 
 #===============================================================================
