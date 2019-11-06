@@ -371,7 +371,7 @@ def set_active_model(model_id):
             raise InputError("client_id must be specified to set active model for client")
         client_id = int(args['client_id'])
         if not Client.find_by_id(client_id):
-            raise ValueError("Client ID {} does not exist.".format(client_id))
+            raise NotFoundError("Client ID {} does not exist.".format(client_id))
         if not model_id:
             pending_model = ClientModel.find_pending_for_client(client_id)
             if not pending_model:
