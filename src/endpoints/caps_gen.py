@@ -256,12 +256,12 @@ def get_master_table_headers(id):
     for key in header_data.keys():
         header_set = { key: [] }
         for item in header_data[key]:
-            header_set[key].append({'table_name': key, 'column_name': item })
+            header_set[key].append({'table_name': key.partition('sap')[2].lower(), 'column_name': item })
         headers.append(header_set)
 
     # def get_column_name(table, caps_data):
     #     return [{'table_name': table, 'column_name': header } for header in caps_data]
-    #
+    # 
     # headers = [{table.partition('sap')[2].lower(): list(itertools.chain.from_iterable(list(map(lambda x: get_column_name(table.partition('sap')[2].lower(), x), value))))} for table, value in query.first().get_headers['caps_data'].items()]
     for mapping in mappings:
         if mapping['table_column_name']:
