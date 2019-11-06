@@ -241,8 +241,8 @@ def do_validate():
 
         # validate input
         request_types = {
-            'test_data_start_date': 'str',
-            'test_data_end_date': 'str'
+            'test_data_start_date': ['str'],
+            'test_data_end_date': ['str']
         }
         validate_request_data(data, request_types)
         train_start = active_model.train_data_start.date()
@@ -310,9 +310,9 @@ def compare_active_and_pending():
 
         # validate input
         request_types = {
-            'test_data_start_date': 'str',
-            'test_data_end_date': 'str'
-        }
+            'test_data_start_date': ['str'],
+            'test_data_end_date': ['str']
+            }
         validate_request_data(data, request_types)
         test_start = get_date_obj_from_str(data['test_data_start_date'])
         test_end = get_date_obj_from_str(data['test_data_end_date'])
@@ -330,13 +330,14 @@ def compare_active_and_pending():
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         test_entries = [tr.serialize['data'] for tr in test_transactions]
-        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
 
         performance_metrics = {}
         for model in [active_model, pending_model]:
             lh_model = mm.MasterPredictionModel(model.pickle)
             predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
+            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
 
         response['message'] = 'Master model comparison complete'
         response['payload'] = performance_metrics

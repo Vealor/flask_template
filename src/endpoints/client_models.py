@@ -242,9 +242,9 @@ def do_validate():
     try:
         # validate input
         request_types = {
-            'test_data_start_date': 'str',
-            'test_data_end_date': 'str',
-            'client_id': 'int'
+            'test_data_start_date': ['str'],
+            'test_data_end_date': ['str'],
+            'client_id': ['int']
         }
         validate_request_data(data, request_types)
 
@@ -269,6 +269,9 @@ def do_validate():
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         test_entries = [tr.serialize['data'] for tr in test_transactions]
+        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
+
         data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
         data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
 
@@ -306,16 +309,14 @@ def do_validate():
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
-
     try:
         # validate input
         request_types = {
-            'test_data_start_date': 'str',
-            'test_data_end_date': 'str',
-            'client_id': 'int'
+            'test_data_start_date': ['str'],
+            'test_data_end_date': ['str'],
+            'client_id': ['int']
         }
         validate_request_data(data, request_types)
-
         active_model = ClientModel.find_active_for_client(data['client_id'])
         if not active_model:
             raise ValueError('No master model has been trained or is active.')
@@ -339,13 +340,14 @@ def compare_active_and_pending():
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         test_entries = [tr.serialize['data'] for tr in test_transactions]
-        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
 
         performance_metrics = {}
         for model in [active_model, pending_model]:
             lh_model = cm.ClientPredictionModel(model.pickle)
             predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(data_valid,predictors,for_validation=True),predictors,target)
+            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
 
         response['message'] = 'Client model comparison complete'
         response['payload'] = performance_metrics
