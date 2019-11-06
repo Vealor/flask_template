@@ -192,7 +192,7 @@ def post_project():
     # TODO: ADD MORE PARAMS (JOHN)
     db.session.add(
         DataParam(
-            project_id = 1,
+            project_id = new_project.id,
             process = 'aps_to_caps',
             param = 'potato',
             operator = Operator.equals,
