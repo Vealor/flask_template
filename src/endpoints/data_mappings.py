@@ -12,18 +12,24 @@ from src.wrappers import has_permission, exception_wrapper
 data_mappings = Blueprint('data_mappings', __name__)
 #===============================================================================
 # GET ALL DATA MAPPINGS
-@data_mappings.route('/', methods=['GET'])
+@data_mappings.route('/', defaults={'id':None}, methods=['GET'])
+@data_mappings.route('/<int:id>', methods=['GET'])
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_data_mappings():
+def get_data_mappings(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
     query = DataMapping.query
-    if 'caps_gen_id' not in args.keys():
-        raise ValueError('Please specify a caps_gen_id ID as an argument for the data_mappings query.')
-    query = query.filter_by(caps_gen_id=args['caps_gen_id'])
+    if id is not None:
+        query = query.filter_by(id=id)
+        if not query.first():
+            raise ValueError('ID {} does not exist.'.format(id))
+    else:
+        if 'caps_gen_id' not in args.keys():
+            raise ValueError('Please specify a caps_gen_id ID as an argument for the data_mappings query.')
+        query = query.filter_by(caps_gen_id=args['caps_gen_id'])
 
     # Set ORDER
     query = query.order_by('caps_gen_id')

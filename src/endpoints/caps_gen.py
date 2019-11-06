@@ -301,8 +301,7 @@ def get_master_table_headers(id):
 # @has_permission([])
 @exception_wrapper()
 def apply_mappings_build_gst_registration(id):
-    response = {'status': 'ok', 'message': {}, 'payload': []}
-    response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
     request_types = {
         'project_id': ['int'],
@@ -310,55 +309,94 @@ def apply_mappings_build_gst_registration(id):
         'system': ['str']
     }
     validate_request_data(data, request_types)
-    mapping = [label.serialize for label in DataMapping.query.filter(DataMapping.caps_gen_id == id).all()]
-    print(mapping[0:10])
-
-    mapping = [label.serialize for label in CDMLabel.query.all()]
-    list_tablenames = current_app.config['CDM_TABLES']
-    for table in list_tablenames:
-        renamed_columndata = []
-        rename_scheme = {}
-        errorlines = []
-        for index, elem in enumerate(mapping):
-            if mapping[index]['mappings'][0]['table_name'] == table:
-                rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
-        tableclass = eval('Sap' + str(table.lower().capitalize()))
-        columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == id).all()
-        print(len(columndata))
-        for row in columndata:
-            row = { "id": row.id, "data": row.data }
-            if [x for x in rename_scheme.values() if x in row['data'].keys()]:
-                [response.pop(key) for key in ['renaming']]
-                raise Exception('Your table has already been renamed. Please ensure that mapping has not been applied twice.')
-            try:
-                #slow solution
-                for key, value in rename_scheme.items():
-                    row['data'][value] = row['data'].pop(key)
-                renamed_columndata.append(row)
-            except Exception as e:
-                errorlines.append(['Error in row' + str(row['id']), 'Error in Column ' + str(e), 'Table '  + str(table)])
-        response['renaming']['payload'] = errorlines
-        if len(response['renaming']['payload']) > 1:
-            response['renaming']['message'] = 'Issue with the following lines. Check if column exists in source data or is populated appropriately in data dictionary'
-            response['renaming']['status'] = 'error'
-            raise Exception(response['renaming'])
-        db.session.bulk_update_mappings(tableclass, renamed_columndata)
-    db.session.flush()
 
 
-    # TODO: check for similary/duplicate projects by comparing attributes
-    project_id = (CapsGen.find_by_id(id)).project_id
-    project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
-    if project_in_gst_registration_table is not None:
-        db.session.delete(project_in_gst_registration_table)
-        db.session.commit()
-    lfa1_result = SapLfa1.query.filter_by(caps_gen_id=id).first()
-    if lfa1_result is not None:
-        gst_registration = GstRegistration(project_id=project_id, caps_gen_id=id, vendor_country=fa1.data['LAND1'], vendor_number=fa1.data['LIFNR'], vendor_city=fa1.data['ORT01'], vendor_region=fa1.data['REGIO'])
-        db.session.add(gst_registration)
-        db.session.flush()
-    else:
-        raise ValueError("LFA1 does not exist, please run caps gen first.")
+    # response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
+
+    # APPLY MAPPINGS
+    mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
+    for mapping in mappings:
+        table_to_modify = "Sap"+(mapping.table_name).lower().capitalize()
+        query = [i for i in eval(table_to_modify).query.filter_by(caps_gen_id=id).all()]
+
+        for row in query:
+            newdata = dict(row.data)
+            if mapping.column_name in newdata.keys():
+                newdata[mapping.cdm_label_script_label] = newdata.pop(mapping.column_name)
+            row.data = newdata
+    db.session.commit()
+
+    # mapping = [label.serialize for label in CDMLabel.query.all()]
+    #
+    #
+    #
+    # list_tablenames = current_app.config['CDM_TABLES']
+    # for table in list_tablenames:
+    #     renamed_columndata = []
+    #     rename_scheme = {}
+    #     errorlines = []
+    #     for index, elem in enumerate(mapping):
+    #         if mapping[index]['mappings'][0]['table_name'] == table:
+    #             rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
+    #     tableclass = eval('Sap' + str(table.lower().capitalize()))
+    #     columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == data['project_id']).all()
+    #     print(len(columndata))
+    #     for row in columndata:
+    #         row = { "id": row.id, "data": row.data }
+    #         if [x for x in rename_scheme.values() if x in row['data'].keys()]:
+    #             [response.pop(key) for key in ['renaming']]
+    #             raise Exception('Your table has already been renamed. Please ensure that mapping has not been applied twice.')
+    #         try:
+    #             #slow solution
+    #             for key, value in rename_scheme.items():
+    #                 row['data'][value] = row['data'].pop(key)
+    #             renamed_columndata.append(row)
+    #         except Exception as e:
+    #             errorlines.append(['Error in row' + str(row['id']), 'Error in Column ' + str(e), 'Table '  + str(table)])
+    #     response['renaming']['payload'] = errorlines
+    #     if len(response['renaming']['payload']) > 1:
+    #         response['renaming']['message'] = 'Issue with the following lines. Check if column exists in source data or is populated appropriately in data dictionary'
+    #         response['renaming']['status'] = 'error'
+    #         raise Exception(response['renaming'])
+    #     db.session.bulk_update_mappings(tableclass, renamed_columndata)
+    # db.session.flush()
+
+
+    # BUILD GST REGISTRATION
+    # TODO: V2 check for similary/duplicate projects by comparing attributes
+    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    for vendor in gst_data:
+        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+        gst_entry = GstRegistration(
+            caps_gen_id = id,
+            vendor_country=vendor['lfa1_land1_key'],
+            vendor_number=vendor['lfa1_lifnr_key'],
+            vendor_city=vendor['vend_city'],
+            vendor_region=vendor['vend_region']
+        )
+        db.session.add(gst_entry)
+    db.session.commit()
+
+    # project_id = (CapsGen.find_by_id(id)).project_id
+    # project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
+    # if project_in_gst_registration_table is not None:
+    #     db.session.delete(project_in_gst_registration_table)
+    #     db.session.commit()
+    # lfa1_result = SapLfa1.query.filter_by(caps_gen_id=id).first()
+    # if lfa1_result is not None:
+    #     gst_registration = GstRegistration(
+    #         project_id=project_id,
+    #         caps_gen_id=id,
+    #         vendor_country=fa1.data['LAND1'],
+    #         vendor_number=fa1.data['LIFNR'],
+    #         vendor_city=fa1.data['ORT01'],
+    #         vendor_region=fa1.data['REGIO']
+    #     )
+    #     db.session.add(gst_registration)
+    #     db.session.flush()
+    # else:
+    #     raise ValueError("LFA1 does not exist, please run caps gen first.")
 
     db.session.commit()
     return jsonify(response), 200
