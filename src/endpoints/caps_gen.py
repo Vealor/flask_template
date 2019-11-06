@@ -211,7 +211,6 @@ def init_caps_gen():
                 if counter > 0:
                     engine.execute(referenceclass.__table__.insert(), list_to_insert)
 
-            CapsGen.query.filter(CapsGen.project_id == data['project_id']).update({"is_completed": True})
             db.session.flush()
         ###
 
