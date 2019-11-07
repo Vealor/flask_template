@@ -20,7 +20,7 @@ This is a brief summary of the prediction pipeline.
 * Take the active model entry from the appropriate models table (either client or master) and create the appropriate model object and get the predictors and target.
 * Preprocess the data to be ingested into the active model.
 * Use the active model to generate a probability of recovery for each entry in the *Prediction data*.
-* Update each transaction in the *prediction data* with the probability of recovery, the predictive model type (master or client) and the associated model ID number.
+* Update each transaction in the *Prediction data* with the probability of recovery, the predictive model type (master or client) and the associated model ID number.
 
 ## Model Training
 
