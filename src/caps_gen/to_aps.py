@@ -197,16 +197,16 @@ def j10(caps_gen_id):
 def j10point5(caps_gen_id):
     j10point5 = """
     DELETE FROM sap_aps WHERE caps_gen_id = {caps_gen_id};
-    select L.*,
+    INSERT INTO sap_aps
+    (select L.*,
     R.data ->>   'skat_ktopl_key' as SKAT_skat_ktopl_key,
     R.data ->>   'skat_saknr_key' as SKAT_skat_saknr_key,
     R.data ->>   'skat_spras_key' as SKAT_skat_spras_key,
     R.data ->>   'lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl' as SKAT_lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl
-    into sap_aps
     from j4_BSEG_BKPF_LFA1_T001_OnlyAP as L
     inner join (select * from sap_skat where caps_gen_id = {caps_gen_id}) as R
     on L.largest_debit_half_acct_num_gl = R.data ->> 'skat_saknr_key'
     and
-    L.T001_KTOPL_KEY = R.data ->> 'skat_ktopl_key'
+    L.T001_KTOPL_KEY = R.data ->> 'skat_ktopl_key')
     """.format(caps_gen_id = caps_gen_id)
     return j10point5
