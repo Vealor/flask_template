@@ -499,14 +499,14 @@ def data_quality_check(id):
        
         # let db does the dirty work 
         # UNIQUENESS
-        names = ','.join(['data ->> \''+ column +'\'' for column in unique_keys])
+        names = '||'.join(['cast(data ->> \''+ column +'\' as text)' for column in unique_keys])
         # uniqueness score
         uniquenss_score_query_string = '''
-        select ROUND((count(distinct(CONCAT({column_names})))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
+        select ROUND((count(distinct({column_names}))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
         '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
         # uniqueness repetition
         repetition_query_string = '''
-        select CONCAT({column_names}) as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by CONCAT({column_names}) HAVING count(*) > 1
+        select {column_names} as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by {column_names} HAVING count(*) > 1
         '''.format(column_names = names, caps_gen_id = id)
 
         u = db.session.execute(uniquenss_score_query_string).first()
