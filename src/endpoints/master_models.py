@@ -102,10 +102,10 @@ def do_train():
 
     # Get the required transactions and put them into dataframes
     train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
-    train_entries = transactions_to_dataframe(train_transactions)
+    data_train = transactions_to_dataframe(train_transactions)
 
     test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-    test_entries = transactions_to_dataframe(test_transactions)
+    data_valid = transactions_to_dataframe(test_transactions)
 
     # Training =================================
     data_train = preprocessing_train(data_train)
