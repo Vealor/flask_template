@@ -9,6 +9,7 @@ import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
+from src.prediction.database import *
 from src.util import get_date_obj_from_str, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -99,16 +100,12 @@ def do_train():
     lh_model = mm.MasterPredictionModel()
     transactions = Transaction.query
 
-    # Train the instantiated model and edit the db entry
+    # Get the required transactions and put them into dataframes
     train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
-    train_entries = [tr.serialize['data'] for tr in train_transactions]
-    data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
-    print("TRAIN DATA LEN: {}".format(len(data_train)))
+    train_entries = transactions_to_dataframe(train_transactions)
 
     test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    print("TEST DATA LEN: {}".format(len(data_valid)))
+    test_entries = transactions_to_dataframe(test_transactions)
 
     # Training =================================
     data_train = preprocessing_train(data_train)
@@ -116,6 +113,7 @@ def do_train():
     target = "Target"
     predictors = list(set(data_train.columns) - set([target]))
     lh_model.train(data_train,predictors,target)
+
     # Update the model entry with the hyperparameters and pickle
     entry.pickle = lh_model.as_pickle()
     entry.hyper_p = {'predictors': predictors, 'target': target}
