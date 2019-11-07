@@ -5,8 +5,8 @@ According to Erin Jensen, maximizing recall is the most important thing in the p
 
 The measure the performance of the algorithm, I have opted to use the $F_{\beta}$-score.
 
-The $F_{beta}$ score is a weighted balance between pure recall and pure precision driven utility. The scoring formula is:
+The $F_{\beta}$ score is a weighted balance between pure recall and pure precision driven utility. The scoring formula is:
 
-$$
-F_{\beta} = \frac{RP}{R + P}
-$$
+```math
+F_{\beta} = \frac{(1 + \beta^{2})RP}{R + \beta^{2}P}
+```
