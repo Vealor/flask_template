@@ -578,7 +578,7 @@ def data_quality_check(id):
         final_result['scores_per_table'][table_name] = {
                                                     'completeness': completeness_result,
                                                     'uniqueness': {
-                                                        'score': float(u[0]), 
+                                                        'score': float(u[0]),
                                                         'key_names': unique_keys,
                                                         'repetitions':[rep[0] for rep in r]
                                                         },
@@ -744,6 +744,7 @@ def data_to_aps(id):
     execute(j8(id))
     execute(j9(id))
     execute(j10(id))
+    execute(j10point5(id))
 
     return jsonify(response), 200
 
