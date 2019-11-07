@@ -911,6 +911,10 @@ class ClientModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).filter_by(client_id = client_id).first()
 
     @classmethod
+    def find_pending_for_client(cls, client_id):
+        return cls.query.filter_by(status = Activity.pending.value).filter_by(client_id = client_id).first()
+
+    @classmethod
     def set_active_for_client(cls, model_id, client_id):
         active_model = cls.find_active_for_client(client_id)
         if active_model:
@@ -966,6 +970,10 @@ class MasterModel(db.Model):
         return cls.query.filter_by(status = Activity.active.value).first()
 
     @classmethod
+    def find_pending(cls):
+        return cls.query.filter_by(status = Activity.pending.value).first()
+
+    @classmethod
     def set_active(cls, model_id):
         active_model = cls.find_active()
         if active_model:
@@ -999,6 +1007,10 @@ class Code(db.Model):
 
     code_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_code', lazy='dynamic')
 
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
+
     @property
     def serialize(self):
         return {
@@ -1007,9 +1019,6 @@ class Code(db.Model):
             'description': self.description
         }
 
-    @classmethod
-    def find_by_id(cls, id):
-        return cls.query.filter_by(id = id).first()
 
 class ErrorCategory(db.Model):
     __tablename__ = 'error_categories'

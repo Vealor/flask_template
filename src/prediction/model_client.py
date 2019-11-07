@@ -38,6 +38,9 @@ class ClientPredictionModel(BasePredictionModel):
         # If there is a significant class imbalance, do some synthetic over_sampling
         X = training_data[predictors]
         y = training_data[target]
+
+        if y.value_counts().nunique() < 2:
+            raise Exception("Error: Only one target class represented in training data.")
         if y.value_counts()[1] < 0.2*len(y):
             print("Balancing classes...")
             X, y = SMOTE().fit_sample(X, y)
