@@ -7,6 +7,7 @@ import pickle
 import random
 import src.prediction.model_client as cm
 from flask import Blueprint, current_app, jsonify, request
+from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import get_date_obj_from_str, validate_request_data
@@ -30,7 +31,16 @@ def get_client_models(id):
              raise NotFoundError("No client model with ID {} exists.".format(id))
 
     # If client_id is specified, then return all models for that client
-    query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
+    if 'client_id' in args.keys():
+        client_id = args['client_id']
+        if client_id.isdigit():
+            client_id = int(client_id)
+            if not Client.find_by_id(client_id):
+                raise NotFoundError("Client ID {} does not exist.".format(client_id))
+            query = query.filter_by(client_id=client_id)
+        else:
+            raise InputError("\"{}\" is not a valid client_id.".format(client_id))
+
     response['payload'] = [i.serialize for i in query.all()]
     return jsonify(response), 200
 
