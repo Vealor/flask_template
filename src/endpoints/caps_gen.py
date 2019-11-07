@@ -466,6 +466,9 @@ def data_quality_check(id):
     overall_datatype_score = 0
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
 
+    if len(mappings) == 0:
+        raise ValueError('No header mapped can not run data quality check')
+
     for table, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
         # paraparing data for processing
         table_name = "sap_" + table
