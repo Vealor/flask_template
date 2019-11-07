@@ -728,7 +728,7 @@ def data_to_aps(id):
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).projet_id
+    project_id = (query.first()).project_id
 
     def execute(query):
         result = db.session.execute(query)
@@ -780,7 +780,7 @@ def aps_quality_check(id):
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).projet_id
+    project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
 
@@ -800,7 +800,7 @@ def aps_to_caps(id):
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).projet_id
+    project_id = (query.first()).project_id
 
     def execute(query):
         result = db.session.execute(query)
@@ -897,7 +897,7 @@ def caps_to_transactions(id):
     caps_gen = CapsGen.query.filter_by(id=id)
     if not caps_gen.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (caps_gen.first()).projet_id
+    project_id = (caps_gen.first()).project_id
 
     # TODO: transform caps to transactions
 
