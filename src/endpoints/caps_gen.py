@@ -220,13 +220,21 @@ def init_caps_gen():
         #####
 
         db.session.commit()
-
+        ## Remove data from caps_gen_master
+        master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
+        list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
         ## Remove data from caps_gen_unzipped
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
     except Exception as e:
+        ## Remove data from caps_gen_master
+        master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
+        list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
+        ## Remove data from caps_gen_unzipped
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         # delete created caps_gen
         db.session.delete(caps_gen)
         db.session.commit()
@@ -472,7 +480,7 @@ def data_quality_check(id):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    final_result = {'scores_per_table': []}
+    final_result = {'scores_per_table': {}}
     overall_completeness_score = 0
     overall_uniqueness_score = 0
     overall_datatype_score = 0
@@ -544,16 +552,15 @@ def data_quality_check(id):
         overall_completeness_score += table_completeness_score / len(datatypes)
         overall_datatype_score += table_datatype_score / len(datatypes)
 
-        final_result['scores_per_table'].append({
-                                            "table": table_name,
-                                            'completeness': completeness_result,
-                                            'uniqueness': {
-                                                'score': float(u[0]), 
-                                                'key_names': unique_keys,
-                                                'repetitions':[rep[0] for rep in r]
-                                                },
-                                            'datatype': datatype_result
-                                            })
+        final_result['scores_per_table'][table_name] = {
+                                                'completeness': completeness_result,
+                                                'uniqueness': {
+                                                    'score': float(u[0]), 
+                                                    'key_names': unique_keys,
+                                                    'repetitions':[rep[0] for rep in r]
+                                                    },
+                                                'datatype': datatype_result
+                                                }
 
     final_result['overalls'] = {
                         'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
