@@ -559,7 +559,11 @@ def data_quality_check(id):
             '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
 
             c = db.session.execute(completeness_score_query_string).first()
-            completeness_result[column_name] = float(c[0])
+            completeness_result.append({
+                            'column_name': column_name,
+                            'score': float(c[0])
+                            })
+
 
             table_completeness_score += float(c[0])
             table_datatype_score += float(d[0])
@@ -568,22 +572,22 @@ def data_quality_check(id):
         overall_completeness_score += table_completeness_score / len(datatypes)
         overall_datatype_score += table_datatype_score / len(datatypes)
 
-        final_result['scores_per_table'].append({
-                                            "table": table_name,
-                                            'completeness': completeness_result,
-                                            'uniqueness': {
-                                                'score': float(u[0]),
-                                                'key_names': unique_keys,
-                                                'repetitions':[rep[0] for rep in r]
-                                                },
-                                            'datatype': datatype_result
-                                            })
+        final_result['scores_per_table'][table_name] = {
+                                                    'completeness': completeness_result,
+                                                    'uniqueness': {
+                                                        'score': float(u[0]), 
+                                                        'key_names': unique_keys,
+                                                        'repetitions':[rep[0] for rep in r]
+                                                        },
+                                                    'datatype': datatype_result
+                                                    }
 
     final_result['overalls'] = {
                         'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
                         'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
                         'datatype': overall_datatype_score / len(final_result['scores_per_table'])
                         }
+
     print(final_result)
 
     # table_names = [ 'sap_'+mapping.table_name.lower() for mapping in mappings]
