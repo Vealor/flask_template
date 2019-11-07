@@ -1265,8 +1265,11 @@ class SapAps(db.Model):
     vend_tax_num_5 = db.Column(db.String(256), nullable=True)
     vend_tax_num_type = db.Column(db.String(256), nullable=True)
     vend_reg_num = db.Column(db.String(256), nullable=True)
-
-
+    skat_ktopl_key = db.Column(db.String(256), nullable=True)
+    skat_saknr_key = db.Column(db.String(256), nullable=True)
+    skat_spras_key = db.Column(db.String(256), nullable=True)
+    lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl = db.Column(db.String(256), nullable=True)
+    
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sapaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaps') # FK
 
