@@ -8,6 +8,7 @@ import pickle
 import random
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
+from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.prediction.database import *
