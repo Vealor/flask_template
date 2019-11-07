@@ -220,13 +220,21 @@ def init_caps_gen():
         #####
 
         db.session.commit()
-
+        ## Remove data from caps_gen_master
+        master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
+        list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
         ## Remove data from caps_gen_unzipped
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
     except Exception as e:
+        ## Remove data from caps_gen_master
+        master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
+        list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
+        ## Remove data from caps_gen_unzipped
+        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         # delete created caps_gen
         db.session.delete(caps_gen)
         db.session.commit()
@@ -485,7 +493,7 @@ def data_quality_check(id):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    final_result = {'scores_per_table': []}
+    final_result = {'scores_per_table': {}}
     overall_completeness_score = 0
     overall_uniqueness_score = 0
     overall_datatype_score = 0
@@ -518,8 +526,8 @@ def data_quality_check(id):
         r = db.session.execute(repetition_query_string)
 
         # COMPLETENESS & DATATYPE for each column
-        completeness_result = {}
-        datatype_result = {}
+        completeness_result = []
+        datatype_result = []
         table_completeness_score = 0
         table_datatype_score = 0
         for column_name, datatype in datatypes.items():
@@ -541,7 +549,10 @@ def data_quality_check(id):
             '''.format(table_name = table_name, column_name = column_name, caps_gen_id = id, regex = regex)
 
             d = db.session.execute(datatype_quety_string).first()
-            datatype_result[column_name] = float(d[0])
+            datatype_result.append({
+                                'column_name': column_name,
+                                'score': float(d[0])
+                                })
 
             completeness_score_query_string = '''
             select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id};
