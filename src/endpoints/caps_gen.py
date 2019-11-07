@@ -460,7 +460,7 @@ def data_quality_check(id):
     if not query.first():
         raise ValueError('CapsGen ID {} does not exist.'.format(id))
 
-    final_result = {}
+    final_result = {'scores_per_table': []}
     overall_completeness_score = 0
     overall_uniqueness_score = 0
     overall_datatype_score = 0
@@ -469,57 +469,84 @@ def data_quality_check(id):
     if len(mappings) == 0:
         raise ValueError('No header mapped can not run data quality check')
 
-    for table, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
+    for table_name, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
         # paraparing data for processing
-        table_name = "sap_" + table
+        # table_name = "sap_" + table
         mapped_columns = [ mapping.cdm_label_script_label  for mapping in group ]
         query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
         unique_keys = [row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
-        datatypes = [{row[0]: row[1].name} for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()]
+        datatypes = {row[0]: row[1].name for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()}
        
         # let db does the dirty work 
-        # COMPLETENESS
-        completeness_score_query_string = '''
-        select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from {table_name} where caps_gen_id = {caps_gen_id}; 
-        '''.format(column_name = mapped_columns[0], table_name = table_name, caps_gen_id = id)
         # UNIQUENESS
         names = ','.join(['data ->> \''+ column +'\'' for column in unique_keys])
         # uniqueness score
         uniquenss_score_query_string = '''
-        select ROUND((count(distinct(CONCAT({column_names})))::decimal / count(*)::decimal), 2) as uniqueness_score from {table_name} where caps_gen_id = {caps_gen_id};
+        select ROUND((count(distinct(CONCAT({column_names})))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
         '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
         # uniqueness repetition 
         repetition_query_string = '''
         select CONCAT({column_names}) as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by CONCAT({column_names}) HAVING count(*) > 1
         '''.format(column_names = names, caps_gen_id = id)
-        print('sql')
 
-        c = db.session.execute(completeness_score_query_string).first()
         u = db.session.execute(uniquenss_score_query_string).first()
         r = db.session.execute(repetition_query_string)
+        
+        # COMPLETENESS & DATATYPE for each column
+        completeness_result = {}
+        datatype_result = {}
+        table_completeness_score = 0
+        table_datatype_score = 0
+        for column_name, datatype in datatypes.items():
+            regex = ''
+            if datatype == 'dt_varchar':
+                regex = '.*'
+            elif datatype == 'dt_float':
+                regex = '^(?:\-)?\d*\.{1}\d+$'
+            elif datatype == 'dt_int':
+                regex = '^(?:\-)?\d+$'
+            elif datatype == 'dt_date':
+                regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
+            else:
+                raise Exception('No regex implmented for the given data type: {dt}', datatype)
+            
+            datatype_quety_string = '''
+            select round(count_check::decimal / count_total::decimal , 2) from (
+            SELECT (select count(*) from sap_{table_name} where caps_gen_id = {caps_gen_id}) count_total, count(*) as count_check FROM sap_{table_name} WHERE caps_gen_id = {caps_gen_id} and data ->> '{column_name}' ~ '{regex}' ) as L
+            '''.format(table_name = table_name, column_name = column_name, caps_gen_id = id, regex = regex)
 
-        overall_completeness_score += float(c[0])
+            d = db.session.execute(datatype_quety_string).first()
+            datatype_result[column_name] = float(d[0])
+
+            completeness_score_query_string = '''
+            select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id}; 
+            '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
+
+            c = db.session.execute(completeness_score_query_string).first()
+            completeness_result[column_name] = float(c[0])
+            
+            table_completeness_score += float(c[0])
+            table_datatype_score += float(d[0])
+
         overall_uniqueness_score += float(u[0])
-        overall_datatype_score += 0
+        overall_completeness_score += table_completeness_score / len(datatypes)
+        overall_datatype_score += table_datatype_score / len(datatypes)
 
-        print('yaya')
-        final_result['tables'] = {
-                            table: {
-                                'completeness': {
-                                    'score': float(c[0])},
-                                    'uniqueness': {
-                                        'score': float(u[0]), 
-                                        'key_names': unique_keys,
-                                        'repetitions':[rep[0] for rep in r]
-                                    }
-                                }
-                            }
-        print("done")
+        final_result['scores_per_table'].append({
+                                            "table": table_name,
+                                            'completeness': completeness_result,
+                                            'uniqueness': {
+                                                'score': float(u[0]), 
+                                                'key_names': unique_keys,
+                                                'repetitions':[rep[0] for rep in r]
+                                                },
+                                            'datatype': datatype_result
+                                            })
 
     final_result['overalls'] = {
-                        'completeness' : overall_completeness_score / len(final_result['tables']),
-                        'uniqueness': overall_uniqueness_score / len(final_result['tables']),
-                        'datatype': overall_datatype_score / len(final_result['tables'])
+                        'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
+                        'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
+                        'datatype': overall_datatype_score / len(final_result['scores_per_table'])
                         }
     print(final_result)
     
