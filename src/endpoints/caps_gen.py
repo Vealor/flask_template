@@ -513,8 +513,8 @@ def data_quality_check(id):
         r = db.session.execute(repetition_query_string)
         
         # COMPLETENESS & DATATYPE for each column
-        completeness_result = {}
-        datatype_result = {}
+        completeness_result = []
+        datatype_result = []
         table_completeness_score = 0
         table_datatype_score = 0
         for column_name, datatype in datatypes.items():
@@ -536,14 +536,20 @@ def data_quality_check(id):
             '''.format(table_name = table_name, column_name = column_name, caps_gen_id = id, regex = regex)
 
             d = db.session.execute(datatype_quety_string).first()
-            datatype_result[column_name] = float(d[0])
+            datatype_result.append({
+                                'column_name': column_name,
+                                'score': float(d[0])
+                                })
 
             completeness_score_query_string = '''
             select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id}; 
             '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
 
             c = db.session.execute(completeness_score_query_string).first()
-            completeness_result[column_name] = float(c[0])
+            completeness_result.append({
+                                'column_name': column_name,
+                                'score': float(c[0])
+                                })
             
             table_completeness_score += float(c[0])
             table_datatype_score += float(d[0])
