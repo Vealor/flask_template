@@ -27,7 +27,7 @@ def get_client_models(id):
     if id:
         query = query.filter_by(id=id)
         if not query.first():
-             raise ValueError("No client model with ID {} exists.".format(id))
+             raise NotFoundError("No client model with ID {} exists.".format(id))
 
     # If client_id is specified, then return all models for that client
     query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
