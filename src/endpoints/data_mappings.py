@@ -25,16 +25,16 @@ def get_data_mappings(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ID {} does not exist.'.format(id))
     else:
         if 'caps_gen_id' not in args.keys():
-            raise ValueError('Please specify a caps_gen_id ID as an argument for the data_mappings query.')
+            raise InputError('Please specify a caps_gen_id ID as an argument for the data_mappings query.')
         query = query.filter_by(caps_gen_id=args['caps_gen_id'])
 
     # Set ORDER
     query = query.order_by('caps_gen_id')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -67,7 +67,7 @@ def update_data_mapping(id):
     # UPDATE data mapping
     query = DataMapping.find_by_id(id)
     if not query:
-        raise ValueError('Data Mapping ID {} does not exist.'.format(id))
+        raise NotFoundError('Data Mapping ID {} does not exist.'.format(id))
 
     query.table_name = data['table_name']
     query.column_name = data['column_name']

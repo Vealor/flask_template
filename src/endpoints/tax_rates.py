@@ -19,14 +19,14 @@ def get_tax_rates():
     args = request.args.to_dict()
 
     if 'project_id' not in args.keys():
-        raise ValueError('Please specify a Project ID as an argument for the query.')
+        raise InputError('Please specify a Project ID as an argument for the query.')
     if not Project.find_by_id(args['project_id']):
-        raise ValueError('Project does not exist.')
+        raise NotFoundError('Project does not exist.')
 
     # check if caps_gen exist, if exist proceed, if not send back error message
     capsgen = CapsGen.query.filter_by(project_id=args['project_id']).order_by(desc(CapsGen.id)).first()
     if not capsgen:
-        raise ValueError("Caps has not been generated, Please generate caps first.")
+        raise InputError("Caps has not been generated, Please generate caps first.")
     rows = SapT007s.query.filter_by(capsgen_id=capsgen.id).all()
     response['payload'] = [row.data for row in rows]
 

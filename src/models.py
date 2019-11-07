@@ -1025,6 +1025,7 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     __table_args__ = (
         db.ForeignKeyConstraint(['locked_user_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['approved_user_id'], ['users.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         db.ForeignKeyConstraint(['client_model_id'], ['client_models.id'], ondelete='SET NULL'),
         db.ForeignKeyConstraint(['master_model_id'], ['master_models.id'], ondelete='SET NULL'),
@@ -1044,7 +1045,7 @@ class Transaction(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
-    is_approved = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+
     is_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     rbc_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -1094,6 +1095,9 @@ class Transaction(db.Model):
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id') # FK
+
+    approved_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
+    approved_transaction_user = db.relationship('User', foreign_keys='Transaction.approved_user_id') # FK
 
     project_id = db.Column(db.Integer, nullable=False) # FK
     transaction_project = db.relationship('Project', back_populates='project_transactions') # FK
@@ -1269,15 +1273,60 @@ class SapAps(db.Model):
     skat_saknr_key = db.Column(db.String(256), nullable=True)
     skat_spras_key = db.Column(db.String(256), nullable=True)
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl = db.Column(db.String(256), nullable=True)
-    
+
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sapaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaps') # FK
 
     @property
     def serialize(self):
         return {
-            "id": self.id,
-            "caps_gen_id": self.caps_gen_id
+            'inv_date': self.inv_date,
+            'post_date_gl': self.post_date_gl,
+            'fx_rate': self.fx_rate,
+            'fiscal_period_gl': self.fiscal_period_gl,
+            'trnx_code_gl': self.trnx_code_gl,
+            'ccy': self.ccy,
+            'inv_num': self.inv_num,
+            'main_asset_num': self.main_asset_num,
+            'asset_sub_num': self.asset_sub_num,
+            'gl_doc_num': self.gl_doc_num,
+            'gl_doc_status': self.gl_doc_status,
+            'co_code_gl': self.co_code_gl,
+            'amount_local_ccy': self.amount_local_ccy,
+            'po_doc_num': self.po_doc_num,
+            'func_area_gl': self.func_area_gl,
+            'fiscal_year_gl': self.fiscal_year_gl,
+            'bus_area_dept_num_gl': self.bus_area_dept_num_gl,
+            'largest_debit_half_acct_num_gl': self.largest_debit_half_acct_num_gl,
+            'control_area_gl': self.control_area_gl,
+            'cost_ctr_num_gl': self.cost_ctr_num_gl,
+            'cx_num': self.cx_num,
+            'vend_num': self.vend_num,
+            'material_num_gl': self.material_num_gl,
+            'tax_type_gl': self.tax_type_gl,
+            'po_tax_code_gl': self.po_tax_code_gl,
+            'gst_hst_qst_pst_local_ccy': self.gst_hst_qst_pst_local_ccy,
+            'profit_ctr_num': self.profit_ctr_num,
+            'wbs_gl': self.wbs_gl,
+            'item_descr_gl': self.item_descr_gl,
+            'reverse_doc_num': self.reverse_doc_num,
+            'reverse_reason_gl': self.reverse_reason_gl,
+            'tax_jur_gl': self.tax_jur_gl,
+            'sales_doc_num_gl': self.sales_doc_num_gl,
+            'billing_doc_num': self.billing_doc_num,
+            'gst_hst_pst_qst_doc_ccy': self.gst_hst_pst_qst_doc_ccy,
+            'ap_ar_amt_doc_ccy': self.ap_ar_amt_doc_ccy,
+            'lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl': self.lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+            'vend_name': self.vend_name,
+            'vend_city': self.vend_city,
+            'vend_region': self.vend_region,
+            'vend_tax_num_1': self.vend_tax_num_1,
+            'vend_tax_num_2': self.vend_tax_num_2,
+            'vend_tax_num_3': self.vend_tax_num_3,
+            'vend_tax_num_4': self.vend_tax_num_4,
+            'vend_tax_num_5': self.vend_tax_num_5,
+            'vend_tax_num_type': self.vend_tax_num_type,
+            'vend_reg_num': self.vend_reg_num
         }
 
 class SapBseg(db.Model):

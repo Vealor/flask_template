@@ -19,15 +19,15 @@ def get_client_vendor_master(id):
     args = request.args.to_dict()
 
     if 'project_id' not in args.keys():
-        raise ValueError('Please specify a Project ID as an argument for the query.')
+        raise InputError('Please specify a Project ID as an argument for the query.')
     if not Project.find_by_id(args['project_id']):
-        raise ValueError('Project does not exist.')
+        raise NotFoundError('Project does not exist.')
 
     query = CapsGen.query.order_by(desc(CapsGen.created))
     query = query.filter_by(project_id=args['project_id'])
     capsgen = query.first()
     if not capsgen:
-        raise ValueError('There is no CapsGen for this project.')
+        raise NotFoundError('There is no CapsGen for this project.')
     rows = SapLfa1.query.filter_by(capsgen_id=capsgen.id).all()
     response['payload'] = [row.data for row in rows]
 

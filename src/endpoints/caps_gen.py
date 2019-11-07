@@ -42,13 +42,13 @@ def get_caps_gens(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('created')
     # Set LIMIT
     query = query.filter_by(project_id = args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -68,7 +68,7 @@ def delete_caps_gens(id):
 
     query = CapsGen.query.filter_by(id=id).first()
     if not query:
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     # TODO: make sure user deleting caps_gen is the user that made it!
     caps_gen = query.serialize
@@ -116,7 +116,7 @@ def init_caps_gen():
     validate_request_data(data, request_types)
     in_progress = CapsGen.query.filter_by(is_completed=False).first()
     if in_progress:
-        raise ValueError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
+        raise InputError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
 
     try:
         source_data_unzipper(data, response) # pass filename here?
@@ -125,22 +125,9 @@ def init_caps_gen():
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         raise Exception(e)
     print('unzipping complete')
-    ### DEV => do local directory creation if required
-    ### Hopefully raises "ERROR UPLOADING DATA"
-
-
-    ### DEV/PROD => data unzipping
-    ###
-
-
-    ### DEV/PROD => Create CapsGen entitiy in DB
-    # do before unzipping and store path in CapsGen?
-    # will fail without login!
-
 
 
     # TODO: change for project specific is_completed
-
     caps_gen = CapsGen(
         user_id=current_user.id,
         project_id=data['project_id']
@@ -156,6 +143,7 @@ def init_caps_gen():
         )
         db.session.add(new_mapping)
     db.session.commit()
+    print('caps_gen model and data_mappings created')
 
     try:
         ### DEV/PROD => make master tables
@@ -307,8 +295,6 @@ def apply_mappings_build_gst_registration(id):
     }
     validate_request_data(data, request_types)
 
-    # response.update({'renaming': {'status': 'ok', 'message': '', 'payload': []}})
-
     # APPLY MAPPINGS
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
     mappables = {}
@@ -339,87 +325,22 @@ def apply_mappings_build_gst_registration(id):
             qlen = map_data(limit, offset)
             offset += limit
 
-
-
-    # mapping = [label.serialize for label in CDMLabel.query.all()]
-    #
-    #
-    #
-    # list_tablenames = current_app.config['CDM_TABLES']
-    # for table in list_tablenames:
-    #     renamed_columndata = []
-    #     rename_scheme = {}
-    #     errorlines = []
-    #     for index, elem in enumerate(mapping):
-    #         if mapping[index]['mappings'][0]['table_name'] == table:
-    #             rename_scheme.update({mapping[index]['mappings'][0]['column_name']: mapping[index]['script_label']})
-    #     tableclass = eval('Sap' + str(table.lower().capitalize()))
-    #     columndata = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(tableclass.caps_gen_id == data['project_id']).all()
-    #     print(len(columndata))
-    #     for row in columndata:
-    #         row = { "id": row.id, "data": row.data }
-    #         if [x for x in rename_scheme.values() if x in row['data'].keys()]:
-    #             [response.pop(key) for key in ['renaming']]
-    #             raise Exception('Your table has already been renamed. Please ensure that mapping has not been applied twice.')
-    #         try:
-    #             #slow solution
-    #             for key, value in rename_scheme.items():
-    #                 row['data'][value] = row['data'].pop(key)
-    #             renamed_columndata.append(row)
-    #         except Exception as e:
-    #             errorlines.append(['Error in row' + str(row['id']), 'Error in Column ' + str(e), 'Table '  + str(table)])
-    #     response['renaming']['payload'] = errorlines
-    #     if len(response['renaming']['payload']) > 1:
-    #         response['renaming']['message'] = 'Issue with the following lines. Check if column exists in source data or is populated appropriately in data dictionary'
-    #         response['renaming']['status'] = 'error'
-    #         raise Exception(response['renaming'])
-    #     db.session.bulk_update_mappings(tableclass, renamed_columndata)
-    # db.session.flush()
-
-
-
-
-
     # BUILD GST REGISTRATION
     # TODO: V2 check for similary/duplicate projects by comparing attributes
-    # gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
-    # for vendor in gst_data:
-    #     if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
-    #         raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
-    #     gst_entry = GstRegistration(
-    #         caps_gen_id = id,
-    #         vendor_country=vendor['lfa1_land1_key'],
-    #         vendor_number=vendor['lfa1_lifnr_key'],
-    #         vendor_city=vendor['vend_city'],
-    #         vendor_region=vendor['vend_region']
-    #     )
-    #     db.session.add(gst_entry)
-    # db.session.commit()
+    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    for vendor in gst_data:
+        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+        gst_entry = GstRegistration(
+            caps_gen_id = id,
+            vendor_country=vendor['lfa1_land1_key'],
+            vendor_number=vendor['lfa1_lifnr_key'],
+            vendor_city=vendor['vend_city'],
+            vendor_region=vendor['vend_region']
+        )
+        db.session.add(gst_entry)
+    db.session.commit()
 
-
-
-
-    # project_id = (CapsGen.find_by_id(id)).project_id
-    # project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
-    # if project_in_gst_registration_table is not None:
-    #     db.session.delete(project_in_gst_registration_table)
-    #     db.session.commit()
-    # lfa1_result = SapLfa1.query.filter_by(caps_gen_id=id).first()
-    # if lfa1_result is not None:
-    #     gst_registration = GstRegistration(
-    #         project_id=project_id,
-    #         caps_gen_id=id,
-    #         vendor_country=fa1.data['LAND1'],
-    #         vendor_number=fa1.data['LIFNR'],
-    #         vendor_city=fa1.data['ORT01'],
-    #         vendor_region=fa1.data['REGIO']
-    #     )
-    #     db.session.add(gst_registration)
-    #     db.session.flush()
-    # else:
-    #     raise ValueError("LFA1 does not exist, please run caps gen first.")
-
-    # db.session.commit()
     response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
 
     return jsonify(response), 200
@@ -437,7 +358,7 @@ def get_tables(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     tables = query.first().get_tables
 
@@ -457,11 +378,7 @@ def view_tables(id, table):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
-
-    # caps_gen_id = CapsGen.query.filter(CapsGen.project_id == project_id).order_by(desc(CapsGen.id)).first().id
-    # if not caps_gen_id:
-    #     raise ValueError('CAPS Generation has not been run on this project yet. Please run CAPS Generation from source data upload.')
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     #table filter
     tableclass = eval('Sap' + str(table.lower().capitalize()))
@@ -469,7 +386,7 @@ def view_tables(id, table):
     query = tableclass.query.filter_by(caps_gen_id = id)
 
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -491,7 +408,7 @@ def data_quality_check(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     final_result = {'scores_per_table': {}}
     overall_completeness_score = 0
@@ -500,7 +417,7 @@ def data_quality_check(id):
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
 
     if len(mappings) == 0:
-        raise ValueError('No header mapped can not run data quality check')
+        raise InputError('No header mapped can not run data quality check')
 
     for table_name, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
         # paraparing data for processing
@@ -727,7 +644,7 @@ def data_to_aps(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
     project_id = (query.first()).project_id
 
     def execute(query):
@@ -760,9 +677,17 @@ def view_aps(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
-    response['payload'] = [SapAps.query.filter_by(caps_gen_id = id).all()]
+    query = SapAps.query.filter_by(caps_gen_id = id)
+
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
+    response['payload'] = [i.serialize for i in query.all()]
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -779,7 +704,7 @@ def aps_quality_check(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
     project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
@@ -799,7 +724,7 @@ def aps_to_caps(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
     project_id = (query.first()).project_id
 
     def execute(query):
@@ -877,7 +802,7 @@ def view_caps(id):
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     # TODO: PULL FROM CAPS TABLES FILTER ON SPECIFIC CAPSGEN ID
 
@@ -896,7 +821,7 @@ def caps_to_transactions(id):
 
     caps_gen = CapsGen.query.filter_by(id=id)
     if not caps_gen.first():
-        raise ValueError('CapsGen ID {} does not exist.'.format(id))
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
     project_id = (caps_gen.first()).project_id
 
     # TODO: transform caps to transactions

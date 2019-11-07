@@ -23,7 +23,7 @@ def get_logs():
     # Set ORDER
     query = query.order_by('timestamp')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 

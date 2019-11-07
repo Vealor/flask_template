@@ -27,12 +27,12 @@ def get_master_models(id):
     if id:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError("No master model with ID {} exists.".format(id))
+            raise NotFoundError("No master model with ID {} exists.".format(id))
 
     # Set ORDER
     query = query.order_by('id')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -65,11 +65,11 @@ def do_train():
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if train_start >= train_end:
-        raise ValueError('Invalid Train Data date range.')
+        raise InputError('Invalid Train Data date range.')
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Train and test data ranges overlap.')
+        raise InputError('Train and test data ranges overlap.')
 
     # pre-build model dictionary
     model_data_dict = {
@@ -84,12 +84,12 @@ def do_train():
 
     # validate if pending mode, stop on exist
     if MasterModel.query.filter_by(status=Activity.pending.value).all():
-        raise ValueError('A pending master model exists.')
+        raise InputError('A pending master model exists.')
 
     # validate sufficient transactions for training
     transaction_count = Transaction.query.filter_by(is_approved=True).count()
     if transaction_count < 10000:
-        raise ValueError('Not enough data to train a master model. Only {} approved transactions. Requires >= 10,000 approved transactions.'.format(transaction_count))
+        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 10,000 approved transactions.'.format(transaction_count))
 
     # create placeholder model
     entry = MasterModel(**model_data_dict)
@@ -228,9 +228,9 @@ def delete_master_model(id):
 
     query = MasterModel.find_by_id(id)
     if not query:
-        raise ValueError('Master model ID {} does not exist.'.format(id))
+        raise NotFoundError('Master model ID {} does not exist.'.format(id))
     if query.status == Activity.active:
-        raise ValueError('Master model ID {} is currently active. Cannot delete.'.format(id))
+        raise InputError('Master model ID {} is currently active. Cannot delete.'.format(id))
 
     model = query.serialize
     db.session.delete(query)

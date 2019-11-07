@@ -25,11 +25,11 @@ def get_paredown_rules(id):
     if id:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError("Paredown rule ID {} does not exist.".format(id))
+            raise NotFoundError("Paredown rule ID {} does not exist.".format(id))
     # Set ORDER
     query = query.order_by('id')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -55,7 +55,7 @@ def create_paredown_rule():
     validate_request_data(data, request_types)
 
     if len(data['conditions']) == 0:
-        raise ValueError("Cannot create paredown rule with no conditions.")
+        raise InputError("Cannot create paredown rule with no conditions.")
     request_types_conditions = {
         'field': ['str'],
         'operator': ['str']
@@ -67,16 +67,16 @@ def create_paredown_rule():
     for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
         user = User.find_by_id(approver_id)
         if not user:
-            raise ValueError("User ID {} does not exist.".format(approver_id))
+            raise InputError("User ID {} does not exist.".format(approver_id))
         if not (user.role == Roles.tax_master or user.is_superuser):
-            raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+            raise InputError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
 
     lob_sectors = []
     # Create the new paredown rule
     for lob_sec in data['lob_sectors']:
         if lob_sec not in LineOfBusinessSectors.__members__:
-            raise ValueError('Specified lob_sec does not exist.')
+            raise InputError('Specified lob_sec does not exist.')
         if LineOfBusinessSectors[lob_sec] not in lob_sectors:
             lob_sectors.append(LineOfBusinessSectors[lob_sec])
 
@@ -119,7 +119,7 @@ def update_paredown_rule(id):
 
     # Validate each condition of the new paredown rule
     if len(data['conditions']) == 0:
-        raise ValueError("Cannot update paredown rule with no conditions.")
+        raise InputError("Cannot update paredown rule with no conditions.")
     request_types = {
         'approver1_id' : ['int','NoneType'],
         'approver2_id' : ['int','NoneType'],
@@ -138,13 +138,13 @@ def update_paredown_rule(id):
     for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
         user = User.find_by_id(approver_id)
         if not user:
-            raise ValueError("User ID {} does not exist.".format(approver_id))
+            raise InputError("User ID {} does not exist.".format(approver_id))
         if not (user.role == Roles.tax_master or user.is_superuser):
-            raise ValueError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
+            raise InputError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
     query = ParedownRule.find_by_id(id)
     if not query:
-        raise ValueError("Pareddown Rule ID {} does not exist.".format(id))
+        raise InputError("Paredown Rule ID {} does not exist.".format(id))
     query.code = data['code']
     query.comment = data['comment']
     query.is_core = data['is_core']
@@ -156,7 +156,7 @@ def update_paredown_rule(id):
     # Create the new paredown rule
     for lob_sec in data['lob_sectors']:
         if lob_sec not in LineOfBusinessSectors.__members__:
-            raise ValueError('Specified lob_sec does not exist.')
+            raise InputError('Specified lob_sec does not exist.')
         if LineOfBusinessSectors[lob_sec] not in lob_sectors:
             lob_sectors.append(LineOfBusinessSectors[lob_sec])
     query.lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
@@ -192,7 +192,7 @@ def delete_paredown_rule(id):
 
     query = ParedownRule.find_by_id(id)
     if not query:
-        raise ValueError("Paredown Rule ID {} does not exist.".format(id))
+        raise NotFoundError("Paredown Rule ID {} does not exist.".format(id))
 
     pd_rule = query.serialize
     db.session.delete(query)

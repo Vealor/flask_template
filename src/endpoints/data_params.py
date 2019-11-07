@@ -26,13 +26,13 @@ def get_data_params(id):
     query = DataParam.query
     if id is None:
         if 'project_id' not in args.keys():
-            raise ValueError('Please specify a Project ID as an argument for the data_params query.')
+            raise InputError('Please specify a Project ID as an argument for the data_params query.')
         query = query.filter_by(project_id=args['project_id']) if 'project_id' in args.keys() and args['project_id'].isdigit() else query
     else:
         # ID filter
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('Data Parameter ID {} does not exist.'.format(id))
+            raise NotFoundError('Data Parameter ID {} does not exist.'.format(id))
 
     # Set ORDER
     query = query.order_by('id')
@@ -46,7 +46,7 @@ def get_data_params(id):
     return jsonify(response), 200
 
 #===============================================================================
-# UPDATE A TRANSACTION information
+# UPDATE A Data Parameter information
 @data_params.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 # @has_permission([])
@@ -68,7 +68,7 @@ def update_data_params(id):
     # UPDATE user
     query = DataParam.find_by_id(id)
     if not query:
-        raise ValueError('Data Parameter ID {} does not exist.'.format(id))
+        raise NotFoundError('Data Parameter ID {} does not exist.'.format(id))
 
     query.value = data['value']
     query.is_many = data['is_many']
