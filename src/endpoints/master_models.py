@@ -257,8 +257,7 @@ def do_validate():
         test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
-        test_entries = [tr.serialize['data'] for tr in test_transactions]
-        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        data_valid = transactions_to_dataframe(test_transactions)
         data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
 
         # Evaluate the performance metrics
@@ -325,10 +324,7 @@ def compare_active_and_pending():
         test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
-        test_entries = [tr.serialize['data'] for tr in test_transactions]
-        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
-
+        test_entries =  transactions_to_dataframe(test_transactions)
         performance_metrics = {}
         for model in [active_model, pending_model]:
             lh_model = mm.MasterPredictionModel(model.pickle)
