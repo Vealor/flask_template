@@ -59,5 +59,49 @@ entry = ClientModel(**model_data_dict)
 db.session.add(entry)
 db.session.flush()
 
+model_data_dict = {
+    'train_data_start': "2018-02-01",
+    'train_data_end': "2019-04-02",
+    'pickle': pickle.dumps(None),
+    'hyper_p': hyper_p,
+    'status': "active"
+}
+entry = MasterModel(**model_data_dict)
+db.session.add(entry)
+db.session.flush()
+
+model_data_dict = {
+    'train_data_start': "2018-03-01",
+    'train_data_end': "2019-05-02",
+    'pickle': pickle.dumps(None),
+    'hyper_p': hyper_p,
+    'status': "pending"
+}
+entry = MasterModel(**model_data_dict)
+db.session.add(entry)
+db.session.flush()
+
+model_data_dict = {
+    'train_data_start': "2016-03-01",
+    'train_data_end': "2017-05-02",
+    'pickle': pickle.dumps(None),
+    'hyper_p': hyper_p,
+    'status': "inactive"
+}
+entry = MasterModel(**model_data_dict)
+db.session.add(entry)
+db.session.flush()
+
+model_data_dict = {
+    'train_data_start': "2017-03-01",
+    'train_data_end': "2018-05-02",
+    'pickle': pickle.dumps(None),
+    'hyper_p': hyper_p,
+    'status': "inactive"
+}
+entry = MasterModel(**model_data_dict)
+db.session.add(entry)
+db.session.flush()
+
 
 db.session.commit()
