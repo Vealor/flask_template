@@ -318,14 +318,27 @@ def apply_mappings_build_gst_registration(id):
             mappables[table_to_modify] = []
         mappables[table_to_modify].append((mapping.column_name, mapping.cdm_label_script_label))
     for key in mappables.keys():
-        query = [i for i in eval(key).query.filter_by(caps_gen_id=id).all()]
-        for row in query:
-            if mapping.column_name in row.data.keys():
+        print(key)
+        limit = 100000
+        offset = 0
+
+        def map_data(limit, offset):
+            query = [i for i in eval(key).query.filter_by(caps_gen_id=id).order_by('id').limit(limit).offset(offset).all()]
+            print(len(query))
+            for row in query:
                 newdata = dict(row.data)
                 for map in mappables[key]:
-                    newdata[map[1]] = newdata.pop(map[0])
-                row.data = newdata
-        db.session.commit()
+                    if map[0] in newdata.keys():
+                        newdata[map[1]] = newdata.pop(map[0])
+                    # print(newdata)
+                    row.data = newdata
+            db.session.commit()
+            return len(query)
+        qlen = 1
+        while qlen > 0:
+            qlen = map_data(limit, offset)
+            offset += limit
+
 
 
     # mapping = [label.serialize for label in CDMLabel.query.all()]
@@ -496,8 +509,8 @@ def data_quality_check(id):
         query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
         unique_keys = [row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
         datatypes = {row[0]: row[1].name for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()}
-       
-        # let db does the dirty work 
+
+        # let db does the dirty work
         # UNIQUENESS
         names = '||'.join(['cast(data ->> \''+ column +'\' as text)' for column in unique_keys])
         # uniqueness score
@@ -511,7 +524,7 @@ def data_quality_check(id):
 
         u = db.session.execute(uniquenss_score_query_string).first()
         r = db.session.execute(repetition_query_string)
-        
+
         # COMPLETENESS & DATATYPE for each column
         completeness_result = []
         datatype_result = []
@@ -529,7 +542,7 @@ def data_quality_check(id):
                 regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
             else:
                 raise Exception('No regex implmented for the given data type: {dt}', datatype)
-            
+
             datatype_quety_string = '''
             select round(count_check::decimal / count_total::decimal , 2) from (
             SELECT (select count(*) from sap_{table_name} where caps_gen_id = {caps_gen_id}) count_total, count(*) as count_check FROM sap_{table_name} WHERE caps_gen_id = {caps_gen_id} and data ->> '{column_name}' ~ '{regex}' ) as L
@@ -542,15 +555,12 @@ def data_quality_check(id):
                                 })
 
             completeness_score_query_string = '''
-            select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id}; 
+            select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id};
             '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
 
             c = db.session.execute(completeness_score_query_string).first()
-            completeness_result.append({
-                                'column_name': column_name,
-                                'score': float(c[0])
-                                })
-            
+            completeness_result[column_name] = float(c[0])
+
             table_completeness_score += float(c[0])
             table_datatype_score += float(d[0])
 
@@ -558,15 +568,16 @@ def data_quality_check(id):
         overall_completeness_score += table_completeness_score / len(datatypes)
         overall_datatype_score += table_datatype_score / len(datatypes)
 
-        final_result['scores_per_table'][table_name] = {
-                                                'completeness': completeness_result,
-                                                'uniqueness': {
-                                                    'score': float(u[0]), 
-                                                    'key_names': unique_keys,
-                                                    'repetitions':[rep[0] for rep in r]
-                                                    },
-                                                'datatype': datatype_result
-                                                }
+        final_result['scores_per_table'].append({
+                                            "table": table_name,
+                                            'completeness': completeness_result,
+                                            'uniqueness': {
+                                                'score': float(u[0]),
+                                                'key_names': unique_keys,
+                                                'repetitions':[rep[0] for rep in r]
+                                                },
+                                            'datatype': datatype_result
+                                            })
 
     final_result['overalls'] = {
                         'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
