@@ -74,6 +74,12 @@ def post_user():
     if data['role'] not in Roles.__members__:
         raise ValueError('Specified role does not exists')
 
+    # SYSTEM ADMIN CHECK
+    # TODO: CHECK IF USER IS SUPERUSER (AKA LH GVA)
+    is_sysadmin = False
+    if 'is_system_administrator' in data.keys():
+        is_sysadmin = bool(data['is_system_administrator'])
+
     # INSERT user
     new_user = User(
         username = data['username'],
@@ -82,7 +88,8 @@ def post_user():
         initials = data['initials'].upper(),
         first_name = data['first_name'],
         last_name = data['last_name'],
-        role = data['role']
+        role = data['role'],
+        is_system_administrator = is_sysadmin
     )
     db.session.add(new_user)
     db.session.flush()
