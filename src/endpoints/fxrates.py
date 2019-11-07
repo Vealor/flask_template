@@ -20,14 +20,14 @@ fxrates = Blueprint('fxrates', __name__)
 def get_fxrates():
     response = {'status': 'ok', 'message': '', 'payload': []}
 
-    query = FXRates.query.order_by(desc(FXRates.date_id)).first().serialize
-    #need assistance on timezones
-    if query['date_id'] < datetime.datetime.now().date():
-        params = {'start_date' : str(query['date_id']), 'end_date' : str(datetime.datetime.now().date())}
+    query = FXRates.query.order_by(desc(FXRates.date)).first().serialize
+
+    if query['date'] < datetime.datetime.now().date():
+        params = {'start_date' : str(query['date']), 'end_date' : str(datetime.datetime.now().date())}
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD', params=params).json()
-        database_insert = [{'date_id': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['date_id'])]
+        database_insert = [{'date': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['date'])]
         db.session.bulk_insert_mappings(FXRates, database_insert)
         db.session.commit()
-    response['payload'] = [i.serialize for i in FXRates.query.order_by(desc(FXRates.date_id)).all()]
+    response['payload'] = [i.serialize for i in FXRates.query.order_by(desc(FXRates.date)).all()]
 
     return jsonify(response), 201
