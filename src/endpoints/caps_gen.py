@@ -303,16 +303,22 @@ def apply_mappings_build_gst_registration(id):
 
     # APPLY MAPPINGS
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
+    mappables = {}
     for mapping in mappings:
         table_to_modify = "Sap"+(mapping.table_name).lower().capitalize()
-        query = [i for i in eval(table_to_modify).query.filter_by(caps_gen_id=id).all()]
-
+        if table_to_modify not in mappables.keys():
+            mappables[table_to_modify] = []
+        mappables[table_to_modify].append((mapping.column_name, mapping.cdm_label_script_label))
+    for key in mappables.keys():
+        query = [i for i in eval(key).query.filter_by(caps_gen_id=id).all()]
         for row in query:
-            newdata = dict(row.data)
-            if mapping.column_name in newdata.keys():
-                newdata[mapping.cdm_label_script_label] = newdata.pop(mapping.column_name)
-            row.data = newdata
-    db.session.commit()
+            if mapping.column_name in row.data.keys():
+                newdata = dict(row.data)
+                for map in mappables[key]:
+                    newdata[map[1]] = newdata.pop(map[0])
+                row.data = newdata
+        db.session.commit()
+
 
     # mapping = [label.serialize for label in CDMLabel.query.all()]
     #
@@ -350,21 +356,27 @@ def apply_mappings_build_gst_registration(id):
     # db.session.flush()
 
 
+
+
+
     # BUILD GST REGISTRATION
     # TODO: V2 check for similary/duplicate projects by comparing attributes
-    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
-    for vendor in gst_data:
-        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
-            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
-        gst_entry = GstRegistration(
-            caps_gen_id = id,
-            vendor_country=vendor['lfa1_land1_key'],
-            vendor_number=vendor['lfa1_lifnr_key'],
-            vendor_city=vendor['vend_city'],
-            vendor_region=vendor['vend_region']
-        )
-        db.session.add(gst_entry)
-    db.session.commit()
+    # gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    # for vendor in gst_data:
+    #     if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+    #         raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+    #     gst_entry = GstRegistration(
+    #         caps_gen_id = id,
+    #         vendor_country=vendor['lfa1_land1_key'],
+    #         vendor_number=vendor['lfa1_lifnr_key'],
+    #         vendor_city=vendor['vend_city'],
+    #         vendor_region=vendor['vend_region']
+    #     )
+    #     db.session.add(gst_entry)
+    # db.session.commit()
+
+
+
 
     # project_id = (CapsGen.find_by_id(id)).project_id
     # project_in_gst_registration_table = GstRegistration.query.filter(GstRegistration.project_id == project_id).first()
@@ -476,11 +488,11 @@ def data_quality_check(id):
         query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
         unique_keys = [row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
         datatypes = [{row[0]: row[1].name} for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()]
-       
-        # let db does the dirty work 
+
+        # let db does the dirty work
         # COMPLETENESS
         completeness_score_query_string = '''
-        select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from {table_name} where caps_gen_id = {caps_gen_id}; 
+        select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from {table_name} where caps_gen_id = {caps_gen_id};
         '''.format(column_name = mapped_columns[0], table_name = table_name, caps_gen_id = id)
         # UNIQUENESS
         names = ','.join(['data ->> \''+ column +'\'' for column in unique_keys])
@@ -488,7 +500,7 @@ def data_quality_check(id):
         uniquenss_score_query_string = '''
         select ROUND((count(distinct(CONCAT({column_names})))::decimal / count(*)::decimal), 2) as uniqueness_score from {table_name} where caps_gen_id = {caps_gen_id};
         '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
-        # uniqueness repetition 
+        # uniqueness repetition
         repetition_query_string = '''
         select CONCAT({column_names}) as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by CONCAT({column_names}) HAVING count(*) > 1
         '''.format(column_names = names, caps_gen_id = id)
@@ -508,7 +520,7 @@ def data_quality_check(id):
                                 'completeness': {
                                     'score': float(c[0])},
                                     'uniqueness': {
-                                        'score': float(u[0]), 
+                                        'score': float(u[0]),
                                         'key_names': unique_keys,
                                         'repetitions':[rep[0] for rep in r]
                                     }
@@ -522,11 +534,11 @@ def data_quality_check(id):
                         'datatype': overall_datatype_score / len(final_result['tables'])
                         }
     print(final_result)
-    
-    # table_names = [ 'sap_'+mapping.table_name.lower() for mapping in mappings] 
+
+    # table_names = [ 'sap_'+mapping.table_name.lower() for mapping in mappings]
     # for table_name in table_names:
     #     if mapping
-   
+
     # query = query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype'))
     # unique_labels = query.filter_by(is_unique = True).all()
     # data_types = query.all()
@@ -576,7 +588,7 @@ def data_quality_check(id):
     #     print(data)
     #     # data_in_table = table_class.query.with_entities(getattr(table_class, 'id'), getattr(table_class, 'data')).filter(
     #         # table_class.caps_gen_id == id).all()
-       
+
     # # data = request.get_json()
     # cmd_labels = [label.serialize for label in CDMLabel.query.all()]
     # # unique_keys = { label["script_label"] : 0 for label in cmd_labels if label["is_unique"] is True }
@@ -598,7 +610,7 @@ def data_quality_check(id):
     #     for value in values:
     #        if type(value) is not key_data_types[k]:
     #            count_failed_datatype += 1
-               
+
     # print(merged_dicts)
         #  merge_dicts()
         # for unique_key in unique_keys:
