@@ -1192,6 +1192,7 @@ class FXRates(db.Model):
         return {
             'id': self.id,
             'date': str(self.date),
+            'datetime': self.date,
             'usdtocad': self.usdtocad
         }
 

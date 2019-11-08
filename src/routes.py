@@ -45,8 +45,8 @@ from src.endpoints.data_params import data_params
 api.register_blueprint(data_params, url_prefix='/data_params')
 
 # FXrates Endpoints
-from src.endpoints.fxrates import fxrates
-api.register_blueprint(fxrates, url_prefix='/fxrates')
+from src.endpoints.fx_rates import fx_rates
+api.register_blueprint(fx_rates, url_prefix='/fx_rates')
 
 # Gst Registration Endpoint
 from src.endpoints.gst_registration import gst_registration

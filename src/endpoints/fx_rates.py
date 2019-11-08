@@ -12,22 +12,30 @@ from src.models import *
 from src.util import *
 from src.wrappers import has_permission, exception_wrapper
 
-fxrates = Blueprint('fxrates', __name__)
+fx_rates = Blueprint('fx_rates', __name__)
 #===============================================================================
 # GET AND UPDATE FXRATES
-@fxrates.route('/', methods=['GET'])
+@fx_rates.route('/', methods=['GET'])
 @exception_wrapper()
-def get_fxrates():
+def get_fx_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}
+    args = request.args.to_dict()
 
     query = FXRates.query.order_by(desc(FXRates.date)).first().serialize
 
-    if query['date'] < datetime.datetime.now().date():
+    if query['datetime'] < datetime.datetime.now().date():
         params = {'start_date' : str(query['date']), 'end_date' : str(datetime.datetime.now().date())}
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD', params=params).json()
         database_insert = [{'date': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['date'])]
         db.session.bulk_insert_mappings(FXRates, database_insert)
         db.session.commit()
-    response['payload'] = [i.serialize for i in FXRates.query.order_by(desc(FXRates.date)).all()]
+
+    query = FXRates.query
+    query = query.order_by(desc(FXRates.date))
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+    response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 201
