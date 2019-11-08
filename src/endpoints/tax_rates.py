@@ -4,6 +4,7 @@ Tax Rate Endpoints
 from sqlalchemy import desc
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from src.errors import *
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
