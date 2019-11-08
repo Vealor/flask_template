@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
+PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into paredown_rules (is_core, code_id) values ('t', 31);
   insert into paredown_rules_conditions (paredown_rule_id, field, operator, value) values (1, 'Acct_Desc', 'contains', 'Donation');
 

@@ -32,6 +32,10 @@ api.register_blueprint(client_models, url_prefix='/client_models')
 from src.endpoints.client_vendor_master import client_vendor_master
 api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
+# Code Endpoint
+from src.endpoints.codes import codes
+api.register_blueprint(codes, url_prefix='/codes')
+
 # DataMapping Endpoints
 from src.endpoints.data_mappings import data_mappings
 api.register_blueprint(data_mappings, url_prefix='/data_mappings')
@@ -41,8 +45,8 @@ from src.endpoints.data_params import data_params
 api.register_blueprint(data_params, url_prefix='/data_params')
 
 # FXrates Endpoints
-from src.endpoints.fxrates import fxrates
-api.register_blueprint(fxrates, url_prefix='/fxrates')
+from src.endpoints.fx_rates import fx_rates
+api.register_blueprint(fx_rates, url_prefix='/fx_rates')
 
 # Gst Registration Endpoint
 from src.endpoints.gst_registration import gst_registration

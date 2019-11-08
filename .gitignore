@@ -120,3 +120,4 @@ db_commands
 .idea
 .idea/*
 migrations/versions
+caps-gen-processing
