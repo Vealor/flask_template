@@ -22,6 +22,7 @@ sleep 1 && echo -e "$FAKE\tInserting base fake data" && sleep 1
 
 sleep 1 && echo -e "$BASE\tInserting Codes" && sleep 1
 ./db_scripts/insert_codes.sh
+
 sleep 1 && echo -e "$BASE\tInserting paredown rules" && sleep 1
 ./db_scripts/insert_paredown_rules.sh
 
@@ -33,3 +34,6 @@ sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings" && sleep 1
 
 sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings - EMPTY CAPSGEN MAPPING" && sleep 1
 ./db_scripts/_insert_nexen_data_mappings_mk2.sh
+
+sleep 1 && echo -e "$FAKE\tInserting dummy master and client predictions models " && sleep 1
+./db_scripts/_insert_dummy_prediction_models.sh
