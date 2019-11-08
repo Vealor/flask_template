@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 import pickle
-from src.models import *
+import sys; sys.path.append("../..")
 
 # Set-up the application context
 import pandas as pd
