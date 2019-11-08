@@ -34,3 +34,8 @@ The $`F_{\beta}`$ score is a weighted balance between pure recall and pure preci
 ```math
 F_{\beta} = \frac{(1 + \beta^{2})RP}{R + \beta^{2}P}
 ```
+
+where $`R`$ is recall (sensitivity) and $`P`$ is precision (specificity). As the value of $`\beta`$ increases from 0 more emphasis is placed on recall than on precision.
+
+
+Ref: https://en.wikipedia.org/wiki/F1_score
