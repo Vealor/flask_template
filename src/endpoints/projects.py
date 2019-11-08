@@ -7,6 +7,7 @@ import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
+from src.errors import *
 from src.models import *
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -45,7 +46,7 @@ def get_projects(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('name')
     # Query on is_approved (is_approved, 1 or 0)
@@ -53,7 +54,7 @@ def get_projects(id):
     # Query on is_completed (is_completed, 1 or 0)
     query = query.filter_by(is_completed=bool(args['is_completed'])) if 'is_completed' in args.keys() and args['is_completed'].isdigit() else query
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -85,9 +86,9 @@ def post_project():
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
             if key not in basedata:
-                raise ValueError('Scope with key {} has not been supplied.'.format(key))
+                raise InputError('Scope with key {} has not been supplied.'.format(key))
             if typecheck and not isinstance(basedata[key], bool):
-                raise ValueError('Scope with key {} has wrong data type.'.format(key))
+                raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
     scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
@@ -100,22 +101,22 @@ def post_project():
     # CHECK CONSTRAINTS: name
     check = Project.query.filter_by(name=data['name']).first()
     if check:
-        raise ValueError('Project {} already exist.'.format(data['name']))
+        raise InputError('Project {} already exist.'.format(data['name']))
 
     # client_id validation
     client = Client.find_by_id(data['client_id'])
     if not client:
-        raise ValueError('Client id does not exist.'.format(data['client_id']))
+        raise InputError('Client id does not exist.'.format(data['client_id']))
 
     # engagement_partner_id validation
     eng_part = User.find_by_id(data['engagement_partner_id'])
     if not eng_part:
-        raise ValueError('User id {} does not exist for engagement partner.'.format(data['engagement_partner_id']))
+        raise InputError('User id {} does not exist for engagement partner.'.format(data['engagement_partner_id']))
 
     # engagement_manager_id validation
     eng_mana = User.find_by_id(data['engagement_manager_id'])
     if not eng_mana:
-        raise ValueError('User id {} does not exist for engagement manager.'.format(data['engagement_manager_id']))
+        raise InputError('User id {} does not exist for engagement manager.'.format(data['engagement_manager_id']))
 
     # BUILD transaction
     new_project = Project(
@@ -176,7 +177,7 @@ def post_project():
     for user_id in data['project_users']:
         user = User.find_by_id(user_id)
         if not user:
-            raise ValueError('Added project user with id {} does not exist'.format(user_id))
+            raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
     for user_id in data['project_users']:
@@ -186,6 +187,20 @@ def post_project():
             user_project_project = new_project,
         )
         db.session.add(new_user_project)
+    db.session.flush()
+
+    # Add all project parameters
+    # TODO: ADD MORE PARAMS (JOHN)
+    db.session.add(
+        DataParam(
+            project_id = new_project.id,
+            process = 'aps_to_caps',
+            param = 'potato',
+            operator = Operator.equals,
+            value = ['test', '123', '123.345'],
+            is_many = True
+        )
+    )
 
     db.session.commit()
     response['message'] = 'Created project {}'.format(data['name'])
@@ -204,7 +219,7 @@ def apply_paredown_rules(id):
     # GET BASE QUERY if exists
     query = Project.find_by_id(id)
     if not query:
-        raise ValueError('Project ID {} does not exist.'.format(id))
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
 
     ### PSEUDO CODE:
 
@@ -251,9 +266,9 @@ def update_project(id):
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
             if key not in basedata:
-                raise ValueError('Scope with key {} has not been supplied.'.format(key))
+                raise InputError('Scope with key {} has not been supplied.'.format(key))
             if typecheck and not isinstance(basedata[key], bool):
-                raise ValueError('Scope with key {} has wrong data type.'.format(key))
+                raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
     scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
@@ -266,19 +281,19 @@ def update_project(id):
     # GET BASE QUERY if exists
     query = Project.find_by_id(id)
     if not query:
-        raise ValueError('Project ID {} does not exist.'.format(id))
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
 
     # CHECK CONSTRAINTS: name
     check = Project.query.filter_by(name=data['name']).filter(Project.id != id).first()
     if check:
-        raise ValueError('Project name {} already exist.'.format(data['name']))
+        raise InputError('Project name {} already exist.'.format(data['name']))
 
     # update name
     query.name = data['name']
     # client_id validate and update
     client = Client.find_by_id(data['client_id'])
     if not client:
-        raise ValueError('Client id does not exist')
+        raise InputError('Client id does not exist')
     query.project_client = client
     # lock paredown update
     query.is_paredown_locked = data['is_paredown_locked']
@@ -287,12 +302,12 @@ def update_project(id):
     # engagement_partner_id validation and update
     eng_part = User.find_by_id(data['engagement_partner_id'])
     if not eng_part:
-        raise ValueError('User id does not exist for engagement partner.'.format(data['engagement_partner_id']))
+        raise InputError('User id does not exist for engagement partner.'.format(data['engagement_partner_id']))
     query.engagement_partner_user = eng_part
     # engagement_manager_id validation
     eng_mana = User.find_by_id(data['engagement_manager_id'])
     if not eng_mana:
-        raise ValueError('User id does not exist for engagement manager.'.format(data['engagement_manager_id']))
+        raise InputError('User id does not exist for engagement manager.'.format(data['engagement_manager_id']))
     query.engagement_manager_user = eng_mana
 
     query.has_ts_gst = data['tax_scope']['has_ts_gst']
@@ -343,7 +358,7 @@ def update_project(id):
     for user_id in data['project_users']:
         user = User.find_by_id(user_id)
         if not user:
-            raise ValueError('Added project user with id {} does not exist'.format(user_id))
+            raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
     user_projects = UserProject.query.filter_by(project_id=id).all()
@@ -377,7 +392,7 @@ def delete_project(id):
 
     query = Project.query.filter_by(id=id).first()
     if not query:
-        raise ValueError('Project ID {} does not exist.'.format(id))
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
 
     deletedproject = query.serialize
     db.session.delete(query)
