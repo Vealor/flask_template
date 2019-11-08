@@ -35,4 +35,4 @@ sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings - EMPTY CAPSGEN MAPPING
 ./db_scripts/_insert_nexen_data_mappings_mk2.sh
 
 sleep 1 && echo -e "$FAKE\tInserting dummy prediction models" && sleep 1
-python _insert_dummy_prediction_models.py
+./db_scripts/_insert_dummy_prediction_models.sh
