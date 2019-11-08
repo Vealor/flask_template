@@ -32,8 +32,8 @@ def preprocessing_predict(df,predictors,for_validation=False):
 
     if for_validation:
         df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
+        df = df.drop(['Code'], 1)
 
-    df = df.drop(['Code'], 1)
     low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
 
     df_onehot = df[low_cardinality_columns]
