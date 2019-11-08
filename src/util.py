@@ -151,7 +151,8 @@ def project_path_create(data, response):
             for folder in folders:
                 os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
         else:
-            raise Exception('Path has already been created for project')
+            response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
+            return response
     elif os.environ['FLASK_ENV'] == 'production':
         project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
         project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
@@ -166,7 +167,8 @@ def project_path_create(data, response):
             current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
                                                                 directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
         else:
-            raise ValueError('Path {} has been created for this project'.format(str(data['project_id'])))
+            response['message'] = 'Path {} has been created for this project'.format(str(data['project_id']))
+            return response
     else:
         raise ValueError('Environ not present. Choose development or production')
     return response
