@@ -17,3 +17,7 @@ class Code(db.Model):
             'code_number': self.code_number,
             'description': self.description
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id = id).first()
