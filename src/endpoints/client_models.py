@@ -365,23 +365,18 @@ def compare_active_and_pending():
 
 #===============================================================================
 # Update the active model for a client
-@client_models.route('/set_active/', defaults={'model_id':None}, methods=['PUT'])
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
     try:
-        if 'client_id' not in args.keys():
-            raise InputError("client_id must be specified to set active model for client")
-        client_id = int(args['client_id'])
+        pending_model = ClientModel.find_by_id(model_id)
+        client_id = pending_model.client_id
         if not Client.find_by_id(client_id):
             raise NotFoundError("Client ID {} does not exist.".format(client_id))
-        if not model_id:
-            pending_model = ClientModel.find_pending_for_client(client_id)
-            if not pending_model:
-                raise ValueError('There is no pending model to compare to the active model.')
-            model_id = pending_model.id
+        if not pending_model:
+            raise ValueError('There is no pending model to compare to the active model.')
         ClientModel.set_active_for_client(model_id, client_id)
         db.session.commit()
         response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
