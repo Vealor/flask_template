@@ -226,6 +226,65 @@ def apply_paredown_rules(id):
     return jsonify(response), 200
 
 #===============================================================================
+# APPLY PREDICTION MODEL TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
+@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
+# @jwt_required
+@exception_wrapper()
+def apply_prediction(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+
+    # input validation
+    request_types = {
+        'use_client_model': ['bool'],
+    }
+    validate_request_data(data, request_types)
+
+    # Get the data to predict
+    project = Project.find_by_id(id)
+    if not project:
+        raise ValueError('Project with ID {} does not exist.'.format(id))
+    project_transactions = Transaction.query.filter_by(project_id = id).filter_by(is_approved=False)
+    if project_transactions.count() == 0:
+        raise ValueError('Project has no transactions to predict.')
+
+    # Get the appropriate active model, create the model object and alter transcation flags
+    if use_client_model:
+        active_model = ClientModel.find_active_for_client(project.client_id)
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+        lh_model = cm.ClientPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.master_model_id : None})
+        project_transactions.update({Transaction.client_model_id :active_model.id})
+
+    else:
+        active_model = MasterModel.find_active()
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+        lh_model = mm.MasterPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.client_model_id : None})
+        project_transactions.update({Transaction.master_model_id :active_model.id})
+
+    predictors = active_model.hyper_p['predictors']
+
+    # TODO: fix separation of data so that prediction happens on transactions with IDs
+    # Can't assume that final zip lines up arrays properly
+    entries = [entry.serialize['data'] for entry in project_transactions]
+    df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
+    df_predict = preprocessing_predict(df_predict, predictors)
+
+    # Get probability of each transaction being class '1'
+    probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
+
+    project_transactions.update({Transaction.is_predicted : True})
+    for tr,pr in zip(project_transactions, probability_recoverable):
+        tr.recovery_probability = pr
+
+    db.session.commit()
+    response['message'] = 'Prediction successful. Transactions have been marked.'
+    return jsonify(response), 201
+
+#===============================================================================
 # UPDATE A PROJECT
 @projects.route('/<path:id>', methods=['PUT'])
 # @jwt_required
