@@ -19,7 +19,7 @@ class MasterModel(db.Model):
             'id': self.id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
-            'name': "master-model_{}_{}".format(self.created,self.id),
+            'name': "master-model_{}_{}".format(self.created.strftime("%Y-%m-%d"),self.id),
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
