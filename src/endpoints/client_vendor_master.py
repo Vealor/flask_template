@@ -25,10 +25,10 @@ def get_client_vendor_master(id):
 
     query = CapsGen.query.order_by(desc(CapsGen.created))
     query = query.filter_by(project_id=args['project_id'])
-    capsgen = query.first()
-    if not capsgen:
+    caps_gen = query.first()
+    if not caps_gen:
         raise NotFoundError('There is no CapsGen for this project.')
-    rows = SapLfa1.query.filter_by(capsgen_id=capsgen.id).all()
+    rows = SapLfa1.query.filter_by(caps_gen_id=caps_gen.id).all()
     response['payload'] = [row.data for row in rows]
 
     return jsonify(response), 200
