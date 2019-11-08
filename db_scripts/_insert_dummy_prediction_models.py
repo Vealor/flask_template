@@ -103,5 +103,4 @@ entry = MasterModel(**model_data_dict)
 db.session.add(entry)
 db.session.flush()
 
-
 db.session.commit()
