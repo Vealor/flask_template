@@ -98,13 +98,13 @@ class ProductionConfig(Config):
     DEBUG = False
 
     # Use a secure, unique and absolutely secret key for signing the data.
-    CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
+    # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
     # Secret key for signing cookies
-    SECRET_KEY = os.environ['SECRET_KEY']
+    # SECRET_KEY = os.environ['SECRET_KEY']
     # JWT Secret Key
-    JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+    # JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    # SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     # DATABASE_CONNECT_OPTIONS = {}
 
 del os
