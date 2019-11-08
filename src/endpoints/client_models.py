@@ -7,6 +7,7 @@ import pickle
 import random
 import src.prediction.model_client as cm
 from flask import Blueprint, current_app, jsonify, request
+from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from src.util import get_date_obj_from_str, validate_request_data
@@ -27,7 +28,7 @@ def get_client_models(id):
     if id:
         query = query.filter_by(id=id)
         if not query.first():
-             raise ValueError("No client model with ID {} exists.".format(id))
+             raise NotFoundError("No client model with ID {} exists.".format(id))
 
     # If client_id is specified, then return all models for that client
     query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
@@ -61,11 +62,11 @@ def do_train():
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if train_start >= train_end:
-        raise ValueError('Invalid Train Data date range.')
+        raise InputError('Invalid Train Data date range.')
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Train and test data ranges overlap.')
+        raise InputError('Train and test data ranges overlap.')
 
     # pre-build model dictionary
     model_data_dict = {
@@ -79,21 +80,21 @@ def do_train():
 
     # validate client existence
     if not Client.find_by_id(data['client_id']):
-        raise ValueError('Client ID {} does not exist.'.format(data['client_id']))
+        raise InputError('Client ID {} does not exist.'.format(data['client_id']))
 
     # validate existing client projects
     client_projects = [p.id for p in Project.query.filter_by(client_id = data['client_id']).distinct()]
     if not client_projects:
-        raise ValueError('Client ID {} has no associated projects.'.format(data['client_id']))
+        raise InputError('Client ID {} has no associated projects.'.format(data['client_id']))
 
     # validate if pending mode, stop on exist
     if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.pending.value).all():
-        raise ValueError('There are pending models for client ID {}.'.format(data['client_id']))
+        raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
 
     # validate sufficient transactions for training
     transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
     if transaction_count < 2000:
-        raise ValueError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
+        raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
     # create placeholder model
     model_data_dict['client_id'] = data['client_id']
@@ -237,9 +238,9 @@ def delete_client_model(id):
 
     query = ClientModel.find_by_id(id)
     if not query:
-        raise ValueError('Client model ID {} does not exist.'.format(id))
+        raise NotFoundError('Client model ID {} does not exist.'.format(id))
     if query.status == Activity.active:
-        raise ValueError('Client model ID {} is currently active. Cannot delete.'.format(id))
+        raise InputError('Client model ID {} is currently active. Cannot delete.'.format(id))
 
     model = query.serialize
     db.session.delete(query)

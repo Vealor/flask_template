@@ -5,6 +5,7 @@ import json
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from src.errors import *
 from src.models import *
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -13,7 +14,7 @@ clients = Blueprint('clients', __name__)
 #===============================================================================
 # GET ALL CLIENT
 @clients.route('/', defaults={'id':None}, methods=['GET'])
-@clients.route('/<path:id>', methods=['GET'])
+@clients.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
 def get_clients(id):
@@ -25,11 +26,11 @@ def get_clients(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('name')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -63,7 +64,7 @@ def post_client():
     # check if this name exists
     check = Client.query.filter_by(name=data['name']).first()
     if check:
-        raise ValueError('Client {} already exists.'.format(data['name']))
+        raise InputError('Client {} already exists.'.format(data['name']))
 
     new_client = Client(
         name = data['name']
@@ -73,13 +74,13 @@ def post_client():
 
     for entity in data['client_entities']:
         if len(entity['company_code']) > 4:
-            raise ValueError('Company Code cannot exceed 4 characters.')
+            raise InputError('Company Code cannot exceed 4 characters.')
         if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
-            raise ValueError('Specified line of business sector does not exists')
+            raise InputError('Specified line of business sector does not exists')
         if not len(entity['jurisdictions']):
-            raise ValueError('All entities must have at least one jurisdiction.')
+            raise InputError('All entities must have at least one jurisdiction.')
         if ClientEntity.query.filter_by(client_id=new_client.id).filter_by(company_code=entity['company_code']).first():
-            raise ValueError('Duplicate company codes for a client cannot exist.')
+            raise InputError('Duplicate company codes for a client cannot exist.')
         new_entity = ClientEntity(
             client_id=new_client.id,
             company_code=entity['company_code'],
@@ -89,9 +90,9 @@ def post_client():
         db.session.flush()
         for jurisdiction in entity['jurisdictions']:
             if jurisdiction not in Jurisdiction.__members__:
-                raise ValueError('Specified jurisdiction does not exist.')
+                raise InputError('Specified jurisdiction does not exist.')
             if ClientEntityJurisdiction.query.filter_by(client_entity_id=new_entity.id).filter_by(jurisdiction=jurisdiction).first():
-                raise ValueError('Duplicate jurisdictions for a client entity cannot exist.')
+                raise InputError('Duplicate jurisdictions for a client entity cannot exist.')
             new_jurisdiction = ClientEntityJurisdiction(
                 client_entity_id=new_entity.id,
                 jurisdiction=jurisdiction,
@@ -107,7 +108,7 @@ def post_client():
 
 #===============================================================================
 # UPDATE A CLIENT
-@clients.route('/<path:id>', methods=['PUT'])
+@clients.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 def update_client(id):
@@ -131,12 +132,12 @@ def update_client(id):
     # UPDATE transaction
     query = Client.find_by_id(id)
     if not query:
-        raise ValueError('Client ID {} does not exist.'.format(id))
+        raise NotFoundError('Client ID {} does not exist.'.format(id))
 
     # check if this name exists
     check = Client.query.filter_by(name=data['name']).filter(Client.id != id).first()
     if check:
-        raise ValueError('Client name {} already exists.'.format(data['name']))
+        raise InputError('Client name {} already exists.'.format(data['name']))
 
     # update client name
     query.name = data['name']
@@ -155,35 +156,35 @@ def update_client(id):
 
         # valdate LoB for entity
         if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
-            raise ValueError('Specified line of business sector does not exists')
+            raise InputError('Specified line of business sector does not exists')
 
         # validate new jurisdictions for entity
         for jurisdiction in entity['jurisdictions']:
             if jurisdiction not in Jurisdiction.__members__:
-                raise ValueError('Specified jurisdiction does not exist.')
+                raise InputError('Specified jurisdiction does not exist.')
 
         # validate company code length
         if len(entity['company_code']) > 4:
-            raise ValueError('Company Code cannot exceed 4 characters.')
+            raise InputError('Company Code cannot exceed 4 characters.')
 
         # validate has at least 1 jurisdiction for each entity
         if not len(entity['jurisdictions']):
-            raise ValueError('All entities must have at least one jurisdiction.')
+            raise InputError('All entities must have at least one jurisdiction.')
 
         # update existing entity
         if 'id' in entity.keys() and entity['id'] is not None:
             client_entity = ClientEntity.find_by_id(entity['id'])
             if not client_entity:
-                raise ValueError('Client entity with ID {} does not exist.'.format(entity['id']))
+                raise InputError('Client entity with ID {} does not exist.'.format(entity['id']))
             # check for duplicate compnay
             if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).filter(ClientEntity.id != entity['id']).first():
-                raise ValueError('Duplicate company codes for a client cannot exist.')
+                raise InputError('Duplicate company codes for a client cannot exist.')
             client_entity.company_code = entity['company_code']
             client_entity.lob_sector = entity['lob_sector']
         # build new entity
         else:
             if ClientEntity.query.filter_by(client_id=id).filter_by(company_code=entity['company_code']).first():
-                raise ValueError('Duplicate company codes for a client cannot exist.')
+                raise InputError('Duplicate company codes for a client cannot exist.')
 
             new_client_entity = ClientEntity(
                 client_id=id,
@@ -204,7 +205,7 @@ def update_client(id):
                 db.session.delete(cej)
         for jurisdiction in jurisdictions_list:
             if ClientEntityJurisdiction.query.filter_by(client_entity_id=entity['id']).filter_by(jurisdiction=jurisdiction).first():
-                raise ValueError('Duplicate jurisdictions for a client entity cannot exist.')
+                raise InputError('Duplicate jurisdictions for a client entity cannot exist.')
             new_jurisdiction = ClientEntityJurisdiction(
                 client_entity_id=entity['id'],
                 jurisdiction=jurisdiction,
@@ -220,7 +221,7 @@ def update_client(id):
 
 #===============================================================================
 # DELETE A CLIENT
-@clients.route('/<path:id>', methods=['DELETE'])
+@clients.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
 def delete_client(id):
@@ -228,12 +229,12 @@ def delete_client(id):
 
     query = Client.query.filter_by(id=id).first()
     if not query:
-        raise ValueError('Client ID {} does not exist.'.format(id))
+        raise NotFoundError('Client ID {} does not exist.'.format(id))
 
     # fail delete if has projects, models, or classification_rules
     if query.client_projects.all() or query.client_client_models.all():
     # if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
-        raise Exception('Client not deleted. Client has active projects, models, or classification rules.')
+        raise InputError('Client not deleted. Client has active projects, models, or classification rules.')
 
     client = query.serialize
     db.session.delete(query)

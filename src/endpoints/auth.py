@@ -6,11 +6,31 @@ import random
 import string
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from src.errors import *
 from src.models import *
 from src.util import send_mail, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 auth = Blueprint('auth', __name__)
+
+#===============================================================================
+# make base lighthouse superuser
+@auth.route('/create_base_lh_superuser', methods=['POST'])
+@exception_wrapper()
+def create_base_lh_superuser():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    has_super = User.query.filter_by(is_superuser=True).first()
+    if has_super:
+        raise InputError("Already Made")
+    db.session.add(User(
+        username = 'lh-admin', password = User.generate_hash('Kpmg1234%'),
+        email = 'ca-fmgvalhrhadmin@kpmg.ca',
+        initials = 'lh'.upper(), first_name = 'Lighthouse', last_name = 'GVA',
+        role = 'tax_master', is_system_administrator = True, is_superuser = True
+    ))
+    db.session.commit()
+    response['message'] = 'Good'
+    return jsonify(response), 201
 
 #===============================================================================
 # resets user's password given username and e-mail
