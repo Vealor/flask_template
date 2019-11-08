@@ -14,6 +14,8 @@ class Config(object):
     # Enable protection agains *Cross-site Request Forgery (CSRF)*
     CSRF_ENABLED = True
 
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     # JWT
     PROPAGATE_EXCEPTIONS = True
     JWT_BLACKLIST_ENABLED = True
@@ -39,7 +41,6 @@ class DevelopmentConfig(Config):
     OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
 
     # Define the database we are working with
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
     POSTGRES = {
         'user': 'itra',
         'pw': 'LHDEV1234',
@@ -49,6 +50,7 @@ class DevelopmentConfig(Config):
     }
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+
     CAPS_BASE_DIR = 'caps-gen-processing'
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
@@ -74,29 +76,36 @@ class TestingConfig(Config):
                   'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
 
     # Use a secure, unique and absolutely secret key for signing the data.
-    # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
+    CSRF_SESSION_KEY = "testing"
     # Secret key for signing cookies
-    # SECRET_KEY = os.environ['SECRET_KEY']
+    SECRET_KEY = "=!w-tp!0xuqscy*6^er*@l$5s#pu$#*17upk=dg-i_03@##=_)"
     # JWT Secret Key
-    # JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+    JWT_SECRET_KEY = 'jwt-testing-string'
 
-    # SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    # DATABASE_CONNECT_OPTIONS = {}
+    SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+    DATABASE_CONNECT_OPTIONS = {}
+
+    CAPS_BASE_DIR = 'caps-gen-processing'
+    CAPS_RAW_LOCATION = 'caps_gen_raw'
+    CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
+    CAPS_MASTER_LOCATION = 'caps_gen_master'
+    CDM_TABLES = ['BKPF', 'BSEG', 'CSKT', 'EKPO', 'LFA1', 'MAKT', 'PAYR', 'SKAT', 'T001', 'T007S']
+    FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
+
 
 class ProductionConfig(Config):
     # Statement for enabling the development environment
     DEBUG = False
+    try:
+        # Use a secure, unique and absolutely secret key for signing the data.
+        CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
+        # Secret key for signing cookies
+        SECRET_KEY = os.environ['SECRET_KEY']
+        # JWT Secret Key
+        JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
-    # Use a secure, unique and absolutely secret key for signing the data.
-    # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
-    # Secret key for signing cookies
-    # SECRET_KEY = os.environ['SECRET_KEY']
-    # JWT Secret Key
-    # JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
-
-    # SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    # DATABASE_CONNECT_OPTIONS = {}
-
+        SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+        # DATABASE_CONNECT_OPTIONS = {}
+    except Exception as e:
+        print("PRODUCTION CONFIG ENVIRONMENT VARIABLES HAVE ISSUES =>> "+str(e))
 del os
