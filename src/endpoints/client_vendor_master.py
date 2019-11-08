@@ -14,7 +14,7 @@ client_vendor_master = Blueprint('client_vendor_master', __name__)
 # @jwt_required
 # @has_permission([])
 @exception_wrapper()
-def get_client_vendor_master(id):
+def get_client_vendor_master():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
 
@@ -25,10 +25,15 @@ def get_client_vendor_master(id):
 
     query = CapsGen.query.order_by(desc(CapsGen.created))
     query = query.filter_by(project_id=args['project_id'])
+
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
     capsgen = query.first()
     if not capsgen:
         raise NotFoundError('There is no CapsGen for this project.')
-    rows = SapLfa1.query.filter_by(capsgen_id=capsgen.id).all()
+    rows = SapLfa1.query.filter_by(caps_gen_id=capsgen.id).all()
     response['payload'] = [row.data for row in rows]
 
     return jsonify(response), 200

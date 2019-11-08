@@ -27,7 +27,7 @@ def get_tax_rates():
     capsgen = CapsGen.query.filter_by(project_id=args['project_id']).order_by(desc(CapsGen.id)).first()
     if not capsgen:
         raise InputError("Caps has not been generated, Please generate caps first.")
-    rows = SapT007s.query.filter_by(capsgen_id=capsgen.id).all()
+    rows = SapT007s.query.filter_by(caps_gen_id=capsgen.id).all()
     response['payload'] = [row.data for row in rows]
 
     return jsonify(response), 200
