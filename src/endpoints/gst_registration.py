@@ -1,9 +1,10 @@
 '''
 GST Registration Endpoints
 '''
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from sqlalchemy import func
+from src.errors import *
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
@@ -20,8 +21,15 @@ def get_gst_registration():
 
     # filter get the newset capgs for each project
     # TODO: dedup lib identify potencial similar project add another column duplicate flag (code)
-    capsgens = db.session.query(func.max(CapsGen.id)).group_by(CapsGen.project_id)
-    all_data = GstRegistration.query.filter(CapsGen.id.in_(capsgens)).all()
-    response['payload']  = [row.data for row in all_data]
+    caps_gens = db.session.query(func.max(CapsGen.id)).group_by(CapsGen.project_id)
+
+    query = GstRegistration.query.filter(CapsGen.id.in_(caps_gens))
+
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
+    response['payload']  = [i.serialize for i in query.all()]
 
     return jsonify(response), 200

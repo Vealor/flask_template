@@ -5,6 +5,7 @@ import json
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from src.errors import *
 from src.models import *
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -25,11 +26,11 @@ def get_users(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise ValueError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('username')
     # Set LIMIT
-    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(10000)
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
@@ -60,19 +61,25 @@ def post_user():
     # check if this username exists
     check = User.query.filter_by(username=data['username']).first()
     if check:
-        raise ValueError('Username {} already exists.'.format(data['username']))
+        raise InputError('Username {} already exists.'.format(data['username']))
     # check if this email exists
     check = User.query.filter_by(email=data['email']).first()
     if check:
-        raise ValueError('User email {} already exists.'.format(data['email']))
+        raise InputError('User email {} already exists.'.format(data['email']))
     # check if these initials exist
     check = User.query.filter_by(initials=data['initials']).first()
     if check:
-        raise ValueError('User initials {} already exist.'.format(data['initials']))
+        raise InputError('User initials {} already exist.'.format(data['initials']))
 
     # ENUM check
     if data['role'] not in Roles.__members__:
-        raise ValueError('Specified role does not exists')
+        raise InputError('Specified role does not exists')
+
+    # SYSTEM ADMIN CHECK
+    # TODO: CHECK IF USER IS SUPERUSER (AKA LH GVA)
+    is_sysadmin = False
+    if 'is_system_administrator' in data.keys():
+        is_sysadmin = bool(data['is_system_administrator'])
 
     # INSERT user
     new_user = User(
@@ -82,7 +89,8 @@ def post_user():
         initials = data['initials'].upper(),
         first_name = data['first_name'],
         last_name = data['last_name'],
-        role = data['role']
+        role = data['role'],
+        is_system_administrator = is_sysadmin
     )
     db.session.add(new_user)
     db.session.flush()
@@ -116,20 +124,20 @@ def update_user(id):
     # UPDATE user
     query = User.find_by_id(id)
     if not query:
-        raise ValueError('User ID {} does not exist.'.format(id))
+        raise NotFoundError('User ID {} does not exist.'.format(id))
 
     # check if data already exists
     check = User.query.filter_by(username=data['username']).filter(User.id != id).first()
     if check:
-        raise ValueError('Username {} already exists.'.format(data['username']))
+        raise InputError('Username {} already exists.'.format(data['username']))
     # check if this email exists
     check = User.query.filter_by(email=data['email']).filter(User.id != id).first()
     if check:
-        raise ValueError('User email {} already exists.'.format(data['email']))
+        raise InputError('User email {} already exists.'.format(data['email']))
     # check if these initials exist
     check = User.query.filter_by(initials=data['initials']).filter(User.id != id).first()
     if check:
-        raise ValueError('User initials {} already exist.'.format(data['initials']))
+        raise InputError('User initials {} already exist.'.format(data['initials']))
 
     # update user data
     query.username = data['username']
@@ -138,7 +146,7 @@ def update_user(id):
     query.first_name = data['first_name']
     query.last_name = data['last_name']
     if data['role'] not in Roles.__members__:
-        raise ValueError('Specified role does not exists')
+        raise InputError('Specified role does not exists')
     query.role = data['role']
 
     db.session.commit()
@@ -187,10 +195,15 @@ def update_user_password(id):
     }
     validate_request_data(data, request_types)
 
-    # password strength
+    # password strength checking
     # if len(data['newpassword']) < 8:
     #     raise InputError("Password length must be greater than 8.")
-    # if
+    # if not any(x.isupper() for x in data['newpassword']):
+    #     raise InputError("Password must contain a capital letter.")
+    # if not any(x.lower() for x in data['newpassword']):
+    #     raise InputError("Password must contain a lowercase letter.")
+    # if not any(x.isdigit() for x in data['newpassword']):
+    #     raise InputError("Password must contain a number.")
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
@@ -216,7 +229,7 @@ def delete_user(id):
 
     query = User.query.filter_by(id=id).first()
     if not query:
-        raise ValueError('User ID {} does not exist.'.format(id))
+        raise NotFoundError('User ID {} does not exist.'.format(id))
 
     user = query.serialize
     db.session.delete(query)
