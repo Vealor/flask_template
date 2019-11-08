@@ -96,15 +96,16 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     # Statement for enabling the development environment
     DEBUG = False
+    try:
+        # Use a secure, unique and absolutely secret key for signing the data.
+        CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
+        # Secret key for signing cookies
+        SECRET_KEY = os.environ['SECRET_KEY']
+        # JWT Secret Key
+        JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
-    # Use a secure, unique and absolutely secret key for signing the data.
-    # CSRF_SESSION_KEY = os.environ['CSRF_SESSION_KEY']
-    # Secret key for signing cookies
-    # SECRET_KEY = os.environ['SECRET_KEY']
-    # JWT Secret Key
-    # JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
-
-    # SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    # DATABASE_CONNECT_OPTIONS = {}
-
+        SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+        # DATABASE_CONNECT_OPTIONS = {}
+    except Exception as e:
+        print("PRODUCTION CONFIG ENVIRONMENT VARIABLES HAVE ISSUES =>> "+str(e))
 del os
