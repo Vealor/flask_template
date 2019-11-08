@@ -27,7 +27,7 @@ def get_fx_rates():
     if query['datetime'] < datetime.datetime.now().date():
         params = {'start_date' : str(query['datetime']), 'end_date' : str(datetime.datetime.now().date())}
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD', params=params).json()
-        database_insert = [{'datetime': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['datetime'])]
+        database_insert = [{'date': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['datetime'])]
         db.session.bulk_insert_mappings(FXRates, database_insert)
         db.session.commit()
 
