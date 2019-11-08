@@ -21,17 +21,17 @@ def get_fx_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
-    query = FXRates.query.order_by(desc(FXRates.date)).first().serialize
+    query = FXRates.query.order_by(desc(FXRates.date)).first().get_dates
 
     if query['datetime'] < datetime.datetime.now().date():
-        params = {'start_date' : str(query['date']), 'end_date' : str(datetime.datetime.now().date())}
+        params = {'start_date' : str(query['datetime']), 'end_date' : str(datetime.datetime.now().date())}
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD', params=params).json()
-        database_insert = [{'date': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['date'])]
+        database_insert = [{'datetime': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['datetime'])]
         db.session.bulk_insert_mappings(FXRates, database_insert)
         db.session.commit()
 
     query = FXRates.query
-    query = query.order_by(desc(FXRates.date))
+    query = query.order_by(desc('date'))
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET

@@ -1188,11 +1188,16 @@ class FXRates(db.Model):
     usdtocad = db.Column(db.Float, nullable=False)
 
     @property
+    def get_dates(self):
+        return {
+            'datetime': self.date,
+        }
+
+    @property
     def serialize(self):
         return {
             'id': self.id,
             'date': str(self.date),
-            'datetime': self.date,
             'usdtocad': self.usdtocad
         }
 
