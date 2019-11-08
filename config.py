@@ -63,8 +63,8 @@ class TestingConfig(Config):
     DEBUG = False
 
     POSTGRES = {
-        'user': 'itra',
-        'pw': 'Kpmg1234$',
+        'user': 'lh_admin_tax@itra-uat-sql.postgres.database.azure.com',
+        'pw': 'Kpmg1234@',
         'db': 'itra_db',
         'host': 'itra-uat-sql.postgres.database.azure.com',
         'port': '5432',
