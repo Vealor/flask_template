@@ -27,6 +27,7 @@ class ClientModel(db.Model):
             'client_id': self.client_id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
+            'name': "{}_{}_{}".format(self.client_model_client.name,self.created.strftime("%Y-%m-%d"),self.id),
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')

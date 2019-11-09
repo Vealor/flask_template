@@ -896,6 +896,7 @@ class ClientModel(db.Model):
             'id': self.id,
             'client_id': self.client_id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
+            'name': self.client_model_client.name + "_" + str(self.id) + "_" + self.created.strftime("%Y-%m-%d"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
@@ -955,6 +956,7 @@ class MasterModel(db.Model):
         return {
             'id': self.id,
             'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
+            'name': "Master_Model_" + str(self.id) + "_" + self.created.strftime("%Y-%m-%d"),
             'hyper_p': self.hyper_p,
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
