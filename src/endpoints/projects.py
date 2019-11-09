@@ -262,7 +262,7 @@ def apply_prediction(id):
     # Get the data to predict
     project = Project.find_by_id(id)
     if not project:
-        raise ValueError('Project with ID {} does not exist.'.format(id))
+        raise NotFoundError('Project with ID {} does not exist.'.format(id))
     project_transactions = Transaction.query.filter_by(project_id = id).filter_by(is_approved=False)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
@@ -287,11 +287,9 @@ def apply_prediction(id):
 
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
-    entries = [entry.serialize['data'] for entry in project_transactions]
-    df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
-    print("HERE!")
+    df_predict = transactions_to_dataframe(project_transactions)
     df_predict = preprocessing_predict(df_predict, predictors)
-    print("HERE2!")
+    
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
