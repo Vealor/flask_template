@@ -4,6 +4,7 @@ General Endpoints
 import json
 import random
 from flask import Blueprint, current_app, jsonify, request
+from src.errors import *
 from src.models import *
 from src.wrappers import has_permission, exception_wrapper
 
