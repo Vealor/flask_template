@@ -10,6 +10,7 @@ import zipfile
 import requests
 import itertools
 import collections
+from anytree import Node, RenderTree
 from collections import Counter
 from azure.storage.file import FileService
 from flask import Blueprint, current_app, jsonify, request
@@ -22,7 +23,7 @@ from sqlalchemy.inspection import inspect
 from src.caps_gen.to_aps import *
 from src.caps_gen.to_caps import *
 from src.errors import *
-from src.util import project_path_create, source_data_unzipper, validate_request_data
+from src.util import project_path_create, source_data_unzipper, validate_request_data, map_regex, recursive_find, recursive_insert
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -404,6 +405,7 @@ def view_tables(id, table):
 # @has_permission([])
 @exception_wrapper()
 def data_quality_check(id):
+
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     query = CapsGen.query.filter_by(id=id)
@@ -420,95 +422,184 @@ def data_quality_check(id):
         raise InputError('No header mapped can not run data quality check')
 
     for table_name, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
+
+        # For edge case: check if there is any data in table if not pass the table
+        data_query =  eval('Sap' + str(table_name.lower().capitalize())).query.filter_by(caps_gen_id = id)
+        total_count = data_query.count()
+        if total_count == 0:
+            continue 
+
         # paraparing data for processing
-        # table_name = "sap_" + table
         mapped_columns = [ mapping.cdm_label_script_label  for mapping in group ]
         query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
         unique_keys = [row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
-        datatypes = {row[0]: row[1].name for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()}
+        datatypes = {row[0]: map_regex(row[1].name) for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()}
 
-        # let db does the dirty work
-        if len(unique_keys) > 0:
-            # UNIQUENESS
-            names = '||'.join(['cast(data ->> \''+ column +'\' as text)' for column in unique_keys])
-            # uniqueness score
-            uniquenss_score_query_string = '''
-            select ROUND((count(distinct({column_names}))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
-            '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
-            # uniqueness repetition
-            repetition_query_string = '''
-            select {column_names} as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by {column_names} HAVING count(*) > 1
-            '''.format(column_names = names, caps_gen_id = id)
+        limit = 200000
+        offset = 0
+        rep = []
+        dup_result = 0
+        root = Node('~', count = 0)
+        completeness_score = { column_name : 0 for column_name in mapped_columns}
+        datatypes_score = { column_name : 0 for column_name in mapped_columns}
+            
+        def check_quality(limit, offset):
+            query = [i for i in data_query.order_by('id').limit(limit).offset(offset).all()]
+            dup_result = 0
+            try:
+                for row in query:
+                    # uniqueness 
+                    cancated_value = ''.join([row.data[unique_key] for unique_key in unique_keys])
+                    if cancated_value:
+                        found = recursive_find(root, cancated_value) 
+                        if found:
+                            dup_result += 1
+                            if cancated_value not in rep:
+                                rep.append(cancated_value)
+                        recursive_insert(root, cancated_value) 
+                    
+                     # completeness
+                    for key, value in row.data.items():
+                        if value and key in mapped_columns:
+                            completeness_score[key] += 1
+                            if re.match(datatypes[key][0], value):
+                                datatypes_score[key] += 1
 
-            u = db.session.execute(uniquenss_score_query_string).first()
-            r = db.session.execute(repetition_query_string)
-            overall_uniqueness_score += float(u[0])
-        else:
-            r = []
+            except Exception as e:
+                print("Exception {}".format(e))
+            return [len(query), dup_result]
 
-        # COMPLETENESS & DATATYPE for each column
-        completeness_result = []
-        datatype_result = []
-        table_completeness_score = 0
-        table_datatype_score = 0
-        for column_name, datatype in datatypes.items():
-            regex = ''
-            if datatype == 'dt_varchar':
-                regex = '.*'
-            elif datatype == 'dt_float':
-                regex = '^(?:\-)?\d*\.{1}\d+$'
-            elif datatype == 'dt_int':
-                regex = '^(?:\-)?\d+$'
-            elif datatype == 'dt_date':
-                regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
-            else:
-                raise Exception('No regex implmented for the given data type: {dt}', datatype)
+        qlen = 1
+        while qlen > 0:
+            result = check_quality(limit, offset)
+            qlen = result[0]
+            dup_result += result[1]
+            offset += limit
 
-            datatype_quety_string = '''
-            select round(count_check::decimal / count_total::decimal , 2) from (
-            SELECT (select count(*) from sap_{table_name} where caps_gen_id = {caps_gen_id}) count_total, count(*) as count_check FROM sap_{table_name} WHERE caps_gen_id = {caps_gen_id} and data ->> '{column_name}' ~ '{regex}' ) as L
-            '''.format(table_name = table_name, column_name = column_name, caps_gen_id = id, regex = regex)
-
-            d = db.session.execute(datatype_quety_string).first()
-            datatype_result.append({
-                                'column_name': column_name,
-                                'score': float(d[0])
-                                })
-
-            completeness_score_query_string = '''
-            select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id};
-            '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
-
-            c = db.session.execute(completeness_score_query_string).first()
-            completeness_result.append({
-                            'column_name': column_name,
-                            'score': float(c[0])
-                            })
-
-
-            table_completeness_score += float(c[0])
-            table_datatype_score += float(d[0])
-
-        overall_completeness_score += table_completeness_score / len(datatypes)
-        overall_datatype_score += table_datatype_score / len(datatypes)
+        temp_overall_completeness_score = 0
+        temp_overall_datatype_score = 0
+        # compute completeness_score
+        completeness = []
+        for key, value in completeness_score.items():
+            score = value / total_count * 100 
+            completeness.append({"column_name": key, "score": score })
+            temp_overall_completeness_score += score
+        overall_completeness_score += temp_overall_completeness_score / len(completeness)
+        
+        datatype = []
+        for key, value in datatypes_score.items():
+            score = value / total_count * 100 
+            datatype.append({"column_name": key, "score": value / total_count * 100 })
+            temp_overall_datatype_score += score
+        overall_datatype_score += temp_overall_datatype_score / len(datatype)
+        
+        uniqueness = (1 - dup_result / total_count) * 100
+        overall_uniqueness_score += uniqueness
 
         final_result['scores_per_table'][table_name] = {
-                                                    'completeness': completeness_result,
-                                                    'uniqueness': {
-                                                        'score': float(u[0]),
-                                                        'key_names': unique_keys,
-                                                        'repetitions':[rep[0] for rep in r]
-                                                        },
-                                                    'datatype': datatype_result
-                                                    }
-
+                                            'completeness': completeness,
+                                            'uniqueness': {
+                                                'score': uniqueness, 
+                                                'key_names': unique_keys,
+                                                'repetitions': rep
+                                                },
+                                            'datatype': datatype
+                                            }
     final_result['overalls'] = {
                         'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
                         'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
                         'datatype': overall_datatype_score / len(final_result['scores_per_table'])
                         }
 
-    print(final_result)
+    #     # let db does the dirty work
+    #     if len(unique_keys) > 0:
+    #         # UNIQUENESS
+    #         print('qqqqq')
+    #         print(table_name)
+    #         names = '||'.join(['cast(data ->> \''+ column +'\' as text)' for column in unique_keys])
+    #         # uniqueness score
+    #         uniquenss_score_query_string = '''
+    #         select ROUND((count(distinct({column_names}))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
+    #         '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
+    #         u = db.session.execute(uniquenss_score_query_string).first()
+           
+    #         if float(u[0]) < 1:
+    #             # uniqueness repetition
+    #             repetition_query_string = '''
+    #             select {column_names} as duplicate_results from sap_bseg where caps_gen_id = {caps_gen_id} group by {column_names} HAVING count(*) > 1
+    #             '''.format(column_names = names, caps_gen_id = id)
+    #             r = db.session.execute(repetition_query_string)
+    #         r = []
+    #         overall_uniqueness_score += float(u[0])
+    #     else:
+    #         print('bbbbbb')
+    #         r = []
+    #         u = []
+
+    #     # COMPLETENESS & DATATYPE for each column
+    #     completeness_result = []
+    #     datatype_result = []
+    #     table_completeness_score = 0
+    #     table_datatype_score = 0
+    #     for column_name, datatype in datatypes.items():
+    #         regex = ''
+    #         if datatype == 'dt_varchar':
+    #             regex = '.*'
+    #         elif datatype == 'dt_float':
+    #             regex = '^(?:\-)?\d*\.{1}\d+$'
+    #         elif datatype == 'dt_int':
+    #             regex = '^(?:\-)?\d+$'
+    #         elif datatype == 'dt_date':
+    #             regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
+    #         else:
+    #             raise Exception('No regex implmented for the given data type: {}'.format(datatype))
+            
+    #         print('datatype q')
+    #         datatype_quety_string = '''
+    #         select round(count_check::decimal / count_total::decimal , 2) from (
+    #         SELECT (select count(*) from sap_{table_name} where caps_gen_id = {caps_gen_id}) count_total, count(*) as count_check FROM sap_{table_name} WHERE caps_gen_id = {caps_gen_id} and data ->> '{column_name}' ~ '{regex}' ) as L
+    #         '''.format(table_name = table_name, column_name = column_name, caps_gen_id = id, regex = regex)
+
+    #         d = db.session.execute(datatype_quety_string).first()
+    #         datatype_result.append({
+    #                             'column_name': column_name,
+    #                             'score': float(d[0])
+    #                             })
+    #         print('cp q')
+    #         completeness_score_query_string = '''
+    #         select ROUND(((count(*) - sum(case when cast(data ->> '{column_name}' as text) = '' then 1 else 0 end)))::decimal / count(*)::decimal, 2) count_nulls from sap_{table_name} where caps_gen_id = {caps_gen_id};
+    #         '''.format(column_name = column_name, table_name = table_name, caps_gen_id = id)
+
+    #         c = db.session.execute(completeness_score_query_string).first()
+    #         completeness_result.append({
+    #                         'column_name': column_name,
+    #                         'score': float(c[0])
+    #                         })
+
+
+    #         table_completeness_score += float(c[0])
+    #         table_datatype_score += float(d[0])
+
+    #     overall_completeness_score += table_completeness_score / len(datatypes)
+    #     overall_datatype_score += table_datatype_score / len(datatypes)
+
+    #     final_result['scores_per_table'][table_name] = {
+    #                                                 'completeness': completeness_result,
+    #                                                 'uniqueness': {
+    #                                                     'score': float(u[0]) if u else 1, 
+    #                                                     'key_names': unique_keys,
+    #                                                     'repetitions':[rep[0] for rep in r if r]
+    #                                                     },
+    #                                                 'datatype': datatype_result
+    #                                                 }
+
+    # final_result['overalls'] = {
+    #                     'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
+    #                     'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
+    #                     'datatype': overall_datatype_score / len(final_result['scores_per_table'])
+    #                     }
+
+    # print(final_result)
 
     # table_names = [ 'sap_'+mapping.table_name.lower() for mapping in mappings]
     # for table_name in table_names:
@@ -594,7 +685,7 @@ def data_quality_check(id):
 
 
     # for table in list_tablenames:
-    #     data_dictionary_results[table] = {}
+    #     data_dictionary_results[table] = {}eval
     #     tableclass = eval('Sap' + str(table.lower().capitalize()))
     #     compiled_data_dictionary = data_dictionary(CDM_query, table)
     #     data = tableclass.query.with_entities(getattr(tableclass, 'id'), getattr(tableclass, 'data')).filter(
