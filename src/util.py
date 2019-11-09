@@ -153,7 +153,7 @@ def project_path_create(data, response):
         else:
             response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
             return response
-    elif os.environ['FLASK_ENV'] == 'production':
+    elif os.environ['FLASK_ENV'] == 'testing':
         project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
         project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
 
@@ -170,5 +170,5 @@ def project_path_create(data, response):
             response['message'] = 'Path {} has been created for this project'.format(str(data['project_id']))
             return response
     else:
-        raise ValueError('Environ not present. Choose development or production')
+        raise ValueError('Environ not present. Choose development or testing')
     return response
