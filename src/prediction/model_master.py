@@ -2,6 +2,7 @@ import pandas as pd
 import pickle
 from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
 
@@ -13,11 +14,14 @@ class MasterPredictionModel(BasePredictionModel):
         else:
             # Define the master model here.
             model_params = {
-                'n_estimators': 100,
-                'max_depth': 5,
-                'class_weight': {1:1.1, 0:1}
+                'class_weight': {1:1.8, 0:1}
                 }
-            self.model = RandomForestClassifier(**model_params)
+            self.model = GridSearchCV(
+                estimator=ExtraTreesClassifier(**model_params),
+                param_grid={'max_depth':[3,5], 'n_estimators':[50,100]},
+                cv=5,
+                scoring='f1'
+                )
             self.is_trained = False
 
 
@@ -61,6 +65,7 @@ class MasterPredictionModel(BasePredictionModel):
 
         xv,yv = validation_data[predictors], validation_data[target]
         yp = self.predict(xv,predictors)
+        test_set_size = len(yp)
 
         true_negatives, false_positives, false_negatives, true_positives = confusion_matrix(yv,yp).ravel()
         accuracy, recall, precision = 0, 0, 0
@@ -71,4 +76,4 @@ class MasterPredictionModel(BasePredictionModel):
         if (true_positives + false_negatives) != 0:
             precision = true_positives / (true_positives + false_positives)
         yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
-        return {"recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
+        return {"test_set_size": test_set_size, "recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
