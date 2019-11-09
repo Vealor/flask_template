@@ -91,7 +91,7 @@ def do_train():
         raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
+    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
@@ -105,10 +105,10 @@ def do_train():
     transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
     # Train the instantiated model and edit the db entry
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
+    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id == None)
     data_train = transactions_to_dataframe(train_transactions)
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     data_valid = transactions_to_dataframe(test_transactions)
 
     # Training =================================
@@ -190,7 +190,7 @@ def do_predict():
     project = Project.find_by_id(data['project_id'])
     if not project:
         raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
-    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -256,7 +256,7 @@ def do_validate():
         predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
         # Pull the transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         data_valid = transactions_to_dataframe(test_transactions)
@@ -323,7 +323,7 @@ def compare_active_and_pending():
             raise ValueError('Cannot validate pending model on data it was trained on.')
 
         # Pull the validation transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id == None)
         if test_transactions.count() == 0:
             raise ValueError('No transactions to validate in given date range.')
         test_entries = transactions_to_dataframe(test_transactions)
