@@ -155,21 +155,31 @@ def project_path_create(data, response):
             response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
             return response
     elif os.environ['FLASK_ENV'] == 'testing':
-        project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
-        project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
-
-        if data['project_id'] not in project_dirs:
-            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                                directory_name='{project_id}'.format(project_id = data['project_id']))
-            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                                directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
-            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                                directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
-            current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-                                                                directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
+        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
+            print('path does not exist, creating project')
+            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
+            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
+            for folder in folders:
+                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
         else:
-            response['message'] = 'Path {} has been created for this project'.format(str(data['project_id']))
+            response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
             return response
+
+        # project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
+        # project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
+        #
+        # if data['project_id'] not in project_dirs:
+        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+        #                                                         directory_name='{project_id}'.format(project_id = data['project_id']))
+        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+        #                                                         directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
+        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+        #                                                         directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
+        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
+        #                                                         directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
+        # else:
+        #     response['message'] = 'Path {} has been created for this project'.format(str(data['project_id']))
+        #     return response
     else:
         raise ValueError('Environ not present. Choose development or testing')
     return response
@@ -199,20 +209,20 @@ def recursive_insert(root : Node, sub_str):
         if len(sub_str) > 1:
             recursive_insert(new_node, sub_str[1:])
         else:
-            new_node.count += 1 
+            new_node.count += 1
     else:
         flag = False
         for child in root.children:
             if char == child.name:
                 if len(sub_str) > 1:
-                    recursive_insert(child, sub_str[1:]) 
+                    recursive_insert(child, sub_str[1:])
                 else:
                     child.count += 1
                 flag = True
         if not flag:
             new_node = Node(char, parent=root, count = 0)
             if len(sub_str) > 1:
-                recursive_insert(new_node, sub_str[1:]) 
+                recursive_insert(new_node, sub_str[1:])
             else:
                 new_node.count += 1
 
