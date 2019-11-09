@@ -427,7 +427,7 @@ def data_quality_check(id):
         data_query =  eval('Sap' + str(table_name.lower().capitalize())).query.filter_by(caps_gen_id = id)
         total_count = data_query.count()
         if total_count == 0:
-            continue 
+            continue
 
         # paraparing data for processing
         mapped_columns = [ mapping.cdm_label_script_label  for mapping in group ]
@@ -442,22 +442,22 @@ def data_quality_check(id):
         root = Node('~', count = 0)
         completeness_score = { column_name : 0 for column_name in mapped_columns}
         datatypes_score = { column_name : 0 for column_name in mapped_columns}
-            
+
         def check_quality(limit, offset):
             query = [i for i in data_query.order_by('id').limit(limit).offset(offset).all()]
             dup_result = 0
             try:
                 for row in query:
-                    # uniqueness 
+                    # uniqueness
                     cancated_value = ''.join([row.data[unique_key] for unique_key in unique_keys])
                     if cancated_value:
-                        found = recursive_find(root, cancated_value) 
+                        found = recursive_find(root, cancated_value)
                         if found:
                             dup_result += 1
                             if cancated_value not in rep:
                                 rep.append(cancated_value)
-                        recursive_insert(root, cancated_value) 
-                    
+                        recursive_insert(root, cancated_value)
+
                      # completeness
                     for key, value in row.data.items():
                         if value and key in mapped_columns:
@@ -467,6 +467,7 @@ def data_quality_check(id):
 
             except Exception as e:
                 print("Exception {}".format(e))
+                raise Exception(e)
             return [len(query), dup_result]
 
         qlen = 1
@@ -481,25 +482,25 @@ def data_quality_check(id):
         # compute completeness_score
         completeness = []
         for key, value in completeness_score.items():
-            score = value / total_count * 100 
+            score = value / total_count * 100
             completeness.append({"column_name": key, "score": score })
             temp_overall_completeness_score += score
         overall_completeness_score += temp_overall_completeness_score / len(completeness)
-        
+
         datatype = []
         for key, value in datatypes_score.items():
-            score = value / total_count * 100 
+            score = value / total_count * 100
             datatype.append({"column_name": key, "score": value / total_count * 100 })
             temp_overall_datatype_score += score
         overall_datatype_score += temp_overall_datatype_score / len(datatype)
-        
+
         uniqueness = (1 - dup_result / total_count) * 100
         overall_uniqueness_score += uniqueness
 
         final_result['scores_per_table'][table_name] = {
                                             'completeness': completeness,
                                             'uniqueness': {
-                                                'score': uniqueness, 
+                                                'score': uniqueness,
                                                 'key_names': unique_keys,
                                                 'repetitions': rep
                                                 },
@@ -522,7 +523,7 @@ def data_quality_check(id):
     #         select ROUND((count(distinct({column_names}))::decimal / count(*)::decimal), 2) as uniqueness_score from sap_{table_name} where caps_gen_id = {caps_gen_id};
     #         '''.format(column_names = names , table_name = table_name, caps_gen_id = id)
     #         u = db.session.execute(uniquenss_score_query_string).first()
-           
+
     #         if float(u[0]) < 1:
     #             # uniqueness repetition
     #             repetition_query_string = '''
@@ -553,7 +554,7 @@ def data_quality_check(id):
     #             regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
     #         else:
     #             raise Exception('No regex implmented for the given data type: {}'.format(datatype))
-            
+
     #         print('datatype q')
     #         datatype_quety_string = '''
     #         select round(count_check::decimal / count_total::decimal , 2) from (
@@ -586,7 +587,7 @@ def data_quality_check(id):
     #     final_result['scores_per_table'][table_name] = {
     #                                                 'completeness': completeness_result,
     #                                                 'uniqueness': {
-    #                                                     'score': float(u[0]) if u else 1, 
+    #                                                     'score': float(u[0]) if u else 1,
     #                                                     'key_names': unique_keys,
     #                                                     'repetitions':[rep[0] for rep in r if r]
     #                                                     },

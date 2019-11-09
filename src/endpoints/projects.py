@@ -253,7 +253,6 @@ def apply_prediction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
-    # input validation
     request_types = {
         'use_client_model': ['bool'],
     }
@@ -289,9 +288,8 @@ def apply_prediction(id):
     # Can't assume that final zip lines up arrays properly
     entries = [entry.serialize['data'] for entry in project_transactions]
     df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
-    print("HERE!")
     df_predict = preprocessing_predict(df_predict, predictors)
-    print("HERE2!")
+
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
