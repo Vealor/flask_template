@@ -439,7 +439,7 @@ def data_quality_check(id):
         offset = 0
         rep = []
         dup_result = 0
-        root = Node('~', count = 0)
+        root = Node('~', count=0)
         completeness_score = { column_name : 0 for column_name in mapped_columns}
         datatypes_score = { column_name : 0 for column_name in mapped_columns}
 
@@ -462,12 +462,12 @@ def data_quality_check(id):
                     for key, value in row.data.items():
                         if value and key in mapped_columns:
                             completeness_score[key] += 1
-                            if re.match(datatypes[key][0], value):
+                            if re.match(datatypes[key], value):
                                 datatypes_score[key] += 1
 
             except Exception as e:
                 print("Exception {}".format(e))
-                raise Exception(e)
+                # raise Exception(e)
             return [len(query), dup_result]
 
         qlen = 1
@@ -489,12 +489,13 @@ def data_quality_check(id):
 
         datatype = []
         for key, value in datatypes_score.items():
-            score = value / total_count * 100
-            datatype.append({"column_name": key, "score": value / total_count * 100 })
+            # score = value / completeness_score[key] * 100 if completeness_score[key] else 0
+            score = value / total_count * 100 
+            datatype.append({"column_name": key, "score": score })
             temp_overall_datatype_score += score
         overall_datatype_score += temp_overall_datatype_score / len(datatype)
 
-        uniqueness = (1 - dup_result / total_count) * 100
+        uniqueness = (1 - dup_result / total_count) * 100 
         overall_uniqueness_score += uniqueness
 
         final_result['scores_per_table'][table_name] = {
