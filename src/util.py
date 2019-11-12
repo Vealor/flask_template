@@ -204,14 +204,8 @@ def map_regex(dt_type):
 # Recursion helper for data quality check
 def recursive_insert(root : Node, sub_str):
     char = sub_str[0]
-    if not root.children :
-        new_node = Node(char, parent=root, count=0)
-        if len(sub_str) > 1:
-            recursive_insert(new_node, sub_str[1:])
-        else:
-            new_node.count += 1
-    else:
-        flag = False
+    flag = False
+    if root.children:
         for child in root.children:
             if char == child.name:
                 if len(sub_str) > 1:
@@ -219,18 +213,16 @@ def recursive_insert(root : Node, sub_str):
                 else:
                     child.count += 1
                 flag = True
-        if not flag:
-            new_node = Node(char, parent=root, count = 0)
-            if len(sub_str) > 1:
-                recursive_insert(new_node, sub_str[1:])
-            else:
-                new_node.count += 1
+    elif not flag:
+        new_node = Node(char, parent=root, count=0)
+        if len(sub_str) > 1:
+            recursive_insert(new_node, sub_str[1:])
+        else:
+            new_node.count += 1
 
 def recursive_find(root : Node, sub_str):
     char = sub_str[0]
-    if not root.children:
-        return False
-    else:
+    if root.children:
         for child in root.children:
             if char == child.name:
                 if len(sub_str) > 1:
@@ -238,4 +230,4 @@ def recursive_find(root : Node, sub_str):
                 else:
                     if child.count > 0:
                         return True
-        return False
+    return False
