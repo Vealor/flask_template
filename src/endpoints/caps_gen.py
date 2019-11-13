@@ -152,6 +152,7 @@ def init_caps_gen():
         engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         #todo: add table to payload so cio can know which tables to view
         for table in list_tablenames:
+            print(table)
             table_files = []
             #Search for all files that match table
             for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):

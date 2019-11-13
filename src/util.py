@@ -92,18 +92,41 @@ def send_mail(user_email, subject, content):
 # Unzips all SAP source data text files from a nested zip file.
 def source_data_unzipper(data, response):
 
-    def extract_nested_zip(zippedFile, toFolder, outputPath):
+    # def extract_nested_zip(zippedFile, toFolder, outputPath):
+    #     try:
+    #         with zipfile.ZipFile(zippedFile, 'r') as zfile:
+    #             zfile.extractall(path=outputPath)
+    #             print('Extracted file to' + str(outputPath))
+    #         print('Removing file' + str(zippedFile))
+    #         os.remove(zippedFile)
+    #         print('walking to' + toFolder)
+    #         for root, dirs, files in os.walk(toFolder):
+    #             print(root, dirs, files)
+    #             for filename in files:
+    #                 print(filename)
+    #                 if re.search(r'\.(?i)ZIP$', filename):
+    #                     fileSpec = os.path.join(root, filename)
+    #                     print('Accessing ' + str(fileSpec))
+    #                     extract_nested_zip(fileSpec, root, outputPath)
+    #     except NotImplementedError:
+    #         raise Exception(str(zippedFile) + ' has compression errors. Please fix')
+
+    def extract_nested_zip(currentfolder, outputfolder):
         try:
-            with zipfile.ZipFile(zippedFile, 'r') as zfile:
-                zfile.extractall(path=outputPath)
-            os.remove(zippedFile)
-            for root, dirs, files in os.walk(toFolder):
+            for root, dirs, files in os.walk(currentfolder):
                 for filename in files:
                     if re.search(r'\.(?i)ZIP$', filename):
-                        fileSpec = os.path.join(root, filename)
-                        extract_nested_zip(fileSpec, root, outputPath)
-        except NotImplementedError:
-            raise Exception(str(zippedFile) + ' has compression errors. Please fix')
+                        with zipfile.ZipFile(os.path.join(root, filename), 'r') as zfile:
+                            zfile.extractall(path=outputfolder)
+                        os.remove(os.path.join(root, filename))
+                        #extract_nested_zip(root, output_folder)
+                        # os.rename(os.path.join(root, filename), os.path.join(outputPath, filename))
+                if dirs:
+                    for dir in dirs:
+                        extract_nested_zip(dir, outputfolder)
+
+        except OSError as e:
+            raise Exception(str(e))
 
     def move_nested_folder(currentfolder, outputPath):
         try:
@@ -128,8 +151,12 @@ def source_data_unzipper(data, response):
         current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         if data['file_name'].lower().endswith('.zip'):
-            extract_nested_zip(os.path.join( current_input_path, data['file_name']), current_output_path, current_output_path)
+            extract_nested_zip(current_input_path, current_output_path)
+            while (True in [file.lower().endswith('.zip') for file in os.listdir(current_output_path)]):
+                extract_nested_zip(current_output_path, current_output_path)
+            print('out of while loop')
             move_nested_folder(current_output_path, current_output_path)
+            #remove_empty_folders(current_output_path)
         else:
             raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
