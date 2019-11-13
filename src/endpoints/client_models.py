@@ -35,6 +35,19 @@ def get_client_models(id):
     response['payload'] = [i.serialize for i in query.all()]
     return jsonify(response), 200
 
+#===============================================================================
+# Check if a pending model exists
+@client_models.route('/<int:client_id>/has_pending/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def has_pending(client_id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    # validate client existence
+    if not Client.find_by_id(client_id):
+        raise InputError('Client ID {} does not exist.'.format(client_id))
+    response['payload'] = (ClientModel.find_pending_for_client(client_id) != None)
+    return jsonify(response), 200
+
 
 #===============================================================================
 # Train a new client model.

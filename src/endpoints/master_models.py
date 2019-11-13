@@ -43,6 +43,15 @@ def get_master_models(id):
 
     return jsonify(response), 200
 
+#===============================================================================
+# Get all master models
+@master_models.route('/has_pending/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def has_pending():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = (MasterModel.find_pending() != None)
+    return jsonify(response), 200
 
 #===============================================================================
 # Train a new master model.
