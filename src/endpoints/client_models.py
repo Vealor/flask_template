@@ -103,7 +103,7 @@ def do_train():
         raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
+    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
@@ -117,13 +117,13 @@ def do_train():
     transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
     # Train the instantiated model and edit the db entry
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
+    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
     train_entries = [tr.serialize['data'] for tr in train_transactions]
     data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
     data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
     print("TRAIN DATA LEN: {}".format(len(data_train)))
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     test_entries = [tr.serialize['data'] for tr in test_transactions]
     data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
     data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
@@ -209,7 +209,7 @@ def do_predict():
     project = Project.find_by_id(data['project_id'])
     if not project:
         raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
-    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
