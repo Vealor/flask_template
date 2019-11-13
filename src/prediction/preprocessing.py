@@ -1,4 +1,51 @@
 import pandas as pd
+from src.models import Transaction, Code
+import os
+
+# ============================================================================ #
+# Take note of the data types and mapping of variables (THIS IS LIKELY TO BE TEMPORARY)
+def get_data_types():
+
+    data_types = pd.read_csv('../src/prediction/data_types.csv', sep=',')
+    data_types[['table_name','column_name']] = data_types["Data Field"].str.split(".", expand = True)
+    data_types = data_types.drop('Data Field',axis=1)
+
+    data_mapping = pd.read_csv('../src/prediction/data_mappings.csv', sep=',')
+
+    data_types = pd.merge(data_mapping,data_types,on=['table_name','column_name'],how='left')
+    data_types.rename(columns={"Data Type":"data_type"},inplace = True)
+
+    # MAP the SAP data types to Python types
+    data_types['data_type'].replace("CHAR","str",inplace = True)
+    data_types['data_type'].replace("DEC","float",inplace = True)
+    data_types['data_type'].replace("CURR","float",inplace = True)
+    data_types['data_type'].replace("DATS",'datetime',inplace = True)
+    data_types['data_type'].replace("NUMC",'Int64',inplace = True)
+    data_types['data_type'].replace("LANG",'str',inplace = True)
+    data_types['data_type'].replace("CUKY",'str',inplace = True)
+    data_types['data_type'].replace("UNIT",'str',inplace = True)
+
+    # Special cases
+    data_types.loc[data_types['cdm_label_script_label'] == 'wbs_gl','data_type'] = 'str'                #(This has non-numerical characters)
+    data_types.loc[data_types['cdm_label_script_label'] == 'prps_psphi_key','data_type'] = 'str'        #(This has non-numerical characters)
+    data_types.loc[data_types['cdm_label_script_label'] == 'prps_pspnr_key','data_type'] = 'str'        #(This has non-numerical characters)
+    data_types.loc[data_types['cdm_label_script_label'] == 'proj_internal_proj','data_type'] = 'str'    #(This has non-numerical characters)
+
+    return data_types
+
+# ============================================================================ #
+# Take a sqlalchemy query to the transaction table and return the transactions in a dataframe
+def transactions_to_dataframe(query,**kwargs):
+
+    # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
+    entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
+    entries = pd.read_json('[' + ','.join(entries) + ']',orient='records')
+    entries['Code'] = codes
+
+    return entries
+
+# Using the
+
 
 # Define the preprocessing routine here
 def preprocessing_train(df,**kwargs):
