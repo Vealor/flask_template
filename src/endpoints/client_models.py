@@ -10,7 +10,6 @@ from flask import Blueprint, current_app, jsonify, request
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
-from src.prediction.database import *
 from src.util import get_date_obj_from_str, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 

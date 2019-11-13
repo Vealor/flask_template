@@ -44,32 +44,58 @@ def transactions_to_dataframe(query,**kwargs):
 
     return entries
 
-# Using the
-
-
 # Define the preprocessing routine here
 def preprocessing_train(df,**kwargs):
+
+    # Only look at columns that are in teh data dictionary
+    data_types = get_data_types()
+    cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
+    df = df[cols]
+
+    # Only consider columns that have informative content
+    informative_columns = [col for col in df.columns if df[col].nunique() > 1]
+    df = df[informative_columns]
+
+    # Enforce the data types here.
+    for col in df.columns:
+        imposed_type = data_types.loc[data_types['cdm_label_script_label'] == col].iloc[0]['data_type']
+        if imposed_type == 'datetime':
+            df[col] = pd.to_datetime(df[col],format='%Y%m%d', errors='coerce')
+        else:
+            df[col] = df[col].astype(imposed_type)
+            if imposed_type == 'str':
+                df[col] = df[col].astype(imposed_type).replace('nan','')
+
+    int_columns = [col for col in informative_columns if (df[col].dtype == 'Int64' and df[col].nunique() < 8)]
+    str_columns = [col for col in informative_columns if (df[col].dtype == 'object' and df[col].nunique() < 8)]
+    float_columns = [col for col in informative_columns if df[col].dtype == 'float64']
+    datetime_columns = [col for col in informative_columns if df[col].dtype == 'datetime64[ns]']
+
+    return df[int_columns + str_columns + float_columns + datetime_columns]
+
+
+
     # Drop the pare down data and code columns, do one-hot encoding, remove duplicate columns.
-    THRESHOLD_DROP_ROWS = 2
-    df = df.dropna(thresh=THRESHOLD_DROP_ROWS)
-    if 'Schedule' in df.columns:
-        df = df[df['Schedule'] != 'pare down']
-        df = df.drop(['Schedule'], 1)
-    df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
-    df = df.drop(['Code'], 1)
-    low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
-    try:
-        for column in low_cardinality_columns:
-            temp_df = pd.get_dummies(df[column], prefix=column,prefix_sep=":")
-            df = pd.concat([df, temp_df], axis=1)
-
-        df = df.drop(low_cardinality_columns, 1)
-    except Exception as e:
-        response['status'] = 'error'
-        response['message'] = "Exception in one-hot encoding: {}.".format(str(e))
-        return jsonify(response, 500)
-
-    df = df.loc[:, ~df.columns.duplicated()]
+    # THRESHOLD_DROP_ROWS = 2
+    # df = df.dropna(thresh=THRESHOLD_DROP_ROWS)
+    # if 'Schedule' in df.columns:
+    #     df = df[df['Schedule'] != 'pare down']
+    #     df = df.drop(['Schedule'], 1)
+    # df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
+    # df = df.drop(['Code'], 1)
+    # low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
+    # try:
+    #     for column in low_cardinality_columns:
+    #         temp_df = pd.get_dummies(df[column], prefix=column,prefix_sep=":")
+    #         df = pd.concat([df, temp_df], axis=1)
+    #
+    #     df = df.drop(low_cardinality_columns, 1)
+    # except Exception as e:
+    #     response['status'] = 'error'
+    #     response['message'] = "Exception in one-hot encoding: {}.".format(str(e))
+    #     return jsonify(response, 500)
+    #
+    # df = df.loc[:, ~df.columns.duplicated()]
     return df
 
 # Define the preprocessing routine here
