@@ -1,4 +1,5 @@
 from .__model_imports import *
+from sqlalchemy import desc
 ################################################################################
 class ClientModel(db.Model):
     __tablename__ = 'client_models'
@@ -71,3 +72,20 @@ class ClientModelPerformance(db.Model):
 
     client_model_id = db.Column(db.Integer, nullable=False) # FK
     performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'client_model_id': self.client_model_id,
+            'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
+            'accuracy': self.accuracy,
+            'precision': self.precision,
+            'recall': self.recall,
+            'test_data_start': self.test_data_start.strftime('%Y/%m/%d'),
+            'test_data_end': self.test_data_end.strftime('%Y/%m/%d')
+        }
+
+    @classmethod
+    def get_most_recent_for_model(cls, model_id):
+        return cls.query.filter_by(client_model_id=model_id).order_by(desc('created')).first()

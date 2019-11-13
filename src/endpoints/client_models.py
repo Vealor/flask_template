@@ -365,59 +365,30 @@ def do_validate():
 # Compare active and pending models
 @client_models.route('/compare/', methods=['GET'])
 # @jwt_required
+@exception_wrapper()
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
-    try:
-        # validate input
-        request_types = {
-            'test_data_start_date': ['str'],
-            'test_data_end_date': ['str'],
-            'client_id': ['int']
-        }
-        validate_request_data(data, request_types)
-        active_model = ClientModel.find_active_for_client(data['client_id'])
-        if not active_model:
-            raise ValueError('No master model has been trained or is active.')
-        pending_model = ClientModel.find_pending_for_client(data['client_id'])
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
 
-        test_start = get_date_obj_from_str(data['test_data_start_date'])
-        test_end = get_date_obj_from_str(data['test_data_end_date'])
+    # validate input
+    request_types = {
+        'client_id': ['int']
+    }
+    validate_request_data(data, request_types)
+    active_model = ClientModel.find_active_for_client(data['client_id'])
+    if not active_model:
+        raise ValueError('No client model has been trained or is active for client ID {}.'.format(data['client_id']))
+    pending_model = ClientModel.find_pending_for_client(data['client_id'])
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
 
-        # Check if date range is acceptable for comparing the two models
-        if test_start >= test_end:
-            raise ValueError('Invalid Test Data date range.')
-        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
-            raise ValueError('Cannot validate active model on data it was trained on.')
-        if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
-            raise ValueError('Cannot validate pending model on data it was trained on.')
+    # Get the performance metrics for the pending and active models
+    active_metrics = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
+    pending_metrics = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
-        # Pull the validation transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-        if test_transactions.count() == 0:
-            raise ValueError('No transactions to validate in given date range.')
-        test_entries = [tr.serialize['data'] for tr in test_transactions]
-        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
+    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
+    response['message'] = 'Client model comparison complete'
 
-        performance_metrics = {}
-        for model in [active_model, pending_model]:
-            lh_model = cm.ClientPredictionModel(model.pickle)
-            predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
-
-        response['message'] = 'Client model comparison complete'
-        response['payload'] = performance_metrics
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
     return jsonify(response), 200
 
 
