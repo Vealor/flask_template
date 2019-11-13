@@ -35,6 +35,32 @@ def get_client_models(id):
     response['payload'] = [i.serialize for i in query.all()]
     return jsonify(response), 200
 
+#===============================================================================
+# Check if a pending model exists
+@client_models.route('/<int:client_id>/has_pending/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def has_pending(client_id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    # validate client existence
+    if not Client.find_by_id(client_id):
+        raise InputError('Client ID {} does not exist.'.format(client_id))
+    response['payload'] = (ClientModel.find_pending_for_client(client_id) != None)
+    return jsonify(response), 200
+
+#===============================================================================
+# Check if a model is being trained for the client
+@client_models.route('/<int:client_id>/is_training/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def is_training(client_id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    # validate client existence
+    if not Client.find_by_id(client_id):
+        raise InputError('Client ID {} does not exist.'.format(client_id))
+    response['payload'] = (ClientModel.find_training_for_client(client_id) != None)
+    return jsonify(response), 200
+
 
 #===============================================================================
 # Train a new client model.
@@ -79,90 +105,102 @@ def do_train():
     # validate client existence
     if not Client.find_by_id(data['client_id']):
         raise InputError('Client ID {} does not exist.'.format(data['client_id']))
+    model_data_dict['client_id'] = data['client_id']
 
     # validate existing client projects
     client_projects = [p.id for p in Project.query.filter_by(client_id = data['client_id']).distinct()]
     if not client_projects:
         raise InputError('Client ID {} has no associated projects.'.format(data['client_id']))
 
+    # validate if training mode, stop on exist
+    if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.training.value).all():
+        raise InputError('There is currently a model in training for client ID {}.'.format(data['client_id']))
+
     # validate if pending mode, stop on exist
     if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.pending.value).all():
         raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter_by(is_approved=True).count()
+    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
-    # create placeholder model
-    model_data_dict['client_id'] = data['client_id']
-    entry = ClientModel(**model_data_dict)
-    db.session.add(entry)
-    db.session.flush()
-    model_id = entry.id
-    lh_model = cm.ClientPredictionModel()
-    transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
+    # Try to train a model.
+    try:
+        # First, create and push placeholder model
+        entry = ClientModel(**model_data_dict)
+        db.session.add(entry)
+        db.session.commit()
+        model_id = entry.id
+        lh_model = cm.ClientPredictionModel()
+        transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
-    # Train the instantiated model and edit the db entry
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
-    train_entries = [tr.serialize['data'] for tr in train_transactions]
-    data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
-    data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
-    print("TRAIN DATA LEN: {}".format(len(data_train)))
+        # Train the instantiated model and edit the db entry
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
+        train_entries = [tr.serialize['data'] for tr in train_transactions]
+        data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
+        data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
+        print("TRAIN DATA LEN: {}".format(len(data_train)))
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
-    print("TEST DATA LEN: {}".format(len(data_valid)))
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
+        test_entries = [tr.serialize['data'] for tr in test_transactions]
+        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+        data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
+        print("TEST DATA LEN: {}".format(len(data_valid)))
+        # Training =================================
+        data_train = preprocessing_train(data_train)
 
-    # Training =================================
-    data_train = preprocessing_train(data_train)
+        target = "Target"
+        predictors = list(set(data_train.columns) - set([target]))
+        lh_model.train(data_train, predictors, target)
 
-    target = "Target"
-    predictors = list(set(data_train.columns) - set([target]))
-    lh_model.train(data_train, predictors, target)
+        # Update the model entry with the hyperparameters and pickle
+        entry.pickle = lh_model.as_pickle()
+        entry.hyper_p = {'predictors': predictors, 'target': target}
+        entry.status = Activity.pending
 
-    # Update the model entry with the hyperparameters and pickle
-    entry.pickle = lh_model.as_pickle()
-    entry.hyper_p = {'predictors': predictors, 'target': target}
-
-    # Output validation data results, used to assess model quality
-    # Positive -> (Target == 1)
-    performance_metrics = lh_model.validate(
-        preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
-    model_performance_dict = {
-        'accuracy': performance_metrics['accuracy'],
-        'precision': performance_metrics['precision'],
-        'recall': performance_metrics['recall'],
-        'test_data_start': test_start,
-        'test_data_end': test_end
-    }
-
-    model_performance_dict['client_model_id'] = model_id
-    new_model = ClientModelPerformance(**model_performance_dict)
-    db.session.add(new_model)
-
-    # If there is an active model for this client, check to compare performance
-    # Else, automatically push newly trained model to active
-
-    active_model = ClientModel.find_active_for_client(data['client_id'])
-    if active_model:
-        lh_model_old = cm.ClientPredictionModel(active_model.pickle)
-        predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-        performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
-        model_performance_dict_old = {
-            'client_model_id': active_model.id,
-            'accuracy': performance_metrics_old['accuracy'],
-            'precision': performance_metrics_old['precision'],
-            'recall': performance_metrics_old['recall'],
+        # Output validation data results, used to assess model quality
+        # Positive -> (Target == 1)
+        performance_metrics = lh_model.validate(
+            preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
+        model_performance_dict = {
+            'accuracy': performance_metrics['accuracy'],
+            'precision': performance_metrics['precision'],
+            'recall': performance_metrics['recall'],
             'test_data_start': test_start,
             'test_data_end': test_end
         }
-        new_model = ClientModelPerformance(**model_performance_dict_old)
+
+        model_performance_dict['client_model_id'] = model_id
+        new_model = ClientModelPerformance(**model_performance_dict)
         db.session.add(new_model)
-    else:
-        ClientModel.set_active_for_client(model_id, data['client_id'])
+
+        # If there is an active model for this client, check to compare performance
+        # Else, automatically push newly trained model to active
+
+        active_model = ClientModel.find_active_for_client(data['client_id'])
+        if active_model:
+            lh_model_old = cm.ClientPredictionModel(active_model.pickle)
+            predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+            performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
+            model_performance_dict_old = {
+                'client_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            new_model = ClientModelPerformance(**model_performance_dict_old)
+            db.session.add(new_model)
+        else:
+            ClientModel.set_active_for_client(model_id, data['client_id'])
+
+    # If exception occurs delete placholder model and raise.
+    except Exception as e:
+        db.session.delete(ClientModel.find_by_id(model_id))
+        db.session.commit()
+        raise Exception("Error occured during model training: " + str(e))
 
     # Send an email here?
     # ==================
@@ -195,7 +233,7 @@ def do_predict():
     project = Project.find_by_id(data['project_id'])
     if not project:
         raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
-    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -367,27 +405,19 @@ def compare_active_and_pending():
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
+@exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
-    try:
-        pending_model = ClientModel.find_by_id(model_id)
-        client_id = pending_model.client_id
-        if not Client.find_by_id(client_id):
-            raise NotFoundError("Client ID {} does not exist.".format(client_id))
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
-        ClientModel.set_active_for_client(model_id, client_id)
-        db.session.commit()
-        response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    pending_model = ClientModel.find_by_id(model_id)
+    client_id = pending_model.client_id
+    if not Client.find_by_id(client_id):
+        raise NotFoundError("Client ID {} does not exist.".format(client_id))
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
+    ClientModel.set_active_for_client(model_id, client_id)
+    db.session.commit()
+    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
     return jsonify(response), 200
 
 
