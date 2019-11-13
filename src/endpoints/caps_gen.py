@@ -115,10 +115,13 @@ def init_caps_gen():
         'system': ['str']
     }
     validate_request_data(data, request_types)
+
+    ### VALIDATE THAT NO CAPSGEN IS RUNNNING
     in_progress = CapsGen.query.filter_by(is_completed=False).first()
     if in_progress:
         raise InputError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
 
+    ### DO UNZIPPING
     try:
         source_data_unzipper(data, response) # pass filename here?
     except Exception as e:
@@ -128,6 +131,7 @@ def init_caps_gen():
     print('unzipping complete')
 
 
+    ### CREATE CapsGen and DataMappings
     # TODO: change for project specific is_completed
     caps_gen = CapsGen(
         user_id=current_user.id,
@@ -146,6 +150,7 @@ def init_caps_gen():
     db.session.commit()
     print('caps_gen model and data_mappings created')
 
+    ### DO BUILD MASTER FILES
     try:
         ### DEV/PROD => make master tables
         list_tablenames = current_app.config['CDM_TABLES']
@@ -491,12 +496,12 @@ def data_quality_check(id):
         datatype = []
         for key, value in datatypes_score.items():
             # score = value / completeness_score[key] * 100 if completeness_score[key] else 0
-            score = value / total_count * 100 
+            score = value / total_count * 100
             datatype.append({"column_name": key, "score": score })
             temp_overall_datatype_score += score
         overall_datatype_score += temp_overall_datatype_score / len(datatype)
 
-        uniqueness = (1 - dup_result / total_count) * 100 
+        uniqueness = (1 - dup_result / total_count) * 100
         overall_uniqueness_score += uniqueness
 
         final_result['scores_per_table'][table_name] = {

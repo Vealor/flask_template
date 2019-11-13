@@ -92,10 +92,6 @@ def send_mail(user_email, subject, content):
 # Unzips all SAP source data text files from a nested zip file.
 def source_data_unzipper(data, response):
 
-    indir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
-    outdir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-
-
     def pull_out_of_folder(outdir, folder):
         for file in os.listdir(os.path.join(outdir, folder)):
             shutil.move(os.path.join(outdir, folder, file), os.path.join(outdir, folder, '..', file))
@@ -108,88 +104,42 @@ def source_data_unzipper(data, response):
         os.remove(os.path.join(outdir, zipper))
         return
 
-    queue = [i for i in os.listdir(os.path.join(indir)) if os.path.isfile(os.path.join(indir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
-    for file in queue:
-        shutil.copyfile(os.path.join(indir,file), os.path.join(outdir,file))
-    print(queue)
-    type = 'zip'
-    while len(queue) > 0:
-        print(queue)
-        print(type)
-        if type == 'folder':
-            for folder in queue:
-                pull_out_of_folder(outdir,folder)
-        if type == 'zip':
-            for zip in queue:
-                unzip_file(outdir,zip)
-        folders = [f for f in os.listdir(outdir) if os.path.isdir(os.path.join(outdir,f))]
-        zips = [i for i in os.listdir(outdir) if os.path.isfile(os.path.join(outdir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
-        if folders:
-            type = 'folder'
-            queue = folders
-        elif zips:
+    if os.environ['FLASK_ENV'] == 'development' or os.environ['FLASK_ENV'] == 'testing':
+        indir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        outdir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+
+        if data['file_name'].lower().endswith('.zip'):
+            queue = [i for i in os.listdir(os.path.join(indir)) if os.path.isfile(os.path.join(indir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
+            for file in queue:
+                shutil.copyfile(os.path.join(indir,file), os.path.join(outdir,file))
+            print(queue)
             type = 'zip'
-            queue = zips
+            while len(queue) > 0:
+                print(queue)
+                print(type)
+                if type == 'folder':
+                    for folder in queue:
+                        pull_out_of_folder(outdir,folder)
+                if type == 'zip':
+                    for zip in queue:
+                        unzip_file(outdir,zip)
+                folders = [f for f in os.listdir(outdir) if os.path.isdir(os.path.join(outdir,f))]
+                zips = [i for i in os.listdir(outdir) if os.path.isfile(os.path.join(outdir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
+                if folders:
+                    type = 'folder'
+                    queue = folders
+                elif zips:
+                    type = 'zip'
+                    queue = zips
+                else:
+                    queue = []
         else:
-            queue = []
-
-    print("UNZIPPING COMPLETEDDDDDD")
-
-    # def extract_nested_zip(currentfolder, outputfolder):
-    #     try:
-    #         for root, dirs, files in os.walk(currentfolder):
-    #             for filename in files:
-    #                 if re.search(r'\.(?i)ZIP$', filename):
-    #                     with zipfile.ZipFile(os.path.join(root, filename), 'r') as zfile:
-    #                         zfile.extractall(path=outputfolder)
-    #                     os.remove(os.path.join(root, filename))
-    #                     #extract_nested_zip(root, output_folder)
-    #                     # os.rename(os.path.join(root, filename), os.path.join(outputPath, filename))
-    #             if dirs:
-    #                 for dir in dirs:
-    #                     extract_nested_zip(dir, outputfolder)
-    #
-    #     except OSError as e:
-    #         raise Exception(str(e))
-    #
-    # def move_nested_folder(currentfolder, outputPath):
-    #     try:
-    #         for root, dirs, files in os.walk(currentfolder):
-    #             for filename in files:
-    #                 if re.search(r'\.(?i)TXT$', filename):
-    #                     os.rename(os.path.join(root, filename), os.path.join(outputPath, filename))
-    #             for dir in dirs:
-    #                 move_nested_folder(dir, outputPath)
-    #     except OSError as e:
-    #         raise Exception(str(e))
-    #
-    # def remove_empty_folders(inPath):
-    #     try:
-    #         for root, dirs, files in os.walk(inPath):
-    #             for dir in dirs:
-    #                 shutil.rmtree(os.path.join(root, dir))
-    #     except OSError as e:
-    #         raise Exception(e)
-    #
-    #
-    # if os.environ['FLASK_ENV'] == 'development':
-    #     current_input_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
-    #     current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-    #     if data['file_name'].lower().endswith('.zip'):
-    #         extract_nested_zip(current_input_path, current_output_path)
-    #         extract_nested_zip(current_output_path, current_output_path)
-    #         while (True in [file.lower().endswith('.zip') for file in os.listdir(current_output_path)]):
-    #             extract_nested_zip(current_output_path, current_output_path)
-    #         print('out of while loop')
-    #         move_nested_folder(current_output_path, current_output_path)
-    #         #remove_empty_folders(current_output_path)
-    #     else:
-    #         raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
-    # elif os.environ['FLASK_ENV'] == 'production':
-    #     #use blob storage
-    #     pass
-    # else:
-    #     raise Exception('Environ not present. Choose development or production')
+            raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
+    elif os.environ['FLASK_ENV'] == 'production':
+        #use blob storage
+        pass
+    else:
+        raise Exception('Environ not present. Choose development or production')
     return response
 
 
