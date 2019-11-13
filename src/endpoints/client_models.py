@@ -367,27 +367,19 @@ def compare_active_and_pending():
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
+@exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
-    try:
-        pending_model = ClientModel.find_by_id(model_id)
-        client_id = pending_model.client_id
-        if not Client.find_by_id(client_id):
-            raise NotFoundError("Client ID {} does not exist.".format(client_id))
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
-        ClientModel.set_active_for_client(model_id, client_id)
-        db.session.commit()
-        response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    pending_model = ClientModel.find_by_id(model_id)
+    client_id = pending_model.client_id
+    if not Client.find_by_id(client_id):
+        raise NotFoundError("Client ID {} does not exist.".format(client_id))
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
+    ClientModel.set_active_for_client(model_id, client_id)
+    db.session.commit()
+    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
     return jsonify(response), 200
 
 

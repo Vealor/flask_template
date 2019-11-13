@@ -357,24 +357,17 @@ def compare_active_and_pending():
 # Update the active master model
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
+@exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
 
-    try:
-        pending_model = MasterModel.find_by_id(model_id)
-        if not pending_model:
-            raise ValueError('There is no pending model to set as active.')
-        MasterModel.set_active(model_id)
-        db.session.commit()
-        response['message'] = 'Active Master model set to model {}'.format(model_id)
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    pending_model = MasterModel.find_by_id(model_id)
+    if not pending_model:
+        raise ValueError('There is no pending model to set as active.')
+    MasterModel.set_active(model_id)
+    db.session.commit()
+    response['message'] = 'Active Master model set to model {}'.format(model_id)
+
     return jsonify(response), 200
 
 
