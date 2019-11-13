@@ -78,6 +78,7 @@ class ClientModelPerformance(db.Model):
         return {
             'id': self.id,
             'client_model_id': self.client_model_id,
+            'model_name': self.performance_client_model.serialize['name'],
             'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
             'accuracy': self.accuracy,
             'precision': self.precision,

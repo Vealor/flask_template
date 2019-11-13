@@ -71,6 +71,7 @@ class MasterModelPerformance(db.Model):
         return {
             'id': self.id,
             'master_model_id': self.master_model_id,
+            'model_name': self.performance_master_model.serialize['name'],
             'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
             'accuracy': self.accuracy,
             'precision': self.precision,
