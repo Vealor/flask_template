@@ -53,7 +53,7 @@ def has_pending(client_id):
 @client_models.route('/<int:client_id>/is_training/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def has_pending(client_id):
+def is_training(client_id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     # validate client existence
     if not Client.find_by_id(client_id):
