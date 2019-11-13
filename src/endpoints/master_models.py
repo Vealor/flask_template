@@ -44,7 +44,7 @@ def get_master_models(id):
     return jsonify(response), 200
 
 #===============================================================================
-# Get all master models
+# Check if master models has a model in pending status
 @master_models.route('/has_pending/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
