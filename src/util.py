@@ -133,6 +133,8 @@ def source_data_unzipper(data, response):
         else:
             queue = []
 
+    print("UNZIPPING COMPLETEDDDDDD")
+
     # def extract_nested_zip(currentfolder, outputfolder):
     #     try:
     #         for root, dirs, files in os.walk(currentfolder):
