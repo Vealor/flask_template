@@ -37,6 +37,11 @@ class MasterModel(db.Model):
     def find_pending(cls):
         return cls.query.filter_by(status = Activity.pending.value).first()
 
+
+    @classmethod
+    def find_training(cls):
+        return cls.query.filter_by(status = Activity.training.value).first()
+
     @classmethod
     def set_active(cls, model_id):
         active_model = cls.find_active()

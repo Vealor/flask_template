@@ -50,7 +50,18 @@ def get_master_models(id):
 @exception_wrapper()
 def has_pending():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    response['payload'] = (MasterModel.find_pending() != None)
+    response['payload'] = { 'is_pending' : (MasterModel.find_pending() != None) }
+    return jsonify(response), 200
+
+
+#===============================================================================
+# Check if master models has a model in pending status
+@master_models.route('/is_training/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def is_training():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = { 'is_training' : (MasterModel.find_training() != None) }
     return jsonify(response), 200
 
 #===============================================================================
