@@ -106,7 +106,7 @@ def do_train():
     # create placeholder model
     entry = MasterModel(**model_data_dict)
     db.session.add(entry)
-    db.session.flush()
+    db.session.commit()
     model_id = entry.id
     lh_model = mm.MasterPredictionModel()
     transactions = Transaction.query
