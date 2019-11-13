@@ -133,6 +133,7 @@ def do_train():
     # Update the model entry with the hyperparameters and pickle
     entry.pickle = lh_model.as_pickle()
     entry.hyper_p = {'predictors': predictors, 'target': target}
+    entry.status = Activity.pending
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
