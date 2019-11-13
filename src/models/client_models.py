@@ -10,7 +10,7 @@ class ClientModel(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
-    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.training.value, nullable=False)
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
