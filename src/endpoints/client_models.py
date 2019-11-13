@@ -7,10 +7,11 @@ import pickle
 import random
 import src.prediction.model_client as cm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
-from src.util import get_date_obj_from_str, validate_request_data
+from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
 
 client_models = Blueprint('client_models', __name__)
@@ -147,6 +148,7 @@ def do_train():
         data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
         data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
         print("TEST DATA LEN: {}".format(len(data_valid)))
+
         # Training =================================
         data_train = preprocessing_train(data_train)
 
@@ -200,16 +202,34 @@ def do_train():
     except Exception as e:
         db.session.delete(ClientModel.find_by_id(model_id))
         db.session.commit()
-        raise Exception("Error occured during model training: " + str(e))
 
-    # Send an email here?
-    # ==================
+        # Send an email to the user
+        subj = "Client model training failed."
+        content = """
+        <p>Sorry. Model Training for client "{}" failed. Please contact the Vancouver KPMG Lighthouse team for more information.</p>
+        <ul>
+        <li>Error: {}</li>
+        </ul>
+        """.format(Client.find_by_id(data['client_id']).name,str(e))
+        send_mail("willthompson@kpmg.ca",subj,content)
+
+        raise Exception("Error occured during model training: " + str(e))
 
     db.session.commit()
 
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['message'] = 'Model trained and created.'
+
+    # Send an email to the user
+    subj = "Client model training complete."
+    content = """
+    <p>Please log into the ARRT application to confirm the acceptability of the model</p>
+    <ul>
+    <li>Model Name: {}</li>
+    </ul>
+    """.format(ClientModel.find_by_id(model_id).serialize['name'])
+    send_mail("willthompson@kpmg.ca",subj,content)
 
     return jsonify(response), 201
 
