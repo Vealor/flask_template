@@ -8,10 +8,11 @@ import pickle
 import random
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
-from src.util import get_date_obj_from_str, validate_request_data
+from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
 
 master_models = Blueprint('master_models', __name__)
@@ -67,7 +68,7 @@ def is_training():
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-# @jwt_required
+#@jwt_required
 @exception_wrapper()
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -190,17 +191,33 @@ def do_train():
     except Exception as e:
         db.session.delete(MasterModel.find_by_id(model_id))
         db.session.commit()
+
+        # Send an email to the user
+        subj = "Master model training failed."
+        content = """
+        <p>Sorry. Model Training failed. Please contact the Vancouver KPMG Lighthouse team for more information.</p>
+        <ul>
+        <li>Error: {}</li>
+        </ul>
+        """.format(str(e))
+        send_mail("willthompson@kpmg.ca",subj,content)
+
         raise Exception("Error occured during model training: " + str(e))
-
-
-
-    # Send an email here?
-    # ==================
 
     db.session.commit()
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['message'] = 'Model trained and created.'
+
+    # Send an email to the user
+    subj = "Master model training is complete!"
+    content = """
+    <p>Please log into the ARRT application to confirm the acceptability of the model</p>
+    <ul>
+    <li>Model Name: {}</li>
+    </ul>
+    """.format(MasterModel.find_by_id(model_id).serialize['name'])
+    send_mail("willthompson@kpmg.ca",subj,content)
 
     return jsonify(response), 201
 
