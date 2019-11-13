@@ -1,4 +1,5 @@
 from .__model_imports import *
+from sqlalchemy import desc
 ###############################################################################
 class MasterModel(db.Model):
     __tablename__ = 'master_models'
@@ -64,3 +65,20 @@ class MasterModelPerformance(db.Model):
 
     master_model_id = db.Column(db.Integer, nullable=False) # FK
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'master_model_id': self.master_model_id,
+            'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
+            'accuracy': self.accuracy,
+            'precision': self.precision,
+            'recall': self.recall,
+            'test_data_start': self.test_data_start.strftime('%Y/%m/%d'),
+            'test_data_end': self.test_data_end.strftime('%Y/%m/%d')
+        }
+
+    @classmethod
+    def get_most_recent_for_model(cls, model_id):
+        return cls.query.filter_by(master_model_id=model_id).order_by(desc('created')).first()
