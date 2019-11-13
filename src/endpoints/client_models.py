@@ -98,6 +98,10 @@ def do_train():
     if not client_projects:
         raise InputError('Client ID {} has no associated projects.'.format(data['client_id']))
 
+    # validate if training mode, stop on exist
+    if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.training.value).all():
+        raise InputError('There is currently a model in training for client ID {}.'.format(data['client_id']))
+
     # validate if pending mode, stop on exist
     if ClientModel.query.filter_by(client_id = data['client_id']).filter_by(status=Activity.pending.value).all():
         raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
@@ -111,7 +115,7 @@ def do_train():
     model_data_dict['client_id'] = data['client_id']
     entry = ClientModel(**model_data_dict)
     db.session.add(entry)
-    db.session.flush()
+    db.session.commit()
     model_id = entry.id
     lh_model = cm.ClientPredictionModel()
     transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))

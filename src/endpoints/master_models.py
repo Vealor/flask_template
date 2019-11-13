@@ -94,6 +94,10 @@ def do_train():
     # At this point, all database independent checks have been perfrm'd
     # Now, database dependent checks begin
 
+    # validate if training mode, stop on exist
+    if MasterModel.query.filter_by(status=Activity.training.value).all():
+        raise InputError('A master model is currently being trained.')
+
     # validate if pending mode, stop on exist
     if MasterModel.query.filter_by(status=Activity.pending.value).all():
         raise InputError('A pending master model exists.')
