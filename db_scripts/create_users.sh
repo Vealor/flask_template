@@ -25,24 +25,24 @@ function make_system_administrator () {
   }' $9:$8/users
 }
 
-make_user "itra" "test" "lh_test_user@test.test" "ITRA" "Ozge" "Uncu" "tax_master" $6
+make_user "itra" "test" "lh_test_user@test.test" "ITRA" "Ozge" "Uncu" "tax_master" $6 $7
 
-make_user "wsmith" "test" "wsmith@test.test" "WS" "William" "Smith" "tax_practitioner" $6
-make_user "msmith" "test" "msmith@test.test" "MS" "Morty" "Smith" "tax_practitioner" $6
-make_user "radams" "test" "radams@test.test" "RA" "Ryan" "Adams" "tax_practitioner" $6
-make_user "mgarcia" "test" "mgarcia@test.test" "MG" "Maria" "Garcia" "tax_approver" $6
-make_user "aochoa" "test" "aochoa@test.test" "AO" "Andrea" "Ochoa" "tax_approver" $6
-make_user "rpatel" "test" "rpatel@test.test" "RP" "Russell" "Patel" "tax_approver" $6
-make_user "creily" "test" "creily@test.test" "CR" "Chris" "Reily" "tax_master" $6
-make_user "lxiang" "test" "lxiang@test.test" "LX" "Lisa" "Xiang" "tax_master" $6
-make_user "fghosh" "test" "fghosh@test.test" "FG" "Frank" "Ghosh" "tax_master" $6
-make_user "jzafar" "test" "jzafar@test.test" "JZ" "Jasmine" "Zafar" "data_master" $6
-make_user "ddeguzman" "test" "ddeguzman@test.test" "DDG" "David" "DeGuzman" "data_master" $6
-make_user "kvaldo" "test" "kvaldo@test.test" "KV" "Kiara" "Valdo" "data_master" $6
-make_user "rsanchez" "test" "rsanchez@test.test" "RS" "Rick" "Sanchez" "administrative_assistant" $6
-make_user "psylvester" "test" "psylvester@test.test" "PS" "Pen" "Sylvester" "administrative_assistant" $6
-make_user "arails" "test" "arails@test.test" "AR" "Adam" "Rails" "administrative_assistant" $6
-make_user "vmaximus" "test" "vmaximus@test.test" "VM" "Vance" "Maximus" "tax_practitioner" $6
+make_user "wsmith" "test" "wsmith@test.test" "WS" "William" "Smith" "tax_practitioner" $6 $7
+make_user "msmith" "test" "msmith@test.test" "MS" "Morty" "Smith" "tax_practitioner" $6 $7
+make_user "radams" "test" "radams@test.test" "RA" "Ryan" "Adams" "tax_practitioner" $6 $7
+make_user "mgarcia" "test" "mgarcia@test.test" "MG" "Maria" "Garcia" "tax_approver" $6 $7
+make_user "aochoa" "test" "aochoa@test.test" "AO" "Andrea" "Ochoa" "tax_approver" $6 $7
+make_user "rpatel" "test" "rpatel@test.test" "RP" "Russell" "Patel" "tax_approver" $6 $7
+make_user "creily" "test" "creily@test.test" "CR" "Chris" "Reily" "tax_master" $6 $7
+make_user "lxiang" "test" "lxiang@test.test" "LX" "Lisa" "Xiang" "tax_master" $6 $7
+make_user "fghosh" "test" "fghosh@test.test" "FG" "Frank" "Ghosh" "tax_master" $6 $7
+make_user "jzafar" "test" "jzafar@test.test" "JZ" "Jasmine" "Zafar" "data_master" $6 $7
+make_user "ddeguzman" "test" "ddeguzman@test.test" "DDG" "David" "DeGuzman" "data_master" $6 $7
+make_user "kvaldo" "test" "kvaldo@test.test" "KV" "Kiara" "Valdo" "data_master" $6 $7
+make_user "rsanchez" "test" "rsanchez@test.test" "RS" "Rick" "Sanchez" "administrative_assistant" $6 $7
+make_user "psylvester" "test" "psylvester@test.test" "PS" "Pen" "Sylvester" "administrative_assistant" $6 $7
+make_user "arails" "test" "arails@test.test" "AR" "Adam" "Rails" "administrative_assistant" $6 $7
+make_user "vmaximus" "test" "vmaximus@test.test" "VM" "Vance" "Maximus" "tax_practitioner" $6 $7
 
 # LH GVA USER
 # curl -H "Content-Type: application/json" -X POST -d '{}' $6:$7/auth/create_base_lh_superuser
