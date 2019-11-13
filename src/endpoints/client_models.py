@@ -46,7 +46,7 @@ def has_pending(client_id):
     # validate client existence
     if not Client.find_by_id(client_id):
         raise InputError('Client ID {} does not exist.'.format(client_id))
-    response['payload'] = (ClientModel.find_pending_for_client(client_id) != None)
+    response['payload'] = { 'is_pending': (ClientModel.find_pending_for_client(client_id) != None) }
     return jsonify(response), 200
 
 #===============================================================================
@@ -59,7 +59,7 @@ def is_training(client_id):
     # validate client existence
     if not Client.find_by_id(client_id):
         raise InputError('Client ID {} does not exist.'.format(client_id))
-    response['payload'] = (ClientModel.find_training_for_client(client_id) != None)
+    response['payload'] = { 'is_training': (ClientModel.find_training_for_client(client_id) != None) }
     return jsonify(response), 200
 
 
