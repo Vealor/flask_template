@@ -47,9 +47,11 @@ def transactions_to_dataframe(query,**kwargs):
 # Define the preprocessing routine here
 def preprocessing_train(df,**kwargs):
 
-    # Only look at columns that are in teh data dictionary
+    # Pop the target column to save it for when the
+    # Only look at columns that are in the data dictionary
     data_types = get_data_types()
     cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
+    target = df['Code']
     df = df[cols]
 
     # Only consider columns that have informative content
@@ -71,7 +73,7 @@ def preprocessing_train(df,**kwargs):
     float_columns = [col for col in informative_columns if df[col].dtype == 'float64']
     datetime_columns = [col for col in informative_columns if df[col].dtype == 'datetime64[ns]']
 
-    return df[int_columns + str_columns + float_columns + datetime_columns]
+    return df[int_columns + str_columns + float_columns + datetime_columns].join(target)
 
 
 
