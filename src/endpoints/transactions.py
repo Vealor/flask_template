@@ -133,6 +133,8 @@ def approve_transaction(id):
 
     # TODO: make sure user has access to the project
     #       make sure user has permission to approve
+
+    # TRANSACTION CAN NOT BE APPROVED UNLESS ALL TAX CODES SIGNED OFF FOR SCOPE
     query = Transaction.find_by_id(id)
     if not query:
         raise NotFoundError('Transaction ID {} does not exist.'.format(id))

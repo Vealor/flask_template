@@ -31,6 +31,7 @@ class Project(db.Model):
     has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_qst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_pst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    has_ts_apo = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_vat = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_mft = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_ct = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)

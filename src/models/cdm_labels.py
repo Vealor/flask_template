@@ -8,7 +8,7 @@ class CDMLabel(db.Model):
     display_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
     # data dictionary
-    is_calculated = db.Column(db.Boolean, unique=False, nullable=False)
+    is_calculated = db.Column(db.Boolean, unique=False, nullable=False, default=False, server_default='f')
     is_unique = db.Column(db.Boolean, unique=False, nullable=False)
     datatype = db.Column(db.Enum(Datatype), nullable=False)
     length = db.Column(db.Integer, nullable=False, default=0, server_default='0')
