@@ -49,9 +49,12 @@ def preprocessing_train(df,**kwargs):
 
     # Pop the target column to save it for when the
     # Only look at columns that are in the data dictionary
+
+    df_target = pd.DataFrame({'Target':df['Code'].apply(lambda x: 1 if (99 < x < 200) else 0)})
+    df = df.drop(['Code'], axis = 1)
+
     data_types = get_data_types()
     cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
-    target = df['Code']
     df = df[cols]
 
     # Only consider columns that have informative content
@@ -73,7 +76,21 @@ def preprocessing_train(df,**kwargs):
     float_columns = [col for col in informative_columns if df[col].dtype == 'float64']
     datetime_columns = [col for col in informative_columns if df[col].dtype == 'datetime64[ns]']
 
-    return df[int_columns + str_columns + float_columns + datetime_columns].join(target)
+    predictors = ['ccy','po_tx_jur','amount_local_ccy','fx_rate','inv_date','gst_hst_qst_pst_local_ccy']
+    df_final = df[predictors]
+    # Do one hot encoding on the low cardinality columns
+    encoded_cols = [col for col in predictors if col in int_columns + str_columns]
+    for column in encoded_cols:
+        temp_df = pd.get_dummies(df[column], prefix=column, prefix_sep=":", dummy_na=True)
+        df_final = pd.concat([df_final, temp_df], axis=1)
+    df_final = df_final.drop(encoded_cols, 1)
+    df_final.drop('inv_date',axis=1,inplace=True)
+    df_final.fillna(-999,inplace=True)
+
+    print(df_final.columns)
+    print(df_target.columns)
+
+    return df_final.join(df_target)
 
 
 
