@@ -193,8 +193,7 @@ def do_train():
                 'test_data_start': test_start,
                 'test_data_end': test_end
             }
-            new_model = ClientModelPerformance(**model_performance_dict_old)
-            db.session.add(new_model)
+            db.session.add(ClientModelPerformance(**model_performance_dict_old))
         else:
             ClientModel.set_active_for_client(model_id, data['client_id'])
 
