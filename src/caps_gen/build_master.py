@@ -8,6 +8,7 @@ from src.models import *
 from config import *
 from sqlalchemy import exists, desc, create_engine
 from flask import Blueprint, current_app, jsonify, request
+from src.models import *
 
 def build_master_file(args):
     table = args['table']
@@ -48,7 +49,7 @@ def build_master_table(args):
         header = header.rstrip('\n').split('#|#')
         for line in masterfile:
             # insert rows chunk by chunk to avoid crashing
-            #  NOTE: 20,000 entries use about 4GB ram
+            #  NOTE: 200,000 entries use about 4GB ram
             if counter >= 200000:
                 engine.execute(referenceclass.__table__.insert(), list_to_insert)
                 counter = 0
@@ -58,3 +59,37 @@ def build_master_table(args):
                 list_to_insert.append({"caps_gen_id": caps_gen_id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
         if counter > 0:
             engine.execute(referenceclass.__table__.insert(), list_to_insert)
+
+def apply_mapping(args):
+    table = args['table']
+    table_name = args['table'].lower().partition('sap')[2]
+    label = args['label']
+    id = args['id']
+    limit = 100000
+    offset = 0
+    referenceclass =  eval(table)
+    engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
+    # print(table)
+    def map_data(limit, offset):
+        query_string = '''
+        SELECT * from sap_{table} WHERE caps_gen_id={id} ORDER BY id LIMIT {limit} OFFSET {offset};
+        '''.format(table = table_name, limit = limit, offset = offset, id = id )
+    
+        result = engine.execute(query_string)
+        columns = [i for i in result]
+        # print(columns)
+        for row in columns:
+            newdata = dict(row.data)
+            for map in label:
+                if map[0] in newdata.keys():
+                    
+                    newdata[map[1]] = newdata.pop(map[0])
+                # print(newdata)
+                row.data = newdata
+            engine.excute(referenceclass.__table__.insert(), row)
+        # db.session.commit()
+        return len(columns)
+    qlen = 1
+    while qlen > 0:
+        qlen = map_data(limit, offset)
+        offset += limit

@@ -142,7 +142,7 @@ def init_caps_gen():
     db.session.add(caps_gen)
     db.session.flush()
 
-    labels = [i.script_label for i in CDMLabel.query.all()]
+    labels = [i.script_label for i in CDMLabel.query.all() if not i.is_calculated]
     for label in labels:
         new_mapping = DataMapping(
             caps_gen_id = caps_gen.id,
@@ -317,27 +317,31 @@ def apply_mappings_build_gst_registration(id):
         if table_to_modify not in mappables.keys():
             mappables[table_to_modify] = []
         mappables[table_to_modify].append((mapping.column_name, mapping.cdm_label_script_label))
-    for key in mappables.keys():
-        print(key)
-        limit = 100000
-        offset = 0
 
-        def map_data(limit, offset):
-            query = [i for i in eval(key).query.filter_by(caps_gen_id=id).order_by('id').limit(limit).offset(offset).all()]
-            print(len(query))
-            for row in query:
-                newdata = dict(row.data)
-                for map in mappables[key]:
-                    if map[0] in newdata.keys():
-                        newdata[map[1]] = newdata.pop(map[0])
-                    # print(newdata)
-                    row.data = newdata
-            db.session.commit()
-            return len(query)
-        qlen = 1
-        while qlen > 0:
-            qlen = map_data(limit, offset)
-            offset += limit
+    N = mp.cpu_count()
+    with mp.Pool(processes = N) as p:
+        p.map(apply_mapping, [ {'table': key, 'label': value, 'id': id} for key, value in mappables.items()])
+    # for key in mappables.keys():
+    #     print(key)
+    #     limit = 100000
+    #     offset = 0
+
+    #     def map_data(limit, offset):
+    #         query = [i for i in eval(key).query.filter_by(caps_gen_id=id).order_by('id').limit(limit).offset(offset).all()]
+    #         print(len(query))
+    #         for row in query:
+    #             newdata = dict(row.data)
+    #             for map in mappables[key]:
+    #                 if map[0] in newdata.keys():
+    #                     newdata[map[1]] = newdata.pop(map[0])
+    #                 # print(newdata)
+    #                 row.data = newdata
+    #         db.session.commit()
+    #         return len(query)
+    #     qlen = 1
+    #     while qlen > 0:
+    #         qlen = map_data(limit, offset)
+    #         offset += limit
 
     # BUILD GST REGISTRATION
     #TODO: V2 check for similary/duplicate projects by comparing attributes

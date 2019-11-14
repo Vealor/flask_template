@@ -225,42 +225,52 @@ def apply_paredown_rules(id):
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
 
+    applied = 0
+    failed = 0
+
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
-    rules = []
-    for i in ParedownRule.query.all():
-        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-            rules.append(i.serialize)
-        elif i.lob_sectors:
-            has_sec = False
-            for l in i.lob_sectors:
-                if l['code'] in lobsecs:
-                    rules.append(i.serialize)
-            if has_sec:
-                rules.append(i.serialize)
+    # rules = []
+    # for i in ParedownRule.query.all():
+    #     if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
+    #         rules.append(i.serialize)
+    #     elif i.lob_sectors:
+    #         has_sec = False
+    #         for l in i.lob_sectors:
+    #             if l['code'] in lobsecs:
+    #                 rules.append(i.serialize)
+    #         if has_sec:
+    #             rules.append(i.serialize)
 
-    for txn in Transaction.query.filter_by(project_id=id).all():
-        print(txn.id)
-        if not txn.locked_user_id:
-            for rule in rules:
-                do_paredown = 0
-                for condition in rule['conditions']:
-                    print(condition)
-                    if condition['field'] in txn.data:
-                        if operator == 'contains':
-                            print("\tCONTAINS")
-                            if condition.value in txn.data[condition.field]:
-                                do_paredown +=1
-                        elif operator in ['>','<','==','>=','<=','!=']:
-                            print("\tLOGICAL OPERATOR")
-                            #check for compare
-                            pass
-                        else:
-                            raise Exception("Database issue for ParedownRuleCondition operator.")
-                    else:
-                        print("field not in data")
-                if do_paredown == len(rule['conditions']):
-                    print("APPLY PAREDOWN TO TXN")
+    # for txn in Transaction.query.filter_by(project_id=id).all():
+    #     print(txn.id)
+    #     if not txn.locked_user_id and not txn.approved_user_id:
+    #         for rule in rules:
+    #             do_paredown = 0
+    #             for condition in rule['conditions']:
+    #                 print(condition)
+    #                 if condition['field'] in txn.data:
+    #                     if operator == 'contains':
+    #                         print("\tCONTAINS")
+    #                         if condition.value in txn.data[condition.field]:
+    #                             do_paredown +=1
+    #                     elif operator in ['>','<','==','>=','<=','!=']:
+    #                         print("\tLOGICAL OPERATOR")
+    #                         #check for compare
+    #                         if True:
+    #                             do_paredown +=1
+    #                         pass
+    #                     else:
+    #                         failed +=1
+    #                         raise Exception("Database issue for ParedownRuleCondition operator.")
+    #                 else:
+    #                     failed +=1
+    #                     print("field not in data")
+    #             if do_paredown == len(rule['conditions']):
+    #                 applied +=1
+    #                 print("APPLY PAREDOWN TO TXN")
+                    # for each tax type, create a new many to many link to the code it needs
+
 
     ### PSEUDO CODE:
 
@@ -277,9 +287,7 @@ def apply_paredown_rules(id):
 
     # db.session.commit()
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
-    response['payload'] = []
-    response['lobsecs'] = lobsecs
-    response['rules'] = rules
+    response['payload'] = [{'applied': applied,'failed':failed}]
 
     return jsonify(response), 200
 
