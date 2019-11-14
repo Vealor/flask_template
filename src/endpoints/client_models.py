@@ -362,22 +362,15 @@ def do_validate():
 
 #===============================================================================
 # Compare active and pending models
-@client_models.route('/compare/', methods=['GET'])
+@client_models.route('/<int:client_id>/compare/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def compare_active_and_pending():
+def compare_active_and_pending(client_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
-    data = request.get_json()
-
-    # validate input
-    request_types = {
-        'client_id': ['int']
-    }
-    validate_request_data(data, request_types)
-    active_model = ClientModel.find_active_for_client(data['client_id'])
+    active_model = ClientModel.find_active_for_client(client_id)
     if not active_model:
-        raise ValueError('No client model has been trained or is active for client ID {}.'.format(data['client_id']))
-    pending_model = ClientModel.find_pending_for_client(data['client_id'])
+        raise ValueError('No client model has been trained or is active for client ID {}.'.format(client_id))
+    pending_model = ClientModel.find_pending_for_client(client_id)
     if not pending_model:
         raise ValueError('There is no pending model to compare to the active model.')
 
