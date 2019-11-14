@@ -1,6 +1,7 @@
 
 import os
 import re
+import json
 import requests
 import multiprocessing as mp
 from os import path
@@ -80,15 +81,21 @@ def apply_mapping(args):
         # print(columns)
         for row in columns:
             newdata = dict(row.data)
-            print(row.data)
+            # print(row.data)
             for map in label:
                 if map[0] in newdata.keys():
                     newdata[map[1]] = newdata.pop(map[0])
                 # print("yay")
                 # row.data = newdata
-                insert_data = {'id':row.id, 'data':newdata}
+                # insert_data = {'id':row.id, 'data':newdata, 'caps_gen_id':id}
                 # print("here")
-            engine.excute(referenceclass.__table__.insert(), insert_data)
+                row_id = row.id
+            insert_data = json.dumps(newdata)
+            update_string = '''
+            UPDATE sap_{table} SET data = '{newdata}' WHERE id={id} ;
+            '''.format(table = table_name, newdata = insert_data, id = row_id )
+    
+            engine.execute(update_string)
         # db.session.commit()
         return len(columns)
     qlen = 1
