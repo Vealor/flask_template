@@ -80,13 +80,15 @@ def apply_mapping(args):
         # print(columns)
         for row in columns:
             newdata = dict(row.data)
+            print(row.data)
             for map in label:
                 if map[0] in newdata.keys():
-                    
                     newdata[map[1]] = newdata.pop(map[0])
-                # print(newdata)
-                row.data = newdata
-            engine.excute(referenceclass.__table__.insert(), row)
+                # print("yay")
+                # row.data = newdata
+                insert_data = {'id':row.id, 'data':newdata}
+                # print("here")
+            engine.excute(referenceclass.__table__.insert(), insert_data)
         # db.session.commit()
         return len(columns)
     qlen = 1
