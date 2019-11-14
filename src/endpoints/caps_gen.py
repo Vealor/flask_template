@@ -340,7 +340,7 @@ def apply_mappings_build_gst_registration(id):
             offset += limit
 
     # BUILD GST REGISTRATION
-    # TODO: V2 check for similary/duplicate projects by comparing attributes
+    #TODO: V2 check for similary/duplicate projects by comparing attributes
     gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
     for vendor in gst_data:
         if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
