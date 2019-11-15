@@ -17,6 +17,7 @@ users = Blueprint('users', __name__)
 @users.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_users(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -43,6 +44,7 @@ def get_users(id):
 @users.route('/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def post_user():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -106,6 +108,7 @@ def post_user():
 @users.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -159,6 +162,7 @@ def update_user(id):
 # Check A USER password
 @users.route('/<int:id>/passcheck', methods=['POST'])
 # @jwt_required
+@exception_wrapper()
 def check_password(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -184,6 +188,7 @@ def check_password(id):
 @users.route('/<int:id>/passchange', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user_password(id):
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -224,6 +229,7 @@ def update_user_password(id):
 @users.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_user(id):
     response = { 'status': '', 'message': '', 'payload': [] }
 

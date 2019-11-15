@@ -8,6 +8,7 @@ import pickle
 import random
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
@@ -21,6 +22,7 @@ master_models = Blueprint('master_models', __name__)
 @master_models.route('/<path:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_master_models(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -49,6 +51,7 @@ def get_master_models(id):
 @master_models.route('/train/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -177,6 +180,7 @@ def do_train():
 @master_models.route('/predict/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -232,6 +236,7 @@ def do_predict():
 @master_models.route('/validate/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_validate():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -290,6 +295,7 @@ def do_validate():
 @master_models.route('/compare/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -342,6 +348,7 @@ def compare_active_and_pending():
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
 
@@ -360,6 +367,7 @@ def set_active_model(model_id):
 @master_models.route('/<path:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_master_model(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

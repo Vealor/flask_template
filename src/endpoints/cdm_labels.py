@@ -14,8 +14,8 @@ cdm_labels = Blueprint('cdm_labels', __name__)
 # GET ALL DATA MAPPINGS
 @cdm_labels.route('/', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_cdm_labels():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()

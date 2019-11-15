@@ -17,8 +17,8 @@ transactions = Blueprint('transactions', __name__)
 @transactions.route('/', defaults={'id':None}, methods=['GET'])
 @transactions.route('/<int:id>', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -50,8 +50,8 @@ def get_transactions(id):
 # Check if transaction locked
 @transactions.route('/<int:id>/is_locked', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def check_transaction_lock(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -69,8 +69,8 @@ def check_transaction_lock(id):
 # Lock Transaction
 @transactions.route('/<int:id>/lock', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def lock_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -98,8 +98,8 @@ def lock_transaction(id):
 # Unlock Transaction
 @transactions.route('/<int:id>/unlock', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def unlock_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -126,8 +126,8 @@ def unlock_transaction(id):
 # Approve Transaction
 @transactions.route('/<int:id>/approve', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def approve_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -173,8 +173,8 @@ def approve_transaction(id):
 # UnApprove Transaction
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def unapprove_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -203,8 +203,8 @@ def unapprove_transaction(id):
 # UPDATE A TRANSACTION information
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
