@@ -44,23 +44,28 @@ def transactions_to_dataframe(query,**kwargs):
 
     return entries
 
+
 # Define the preprocessing routine here
-def preprocessing_train(df,**kwargs):
+def preprocess_data(df,preprocess_for='training',**kwargs):
+
+    print("1")
+    assert preprocess_for in ['training','validation','prediction']
 
     # Pop the target column to save it for when the
-    # Only look at columns that are in the data dictionary
-
-    df_target = pd.DataFrame({'Target':df['Code'].apply(lambda x: 1 if (99 < x < 200) else 0)})
-    df = df.drop(['Code'], axis = 1)
+    if preprocess_for in ['training','validation']:
+        df_target = pd.DataFrame({'Target':df['Code'].apply(lambda x: 1 if (99 < x < 200) else 0)})
+        df = df.drop(['Code'], axis = 1)
 
     data_types = get_data_types()
     cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
     df = df[cols]
+    print("2")
+    # If training, only consider columns that have informative content
+    if preprocess_for == 'training':
+        informative_columns = [col for col in df.columns if df[col].nunique() > 1]
+        df = df[informative_columns]
 
-    # Only consider columns that have informative content
-    informative_columns = [col for col in df.columns if df[col].nunique() > 1]
-    df = df[informative_columns]
-
+    print("3")
     # Enforce the data types here.
     for col in df.columns:
         imposed_type = data_types.loc[data_types['cdm_label_script_label'] == col].iloc[0]['data_type']
@@ -70,85 +75,96 @@ def preprocessing_train(df,**kwargs):
             df[col] = df[col].astype(imposed_type)
             if imposed_type == 'str':
                 df[col] = df[col].astype(imposed_type).replace('nan','')
+    print("4")
+    int_columns = [col for col in df.columns if df[col].dtype == 'Int64']
+    str_columns = [col for col in df.columns if df[col].dtype == 'object']
+    float_columns = [col for col in df.columns if df[col].dtype == 'float64']
+    datetime_columns = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
 
-    int_columns = [col for col in informative_columns if (df[col].dtype == 'Int64' and df[col].nunique() < 8)]
-    str_columns = [col for col in informative_columns if (df[col].dtype == 'object' and df[col].nunique() < 8)]
-    float_columns = [col for col in informative_columns if df[col].dtype == 'float64']
-    datetime_columns = [col for col in informative_columns if df[col].dtype == 'datetime64[ns]']
+    print("5")
+    # If training, only consider categorical columns with low cardinality
+    if preprocess_for == 'training':
+        int_columns = [col for col in int_columns if df[col].nunique() < 8]
+        str_columns = [col for col in str_columns if df[col].nunique() < 8]
 
-    predictors = ['ccy','po_tx_jur','amount_local_ccy','fx_rate','inv_date','gst_hst_qst_pst_local_ccy']
+    predictors = list(set(['ccy','po_tx_jur','amount_local_ccy','fx_rate','gst_hst_qst_pst_local_ccy']) & set(df.columns))
+
     df_final = df[predictors]
+
+    print("6")
     # Do one hot encoding on the low cardinality columns
     encoded_cols = [col for col in predictors if col in int_columns + str_columns]
     for column in encoded_cols:
         temp_df = pd.get_dummies(df[column], prefix=column, prefix_sep=":", dummy_na=True)
         df_final = pd.concat([df_final, temp_df], axis=1)
     df_final = df_final.drop(encoded_cols, 1)
-    df_final.drop('inv_date',axis=1,inplace=True)
+
+    # If validating or predicting, need to ensure all predictors are there.
+    if preprocess_for in ['validation','prediction']:
+
+        train_predictors = kwargs['predictors']
+
+        # Remove those columns that are not in the training predictors, but are in the data here.
+        missing_cols = list(set(df_final.columns) - set(train_predictors))
+        df_final.drop(missing_cols,axis=1,inplace=True)
+
+        # Add those columns that are in the training predictors, but not in the columns here.
+        cols_to_add = list(set(train_predictors) - set(df_final.columns))
+        for col in cols_to_add:
+            df_final[col] = 0
+
     df_final.fillna(-999,inplace=True)
 
-    print(df_final.columns)
-    print(df_target.columns)
-
-    return df_final.join(df_target)
-
-
-
-    # Drop the pare down data and code columns, do one-hot encoding, remove duplicate columns.
-    # THRESHOLD_DROP_ROWS = 2
-    # df = df.dropna(thresh=THRESHOLD_DROP_ROWS)
-    # if 'Schedule' in df.columns:
-    #     df = df[df['Schedule'] != 'pare down']
-    #     df = df.drop(['Schedule'], 1)
-    # df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
-    # df = df.drop(['Code'], 1)
-    # low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
-    # try:
-    #     for column in low_cardinality_columns:
-    #         temp_df = pd.get_dummies(df[column], prefix=column,prefix_sep=":")
-    #         df = pd.concat([df, temp_df], axis=1)
-    #
-    #     df = df.drop(low_cardinality_columns, 1)
-    # except Exception as e:
-    #     response['status'] = 'error'
-    #     response['message'] = "Exception in one-hot encoding: {}.".format(str(e))
-    #     return jsonify(response, 500)
-    #
-    # df = df.loc[:, ~df.columns.duplicated()]
-    return df
+    if preprocess_for in ['training','validation']:
+        return df_final.join(df_target)
+    return df_final
 
 # Define the preprocessing routine here
-def preprocessing_predict(df,predictors,for_validation=False):
-    # Drop the pare down data and code columns, do one-hot encoding, remove duplicate columns.
-    if 'Schedule' in df.columns:
-        df = df[df['Schedule'] != 'pare down']
-        df = df.drop(['Schedule'], 1)
-
-    if for_validation:
-        df['Target'] = df['Code'].apply(lambda row: 1 if (99 < row < 200) else 0)
-        df = df.drop(['Code'], 1)
-
-    low_cardinality_columns = "PRI_REPORT,SEC_REPORT,Currency,VEND_CNTRY,Tax Jurisdiction".split(',')
-
-    df_onehot = df[low_cardinality_columns]
-    one_hot_predictors = []
-    for column in low_cardinality_columns:
-        temp_df = pd.get_dummies(df[column], prefix=column, prefix_sep=":")
-        df_onehot = pd.concat([df_onehot, temp_df], axis=1)
-        one_hot_predictors.extend([pred for pred in predictors if pred[:len(column)] == column])
-        df = df.drop(column,1)
-
-    df_onehot = df_onehot.drop(low_cardinality_columns, 1)
-
-    # Add missing one-hot encoding columns from predictors, filled with zeros
-    missing_cols = list(set(one_hot_predictors) - set(df_onehot.columns))
-    for col in missing_cols:
-       df_onehot[col] = 0
-
-    # Remove extra one-hot encoding columns that are not in predictors
-    extra_cols = list(set(df_onehot.columns) - set(one_hot_predictors))
-    df_onehot = df_onehot.drop(extra_cols,1)
-
-    df = pd.concat([df,df_onehot],axis=1)
-    df = df.loc[:, ~df.columns.duplicated()]
-    return df
+# def preprocessing_predict(df,train_predictors,for_validation=False):
+#
+#     if for_validation:
+#         df_target = pd.DataFrame({'Target':df['Code'].apply(lambda x: 1 if (99 < x < 200) else 0)})
+#     df = df.drop(['Code'], axis = 1)
+#
+#     data_types = get_data_types()
+#     cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
+#     df = df[cols]
+#
+#     # Enforce the data types here.
+#     for col in df.columns:
+#         imposed_type = data_types.loc[data_types['cdm_label_script_label'] == col].iloc[0]['data_type']
+#         if imposed_type == 'datetime':
+#             df[col] = pd.to_datetime(df[col],format='%Y%m%d', errors='coerce')
+#         else:
+#             df[col] = df[col].astype(imposed_type)
+#             if imposed_type == 'str':
+#                 df[col] = df[col].astype(imposed_type).replace('nan','')
+#
+#     int_columns = [col for col in df.columns if (df[col].dtype == 'Int64')]
+#     str_columns = [col for col in df.columns if (df[col].dtype == 'object')]
+#     float_columns = [col for col in df.columns if df[col].dtype == 'float64']
+#     datetime_columns = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
+#
+#     predictors = ['ccy','po_tx_jur','amount_local_ccy','fx_rate','gst_hst_qst_pst_local_ccy']
+#     df_final = df[predictors]
+#     # Do one hot encoding on the low cardinality columns
+#     encoded_cols = [col for col in predictors if col in int_columns + str_columns]
+#     for column in encoded_cols:
+#         temp_df = pd.get_dummies(df[column], prefix=column, prefix_sep=":", dummy_na=True)
+#         df_final = pd.concat([df_final, temp_df], axis=1)
+#     df_final = df_final.drop(encoded_cols, 1)
+#
+#     # Remove those columns that are not in the training predictors, but are in the data here.
+#     missing_cols = list(set(df_final.columns) - set(train_predictors))
+#     df_final.drop(missing_cols,axis=1,inplace=1)
+#
+#     # Add those columns that are in the training predictors, but not in the columns here.
+#     cols_to_add = list(set(train_predictors) - set(df_final.columns))
+#     for col in cols_to_add:
+#         df_final[col] = 0
+#
+#     # Fill the NaN columns with a large negative value
+#     df_final.fillna(-999,inplace=True)
+#     if for_validation:
+#         return df_final.join(df_target)
+#     return df_final

@@ -6,13 +6,12 @@ import pandas as pd
 import random
 import src.prediction.model_client as cm
 import src.prediction.model_master as mm
-from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocessing_predict
+from src.prediction.preprocessing import preprocess_data
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -289,7 +288,7 @@ def apply_prediction(id):
     # Can't assume that final zip lines up arrays properly
     df_predict = transactions_to_dataframe(project_transactions)
     df_predict = preprocessing_predict(df_predict, predictors)
-    
+
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 

@@ -10,7 +10,7 @@ import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
+from src.prediction.preprocessing import preprocess_data
 from src.util import get_date_obj_from_str, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -110,7 +110,7 @@ def do_train():
     data_valid = transactions_to_dataframe(test_transactions)
 
     # Training =================================
-    data_train = preprocessing_train(data_train)
+    data_train = preprocess_data(data_train,preprocess_for='training')
 
     target = "Target"
     predictors = list(set(data_train.columns) - set([target]))
@@ -122,8 +122,8 @@ def do_train():
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    performance_metrics = lh_model.validate(
-        preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
+    data_valid = preprocess_data(data_train,preprocess_for='training',predictors=predictors)
+    performance_metrics = lh_model.validate(data_valid, predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],
         'precision': performance_metrics['precision'],
@@ -141,8 +141,8 @@ def do_train():
     if active_model:
         lh_model_old = mm.MasterPredictionModel(active_model.pickle)
         predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-        performance_metrics_old = lh_model_old.validate(
-            preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
+        data_valid_old = preprocess_data(data_valid_old,preprocess_for='validation',predictors=predictors_old)
+        performance_metrics_old = lh_model_old.validate(data_valid_old, predictors_old, target_old)
         model_performance_dict_old = {
             'master_model_id': active_model.id,
             'accuracy': performance_metrics_old['accuracy'],
