@@ -3,6 +3,17 @@ from src.models import Transaction, Code
 import os
 
 # ============================================================================ #
+# Configuration :
+
+PREDICTION_VARS = set([
+    'ccy',
+    'po_tx_jur',
+    'amount_local_ccy',
+    'fx_rate',
+    'gst_hst_qst_pst_local_ccy'
+    ])
+
+# ============================================================================ #
 # Take note of the data types and mapping of variables (THIS IS LIKELY TO BE TEMPORARY)
 def get_data_types():
 
@@ -48,24 +59,25 @@ def transactions_to_dataframe(query,**kwargs):
 # Define the preprocessing routine here
 def preprocess_data(df,preprocess_for='training',**kwargs):
 
-    print("1")
+    # Ensure that the preprocess_for variable is set to one of the correct values
     assert preprocess_for in ['training','validation','prediction']
 
-    # Pop the target column to save it for when the
     if preprocess_for in ['training','validation']:
         df_target = pd.DataFrame({'Target':df['Code'].apply(lambda x: 1 if (99 < x < 200) else 0)})
         df = df.drop(['Code'], axis = 1)
 
+    # Filter the inputs to use only the predictors we want at the moment
+
+
     data_types = get_data_types()
-    cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label'])]
+    cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label']) & PREDICTION_VARS]
     df = df[cols]
-    print("2")
+
     # If training, only consider columns that have informative content
     if preprocess_for == 'training':
         informative_columns = [col for col in df.columns if df[col].nunique() > 1]
         df = df[informative_columns]
 
-    print("3")
     # Enforce the data types here.
     for col in df.columns:
         print("\t{}".format(col))
@@ -76,13 +88,13 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
             df[col] = df[col].astype(imposed_type)
             if imposed_type == 'str':
                 df[col] = df[col].astype(imposed_type).replace('nan','')
-    print("4")
+
     int_columns = [col for col in df.columns if df[col].dtype == 'Int64']
     str_columns = [col for col in df.columns if df[col].dtype == 'object']
     float_columns = [col for col in df.columns if df[col].dtype == 'float64']
     datetime_columns = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
 
-    print("5")
+
     # If training, only consider categorical columns with low cardinality
     if preprocess_for == 'training':
         int_columns = [col for col in int_columns if df[col].nunique() < 8]
@@ -92,7 +104,7 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     df_final = df[predictors]
 
-    print("6")
+
     # Do one hot encoding on the low cardinality columns
     encoded_cols = [col for col in predictors if col in int_columns + str_columns]
     for column in encoded_cols:
