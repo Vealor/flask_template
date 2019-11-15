@@ -7,6 +7,7 @@ import pickle
 import random
 import src.prediction.model_client as cm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
@@ -20,6 +21,7 @@ client_models = Blueprint('client_models', __name__)
 @client_models.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_client_models(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -41,6 +43,7 @@ def get_client_models(id):
 @client_models.route('/train/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -181,6 +184,7 @@ def do_train():
 @client_models.route('/predict/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -236,70 +240,62 @@ def do_predict():
 # Validate the active client model based on input ID.
 @client_models.route('/validate/', methods=['POST'])
 # @jwt_required
+@exception_wrapper()
 def do_validate():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
 
-    try:
-        # validate input
-        request_types = {
-            'test_data_start_date': ['str'],
-            'test_data_end_date': ['str'],
-            'client_id': ['int']
-        }
-        validate_request_data(data, request_types)
+    request_types = {
+        'test_data_start_date': ['str'],
+        'test_data_end_date': ['str'],
+        'client_id': ['int']
+    }
+    validate_request_data(data, request_types)
 
-        active_model = ClientModel.find_active_for_client(data['client_id'])
-        if not active_model:
-            raise ValueError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
+    active_model = ClientModel.find_active_for_client(data['client_id'])
+    if not active_model:
+        raise ValueError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
 
-        train_start = active_model.train_data_start.date()
-        train_end = active_model.train_data_end.date()
-        test_start = get_date_obj_from_str(data['test_data_start_date'])
-        test_end = get_date_obj_from_str(data['test_data_end_date'])
-        if test_start >= test_end:
-            raise ValueError('Invalid Test Data date range.')
-        if not (train_end < test_start or test_end < train_start):
-            raise ValueError('Cannot validate model on data it was trained on.')
+    train_start = active_model.train_data_start.date()
+    train_end = active_model.train_data_end.date()
+    test_start = get_date_obj_from_str(data['test_data_start_date'])
+    test_end = get_date_obj_from_str(data['test_data_end_date'])
+    if test_start >= test_end:
+        raise ValueError('Invalid Test Data date range.')
+    if not (train_end < test_start or test_end < train_start):
+        raise ValueError('Cannot validate model on data it was trained on.')
 
-        lh_model_old = cm.ClientPredictionModel(active_model.pickle)
-        predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+    lh_model_old = cm.ClientPredictionModel(active_model.pickle)
+    predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
-        # Pull the transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-        if test_transactions.count() == 0:
-            raise ValueError('No transactions to validate in given date range.')
-        test_entries = [tr.serialize['data'] for tr in test_transactions]
-        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
+    # Pull the transaction data into a dataframe
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    if test_transactions.count() == 0:
+        raise ValueError('No transactions to validate in given date range.')
+    test_entries = [tr.serialize['data'] for tr in test_transactions]
+    test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+    test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
 
-        data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
 
-        # Evaluate the performance metrics
-        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
-        model_performance_dict_old = {
-            'client_model_id': active_model.id,
-            'accuracy': performance_metrics_old['accuracy'],
-            'precision': performance_metrics_old['precision'],
-            'recall': performance_metrics_old['recall'],
-            'test_data_start': test_start,
-            'test_data_end': test_end
-        }
-        db.session.add(ClientModelPerformance(**model_performance_dict_old))
-        db.session.commit()
+    # Evaluate the performance metrics
+    performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+    model_performance_dict_old = {
+        'client_model_id': active_model.id,
+        'accuracy': performance_metrics_old['accuracy'],
+        'precision': performance_metrics_old['precision'],
+        'recall': performance_metrics_old['recall'],
+        'test_data_start': test_start,
+        'test_data_end': test_end
+    }
+    db.session.add(ClientModelPerformance(**model_performance_dict_old))
+    db.session.commit()
 
-        response['message'] = 'Model validation complete.'
-        response['payload']['model_id'] = active_model.id
-        response['payload']['performance_metrics'] = performance_metrics_old
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    response['message'] = 'Model validation complete.'
+    response['payload']['model_id'] = active_model.id
+    response['payload']['performance_metrics'] = performance_metrics_old
+
     return jsonify(response), 201
 
 
@@ -307,95 +303,84 @@ def do_validate():
 # Compare active and pending models
 @client_models.route('/compare/', methods=['GET'])
 # @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
-    try:
-        # validate input
-        request_types = {
-            'test_data_start_date': ['str'],
-            'test_data_end_date': ['str'],
-            'client_id': ['int']
-        }
-        validate_request_data(data, request_types)
-        active_model = ClientModel.find_active_for_client(data['client_id'])
-        if not active_model:
-            raise ValueError('No master model has been trained or is active.')
-        pending_model = ClientModel.find_pending_for_client(data['client_id'])
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
 
-        test_start = get_date_obj_from_str(data['test_data_start_date'])
-        test_end = get_date_obj_from_str(data['test_data_end_date'])
+    request_types = {
+        'test_data_start_date': ['str'],
+        'test_data_end_date': ['str'],
+        'client_id': ['int']
+    }
+    validate_request_data(data, request_types)
+    active_model = ClientModel.find_active_for_client(data['client_id'])
+    if not active_model:
+        raise ValueError('No master model has been trained or is active.')
+    pending_model = ClientModel.find_pending_for_client(data['client_id'])
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
 
-        # Check if date range is acceptable for comparing the two models
-        if test_start >= test_end:
-            raise ValueError('Invalid Test Data date range.')
-        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
-            raise ValueError('Cannot validate active model on data it was trained on.')
-        if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
-            raise ValueError('Cannot validate pending model on data it was trained on.')
+    test_start = get_date_obj_from_str(data['test_data_start_date'])
+    test_end = get_date_obj_from_str(data['test_data_end_date'])
 
-        # Pull the validation transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-        if test_transactions.count() == 0:
-            raise ValueError('No transactions to validate in given date range.')
-        test_entries = [tr.serialize['data'] for tr in test_transactions]
-        test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-        test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
+    # Check if date range is acceptable for comparing the two models
+    if test_start >= test_end:
+        raise ValueError('Invalid Test Data date range.')
+    if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
+        raise ValueError('Cannot validate active model on data it was trained on.')
+    if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
+        raise ValueError('Cannot validate pending model on data it was trained on.')
 
-        performance_metrics = {}
-        for model in [active_model, pending_model]:
-            lh_model = cm.ClientPredictionModel(model.pickle)
-            predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
+    # Pull the validation transaction data into a dataframe
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    if test_transactions.count() == 0:
+        raise ValueError('No transactions to validate in given date range.')
+    test_entries = [tr.serialize['data'] for tr in test_transactions]
+    test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
+    test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
 
-        response['message'] = 'Client model comparison complete'
-        response['payload'] = performance_metrics
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    performance_metrics = {}
+    for model in [active_model, pending_model]:
+        lh_model = cm.ClientPredictionModel(model.pickle)
+        predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
+        performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
+
+    response['message'] = 'Client model comparison complete'
+    response['payload'] = performance_metrics
+
     return jsonify(response), 200
 
 
 #===============================================================================
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
-# @jwt_required
+# @jwt_refresh_token_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
-    args = request.args.to_dict()
-    try:
-        pending_model = ClientModel.find_by_id(model_id)
-        client_id = pending_model.client_id
-        if not Client.find_by_id(client_id):
-            raise NotFoundError("Client ID {} does not exist.".format(client_id))
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
-        ClientModel.set_active_for_client(model_id, client_id)
-        db.session.commit()
-        response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+
+    pending_model = ClientModel.find_by_id(model_id)
+    client_id = pending_model.client_id
+    if not Client.find_by_id(client_id):
+        raise NotFoundError("Client ID {} does not exist.".format(client_id))
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
+    ClientModel.set_active_for_client(model_id, client_id)
+    db.session.commit()
+    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
+
     return jsonify(response), 200
 
 
 #===============================================================================
 # Delete a client model
-@client_models.route('/<path:id>', methods=['DELETE'])
+@client_models.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_client_model(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

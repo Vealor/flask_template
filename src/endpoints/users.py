@@ -17,6 +17,7 @@ users = Blueprint('users', __name__)
 @users.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_users(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -43,7 +44,8 @@ def get_users(id):
 @users.route('/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
-def post_user():
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def create_user():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
@@ -106,6 +108,7 @@ def post_user():
 @users.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -159,6 +162,7 @@ def update_user(id):
 # Check A USER password
 @users.route('/<int:id>/passcheck', methods=['POST'])
 # @jwt_required
+@exception_wrapper()
 def check_password(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -171,9 +175,7 @@ def check_password(id):
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
-        response['status'] = 'error'
-        response['message'] = 'Password Invalid'
-        return jsonify(response), 401
+        raise UnauthorizedError("Password Invalid")
 
     response['message'] = 'Password Valid'
 
@@ -184,6 +186,7 @@ def check_password(id):
 @users.route('/<int:id>/passchange', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user_password(id):
     response = { 'status': '', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -195,7 +198,7 @@ def update_user_password(id):
     }
     validate_request_data(data, request_types)
 
-    # password strength checking
+    # PASSWORD STRENGTH CHECKING
     # if len(data['newpassword']) < 8:
     #     raise InputError("Password length must be greater than 8.")
     # if not any(x.isupper() for x in data['newpassword']):
@@ -207,9 +210,7 @@ def update_user_password(id):
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
-        response['status'] = 'error'
-        response['message'] = 'Password Invalid'
-        return jsonify(response), 401
+        raise UnauthorizedError("Password Invalid")
 
     query.password = User.generate_hash(data['newpassword'])
     query.req_pass_reset = False
@@ -224,6 +225,7 @@ def update_user_password(id):
 @users.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_user(id):
     response = { 'status': '', 'message': '', 'payload': [] }
 
