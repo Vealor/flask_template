@@ -1,12 +1,9 @@
 # ~~~ Utils:
 import datetime
-import os
 import re
 import sendgrid
-import zipfile
-import shutil
-from anytree import Node, RenderTree
 from flask import current_app
+from src.errors import *
 
 #==============================================================================
 # prints text with specific colours if adding to print statements
@@ -24,23 +21,23 @@ class bcolours:
 # Builds date object from date format "YYYY-MM-DD"
 #   RETURNS:
 #     - datetime object
-#     - ValueError on wrong format
+#     - InputError on wrong format
 def get_date_obj_from_str(date_str):
     try:
         date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     except:
-        raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+        raise InputError("Incorrect data format, should be YYYY-MM-DD")
     return date_obj
 
 #===============================================================================
 # Checks that keys and types are in JSON input
 def validate_request_data(data, validation):
     if not isinstance(data, dict):
-        raise ValueError('Input payload for endpoint must be a dictionary.')
+        raise InputError('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
     missing_vars = [x for x in validation.keys() if not x in data.keys()]
     if missing_vars:
-        raise ValueError('Request is missing required keys: {}'.format(missing_vars))
+        raise InputError('Request is missing required keys: {}'.format(missing_vars))
 
     # Esures that the datatypes specified in validation match the types in data.
     # Example Available types:
@@ -57,13 +54,13 @@ def validate_request_data(data, validation):
             elif isinstance(data[key], eval(datatype)):
                 valid = True
         if not valid:
-            raise ValueError('Request contains improper data types for key {}.'.format(key))
+            raise InputError('Request contains improper data types for key {}.'.format(key))
 
     # ensures strings are not empty unless specified
     for key in validation.keys():
         if 'str' in validation[key] and not ("" in validation[key] or 'NoneType' in validation[key]):
             if "".join(e for e in data[key] if e.isalnum() or e in ['<','>','=']) == '':
-                raise ValueError('Request cannot contain empty or only non-alphanumeric string for columns.')
+                raise InputError('Request cannot contain empty or only non-alphanumeric string for columns.')
 
 #===============================================================================
 # Sends an email to the user with given inputs
@@ -87,150 +84,3 @@ def send_mail(user_email, subject, content):
         return True
     except Exception as e:
         raise e
-
-#===============================================================================
-# Unzips all SAP source data text files from a nested zip file.
-def source_data_unzipper(data, response):
-
-    def pull_out_of_folder(outdir, folder):
-        for file in os.listdir(os.path.join(outdir, folder)):
-            shutil.move(os.path.join(outdir, folder, file), os.path.join(outdir, folder, '..', file))
-        os.rmdir(os.path.join(outdir, folder))
-        return
-
-    def unzip_file(outdir, zipper):
-        with zipfile.ZipFile(os.path.join(outdir, zipper), 'r') as zipObj:
-            zipObj.extractall(outdir)
-        os.remove(os.path.join(outdir, zipper))
-        return
-
-    if os.environ['FLASK_ENV'] == 'development' or os.environ['FLASK_ENV'] == 'testing':
-        indir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
-        outdir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-
-        if data['file_name'].lower().endswith('.zip'):
-            queue = [i for i in os.listdir(os.path.join(indir)) if os.path.isfile(os.path.join(indir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
-            for file in queue:
-                shutil.copyfile(os.path.join(indir,file), os.path.join(outdir,file))
-            print(queue)
-            type = 'zip'
-            while len(queue) > 0:
-                print(queue)
-                print(type)
-                if type == 'folder':
-                    for folder in queue:
-                        pull_out_of_folder(outdir,folder)
-                if type == 'zip':
-                    for zip in queue:
-                        unzip_file(outdir,zip)
-                folders = [f for f in os.listdir(outdir) if os.path.isdir(os.path.join(outdir,f))]
-                zips = [i for i in os.listdir(outdir) if os.path.isfile(os.path.join(outdir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
-                if folders:
-                    type = 'folder'
-                    queue = folders
-                elif zips:
-                    type = 'zip'
-                    queue = zips
-                else:
-                    queue = []
-        else:
-            raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
-    elif os.environ['FLASK_ENV'] == 'production':
-        #use blob storage
-        pass
-    else:
-        raise Exception('Environ not present. Choose development or production')
-    return response
-
-
-#===============================================================================
-# Unzips all SAP source data text files from a nested zip file.
-
-def project_path_create(data, response):
-    if os.environ['FLASK_ENV'] == 'development':
-        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
-            print('path does not exist, creating project')
-            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
-            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-            for folder in folders:
-                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
-        else:
-            response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
-            return response
-    elif os.environ['FLASK_ENV'] == 'testing':
-        if not os.path.exists(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']))):
-            print('path does not exist, creating project')
-            os.mkdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id'])))
-            folders = ['sap_data', 'caps_gen_unzipped', 'caps_gen_raw', 'caps_gen_master']
-            for folder in folders:
-                os.mkdir((os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), folder)))
-        else:
-            response['message'] = 'Proceeding: Path {} has already been created for this project'.format(str(data['project_id']))
-            return response
-
-        # project_dirs = current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')
-        # project_dirs = [int(dir.name) for dir in current_app.config['FILE_SERVICE'].list_directories_and_files('caps-gen-processing')]
-        #
-        # if data['project_id'] not in project_dirs:
-        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-        #                                                         directory_name='{project_id}'.format(project_id = data['project_id']))
-        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-        #                                                         directory_name='{project_id}/{CAPS_RAW_LOCATION}'.format(project_id = data['project_id'], CAPS_RAW_LOCATION = current_app.config['CAPS_RAW_LOCATION']))
-        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-        #                                                         directory_name='{project_id}/{CAPS_UNZIPPING_LOCATION}'.format(project_id = data['project_id'], CAPS_UNZIPPING_LOCATION = current_app.config['CAPS_UNZIPPING_LOCATION']))
-        #     current_app.config['FILE_SERVICE'].create_directory(fail_on_exist = True, share_name=current_app.config['CAPS_BASE_DIR'],
-        #                                                         directory_name='{project_id}/{CAPS_MASTER_LOCATION}'.format(project_id = data['project_id'], CAPS_MASTER_LOCATION = current_app.config['CAPS_MASTER_LOCATION']))
-        # else:
-        #     response['message'] = 'Path {} has been created for this project'.format(str(data['project_id']))
-        #     return response
-    else:
-        raise ValueError('Environ not present. Choose development or testing')
-    return response
-
-#===============================================================================
-# Map datatype to regex for data quality check
-def map_regex(dt_type):
-    regex = ''
-    if dt_type == 'dt_varchar':
-        regex = '.*'
-    elif dt_type == 'dt_float':
-        regex = '^(?:\-)?\d*\.{1}\d+$'
-    elif dt_type == 'dt_int':
-        regex = '^(?:\-)?\d+$'
-    elif dt_type == 'dt_date':
-        regex = '^(0[1-9]|1[012])\/(0[1-9]|[1-2][0-9]|3[01])\/\d{4}$'
-    else:
-        raise Exception('No regex implmented for the given data type: {}'.format(dt_type))
-    return regex
-
-#===============================================================================
-# Recursion helper for data quality check
-def recursive_insert(root : Node, sub_str):
-    char = sub_str[0]
-    flag = False
-    if root.children:
-        for child in root.children:
-            if char == child.name:
-                if len(sub_str) > 1:
-                    recursive_insert(child, sub_str[1:])
-                else:
-                    child.count += 1
-                flag = True
-    elif not flag:
-        new_node = Node(char, parent=root, count=0)
-        if len(sub_str) > 1:
-            recursive_insert(new_node, sub_str[1:])
-        else:
-            new_node.count += 1
-
-def recursive_find(root : Node, sub_str):
-    char = sub_str[0]
-    if root.children:
-        for child in root.children:
-            if char == child.name:
-                if len(sub_str) > 1:
-                    return recursive_find(child, sub_str[1:])
-                else:
-                    if child.count > 0:
-                        return True
-    return False
