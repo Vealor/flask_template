@@ -10,6 +10,7 @@ from config import *
 from sqlalchemy import exists, desc, create_engine
 from flask import Blueprint, current_app, jsonify, request
 from src.models import *
+from sqlalchemy.sql.expression import bindparam
 
 def build_master_file(args):
     table = args['table']
@@ -62,13 +63,15 @@ def build_master_table(args):
             engine.execute(referenceclass.__table__.insert(), list_to_insert)
 
 def apply_mapping(args):
+    
     table = args['table']
+    print("start:{}".format(table))
     table_name = args['table'].lower().partition('sap')[2]
     label = args['label']
     id = args['id']
     limit = 100000
     offset = 0
-    referenceclass =  eval(table)
+    referenceclass = eval(table)
     engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
     # print(table)
     def map_data(limit, offset):
@@ -77,28 +80,36 @@ def apply_mapping(args):
         '''.format(table = table_name, limit = limit, offset = offset, id = id )
     
         result = engine.execute(query_string)
+        stmt = referenceclass.__table__.update().\
+                where(referenceclass.id == bindparam('_id')).\
+                values({
+                    'data': bindparam('data'),
+                    'caps_gen_id': bindparam('caps_gen_id'),
+                })
+
         columns = [i for i in result]
-        # print(columns)
+        list_to_inset = []
         for row in columns:
             newdata = dict(row.data)
+            if not row.data:
+                print("data empty")
             # print(row.data)
             for map in label:
                 if map[0] in newdata.keys():
                     newdata[map[1]] = newdata.pop(map[0])
                 # print("yay")
                 # row.data = newdata
-                # insert_data = {'id':row.id, 'data':newdata, 'caps_gen_id':id}
-                # print("here")
-                row_id = row.id
-            insert_data = json.dumps(newdata)
-            update_string = '''
-            UPDATE sap_{table} SET data = '{newdata}' WHERE id={id} ;
-            '''.format(table = table_name, newdata = insert_data, id = row_id )
-    
-            engine.execute(update_string)
+            insert_data = {'_id':row.id, 'data':newdata, 'caps_gen_id':id}
+            list_to_inset.append(insert_data)
+
+        # print('insert')
+        # print(list_to_inset)
+        if len(list_to_inset)>0:
+            engine.execute(stmt, list_to_inset)
         # db.session.commit()
         return len(columns)
     qlen = 1
     while qlen > 0:
         qlen = map_data(limit, offset)
         offset += limit
+    print("complete:{}".format(table))
