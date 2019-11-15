@@ -120,61 +120,43 @@ def do_train():
     if transaction_count < 5000:
         raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 5,000 approved transactions.'.format(transaction_count))
 
-    # create placeholder model
-    entry = MasterModel(**model_data_dict)
-    db.session.add(entry)
-    db.session.flush()
-    model_id = entry.id
-    lh_model = mm.MasterPredictionModel()
-    transactions = Transaction.query
+    #Try to create model. If model creation fails, delete placeholder and raise Exception
+    try:
+        # create placeholder model
+        entry = MasterModel(**model_data_dict)
+        db.session.add(entry)
+        db.session.flush()
+        model_id = entry.id
+        lh_model = mm.MasterPredictionModel()
+        transactions = Transaction.query
 
-    # Get the required transactions and put them into dataframes
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)) #.filter_by(is_approved=True)
-    data_train = transactions_to_dataframe(train_transactions)
+        # Get the required transactions and put them into dataframes
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)) #.filter_by(is_approved=True)
+        data_train = transactions_to_dataframe(train_transactions)
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)) #.filter_by(is_approved=True)
-    data_valid = transactions_to_dataframe(test_transactions)
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)) #.filter_by(is_approved=True)
+        data_valid = transactions_to_dataframe(test_transactions)
 
-    # Training =================================
-    data_train = preprocess_data(data_train,preprocess_for='training')
+        # Training =================================
+        data_train = preprocess_data(data_train,preprocess_for='training')
 
-    target = "Target"
-    predictors = list(set(data_train.columns) - set([target]))
-    print(predictors)
-    lh_model.train(data_train,predictors,target)
+        target = "Target"
+        predictors = list(set(data_train.columns) - set([target]))
+        print(predictors)
+        lh_model.train(data_train,predictors,target)
 
-    # Update the model entry with the hyperparameters and pickle
-    entry.pickle = lh_model.as_pickle()
-    entry.hyper_p = {'predictors': predictors, 'target': target}
+        # Update the model entry with the hyperparameters and pickle
+        entry.pickle = lh_model.as_pickle()
+        entry.hyper_p = {'predictors': predictors, 'target': target}
 
-    # Output validation data results, used to assess model quality
-    # Positive -> (Target == 1)
-    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
-    performance_metrics = lh_model.validate(data_valid, predictors, target)
-    model_performance_dict = {
-        'accuracy': performance_metrics['accuracy'],
-        'precision': performance_metrics['precision'],
-        'recall': performance_metrics['recall'],
-        'test_data_start': test_start,
-        'test_data_end': test_end
-    }
-
-    # Push trained model and performance metrics
-    model_performance_dict['master_model_id'] = model_id
-    new_model = MasterModelPerformance(**model_performance_dict)
-    db.session.add(new_model)
-    # If there is no active model, set the current one to be the active one.
-    active_model = MasterModel.find_active()
-    if active_model:
-        lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-        data_valid_old = preprocess_data(data_valid_old,preprocess_for='validation',predictors=predictors_old)
-        performance_metrics_old = lh_model_old.validate(data_valid_old, predictors_old, target_old)
-        model_performance_dict_old = {
-            'master_model_id': active_model.id,
-            'accuracy': performance_metrics_old['accuracy'],
-            'precision': performance_metrics_old['precision'],
-            'recall': performance_metrics_old['recall'],
+        # Output validation data results, used to assess model quality
+        # Positive -> (Target == 1)
+        data_valid_new = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
+        performance_metrics = lh_model.validate(data_valid_new, predictors, target)
+        model_performance_dict = {
+            'accuracy': performance_metrics['accuracy'],
+            'precision': performance_metrics['precision'],
+            'recall': performance_metrics['recall'],
             'test_data_start': test_start,
             'test_data_end': test_end
         }
@@ -188,8 +170,8 @@ def do_train():
         if active_model:
             lh_model_old = mm.MasterPredictionModel(active_model.pickle)
             predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-            performance_metrics_old = lh_model_old.validate(
-                preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
+            data_valid_old = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors_old)
+            performance_metrics_old = lh_model_old.validate(data_valid_old, predictors_old, target_old)
             model_performance_dict_old = {
                 'master_model_id': active_model.id,
                 'accuracy': performance_metrics_old['accuracy'],
@@ -198,6 +180,8 @@ def do_train():
                 'test_data_start': test_start,
                 'test_data_end': test_end
             }
+
+
             new_model = MasterModelPerformance(**model_performance_dict_old)
             db.session.add(new_model)
         else:
