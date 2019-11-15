@@ -17,8 +17,8 @@ transactions = Blueprint('transactions', __name__)
 @transactions.route('/', defaults={'id':None}, methods=['GET'])
 @transactions.route('/<int:id>', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -50,8 +50,8 @@ def get_transactions(id):
 # Check if transaction locked
 @transactions.route('/<int:id>/is_locked', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def check_transaction_lock(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -69,8 +69,8 @@ def check_transaction_lock(id):
 # Lock Transaction
 @transactions.route('/<int:id>/lock', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def lock_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -98,8 +98,8 @@ def lock_transaction(id):
 # Unlock Transaction
 @transactions.route('/<int:id>/unlock', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def unlock_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -126,16 +126,33 @@ def unlock_transaction(id):
 # Approve Transaction
 @transactions.route('/<int:id>/approve', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def approve_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
     # TODO: make sure user has access to the project
     #       make sure user has permission to approve
+
     query = Transaction.find_by_id(id)
     if not query:
         raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+    if query.transaction_project.has_ts_gst:
+        if not query.gst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_hst:
+        if not query.hst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_qst:
+        if not query.qst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_pst:
+        if not query.pst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on PST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_apo:
+        if not query.apo_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on APO codes before being approved.'.format(id))
+
     if query.locked_transaction_user and query.locked_user_id != current_user.id:
         raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
     if query.locked_user_id == current_user.id:
@@ -156,8 +173,8 @@ def approve_transaction(id):
 # UnApprove Transaction
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def unapprove_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -186,42 +203,53 @@ def unapprove_transaction(id):
 # UPDATE A TRANSACTION information
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
     # TODO: make sure user has access to the project
-    # input validation
     request_types = {
-        'gst_hst_code_id': ['int'],
-        'gst_hst_notes': ['str'],
-        'gst_hst_recoveries': ['float'],
-        'gst_hst_error_type': ['str'],
-        'gst_hst_coded_by_id': ['int'],
-        'gst_hst_signed_off_by_id': ['int'],
+        'gst_code_id': ['int','NoneType'],
+        'gst_notes_internal': ['str','NoneType'],
+        'gst_notes_external': ['str','NoneType'],
+        'gst_recoveries': ['float','NoneType'],
+        'gst_error_type': ['str','NoneType'],
+        'gst_coded_by_id': ['int','NoneType'],
+        'gst_signed_off_by_id': ['int','NoneType'],
 
-        'qst_code_id': ['int'],
-        'qst_notes': ['str'],
-        'qst_recoveries': ['float'],
-        'qst_error_type': ['str'],
-        'qst_coded_by_id': ['int'],
-        'qst_signed_off_by_id': ['int'],
+        'hst_code_id': ['int','NoneType'],
+        'hst_notes_internal': ['str','NoneType'],
+        'hst_notes_external': ['str','NoneType'],
+        'hst_recoveries': ['float','NoneType'],
+        'hst_error_type': ['str','NoneType'],
+        'hst_coded_by_id': ['int','NoneType'],
+        'hst_signed_off_by_id': ['int','NoneType'],
 
-        'pst_code_id': ['int'],
-        'pst_notes': ['str'],
-        'pst_recoveries': ['float'],
-        'pst_error_type': ['str'],
-        'pst_coded_by_id': ['int'],
-        'pst_signed_off_by_id': ['int'],
+        'qst_code_id': ['int','NoneType'],
+        'qst_notes_internal': ['str','NoneType'],
+        'qst_notes_external': ['str','NoneType'],
+        'qst_recoveries': ['float','NoneType'],
+        'qst_error_type': ['str','NoneType'],
+        'qst_coded_by_id': ['int','NoneType'],
+        'qst_signed_off_by_id': ['int','NoneType'],
 
-        'apo_code_id': ['int'],
-        'apo_notes': ['str'],
-        'apo_recoveries': ['float'],
-        'apo_error_type': ['str'],
-        'apo_coded_by_id': ['int'],
-        'apo_signed_off_by_id': ['int']
+        'pst_code_id': ['int','NoneType'],
+        'pst_notes_internal': ['str','NoneType'],
+        'pst_notes_external': ['str','NoneType'],
+        'pst_recoveries': ['float','NoneType'],
+        'pst_error_type': ['str','NoneType'],
+        'pst_coded_by_id': ['int','NoneType'],
+        'pst_signed_off_by_id': ['int','NoneType'],
+
+        'apo_code_id': ['int','NoneType'],
+        'apo_notes_internal': ['str','NoneType'],
+        'apo_notes_external': ['str','NoneType'],
+        'apo_recoveries': ['float','NoneType'],
+        'apo_error_type': ['str','NoneType'],
+        'apo_coded_by_id': ['int','NoneType'],
+        'apo_signed_off_by_id': ['int','NoneType']
     }
     validate_request_data(data, request_types)
 
@@ -235,26 +263,41 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
-    query.gst_hst_code_id = data['gst_hst_code_id']
-    query.gst_hst_notes = data['gst_hst_notes']
-    query.gst_hst_recoveries = data['gst_hst_recoveries']
-    query.gst_hst_error_type = data['gst_hst_error_type']
-    query.gst_hst_coded_by_id = data['gst_hst_coded_by_id']
-    query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
+    query.gst_code_id = data['gst_code_id']
+    query.gst_notes_internal = data['gst_notes_internal']
+    query.gst_notes_external = data['gst_notes_external']
+    query.gst_recoveries = data['gst_recoveries']
+    query.gst_error_type = data['gst_error_type']
+    query.gst_coded_by_id = data['gst_coded_by_id']
+    query.gst_signed_off_by_id = data['gst_signed_off_by_id']
+
+    query.hst_code_id = data['hst_code_id']
+    query.hst_notes_internal = data['hst_notes_internal']
+    query.hst_notes_external = data['hst_notes_external']
+    query.hst_recoveries = data['hst_recoveries']
+    query.hst_error_type = data['hst_error_type']
+    query.hst_coded_by_id = data['hst_coded_by_id']
+    query.hst_signed_off_by_id = data['hst_signed_off_by_id']
+
     query.qst_code_id = data['qst_code_id']
-    query.qst_notes = data['qst_notes']
+    query.qst_notes_internal = data['qst_notes_internal']
+    query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
     query.qst_coded_by_id = data['qst_coded_by_id']
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
+
     query.pst_code_id = data['pst_code_id']
-    query.pst_notes = data['pst_notes']
+    query.pst_notes_internal = data['pst_notes_internal']
+    query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
     query.pst_coded_by_id = data['pst_coded_by_id']
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
+
     query.apo_code_id = data['apo_code_id']
-    query.apo_notes = data['apo_notes']
+    query.apo_notes_internal = data['apo_notes_internal']
+    query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
     query.apo_error_type = data['apo_error_type']
     query.apo_coded_by_id = data['apo_coded_by_id']

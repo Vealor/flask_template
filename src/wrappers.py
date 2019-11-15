@@ -19,6 +19,12 @@ def exception_wrapper():
             except (InputError, ValueError) as e:
                 db.session.rollback()
                 abort(400, str(e)) if str(e) else abort(400)
+            except (UnauthorizedError) as e:
+                db.session.rollback()
+                abort(401, str(e)) if str(e) else abort(401)
+            except (ForbiddenError) as e:
+                db.session.rollback()
+                abort(403, str(e)) if str(e) else abort(403)
             except NotFoundError as e:
                 db.session.rollback()
                 abort(404, str(e)) if str(e) else abort(404)
@@ -38,10 +44,8 @@ def has_permission(roles):
         def f(*args, **kwargs):
             verify_jwt_in_request()
             user = get_current_user()
-            if user.is_superuser:
+            if user.is_superuser or user.is_system_administrator or user.role.value in roles:
                 return method(*args, **kwargs)
-            if user.is_system_administrator or user.role.value in roles:
-                return method(*args, **kwargs)
-            abort(403)
+            raise ForbiddenError("You do not have access to this resource.")
         return f
     return decorator

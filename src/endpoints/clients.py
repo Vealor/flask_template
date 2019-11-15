@@ -17,6 +17,7 @@ clients = Blueprint('clients', __name__)
 @clients.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_clients(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -43,6 +44,7 @@ def get_clients(id):
 @clients.route('/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def post_client():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -111,6 +113,7 @@ def post_client():
 @clients.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_client(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -224,6 +227,7 @@ def update_client(id):
 @clients.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_client(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
