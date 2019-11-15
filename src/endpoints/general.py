@@ -16,4 +16,5 @@ general = Blueprint('general', __name__)
 def default():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     response['VERSION'] = current_app.config['VERSION']
+    response['payload'] = []
     return jsonify(response)

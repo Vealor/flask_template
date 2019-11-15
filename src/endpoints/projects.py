@@ -133,6 +133,7 @@ def post_project():
         has_ts_hst = data['tax_scope']['has_ts_hst'],
         has_ts_qst = data['tax_scope']['has_ts_qst'],
         has_ts_pst = data['tax_scope']['has_ts_pst'],
+        has_ts_apo = data['tax_scope']['has_ts_apo'],
         has_ts_vat = data['tax_scope']['has_ts_vat'],
         has_ts_mft = data['tax_scope']['has_ts_mft'],
         has_ts_ct = data['tax_scope']['has_ts_ct'],
@@ -422,6 +423,7 @@ def update_project(id):
     query.has_ts_hst = data['tax_scope']['has_ts_hst']
     query.has_ts_qst = data['tax_scope']['has_ts_qst']
     query.has_ts_pst = data['tax_scope']['has_ts_pst']
+    query.has_ts_apo = data['tax_scope']['has_ts_apo']
     query.has_ts_vat = data['tax_scope']['has_ts_vat']
     query.has_ts_mft = data['tax_scope']['has_ts_mft']
     query.has_ts_ct = data['tax_scope']['has_ts_ct']

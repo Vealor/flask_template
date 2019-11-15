@@ -134,10 +134,25 @@ def approve_transaction(id):
     # TODO: make sure user has access to the project
     #       make sure user has permission to approve
 
-    # TRANSACTION CAN NOT BE APPROVED UNLESS ALL TAX CODES SIGNED OFF FOR SCOPE
     query = Transaction.find_by_id(id)
     if not query:
         raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+    if query.transaction_project.has_ts_gst:
+        if not query.gst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_hst:
+        if not query.hst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_qst:
+        if not query.qst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_pst:
+        if not query.pst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on PST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_apo:
+        if not query.apo_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on APO codes before being approved.'.format(id))
+
     if query.locked_transaction_user and query.locked_user_id != current_user.id:
         raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
     if query.locked_user_id == current_user.id:
@@ -195,14 +210,20 @@ def update_transaction(id):
     data = request.get_json()
 
     # TODO: make sure user has access to the project
-    # input validation
     request_types = {
-        'gst_hst_code_id': ['int'],
-        'gst_hst_notes': ['str'],
-        'gst_hst_recoveries': ['float'],
-        'gst_hst_error_type': ['str'],
-        'gst_hst_coded_by_id': ['int'],
-        'gst_hst_signed_off_by_id': ['int'],
+        'gst_code_id': ['int'],
+        'gst_notes': ['str'],
+        'gst_recoveries': ['float'],
+        'gst_error_type': ['str'],
+        'gst_coded_by_id': ['int'],
+        'gst_signed_off_by_id': ['int'],
+
+        'hst_code_id': ['int'],
+        'hst_notes': ['str'],
+        'hst_recoveries': ['float'],
+        'hst_error_type': ['str'],
+        'hst_coded_by_id': ['int'],
+        'hst_signed_off_by_id': ['int'],
 
         'qst_code_id': ['int'],
         'qst_notes': ['str'],
@@ -237,24 +258,34 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
-    query.gst_hst_code_id = data['gst_hst_code_id']
-    query.gst_hst_notes = data['gst_hst_notes']
-    query.gst_hst_recoveries = data['gst_hst_recoveries']
-    query.gst_hst_error_type = data['gst_hst_error_type']
-    query.gst_hst_coded_by_id = data['gst_hst_coded_by_id']
-    query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
+    query.gst_code_id = data['gst_code_id']
+    query.gst_notes = data['gst_notes']
+    query.gst_recoveries = data['gst_recoveries']
+    query.gst_error_type = data['gst_error_type']
+    query.gst_coded_by_id = data['gst_coded_by_id']
+    query.gst_signed_off_by_id = data['gst_signed_off_by_id']
+
+    query.hst_code_id = data['hst_code_id']
+    query.hst_notes = data['hst_notes']
+    query.hst_recoveries = data['hst_recoveries']
+    query.hst_error_type = data['hst_error_type']
+    query.hst_coded_by_id = data['hst_coded_by_id']
+    query.hst_signed_off_by_id = data['hst_signed_off_by_id']
+
     query.qst_code_id = data['qst_code_id']
     query.qst_notes = data['qst_notes']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
     query.qst_coded_by_id = data['qst_coded_by_id']
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
+
     query.pst_code_id = data['pst_code_id']
     query.pst_notes = data['pst_notes']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
     query.pst_coded_by_id = data['pst_coded_by_id']
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
+
     query.apo_code_id = data['apo_code_id']
     query.apo_notes = data['apo_notes']
     query.apo_recoveries = data['apo_recoveries']

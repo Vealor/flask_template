@@ -115,9 +115,9 @@ class Transaction(db.Model):
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
             'approved_user_id': self.approved_user_id,
             'approved_user_initials': self.approved_transaction_user.initials if self.approved_transaction_user else None,
+
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id,
-
 
             'gst_codes': [c.serialize for c in self.gst_codes],
             'gst_notes': self.gst_notes,
