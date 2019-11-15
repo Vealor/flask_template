@@ -19,7 +19,7 @@ from src.wrappers import has_permission, exception_wrapper
 projects = Blueprint('projects', __name__)
 #===============================================================================
 # Toggle Favourite for User
-@projects.route('/toggle_favourite/<path:id>', methods=['PUT'])
+@projects.route('/<int:id>/toggle_favourite', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -38,7 +38,7 @@ def toggle_favourite(id):
 #===============================================================================
 # GET ALL PROJECT
 @projects.route('/', defaults={'id':None}, methods=['GET'])
-@projects.route('/<path:id>', methods=['GET'])
+@projects.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -355,7 +355,7 @@ def apply_prediction(id):
 
 #===============================================================================
 # UPDATE A PROJECT
-@projects.route('/<path:id>', methods=['PUT'])
+@projects.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -499,7 +499,7 @@ def update_project(id):
 
 #===============================================================================
 # DELETE A PROJECT
-@projects.route('/<path:id>', methods=['DELETE'])
+@projects.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])

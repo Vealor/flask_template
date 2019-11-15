@@ -377,7 +377,7 @@ def set_active_model(model_id):
 
 #===============================================================================
 # Delete a client model
-@client_models.route('/<path:id>', methods=['DELETE'])
+@client_models.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])

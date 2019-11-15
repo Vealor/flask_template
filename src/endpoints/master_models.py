@@ -19,7 +19,7 @@ master_models = Blueprint('master_models', __name__)
 #===============================================================================
 # Get all master models
 @master_models.route('/', defaults={'id':None}, methods=['GET'])
-@master_models.route('/<path:id>', methods=['GET'])
+@master_models.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -364,7 +364,7 @@ def set_active_model(model_id):
 
 #===============================================================================
 # Delete a master model
-@master_models.route('/<path:id>', methods=['DELETE'])
+@master_models.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
