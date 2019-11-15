@@ -10,7 +10,7 @@ import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocess_data
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import get_date_obj_from_str, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -90,9 +90,10 @@ def do_train():
         raise InputError('A pending master model exists.')
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter_by(is_approved=True).count()
-    if transaction_count < 10000:
-        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 10,000 approved transactions.'.format(transaction_count))
+    #transaction_count = Transaction.query.filter_by(is_approved=True).count()
+    transaction_count = Transaction.query.count()
+    if transaction_count < 5000:
+        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 5,000 approved transactions.'.format(transaction_count))
 
     # create placeholder model
     entry = MasterModel(**model_data_dict)
@@ -103,10 +104,10 @@ def do_train():
     transactions = Transaction.query
 
     # Get the required transactions and put them into dataframes
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
+    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)) #.filter_by(is_approved=True)
     data_train = transactions_to_dataframe(train_transactions)
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)) #.filter_by(is_approved=True)
     data_valid = transactions_to_dataframe(test_transactions)
 
     # Training =================================
@@ -114,6 +115,7 @@ def do_train():
 
     target = "Target"
     predictors = list(set(data_train.columns) - set([target]))
+    print(predictors)
     lh_model.train(data_train,predictors,target)
 
     # Update the model entry with the hyperparameters and pickle
@@ -122,7 +124,7 @@ def do_train():
 
     # Output validation data results, used to assess model quality
     # Positive -> (Target == 1)
-    data_valid = preprocess_data(data_train,preprocess_for='training',predictors=predictors)
+    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
     performance_metrics = lh_model.validate(data_valid, predictors, target)
     model_performance_dict = {
         'accuracy': performance_metrics['accuracy'],

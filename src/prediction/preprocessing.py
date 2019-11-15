@@ -6,11 +6,11 @@ import os
 # Take note of the data types and mapping of variables (THIS IS LIKELY TO BE TEMPORARY)
 def get_data_types():
 
-    data_types = pd.read_csv('../src/prediction/data_types.csv', sep=',')
+    data_types = pd.read_csv('./src/prediction/data_types.csv', sep=',')
     data_types[['table_name','column_name']] = data_types["Data Field"].str.split(".", expand = True)
     data_types = data_types.drop('Data Field',axis=1)
 
-    data_mapping = pd.read_csv('../src/prediction/data_mappings.csv', sep=',')
+    data_mapping = pd.read_csv('./src/prediction/data_mappings.csv', sep=',')
 
     data_types = pd.merge(data_mapping,data_types,on=['table_name','column_name'],how='left')
     data_types.rename(columns={"Data Type":"data_type"},inplace = True)
