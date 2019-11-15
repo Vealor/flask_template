@@ -211,7 +211,7 @@ def update_transaction(id):
 
     # TODO: make sure user has access to the project
     request_types = {
-        'gst_codes': ['list'],
+        'gst_codes': ['list','NoneType'],
         'gst_notes_internal': ['str','NoneType'],
         'gst_notes_external': ['str','NoneType'],
         'gst_recoveries': ['float','NoneType'],
@@ -219,7 +219,7 @@ def update_transaction(id):
         'gst_coded_by_id': ['int','NoneType'],
         'gst_signed_off_by_id': ['int','NoneType'],
 
-        'hst_codes': ['list'],
+        'hst_codes': ['list','NoneType'],
         'hst_notes_internal': ['str','NoneType'],
         'hst_notes_external': ['str','NoneType'],
         'hst_recoveries': ['float','NoneType'],
@@ -227,7 +227,7 @@ def update_transaction(id):
         'hst_coded_by_id': ['int','NoneType'],
         'hst_signed_off_by_id': ['int','NoneType'],
 
-        'qst_codes': ['list'],
+        'qst_codes': ['list','NoneType'],
         'qst_notes_internal': ['str','NoneType'],
         'qst_notes_external': ['str','NoneType'],
         'qst_recoveries': ['float','NoneType'],
@@ -235,7 +235,7 @@ def update_transaction(id):
         'qst_coded_by_id': ['int','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
-        'pst_codes': ['list'],
+        'pst_codes': ['list','NoneType'],
         'pst_notes_internal': ['str','NoneType'],
         'pst_notes_external': ['str','NoneType'],
         'pst_recoveries': ['float','NoneType'],
@@ -243,7 +243,7 @@ def update_transaction(id):
         'pst_coded_by_id': ['int','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
-        'apo_codes': ['list'],
+        'apo_codes': ['list','NoneType'],
         'apo_notes_internal': ['str','NoneType'],
         'apo_notes_external': ['str','NoneType'],
         'apo_recoveries': ['float','NoneType'],

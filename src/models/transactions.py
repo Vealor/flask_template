@@ -1,5 +1,6 @@
 from .__model_imports import *
 from .codes import *
+from src.errors import *
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
