@@ -264,23 +264,7 @@ def update_transaction(id):
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
     ### GST
-    gst_codes = list(set(data['gst_codes']))
-    gst_query = TransactionGSTCode.query.filter_by(transaction_id=id).all()
-    for gst in gst_query:
-        print(gst.serialize)
-        if gst.transaction_gst_code_code.code_number in gst_codes:
-            gst_codes.remove(gst.transaction_gst_code_code.code_number)
-        else:
-            db.session.delete(gst)
-    for code in gst_codes:
-        code_query = Code.query.filter_by(code_number=code).first()
-        if not code_query:
-            raise InputError("Code number {} does not exist.".format(code))
-        db.session.add(TransactionGSTCode(
-            transaction_id = id,
-            code_id = code_query.id
-        ))
-    db.session.flush()
+    query.update_gst_codes(list(set(data['gst_codes'])))
     query.gst_notes_internal = data['gst_notes_internal']
     query.gst_notes_external = data['gst_notes_external']
     query.gst_recoveries = data['gst_recoveries']
@@ -289,23 +273,7 @@ def update_transaction(id):
     query.gst_signed_off_by_id = data['gst_signed_off_by_id']
 
     ### HST
-    hst_codes = list(set(data['hst_codes']))
-    hst_query = TransactionHSTCode.query.filter_by(transaction_id=id).all()
-    for hst in hst_query:
-        print(hst.serialize)
-        if hst.transaction_hst_code_code.code_number in hst_codes:
-            hst_codes.remove(hst.transaction_hst_code_code.code_number)
-        else:
-            db.session.delete(hst)
-    for code in hst_codes:
-        code_query = Code.query.filter_by(code_number=code).first()
-        if not code_query:
-            raise InputError("Code number {} does not exist.".format(code))
-        db.session.add(TransactionHSTCode(
-            transaction_id = id,
-            code_id = code_query.id
-        ))
-    db.session.flush()
+    query.update_hst_codes(list(set(data['hst_codes'])))
     query.hst_notes_internal = data['hst_notes_internal']
     query.hst_notes_external = data['hst_notes_external']
     query.hst_recoveries = data['hst_recoveries']
@@ -314,23 +282,7 @@ def update_transaction(id):
     query.hst_signed_off_by_id = data['hst_signed_off_by_id']
 
     ### QST
-    qst_codes = list(set(data['qst_codes']))
-    qst_query = TransactionQSTCode.query.filter_by(transaction_id=id).all()
-    for qst in qst_query:
-        print(qst.serialize)
-        if qst.transaction_qst_code_code.code_number in qst_codes:
-            qst_codes.remove(qst.transaction_qst_code_code.code_number)
-        else:
-            db.session.delete(qst)
-    for code in qst_codes:
-        code_query = Code.query.filter_by(code_number=code).first()
-        if not code_query:
-            raise InputError("Code number {} does not exist.".format(code))
-        db.session.add(TransactionQSTCode(
-            transaction_id = id,
-            code_id = code_query.id
-        ))
-    db.session.flush()
+    query.update_qst_codes(list(set(data['qst_codes'])))
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
@@ -339,23 +291,7 @@ def update_transaction(id):
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     ### PST
-    pst_codes = list(set(data['pst_codes']))
-    pst_query = TransactionPSTCode.query.filter_by(transaction_id=id).all()
-    for pst in pst_query:
-        print(pst.serialize)
-        if pst.transaction_pst_code_code.code_number in pst_codes:
-            pst_codes.remove(pst.transaction_pst_code_code.code_number)
-        else:
-            db.session.delete(pst)
-    for code in pst_codes:
-        code_query = Code.query.filter_by(code_number=code).first()
-        if not code_query:
-            raise InputError("Code number {} does not exist.".format(code))
-        db.session.add(TransactionPSTCode(
-            transaction_id = id,
-            code_id = code_query.id
-        ))
-    db.session.flush()
+    query.update_pst_codes(list(set(data['pst_codes'])))
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
@@ -364,23 +300,7 @@ def update_transaction(id):
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     ### APO
-    apo_codes = list(set(data['apo_codes']))
-    apo_query = TransactionAPOCode.query.filter_by(transaction_id=id).all()
-    for apo in apo_query:
-        print(apo.serialize)
-        if apo.transaction_apo_code_code.code_number in apo_codes:
-            apo_codes.remove(apo.transaction_apo_code_code.code_number)
-        else:
-            db.session.delete(apo)
-    for code in apo_codes:
-        code_query = Code.query.filter_by(code_number=code).first()
-        if not code_query:
-            raise InputError("Code number {} does not exist.".format(code))
-        db.session.add(TransactionAPOCode(
-            transaction_id = id,
-            code_id = code_query.id
-        ))
-    db.session.flush()
+    query.update_apo_codes(list(set(data['apo_codes'])))
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']

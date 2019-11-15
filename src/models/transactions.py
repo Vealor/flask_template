@@ -1,4 +1,5 @@
 from .__model_imports import *
+from .codes import *
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -28,6 +29,7 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    is_paredowned = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     rbc_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -110,6 +112,7 @@ class Transaction(db.Model):
         return {
             'id': self.id,
             'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
+            'is_paredowned': self.is_paredowned,
             'is_predicted': self.is_predicted,
             'recovery_probability': self.recovery_probability,
             'rbc_predicted': self.rbc_predicted,
@@ -174,6 +177,7 @@ class Transaction(db.Model):
             'apo_signed_off_by_id': self.apo_signed_off_by_id,
             'apo_signed_off_by_user': self.apo_signed_off_by_user
         }
+
     @property
     def predictive_serialize(self):
         output = {
@@ -197,3 +201,94 @@ class Transaction(db.Model):
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
+
+
+    def update_gst_codes(self, codes):
+        gst_codes = codes
+        gst_query = TransactionGSTCode.query.filter_by(transaction_id=self.id).all()
+        for gst in gst_query:
+            if gst.transaction_gst_code_code.code_number in gst_codes:
+                gst_codes.remove(gst.transaction_gst_code_code.code_number)
+            else:
+                db.session.delete(gst)
+        for code in gst_codes:
+            code_query = Code.query.filter_by(code_number=code).first()
+            if not code_query:
+                raise InputError("Code number {} does not exist.".format(code))
+            db.session.add(TransactionGSTCode(
+                transaction_id = self.id,
+                code_id = code_query.id
+            ))
+        db.session.flush()
+
+    def update_hst_codes(self, codes):
+        hst_codes = codes
+        hst_query = TransactionHSTCode.query.filter_by(transaction_id=self.id).all()
+        for hst in hst_query:
+            if hst.transaction_hst_code_code.code_number in hst_codes:
+                hst_codes.remove(hst.transaction_hst_code_code.code_number)
+            else:
+                db.session.delete(hst)
+        for code in hst_codes:
+            code_query = Code.query.filter_by(code_number=code).first()
+            if not code_query:
+                raise InputError("Code number {} does not exist.".format(code))
+            db.session.add(TransactionHSTCode(
+                transaction_id = self.id,
+                code_id = code_query.id
+            ))
+        db.session.flush()
+
+    def update_qst_codes(self, codes):
+        qst_codes = codes
+        qst_query = TransactionQSTCode.query.filter_by(transaction_id=self.id).all()
+        for qst in qst_query:
+            if qst.transaction_qst_code_code.code_number in qst_codes:
+                qst_codes.remove(qst.transaction_qst_code_code.code_number)
+            else:
+                db.session.delete(qst)
+        for code in qst_codes:
+            code_query = Code.query.filter_by(code_number=code).first()
+            if not code_query:
+                raise InputError("Code number {} does not exist.".format(code))
+            db.session.add(TransactionQSTCode(
+                transaction_id = self.id,
+                code_id = code_query.id
+            ))
+        db.session.flush()
+
+    def update_pst_codes(self, codes):
+        pst_codes = codes
+        pst_query = TransactionPSTCode.query.filter_by(transaction_id=self.id).all()
+        for pst in pst_query:
+            if pst.transaction_pst_code_code.code_number in pst_codes:
+                pst_codes.remove(pst.transaction_pst_code_code.code_number)
+            else:
+                db.session.delete(pst)
+        for code in pst_codes:
+            code_query = Code.query.filter_by(code_number=code).first()
+            if not code_query:
+                raise InputError("Code number {} does not exist.".format(code))
+            db.session.add(TransactionPSTCode(
+                transaction_id = self.id,
+                code_id = code_query.id
+            ))
+        db.session.flush()
+
+    def update_apo_codes(self, codes):
+        apo_codes = codes
+        apo_query = TransactionAPOCode.query.filter_by(transaction_id=self.id).all()
+        for apo in apo_query:
+            if apo.transaction_apo_code_code.code_number in apo_codes:
+                apo_codes.remove(apo.transaction_apo_code_code.code_number)
+            else:
+                db.session.delete(apo)
+        for code in apo_codes:
+            code_query = Code.query.filter_by(code_number=code).first()
+            if not code_query:
+                raise InputError("Code number {} does not exist.".format(code))
+            db.session.add(TransactionAPOCode(
+                transaction_id = self.id,
+                code_id = code_query.id
+            ))
+        db.session.flush()
