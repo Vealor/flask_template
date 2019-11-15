@@ -4,7 +4,6 @@ import os
 
 # ============================================================================ #
 # Configuration :
-
 PREDICTION_VARS = set([
     'ccy',
     'po_tx_jur',
@@ -67,7 +66,6 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
         df = df.drop(['Code'], axis = 1)
 
     # Filter the inputs to use only the predictors we want at the moment
-
 
     data_types = get_data_types()
     cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label']) & PREDICTION_VARS]
