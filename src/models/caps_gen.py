@@ -132,7 +132,7 @@ class SapCaps(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    # TODO: John add columns here
+
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps') # FK

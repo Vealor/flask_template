@@ -726,6 +726,7 @@ def j15():
     from caps as L
     left join (select * from sap_tbslt where caps_gen_id = {caps_gen_id}) as R
     on L.post_key_gl = R.data ->> 'tbslt_bschl_key'
+    and L.UMSKZ = R.data ->> 'tbslt_umskz_key'
     """.format(caps_gen_id = caps_gen_id)
     return j15
 
@@ -741,7 +742,7 @@ def j16():
     into caps_2
     from caps_1 as L
     left join (select * from sap_T001 where caps_gen_id = {caps_gen_id}) as R
-    on L.data ->> 'co_code_gl' = R.data ->> 't001_bukrs_key'
+    on L.co_code_gl = R.data ->> 't001_bukrs_key'
     """.format(caps_gen_id = caps_gen_id)
     return j16
 
