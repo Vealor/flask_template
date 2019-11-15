@@ -68,6 +68,7 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     print("3")
     # Enforce the data types here.
     for col in df.columns:
+        print("\t{}".format(col))
         imposed_type = data_types.loc[data_types['cdm_label_script_label'] == col].iloc[0]['data_type']
         if imposed_type == 'datetime':
             df[col] = pd.to_datetime(df[col],format='%Y%m%d', errors='coerce')

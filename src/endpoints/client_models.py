@@ -10,7 +10,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocess_data
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
 
@@ -122,12 +122,14 @@ def do_train():
         raise InputError('There are pending models for client ID {}.'.format(data['client_id']))
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
+    #transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
+    transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).count()
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
     # create placeholder model
-    try:    
+    print("1")
+    try:
         model_data_dict['client_id'] = data['client_id']
         entry = ClientModel(**model_data_dict)
         db.session.add(entry)
@@ -137,14 +139,14 @@ def do_train():
         transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
         # Train the instantiated model and edit the db entry
-        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id == None)
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))#.filter(Transaction.approved_user_id == None)
         data_train = transactions_to_dataframe(train_transactions)
 
-        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))#.filter(Transaction.approved_user_id != None)
         data_valid = transactions_to_dataframe(test_transactions)
-
+        print("2")
         # Training =================================
-        data_train = preprocessing_train(data_train)
+        data_train = preprocess_data(data_train,preprocess_for='training')
 
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
@@ -153,11 +155,12 @@ def do_train():
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}
-
+        entry.status = Activity.pending
+        print("3")
         # Output validation data results, used to assess model quality
         # Positive -> (Target == 1)
         performance_metrics = lh_model.validate(
-            preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
+            preprocess_data(data_valid, preprocess_for='validation', predictors=predictors), predictors, target)
         model_performance_dict = {
             'accuracy': performance_metrics['accuracy'],
             'precision': performance_metrics['precision'],
@@ -172,12 +175,13 @@ def do_train():
 
         # If there is an active model for this client, check to compare performance
         # Else, automatically push newly trained model to active
-
+        print("4")
         active_model = ClientModel.find_active_for_client(data['client_id'])
         if active_model:
             lh_model_old = cm.ClientPredictionModel(active_model.pickle)
             predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-            performance_metrics_old = lh_model_old.validate(preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
+            performance_metrics_old = lh_model_old.validate(
+                preprocess_data(data_valid, preprocess_for='validation', predictors=predictors_old), predictors_old, target_old)
             model_performance_dict_old = {
                 'client_model_id': active_model.id,
                 'accuracy': performance_metrics_old['accuracy'],

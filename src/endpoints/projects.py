@@ -11,7 +11,7 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from functools import reduce
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocess_data
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -262,7 +262,7 @@ def apply_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = id)# .filter_by(is_approved=False)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -287,7 +287,7 @@ def apply_prediction(id):
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
     df_predict = transactions_to_dataframe(project_transactions)
-    df_predict = preprocessing_predict(df_predict, predictors)
+    df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
