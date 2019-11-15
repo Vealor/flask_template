@@ -212,35 +212,40 @@ def update_transaction(id):
     # TODO: make sure user has access to the project
     request_types = {
         'gst_code_id': ['int','NoneType'],
-        'gst_notes': ['str','NoneType'],
+        'gst_notes_internal': ['str','NoneType'],
+        'gst_notes_external': ['str','NoneType'],
         'gst_recoveries': ['float','NoneType'],
         'gst_error_type': ['str','NoneType'],
         'gst_coded_by_id': ['int','NoneType'],
         'gst_signed_off_by_id': ['int','NoneType'],
 
         'hst_code_id': ['int','NoneType'],
-        'hst_notes': ['str','NoneType'],
+        'hst_notes_internal': ['str','NoneType'],
+        'hst_notes_external': ['str','NoneType'],
         'hst_recoveries': ['float','NoneType'],
         'hst_error_type': ['str','NoneType'],
         'hst_coded_by_id': ['int','NoneType'],
         'hst_signed_off_by_id': ['int','NoneType'],
 
         'qst_code_id': ['int','NoneType'],
-        'qst_notes': ['str','NoneType'],
+        'qst_notes_internal': ['str','NoneType'],
+        'qst_notes_external': ['str','NoneType'],
         'qst_recoveries': ['float','NoneType'],
         'qst_error_type': ['str','NoneType'],
         'qst_coded_by_id': ['int','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
         'pst_code_id': ['int','NoneType'],
-        'pst_notes': ['str','NoneType'],
+        'pst_notes_internal': ['str','NoneType'],
+        'pst_notes_external': ['str','NoneType'],
         'pst_recoveries': ['float','NoneType'],
         'pst_error_type': ['str','NoneType'],
         'pst_coded_by_id': ['int','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
         'apo_code_id': ['int','NoneType'],
-        'apo_notes': ['str','NoneType'],
+        'apo_notes_internal': ['str','NoneType'],
+        'apo_notes_external': ['str','NoneType'],
         'apo_recoveries': ['float','NoneType'],
         'apo_error_type': ['str','NoneType'],
         'apo_coded_by_id': ['int','NoneType'],
@@ -259,35 +264,40 @@ def update_transaction(id):
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
     query.gst_code_id = data['gst_code_id']
-    query.gst_notes = data['gst_notes']
+    query.gst_notes_internal = data['gst_notes_internal']
+    query.gst_notes_external = data['gst_notes_external']
     query.gst_recoveries = data['gst_recoveries']
     query.gst_error_type = data['gst_error_type']
     query.gst_coded_by_id = data['gst_coded_by_id']
     query.gst_signed_off_by_id = data['gst_signed_off_by_id']
 
     query.hst_code_id = data['hst_code_id']
-    query.hst_notes = data['hst_notes']
+    query.hst_notes_internal = data['hst_notes_internal']
+    query.hst_notes_external = data['hst_notes_external']
     query.hst_recoveries = data['hst_recoveries']
     query.hst_error_type = data['hst_error_type']
     query.hst_coded_by_id = data['hst_coded_by_id']
     query.hst_signed_off_by_id = data['hst_signed_off_by_id']
 
     query.qst_code_id = data['qst_code_id']
-    query.qst_notes = data['qst_notes']
+    query.qst_notes_internal = data['qst_notes_internal']
+    query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
     query.qst_coded_by_id = data['qst_coded_by_id']
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     query.pst_code_id = data['pst_code_id']
-    query.pst_notes = data['pst_notes']
+    query.pst_notes_internal = data['pst_notes_internal']
+    query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
     query.pst_coded_by_id = data['pst_coded_by_id']
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     query.apo_code_id = data['apo_code_id']
-    query.apo_notes = data['apo_notes']
+    query.apo_notes_internal = data['apo_notes_internal']
+    query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
     query.apo_error_type = data['apo_error_type']
     query.apo_coded_by_id = data['apo_coded_by_id']

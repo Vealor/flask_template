@@ -37,7 +37,8 @@ class Transaction(db.Model):
 
     # gst_code_id = db.Column(db.Integer, nullable=True) #FK
     gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
-    gst_notes = db.Column(db.String(2048), nullable=True)
+    gst_notes_internal = db.Column(db.String(2048), nullable=True)
+    gst_notes_external = db.Column(db.String(2048), nullable=True)
     gst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     gst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     gst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
@@ -47,7 +48,8 @@ class Transaction(db.Model):
 
     # hst_code_id = db.Column(db.Integer, nullable=True) #FK
     hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
-    hst_notes = db.Column(db.String(2048), nullable=True)
+    hst_notes_internal = db.Column(db.String(2048), nullable=True)
+    hst_notes_external = db.Column(db.String(2048), nullable=True)
     hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     hst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
@@ -57,7 +59,8 @@ class Transaction(db.Model):
 
     # qst_code_id = db.Column(db.Integer, nullable=True) #FK
     qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
-    qst_notes = db.Column(db.String(2048), nullable=True)
+    qst_notes_internal = db.Column(db.String(2048), nullable=True)
+    qst_notes_external = db.Column(db.String(2048), nullable=True)
     qst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     qst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
@@ -67,7 +70,8 @@ class Transaction(db.Model):
 
     # pst_code_id = db.Column(db.Integer, nullable=True) #FK
     pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
-    pst_notes = db.Column(db.String(2048), nullable=True)
+    pst_notes_internal = db.Column(db.String(2048), nullable=True)
+    pst_notes_external = db.Column(db.String(2048), nullable=True)
     pst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     pst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
@@ -77,7 +81,8 @@ class Transaction(db.Model):
 
     # apo_code_id = db.Column(db.Integer, nullable=True) #FK
     apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
-    apo_notes = db.Column(db.String(2048), nullable=True)
+    apo_notes_internal = db.Column(db.String(2048), nullable=True)
+    apo_notes_external = db.Column(db.String(2048), nullable=True)
     apo_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     apo_coded_by_id = db.Column(db.Integer, nullable=True) #FK
@@ -120,7 +125,8 @@ class Transaction(db.Model):
             'master_model_id': self.master_model_id,
 
             'gst_codes': [c.serialize for c in self.gst_codes],
-            'gst_notes': self.gst_notes,
+            'gst_notes_internal': self.gst_notes_internal,
+            'gst_notes_external': self.gst_notes_external,
             'gst_recoveries': self.gst_recoveries,
             'gst_error_type': self.gst_error_type,
             'gst_coded_by_id': self.gst_coded_by_id,
@@ -129,7 +135,8 @@ class Transaction(db.Model):
             'gst_signed_off_by_user': self.gst_signed_off_by_user,
 
             'hst_codes': [c.serialize for c in self.hst_codes],
-            'hst_notes': self.hst_notes,
+            'hst_notes_internal': self.hst_notes_internal,
+            'hst_notes_external': self.hst_notes_external,
             'hst_recoveries': self.hst_recoveries,
             'hst_error_type': self.hst_error_type,
             'hst_coded_by_id': self.hst_coded_by_id,
@@ -138,7 +145,8 @@ class Transaction(db.Model):
             'hst_signed_off_by_user': self.hst_signed_off_by_user,
 
             'qst_codes': [c.serialize for c in self.qst_codes],
-            'qst_notes': self.qst_notes,
+            'qst_notes_internal': self.qst_notes_internal,
+            'qst_notes_external': self.qst_notes_external,
             'qst_recoveries': self.qst_recoveries,
             'qst_error_type': self.qst_error_type,
             'qst_coded_by_id': self.qst_coded_by_id,
@@ -147,7 +155,8 @@ class Transaction(db.Model):
             'qst_signed_off_by_user': self.qst_signed_off_by_user,
 
             'pst_codes': [c.serialize for c in self.pst_codes],
-            'pst_notes': self.pst_notes,
+            'pst_notes_internal': self.pst_notes_internal,
+            'pst_notes_external': self.pst_notes_external,
             'pst_recoveries': self.pst_recoveries,
             'pst_error_type': self.pst_error_type,
             'pst_coded_by_id': self.pst_coded_by_id,
@@ -156,7 +165,8 @@ class Transaction(db.Model):
             'pst_signed_off_by_user': self.pst_signed_off_by_user,
 
             'apo_codes': [c.serialize for c in self.apo_codes],
-            'apo_notes': self.apo_notes,
+            'apo_notes_internal': self.apo_notes_internal,
+            'apo_notes_external': self.apo_notes_external,
             'apo_recoveries': self.apo_recoveries,
             'apo_error_type': self.apo_error_type,
             'apo_coded_by_id': self.apo_coded_by_id,
