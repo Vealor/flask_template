@@ -12,7 +12,6 @@ from src.util import send_mail, validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 auth = Blueprint('auth', __name__)
-
 #===============================================================================
 # make base lighthouse superuser
 @auth.route('/create_base_lh_superuser', methods=['POST'])
@@ -84,9 +83,7 @@ def login():
 
     user = User.find_by_username(data['username'])
     if not user or not User.verify_hash(data['password'], user.password):
-        response['status'] = 'error'
-        response['message'] = 'Wrong Credentials'
-        return jsonify(response), 401
+        raise UnauthorizedError("Wrong Credentials")
 
     response['access_token'] = create_access_token(identity = data['username'])
     response['refresh_token'] = create_refresh_token(identity = data['username'])

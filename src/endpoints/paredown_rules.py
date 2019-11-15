@@ -18,6 +18,8 @@ paredown_rules = Blueprint('paredown_rules', __name__)
 @paredown_rules.route('/', defaults={'id':None}, methods=['GET'])
 @paredown_rules.route('/<int:id>', methods=['GET'])
 # @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -43,6 +45,7 @@ def get_paredown_rules(id):
 @paredown_rules.route('/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def create_paredown_rule():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -50,7 +53,7 @@ def create_paredown_rule():
     request_types = {
         'approver1_id' : ['int','NoneType'],
         'approver2_id' : ['int','NoneType'],
-        'code': ['int'],
+        'code_id': ['int'],
         'is_active': ['bool']
     }
     validate_request_data(data, request_types)
@@ -72,6 +75,9 @@ def create_paredown_rule():
         if not (user.role == Roles.tax_master or user.is_superuser):
             raise InputError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
 
+    codecheck = Code.find_by_id(data['code_id'])
+    if not codecheck:
+        raise InputError("Code ID {} does not exist.".format(data['code_id']))
 
     lob_sectors = []
     # Create the new paredown rule
@@ -84,13 +90,13 @@ def create_paredown_rule():
     new_paredown_rule = ParedownRule(
         paredown_rule_approver1_id = data['approver1_id'],
         paredown_rule_approver2_id = data['approver2_id'],
-        code = data['code'],
+        code_id = data['code_id'],
         is_core = data['is_core'],
         is_active = data['is_active'],
         comment = data['comment'],
         lob_sectors = sqlalchemy.cast(lob_sectors, postgresql.ARRAY(postgresql.ENUM(LineOfBusinessSectors)))
     )
-    db.session.add(new_paredown_condition)
+    db.session.add(new_paredown_rule)
     db.session.flush()
 
     # Create the conditions for the paredown rule
@@ -104,8 +110,9 @@ def create_paredown_rule():
         db.session.add(new_paredown_condition)
         db.session.flush()
 
-    response['message'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
     db.session.commit()
+    response['message'] = 'Created Paredown Rule ID with {}.'.format(new_paredown_rule.id)
+    response['payload'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
 
     return jsonify(response), 201
 
@@ -114,6 +121,7 @@ def create_paredown_rule():
 @paredown_rules.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -124,7 +132,7 @@ def update_paredown_rule(id):
     request_types = {
         'approver1_id' : ['int','NoneType'],
         'approver2_id' : ['int','NoneType'],
-        'code': ['int'],
+        'code_id': ['int'],
         'is_active': ['bool']
     }
     validate_request_data(data, request_types)
@@ -146,7 +154,12 @@ def update_paredown_rule(id):
     query = ParedownRule.find_by_id(id)
     if not query:
         raise InputError("Paredown Rule ID {} does not exist.".format(id))
-    query.code = data['code']
+
+    codecheck = Code.find_by_id(data['code_id'])
+    if not codecheck:
+        raise InputError("Code ID {} does not exist.".format(data['code_id']))
+
+    query.code_id = data['code_id']
     query.comment = data['comment']
     query.is_core = data['is_core']
     query.is_active = data['is_active']
@@ -179,7 +192,8 @@ def update_paredown_rule(id):
         db.session.flush()
 
     db.session.commit()
-    response['message'] = 'Successfully updated Paredown Rule ID {}.'.format(query.id)
+    response['message'] = 'Updated Paredown Rule ID with {}.'.format(query.id)
+    response['payload'] = [ParedownRule.find_by_id(id).serialize]
 
     return jsonify(response), 200
 
@@ -188,6 +202,7 @@ def update_paredown_rule(id):
 @paredown_rules.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

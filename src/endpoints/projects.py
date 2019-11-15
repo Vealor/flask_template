@@ -18,17 +18,17 @@ from src.wrappers import has_permission, exception_wrapper
 projects = Blueprint('projects', __name__)
 #===============================================================================
 # Toggle Favourite for User
-@projects.route('/toggle_favourite/<path:id>', methods=['PUT'])
+@projects.route('/<int:id>/toggle_favourite', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def toggle_favourite(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    data = request.get_json()
 
-    query = UserProject.query
-    query = query.filter_by(user_id=current_user.id)
-    query = query.filter_by(project_id=id)
-    query = query.first()
+    query = UserProject.query.filter_by(user_id=current_user.id)
+    query = query.filter_by(project_id=id).first()
+    if not query:
+        raise NotFoundError("This project can not be toggled as a favourite or does not exist.")
     query.is_favourite = not query.is_favourite
     db.session.commit()
 
@@ -37,9 +37,10 @@ def toggle_favourite(id):
 #===============================================================================
 # GET ALL PROJECT
 @projects.route('/', defaults={'id':None}, methods=['GET'])
-@projects.route('/<path:id>', methods=['GET'])
+@projects.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_projects(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -70,6 +71,7 @@ def get_projects(id):
 @projects.route('/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def post_project():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -132,6 +134,7 @@ def post_project():
         has_ts_hst = data['tax_scope']['has_ts_hst'],
         has_ts_qst = data['tax_scope']['has_ts_qst'],
         has_ts_pst = data['tax_scope']['has_ts_pst'],
+        has_ts_apo = data['tax_scope']['has_ts_apo'],
         has_ts_vat = data['tax_scope']['has_ts_vat'],
         has_ts_mft = data['tax_scope']['has_ts_mft'],
         has_ts_ct = data['tax_scope']['has_ts_ct'],
@@ -216,6 +219,7 @@ def post_project():
 @projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def apply_paredown_rules(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 
@@ -223,6 +227,53 @@ def apply_paredown_rules(id):
     query = Project.find_by_id(id)
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
+
+    applied = 0
+    failed = 0
+
+    # get list of rules
+    lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
+    # rules = []
+    # for i in ParedownRule.query.all():
+    #     if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
+    #         rules.append(i.serialize)
+    #     elif i.lob_sectors:
+    #         has_sec = False
+    #         for l in i.lob_sectors:
+    #             if l['code'] in lobsecs:
+    #                 rules.append(i.serialize)
+    #         if has_sec:
+    #             rules.append(i.serialize)
+
+    # for txn in Transaction.query.filter_by(project_id=id).all():
+    #     print(txn.id)
+    #     if not txn.locked_user_id and not txn.approved_user_id:
+    #         for rule in rules:
+    #             do_paredown = 0
+    #             for condition in rule['conditions']:
+    #                 print(condition)
+    #                 if condition['field'] in txn.data:
+    #                     if operator == 'contains':
+    #                         print("\tCONTAINS")
+    #                         if condition.value in txn.data[condition.field]:
+    #                             do_paredown +=1
+    #                     elif operator in ['>','<','==','>=','<=','!=']:
+    #                         print("\tLOGICAL OPERATOR")
+    #                         #check for compare
+    #                         if True:
+    #                             do_paredown +=1
+    #                         pass
+    #                     else:
+    #                         failed +=1
+    #                         raise Exception("Database issue for ParedownRuleCondition operator.")
+    #                 else:
+    #                     failed +=1
+    #                     print("field not in data")
+    #             if do_paredown == len(rule['conditions']):
+    #                 applied +=1
+    #                 print("APPLY PAREDOWN TO TXN")
+                    # for each tax type, create a new many to many link to the code it needs
+
 
     ### PSEUDO CODE:
 
@@ -237,9 +288,9 @@ def apply_paredown_rules(id):
     #       else if operator in ['>','<','==','>=','<=','!=']
     #       else raise Error generic for 500 as DB problem
 
-    db.session.commit()
+    # db.session.commit()
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
-    response['payload'] = []
+    response['payload'] = [{'applied': applied,'failed':failed}]
 
     return jsonify(response), 200
 
@@ -248,11 +299,11 @@ def apply_paredown_rules(id):
 @projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def apply_prediction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
-    # input validation
     request_types = {
         'use_client_model': ['bool'],
     }
@@ -302,9 +353,10 @@ def apply_prediction(id):
 
 #===============================================================================
 # UPDATE A PROJECT
-@projects.route('/<path:id>', methods=['PUT'])
+@projects.route('/<int:id>', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_project(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -374,6 +426,7 @@ def update_project(id):
     query.has_ts_hst = data['tax_scope']['has_ts_hst']
     query.has_ts_qst = data['tax_scope']['has_ts_qst']
     query.has_ts_pst = data['tax_scope']['has_ts_pst']
+    query.has_ts_apo = data['tax_scope']['has_ts_apo']
     query.has_ts_vat = data['tax_scope']['has_ts_vat']
     query.has_ts_mft = data['tax_scope']['has_ts_mft']
     query.has_ts_ct = data['tax_scope']['has_ts_ct']
@@ -444,9 +497,10 @@ def update_project(id):
 
 #===============================================================================
 # DELETE A PROJECT
-@projects.route('/<path:id>', methods=['DELETE'])
+@projects.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_project(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

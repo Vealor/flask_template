@@ -19,9 +19,10 @@ master_models = Blueprint('master_models', __name__)
 #===============================================================================
 # Get all master models
 @master_models.route('/', defaults={'id':None}, methods=['GET'])
-@master_models.route('/<path:id>', methods=['GET'])
+@master_models.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_master_models(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -70,6 +71,7 @@ def is_training():
 @master_models.route('/train/', methods=['POST'])
 #@jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -227,6 +229,7 @@ def do_train():
 @master_models.route('/predict/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -277,64 +280,57 @@ def do_predict():
 # Validate the active master model.
 @master_models.route('/validate/', methods=['POST'])
 # @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_validate():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
 
-    try:
-        active_model = MasterModel.find_active()
-        if not active_model:
-            raise ValueError('No master model has been trained or is active.')
+    active_model = MasterModel.find_active()
+    if not active_model:
+        raise ValueError('No master model has been trained or is active.')
 
-        # validate input
-        request_types = {
-            'test_data_start_date': ['str'],
-            'test_data_end_date': ['str']
-        }
-        validate_request_data(data, request_types)
-        train_start = active_model.train_data_start.date()
-        train_end = active_model.train_data_end.date()
-        test_start = get_date_obj_from_str(data['test_data_start_date'])
-        test_end = get_date_obj_from_str(data['test_data_end_date'])
-        if test_start >= test_end:
-            raise ValueError('Invalid Test Data date range.')
-        if not (train_end < test_start or test_end < train_start):
-            raise ValueError('Cannot validate model on data it was trained on.')
+    request_types = {
+        'test_data_start_date': ['str'],
+        'test_data_end_date': ['str']
+    }
+    validate_request_data(data, request_types)
+    train_start = active_model.train_data_start.date()
+    train_end = active_model.train_data_end.date()
+    test_start = get_date_obj_from_str(data['test_data_start_date'])
+    test_end = get_date_obj_from_str(data['test_data_end_date'])
+    if test_start >= test_end:
+        raise ValueError('Invalid Test Data date range.')
+    if not (train_end < test_start or test_end < train_start):
+        raise ValueError('Cannot validate model on data it was trained on.')
 
-        lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+    lh_model_old = mm.MasterPredictionModel(active_model.pickle)
+    predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
-        # Pull the transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-        if test_transactions.count() == 0:
-            raise ValueError('No transactions to validate in given date range.')
-        data_valid = transactions_to_dataframe(test_transactions)
-        data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+    # Pull the transaction data into a dataframe
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    if test_transactions.count() == 0:
+        raise ValueError('No transactions to validate in given date range.')
+    data_valid = transactions_to_dataframe(test_transactions)
+    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
 
-        # Evaluate the performance metrics
-        performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
-        model_performance_dict_old = {
-            'master_model_id': active_model.id,
-            'accuracy': performance_metrics_old['accuracy'],
-            'precision': performance_metrics_old['precision'],
-            'recall': performance_metrics_old['recall'],
-            'test_data_start': test_start,
-            'test_data_end': test_end
-        }
-        db.session.add(MasterModelPerformance(**model_performance_dict_old))
-        db.session.commit()
+    # Evaluate the performance metrics
+    performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+    model_performance_dict_old = {
+        'master_model_id': active_model.id,
+        'accuracy': performance_metrics_old['accuracy'],
+        'precision': performance_metrics_old['precision'],
+        'recall': performance_metrics_old['recall'],
+        'test_data_start': test_start,
+        'test_data_end': test_end
+    }
+    db.session.add(MasterModelPerformance(**model_performance_dict_old))
+    db.session.commit()
 
-        response['message'] = 'Model validation complete.'
-        response['payload']['model_id'] = active_model.id
-        response['payload']['performance_metrics'] = performance_metrics_old
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    response['message'] = 'Model validation complete.'
+    response['payload']['model_id'] = active_model.id
+    response['payload']['performance_metrics'] = performance_metrics_old
+
     return jsonify(response), 201
 
 
@@ -343,10 +339,10 @@ def do_validate():
 @master_models.route('/compare/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
-
 
     active_model = MasterModel.find_active()
     if not active_model:
@@ -370,6 +366,7 @@ def compare_active_and_pending():
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
 
@@ -385,9 +382,10 @@ def set_active_model(model_id):
 
 #===============================================================================
 # Delete a master model
-@master_models.route('/<path:id>', methods=['DELETE'])
+@master_models.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_master_model(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

@@ -3,7 +3,7 @@ from azure.storage.file import FileService
 from datetime import timedelta
 
 class Config(object):
-    VERSION = '0.1.19'
+    VERSION = '0.2.0'
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -55,7 +55,10 @@ class DevelopmentConfig(Config):
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
     CAPS_MASTER_LOCATION = 'caps_gen_master'
-    CDM_TABLES = ['BKPF', 'BSEG', 'CSKT', 'EKPO', 'LFA1', 'MAKT', 'PAYR', 'SKAT', 'T001', 'T007S']
+    CDM_TABLES = ['BKPF', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
+                  'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
+                  'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
+                  'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
     FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
 
 class TestingConfig(Config):
@@ -63,8 +66,8 @@ class TestingConfig(Config):
     DEBUG = False
 
     POSTGRES = {
-        'user': 'itra',
-        'pw': 'Kpmg1234$',
+        'user': 'lh_admin_tax@itra-uat-sql.postgres.database.azure.com',
+        'pw': 'Kpmg1234@',
         'db': 'itra_db',
         'host': 'itra-uat-sql.postgres.database.azure.com',
         'port': '5432',
