@@ -361,7 +361,6 @@ def compare_active_and_pending():
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
-    args = request.args.to_dict()
 
     pending_model = ClientModel.find_by_id(model_id)
     client_id = pending_model.client_id

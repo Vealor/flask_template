@@ -25,12 +25,11 @@ projects = Blueprint('projects', __name__)
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def toggle_favourite(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    data = request.get_json()
 
-    query = UserProject.query
-    query = query.filter_by(user_id=current_user.id)
-    query = query.filter_by(project_id=id)
-    query = query.first()
+    query = UserProject.query.filter_by(user_id=current_user.id)
+    query = query.filter_by(project_id=id).first()
+    if not query:
+        raise NotFoundError("This project can not be toggled as a favourite or does not exist.")
     query.is_favourite = not query.is_favourite
     db.session.commit()
 

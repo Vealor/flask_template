@@ -85,9 +85,8 @@ def delete_caps_gens(id):
 #===============================================================================
 #===============================================================================
 #===============================================================================
-# Data Source Page
-# upload data when pressing `Next`
-
+# Project Path Creation
+# creates project path in local file hierarchy for server
 @caps_gen.route('/project_path_creation', methods=['POST'])
 @jwt_required
 @exception_wrapper()
@@ -104,6 +103,9 @@ def project_path_creation():
     response = project_path_create(data, response)
     return jsonify(response), 200
 
+#===============================================================================
+# CapsGen Initialization
+# unzips, creates CapsGen, creates DataMappings, builds master tables
 @caps_gen.route('/init', methods=['POST'])
 @jwt_required
 @exception_wrapper()

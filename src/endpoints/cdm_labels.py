@@ -24,7 +24,6 @@ def get_cdm_labels():
     # Set ORDER
     query = query.order_by('script_label')
 
-    # Set LIMIT
     if 'caps_table' in args.keys():
         output = {}
         for i in query.all():

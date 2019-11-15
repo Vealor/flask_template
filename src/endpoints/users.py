@@ -45,7 +45,7 @@ def get_users(id):
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
-def post_user():
+def create_user():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
@@ -175,9 +175,7 @@ def check_password(id):
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
-        response['status'] = 'error'
-        response['message'] = 'Password Invalid'
-        return jsonify(response), 401
+        raise UnauthorizedError("Password Invalid")
 
     response['message'] = 'Password Valid'
 
@@ -200,7 +198,7 @@ def update_user_password(id):
     }
     validate_request_data(data, request_types)
 
-    # password strength checking
+    # PASSWORD STRENGTH CHECKING
     # if len(data['newpassword']) < 8:
     #     raise InputError("Password length must be greater than 8.")
     # if not any(x.isupper() for x in data['newpassword']):
@@ -212,9 +210,7 @@ def update_user_password(id):
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
-        response['status'] = 'error'
-        response['message'] = 'Password Invalid'
-        return jsonify(response), 401
+        raise UnauthorizedError("Password Invalid")
 
     query.password = User.generate_hash(data['newpassword'])
     query.req_pass_reset = False
