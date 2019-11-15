@@ -124,7 +124,7 @@ class Transaction(db.Model):
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id,
 
-            'gst_codes': [c.serialize for c in self.gst_codes],
+            'gst_codes': [c.serialize['code'] for c in self.gst_codes] if self.gst_codes else [],
             'gst_notes_internal': self.gst_notes_internal,
             'gst_notes_external': self.gst_notes_external,
             'gst_recoveries': self.gst_recoveries,
@@ -134,7 +134,7 @@ class Transaction(db.Model):
             'gst_signed_off_by_id': self.gst_signed_off_by_id,
             'gst_signed_off_by_user': self.gst_signed_off_by_user,
 
-            'hst_codes': [c.serialize for c in self.hst_codes],
+            'hst_codes': [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else [],
             'hst_notes_internal': self.hst_notes_internal,
             'hst_notes_external': self.hst_notes_external,
             'hst_recoveries': self.hst_recoveries,
@@ -144,7 +144,7 @@ class Transaction(db.Model):
             'hst_signed_off_by_id': self.hst_signed_off_by_id,
             'hst_signed_off_by_user': self.hst_signed_off_by_user,
 
-            'qst_codes': [c.serialize for c in self.qst_codes],
+            'qst_codes': [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else [],
             'qst_notes_internal': self.qst_notes_internal,
             'qst_notes_external': self.qst_notes_external,
             'qst_recoveries': self.qst_recoveries,
@@ -154,7 +154,7 @@ class Transaction(db.Model):
             'qst_signed_off_by_id': self.qst_signed_off_by_id,
             'qst_signed_off_by_user': self.qst_signed_off_by_user,
 
-            'pst_codes': [c.serialize for c in self.pst_codes],
+            'pst_codes': [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else [],
             'pst_notes_internal': self.pst_notes_internal,
             'pst_notes_external': self.pst_notes_external,
             'pst_recoveries': self.pst_recoveries,
@@ -164,7 +164,7 @@ class Transaction(db.Model):
             'pst_signed_off_by_id': self.pst_signed_off_by_id,
             'pst_signed_off_by_user': self.pst_signed_off_by_user,
 
-            'apo_codes': [c.serialize for c in self.apo_codes],
+            'apo_codes': [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else [],
             'apo_notes_internal': self.apo_notes_internal,
             'apo_notes_external': self.apo_notes_external,
             'apo_recoveries': self.apo_recoveries,
