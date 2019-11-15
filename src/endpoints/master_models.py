@@ -8,10 +8,11 @@ import pickle
 import random
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import get_date_obj_from_str, validate_request_data
+from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
 
 master_models = Blueprint('master_models', __name__)
@@ -43,11 +44,31 @@ def get_master_models(id):
 
     return jsonify(response), 200
 
+#===============================================================================
+# Check if master models has a model in pending status
+@master_models.route('/has_pending/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def has_pending():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = { 'is_pending' : (MasterModel.find_pending() != None) }
+    return jsonify(response), 200
+
+
+#===============================================================================
+# Check if master models has a model in pending status
+@master_models.route('/is_training/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def is_training():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = { 'is_training' : (MasterModel.find_training() != None) }
+    return jsonify(response), 200
 
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-# @jwt_required
+#@jwt_required
 @exception_wrapper()
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -84,6 +105,10 @@ def do_train():
 
     # At this point, all database independent checks have been perfrm'd
     # Now, database dependent checks begin
+
+    # validate if training mode, stop on exist
+    if MasterModel.query.filter_by(status=Activity.training.value).all():
+        raise InputError('A master model is currently being trained.')
 
     # validate if pending mode, stop on exist
     if MasterModel.query.filter_by(status=Activity.pending.value).all():
@@ -153,18 +178,61 @@ def do_train():
             'test_data_start': test_start,
             'test_data_end': test_end
         }
-        new_model = MasterModelPerformance(**model_performance_dict_old)
-        db.session.add(new_model)
-    else:
-        MasterModel.set_active(model_id)
 
-    # Send an email here?
-    # ==================
+        # Push trained model and performance metrics
+        model_performance_dict['master_model_id'] = model_id
+        new_model = MasterModelPerformance(**model_performance_dict)
+        db.session.add(new_model)
+        # If there is no active model, set the current one to be the active one.
+        active_model = MasterModel.find_active()
+        if active_model:
+            lh_model_old = mm.MasterPredictionModel(active_model.pickle)
+            predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+            performance_metrics_old = lh_model_old.validate(
+                preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
+            model_performance_dict_old = {
+                'master_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+            new_model = MasterModelPerformance(**model_performance_dict_old)
+            db.session.add(new_model)
+        else:
+            MasterModel.set_active(model_id)
+    # If exception occurs delete placholder model and raise.
+    except Exception as e:
+        db.session.delete(MasterModel.find_by_id(model_id))
+        db.session.commit()
+
+        # Send an email to the user
+        subj = "Master model training failed."
+        content = """
+        <p>Sorry. Model Training failed. Please contact the Vancouver KPMG Lighthouse team for more information.</p>
+        <ul>
+        <li>Error: {}</li>
+        </ul>
+        """.format(str(e))
+        send_mail("willthompson@kpmg.ca",subj,content)
+
+        raise Exception("Error occured during model training: " + str(e))
 
     db.session.commit()
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['message'] = 'Model trained and created.'
+
+    # Send an email to the user
+    subj = "Master model training is complete!"
+    content = """
+    <p>Please log into the ARRT application to confirm the acceptability of the model</p>
+    <ul>
+    <li>Model Name: {}</li>
+    </ul>
+    """.format(MasterModel.find_by_id(model_id).serialize['name'])
+    send_mail("willthompson@kpmg.ca",subj,content)
 
     return jsonify(response), 201
 
@@ -188,7 +256,7 @@ def do_predict():
     project = Project.find_by_id(data['project_id'])
     if not project:
         raise ValueError('Project with ID {} does not exist.'.format(data['project_id']))
-    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = data['project_id']).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -289,56 +357,26 @@ def do_validate():
 # Compare active and pending models
 @master_models.route('/compare/', methods=['GET'])
 # @jwt_required
+@exception_wrapper()
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
 
-    try:
-        active_model = MasterModel.find_active()
-        if not active_model:
-            raise ValueError('No master model has been trained or is active.')
-        pending_model = MasterModel.find_pending()
-        if not pending_model:
-            raise ValueError('There is no pending model to compare to the active model.')
 
-        # validate input
-        request_types = {
-            'test_data_start_date': ['str'],
-            'test_data_end_date': ['str']
-            }
-        validate_request_data(data, request_types)
-        test_start = get_date_obj_from_str(data['test_data_start_date'])
-        test_end = get_date_obj_from_str(data['test_data_end_date'])
+    active_model = MasterModel.find_active()
+    if not active_model:
+        raise ValueError('No master model has been trained or is active.')
+    pending_model = MasterModel.find_pending()
+    if not pending_model:
+        raise ValueError('There is no pending model to compare to the active model.')
 
-        # Check if date range is acceptable for comparing the two models
-        if test_start >= test_end:
-            raise ValueError('Invalid Test Data date range.')
-        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
-            raise ValueError('Cannot validate active model on data it was trained on.')
-        if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
-            raise ValueError('Cannot validate pending model on data it was trained on.')
+    # Get the performance metrics for the pending and active models
+    active_metrics = MasterModelPerformance.get_most_recent_for_model(active_model.id).serialize
+    pending_metrics = MasterModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
-        # Pull the validation transaction data into a dataframe
-        test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-        if test_transactions.count() == 0:
-            raise ValueError('No transactions to validate in given date range.')
-        test_entries =  transactions_to_dataframe(test_transactions)
-        performance_metrics = {}
-        for model in [active_model, pending_model]:
-            lh_model = mm.MasterPredictionModel(model.pickle)
-            predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-            performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
+    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
+    response['message'] = 'Master model comparison complete'
 
-        response['message'] = 'Master model comparison complete'
-        response['payload'] = performance_metrics
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
     return jsonify(response), 200
 
 
@@ -346,24 +384,17 @@ def compare_active_and_pending():
 # Update the active master model
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 # @jwt_required
+@exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
 
-    try:
-        pending_model = MasterModel.find_by_id(model_id)
-        if not pending_model:
-            raise ValueError('There is no pending model to set as active.')
-        MasterModel.set_active(model_id)
-        db.session.commit()
-        response['message'] = 'Active Master model set to model {}'.format(model_id)
-    except ValueError as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 400
-    except Exception as e:
-        db.session.rollback()
-        response = { 'status': 'error', 'message': str(e), 'payload': [] }
-        return jsonify(response), 500
+    pending_model = MasterModel.find_by_id(model_id)
+    if not pending_model:
+        raise ValueError('There is no pending model to set as active.')
+    MasterModel.set_active(model_id)
+    db.session.commit()
+    response['message'] = 'Active Master model set to model {}'.format(model_id)
+
     return jsonify(response), 200
 
 

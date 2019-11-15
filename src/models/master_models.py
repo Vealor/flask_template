@@ -1,4 +1,5 @@
 from .__model_imports import *
+from sqlalchemy import desc
 ###############################################################################
 class MasterModel(db.Model):
     __tablename__ = 'master_models'
@@ -6,7 +7,7 @@ class MasterModel(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     pickle = db.Column(db.PickleType, nullable=False)
     hyper_p = db.Column(postgresql.JSON, nullable=False)
-    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.pending.value, nullable=False)
+    status = db.Column(db.Enum(Activity), unique=False, server_default=Activity.training.value, nullable=False)
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
@@ -37,6 +38,11 @@ class MasterModel(db.Model):
     def find_pending(cls):
         return cls.query.filter_by(status = Activity.pending.value).first()
 
+
+    @classmethod
+    def find_training(cls):
+        return cls.query.filter_by(status = Activity.training.value).first()
+
     @classmethod
     def set_active(cls, model_id):
         active_model = cls.find_active()
@@ -59,3 +65,21 @@ class MasterModelPerformance(db.Model):
 
     master_model_id = db.Column(db.Integer, nullable=False) # FK
     performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'master_model_id': self.master_model_id,
+            'model_name': self.performance_master_model.serialize['name'],
+            'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
+            'accuracy': self.accuracy,
+            'precision': self.precision,
+            'recall': self.recall,
+            'test_data_start': self.test_data_start.strftime('%Y/%m/%d'),
+            'test_data_end': self.test_data_end.strftime('%Y/%m/%d')
+        }
+
+    @classmethod
+    def get_most_recent_for_model(cls, model_id):
+        return cls.query.filter_by(master_model_id=model_id).order_by(desc('created')).first()

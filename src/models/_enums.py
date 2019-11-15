@@ -91,6 +91,7 @@ class Activity(enum.Enum):
     active = "active"
     inactive = "inactive"
     pending = "pending"
+    training = "training"
 
 class Caps_Interface(enum.Enum):
     repetition = "repetition"
