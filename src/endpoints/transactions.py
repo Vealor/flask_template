@@ -211,7 +211,7 @@ def update_transaction(id):
 
     # TODO: make sure user has access to the project
     request_types = {
-        'gst_code_id': ['int','NoneType'],
+        'gst_codes': ['list'],
         'gst_notes_internal': ['str','NoneType'],
         'gst_notes_external': ['str','NoneType'],
         'gst_recoveries': ['float','NoneType'],
@@ -219,7 +219,7 @@ def update_transaction(id):
         'gst_coded_by_id': ['int','NoneType'],
         'gst_signed_off_by_id': ['int','NoneType'],
 
-        'hst_code_id': ['int','NoneType'],
+        'hst_codes': ['list'],
         'hst_notes_internal': ['str','NoneType'],
         'hst_notes_external': ['str','NoneType'],
         'hst_recoveries': ['float','NoneType'],
@@ -227,7 +227,7 @@ def update_transaction(id):
         'hst_coded_by_id': ['int','NoneType'],
         'hst_signed_off_by_id': ['int','NoneType'],
 
-        'qst_code_id': ['int','NoneType'],
+        'qst_codes': ['list'],
         'qst_notes_internal': ['str','NoneType'],
         'qst_notes_external': ['str','NoneType'],
         'qst_recoveries': ['float','NoneType'],
@@ -235,7 +235,7 @@ def update_transaction(id):
         'qst_coded_by_id': ['int','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
-        'pst_code_id': ['int','NoneType'],
+        'pst_codes': ['list'],
         'pst_notes_internal': ['str','NoneType'],
         'pst_notes_external': ['str','NoneType'],
         'pst_recoveries': ['float','NoneType'],
@@ -243,7 +243,7 @@ def update_transaction(id):
         'pst_coded_by_id': ['int','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
-        'apo_code_id': ['int','NoneType'],
+        'apo_codes': ['list'],
         'apo_notes_internal': ['str','NoneType'],
         'apo_notes_external': ['str','NoneType'],
         'apo_recoveries': ['float','NoneType'],
@@ -263,7 +263,8 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
-    query.gst_code_id = data['gst_code_id']
+    ### GST
+    query.update_gst_codes(list(set(data['gst_codes'])))
     query.gst_notes_internal = data['gst_notes_internal']
     query.gst_notes_external = data['gst_notes_external']
     query.gst_recoveries = data['gst_recoveries']
@@ -271,7 +272,8 @@ def update_transaction(id):
     query.gst_coded_by_id = data['gst_coded_by_id']
     query.gst_signed_off_by_id = data['gst_signed_off_by_id']
 
-    query.hst_code_id = data['hst_code_id']
+    ### HST
+    query.update_hst_codes(list(set(data['hst_codes'])))
     query.hst_notes_internal = data['hst_notes_internal']
     query.hst_notes_external = data['hst_notes_external']
     query.hst_recoveries = data['hst_recoveries']
@@ -279,7 +281,8 @@ def update_transaction(id):
     query.hst_coded_by_id = data['hst_coded_by_id']
     query.hst_signed_off_by_id = data['hst_signed_off_by_id']
 
-    query.qst_code_id = data['qst_code_id']
+    ### QST
+    query.update_qst_codes(list(set(data['qst_codes'])))
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
@@ -287,7 +290,8 @@ def update_transaction(id):
     query.qst_coded_by_id = data['qst_coded_by_id']
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
-    query.pst_code_id = data['pst_code_id']
+    ### PST
+    query.update_pst_codes(list(set(data['pst_codes'])))
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
@@ -295,7 +299,8 @@ def update_transaction(id):
     query.pst_coded_by_id = data['pst_coded_by_id']
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
-    query.apo_code_id = data['apo_code_id']
+    ### APO
+    query.update_apo_codes(list(set(data['apo_codes'])))
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
