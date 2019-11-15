@@ -228,6 +228,8 @@ def apply_paredown_rules(id):
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
 
+    # CHECK IF PROJECT PAREDOWN LOCKED
+
     applied = 0
     failed = 0
 
