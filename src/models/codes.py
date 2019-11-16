@@ -3,8 +3,8 @@ from .__model_imports import *
 class TransactionGSTCode(db.Model):
     __tablename__ = 'transaction_gst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -27,8 +27,8 @@ class TransactionGSTCode(db.Model):
 class TransactionHSTCode(db.Model):
     __tablename__ = 'transaction_hst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -51,8 +51,8 @@ class TransactionHSTCode(db.Model):
 class TransactionQSTCode(db.Model):
     __tablename__ = 'transaction_qst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -75,8 +75,8 @@ class TransactionQSTCode(db.Model):
 class TransactionPSTCode(db.Model):
     __tablename__ = 'transaction_pst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -99,8 +99,8 @@ class TransactionPSTCode(db.Model):
 class TransactionAPOCode(db.Model):
     __tablename__ = 'transaction_apo_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
