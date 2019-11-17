@@ -16,8 +16,8 @@ data_mappings = Blueprint('data_mappings', __name__)
 @data_mappings.route('/', defaults={'id':None}, methods=['GET'])
 @data_mappings.route('/<int:id>', methods=['GET'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_data_mappings(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -45,7 +45,6 @@ def get_data_mappings(id):
 
 #===============================================================================
 # CREATE NEW DATA MAPPING
-
 # not done as new mappings can't be created
 # they are made during the CAPSGen process in /caps_gen/init
 
@@ -53,8 +52,8 @@ def get_data_mappings(id):
 # UPDATE DATA MAPPING
 @data_mappings.route('/<int:id>', methods=['PUT'])
 # @jwt_required
-# @has_permission([])
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_data_mapping(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -80,5 +79,4 @@ def update_data_mapping(id):
 
 #===============================================================================
 # DELETE DATA MAPPING
-
 # not done as mappings are only deleted through project deletion

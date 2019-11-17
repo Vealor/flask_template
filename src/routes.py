@@ -76,6 +76,10 @@ api.register_blueprint(paredown_rules, url_prefix='/paredown_rules')
 from src.endpoints.projects import projects
 api.register_blueprint(projects, url_prefix='/projects')
 
+# Role Endpoints
+from src.endpoints.roles import roles
+api.register_blueprint(roles, url_prefix='/roles')
+
 # Tax Rate Endpoint
 from src.endpoints.tax_rates import tax_rates
 api.register_blueprint(tax_rates, url_prefix='/tax_rates')

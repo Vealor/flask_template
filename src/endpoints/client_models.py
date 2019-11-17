@@ -7,6 +7,7 @@ import pickle
 import random
 import src.prediction.model_client as cm
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.errors import *
 from src.models import *
 from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
@@ -20,6 +21,7 @@ client_models = Blueprint('client_models', __name__)
 @client_models.route('/<int:id>', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_client_models(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
@@ -41,6 +43,7 @@ def get_client_models(id):
 @client_models.route('/train/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -181,6 +184,7 @@ def do_train():
 @client_models.route('/predict/', methods=['POST'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_predict():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -299,6 +303,8 @@ def do_validate():
 # Compare active and pending models
 @client_models.route('/compare/', methods=['GET'])
 # @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     data = request.get_json()
@@ -350,10 +356,11 @@ def compare_active_and_pending():
 #===============================================================================
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
-# @jwt_required
+# @jwt_refresh_token_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
-    args = request.args.to_dict()
 
     pending_model = ClientModel.find_by_id(model_id)
     client_id = pending_model.client_id
@@ -364,15 +371,16 @@ def set_active_model(model_id):
     ClientModel.set_active_for_client(model_id, client_id)
     db.session.commit()
     response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
-    
+
     return jsonify(response), 200
 
 
 #===============================================================================
 # Delete a client model
-@client_models.route('/<path:id>', methods=['DELETE'])
+@client_models.route('/<int:id>', methods=['DELETE'])
 # @jwt_required
 @exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_client_model(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
 

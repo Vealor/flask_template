@@ -3,22 +3,22 @@ from .__model_imports import *
 class TransactionGSTCode(db.Model):
     __tablename__ = 'transaction_gst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_gst_code_transaction = db.relationship('Transaction', back_populates='gst_codes', uselist=True) # FK
+    transaction_gst_code_transaction = db.relationship('Transaction', back_populates='gst_codes') # FK
 
     code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_gst_code_code = db.relationship('Code', back_populates='code_gst_transactions', uselist=True) # FK
+    transaction_gst_code_code = db.relationship('Code', back_populates='code_gst_transactions') # FK
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'code': self.transaction_gst_code_code
+            'code': self.transaction_gst_code_code.code_number
         }
     @classmethod
     def find_by_id(cls, id):
@@ -27,22 +27,22 @@ class TransactionGSTCode(db.Model):
 class TransactionHSTCode(db.Model):
     __tablename__ = 'transaction_hst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_hst_code_transaction = db.relationship('Transaction', back_populates='hst_codes', uselist=True) # FK
+    transaction_hst_code_transaction = db.relationship('Transaction', back_populates='hst_codes') # FK
 
     code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_hst_code_code = db.relationship('Code', back_populates='code_hst_transactions', uselist=True) # FK
+    transaction_hst_code_code = db.relationship('Code', back_populates='code_hst_transactions') # FK
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'code': self.transaction_hst_code_code
+            'code': self.transaction_hst_code_code.code_number
         }
     @classmethod
     def find_by_id(cls, id):
@@ -51,22 +51,22 @@ class TransactionHSTCode(db.Model):
 class TransactionQSTCode(db.Model):
     __tablename__ = 'transaction_qst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_qst_code_transaction = db.relationship('Transaction', back_populates='qst_codes', uselist=True) # FK
+    transaction_qst_code_transaction = db.relationship('Transaction', back_populates='qst_codes') # FK
 
     code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_qst_code_code = db.relationship('Code', back_populates='code_qst_transactions', uselist=True) # FK
+    transaction_qst_code_code = db.relationship('Code', back_populates='code_qst_transactions') # FK
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'code': self.transaction_qst_code_code
+            'code': self.transaction_qst_code_code.code_number
         }
     @classmethod
     def find_by_id(cls, id):
@@ -75,22 +75,22 @@ class TransactionQSTCode(db.Model):
 class TransactionPSTCode(db.Model):
     __tablename__ = 'transaction_pst_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_pst_code_transaction = db.relationship('Transaction', back_populates='pst_codes', uselist=True) # FK
+    transaction_pst_code_transaction = db.relationship('Transaction', back_populates='pst_codes') # FK
 
     code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_pst_code_code = db.relationship('Code', back_populates='code_pst_transactions', uselist=True) # FK
+    transaction_pst_code_code = db.relationship('Code', back_populates='code_pst_transactions') # FK
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'code': self.transaction_pst_code_code
+            'code': self.transaction_pst_code_code.code_number
         }
     @classmethod
     def find_by_id(cls, id):
@@ -99,27 +99,26 @@ class TransactionPSTCode(db.Model):
 class TransactionAPOCode(db.Model):
     __tablename__ = 'transaction_apo_codes'
     __table_args__ = (
-        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id']),
-        db.ForeignKeyConstraint(['code_id'], ['codes.id']),
+        db.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
+        db.ForeignKeyConstraint(['code_id'], ['codes.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_apo_code_transaction = db.relationship('Transaction', back_populates='apo_codes', uselist=True) # FK
+    transaction_apo_code_transaction = db.relationship('Transaction', back_populates='apo_codes') # FK
 
     code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_apo_code_code = db.relationship('Code', back_populates='code_apo_transactions', uselist=True) # FK
+    transaction_apo_code_code = db.relationship('Code', back_populates='code_apo_transactions') # FK
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'code': self.transaction_apo_code_code
+            'code': self.transaction_apo_code_code.code_number
         }
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
-
 
 class Code(db.Model):
     __tablename__ = 'codes'
@@ -129,11 +128,11 @@ class Code(db.Model):
     code_number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
 
-    code_gst_transactions = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_code', cascade="save-update", lazy='dynamic')
-    code_hst_transactions = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_code', cascade="save-update", lazy='dynamic')
-    code_qst_transactions = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_code', cascade="save-update", lazy='dynamic')
-    code_pst_transactions = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_code', cascade="save-update", lazy='dynamic')
-    code_apo_transactions = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_code', cascade="save-update", lazy='dynamic')
+    code_gst_transactions = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_code')
+    code_hst_transactions = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_code')
+    code_qst_transactions = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_code')
+    code_pst_transactions = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_code')
+    code_apo_transactions = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_code')
 
     code_paredown_rules = db.relationship('ParedownRule', back_populates='paredown_rule_code', lazy='dynamic')
 

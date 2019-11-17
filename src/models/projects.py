@@ -90,6 +90,7 @@ class Project(db.Model):
                 'has_ts_hst': self.has_ts_hst,
                 'has_ts_qst': self.has_ts_qst,
                 'has_ts_pst': self.has_ts_pst,
+                'has_ts_apo': self.has_ts_apo,
                 'has_ts_vat': self.has_ts_vat,
                 'has_ts_mft': self.has_ts_mft,
                 'has_ts_ct': self.has_ts_ct,
