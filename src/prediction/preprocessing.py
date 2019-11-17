@@ -48,11 +48,16 @@ def get_data_types():
 def transactions_to_dataframe(query,**kwargs):
 
     # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
-    entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
-    entries = pd.read_json('[' + ','.join(entries) + ']',orient='records')
-    entries['Code'] = codes
+    #entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
+    entries = [tr.predictive_serialize for tr in query]
+    data = [entry['data'] for entry in entries]
+    codes = [entry['codes'] for entry in entries]
 
-    return entries
+    df = pd.read_json('[' + ','.join(data) + ']',orient='records')
+    codes_df = pd.DataFrame(codes)
+    codes_df.rename(columns={x:x+"_codes" for x in codes_df.columns},inplace=True)
+
+    return df.join(codes_df)
 
 
 # Define the preprocessing routine here
