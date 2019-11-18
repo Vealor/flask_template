@@ -1,5 +1,6 @@
 from .__model_imports import *
 from .codes import *
+from src.errors import *
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -38,7 +39,7 @@ class Transaction(db.Model):
     data = db.Column(postgresql.JSON, nullable=False)
 
     # gst_code_id = db.Column(db.Integer, nullable=True) #FK
-    gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     gst_notes_internal = db.Column(db.String(2048), nullable=True)
     gst_notes_external = db.Column(db.String(2048), nullable=True)
     gst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -49,7 +50,7 @@ class Transaction(db.Model):
     gst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_signed_off_by_id') # FK
 
     # hst_code_id = db.Column(db.Integer, nullable=True) #FK
-    hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     hst_notes_internal = db.Column(db.String(2048), nullable=True)
     hst_notes_external = db.Column(db.String(2048), nullable=True)
     hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -60,7 +61,7 @@ class Transaction(db.Model):
     hst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.hst_signed_off_by_id') # FK
 
     # qst_code_id = db.Column(db.Integer, nullable=True) #FK
-    qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     qst_notes_internal = db.Column(db.String(2048), nullable=True)
     qst_notes_external = db.Column(db.String(2048), nullable=True)
     qst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -71,7 +72,7 @@ class Transaction(db.Model):
     qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id') # FK
 
     # pst_code_id = db.Column(db.Integer, nullable=True) #FK
-    pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     pst_notes_internal = db.Column(db.String(2048), nullable=True)
     pst_notes_external = db.Column(db.String(2048), nullable=True)
     pst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -82,7 +83,7 @@ class Transaction(db.Model):
     pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id') # FK
 
     # apo_code_id = db.Column(db.Integer, nullable=True) #FK
-    apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     apo_notes_internal = db.Column(db.String(2048), nullable=True)
     apo_notes_external = db.Column(db.String(2048), nullable=True)
     apo_recoveries = db.Column(db.Float, nullable=True, default=0.0)

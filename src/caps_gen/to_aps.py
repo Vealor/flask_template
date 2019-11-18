@@ -76,6 +76,10 @@ def j6(caps_gen_id):
     DROP TABLE IF EXISTS J1_BSEG_BKPF;
     SELECT
     L.varapkey,
+    LTRIM(RTRIM(L.data ->> 'PSWBT')) as bseg_pswbt_key,
+    LTRIM(RTRIM(L.data ->> 'DMBE2')) AS bseg_dmbe2_key,
+    LTRIM(RTRIM(L.data ->> 'UMSKZ')) as bseg_umskz_key,
+    LTRIM(RTRIM(L.data ->> 'SHKZG')) AS bseg_shkzg_key,
 	LTRIM(RTRIM(L.data ->> 'main_asset_num')) AS main_asset_num,
 	LTRIM(RTRIM(L.data ->> 'asset_sub_num')) AS asset_sub_num,
 	LTRIM(RTRIM(L.data ->> 'gl_doc_num')) AS gl_doc_num,
@@ -119,7 +123,7 @@ def j6(caps_gen_id):
     LTRIM(RTRIM(R.data ->> 'CPUTM')) AS CPUTM,
     LTRIM(RTRIM(R.data ->> 'fx_rate')) AS fx_rate,
     LTRIM(RTRIM(R.data ->> 'trnx_code_gl')) AS trnx_code_gl,
-    LTRIM(RTRIM(R.data ->> 'KTOPL')) AS KTOPL,
+    LTRIM(RTRIM(R.data ->> 'KTOPL')) AS bkpf_ktopl_key,
     LTRIM(RTRIM(R.data ->> 'bkpf_belnr_key')) AS bkpf_belnr_key,
     LTRIM(RTRIM(R.data ->> 'bkpf_bukrs_key')) AS bkpf_bukrs_key,
     LTRIM(RTRIM(R.data ->> 'bkpf_gjahr_key')) AS bkpf_gjahr_key,
@@ -198,6 +202,7 @@ def j10point5(caps_gen_id):
     j10point5 = """
     DELETE FROM sap_aps WHERE caps_gen_id = {caps_gen_id};
     INSERT INTO sap_aps (caps_gen_id, main_asset_num,
+    varapkey,
     asset_sub_num,
     gl_doc_num,
     post_key_gl,
@@ -261,6 +266,7 @@ def j10point5(caps_gen_id):
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl)
     select
     {caps_gen_id} caps_gen_id,
+    L.varapkey,
     L.main_asset_num,
     L.asset_sub_num,
     L.gl_doc_num,
