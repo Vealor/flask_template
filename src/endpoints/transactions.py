@@ -272,7 +272,7 @@ def batch_unapprove_transaction():
     response['message'] = 'Transaction unapproved.'
 
     db.session.commit()
-    response['payload'] = [Transaction.find_by_id(id).serialize]
+    response['payload'] = []
 
     return jsonify(response), 200
 
