@@ -82,7 +82,7 @@ def post_project():
         'client_id': ['int'],
         'project_users': ['list'],
         'lead_partner_id': ['int'],
-        'lead__manager_id': ['int'],
+        'lead_manager_id': ['int'],
         'tax_scope': ['dict'],
         'engagement_scope': ['dict']
     }
@@ -118,17 +118,17 @@ def post_project():
     if not lead_part:
         raise InputError('User id {} does not exist for engagement partner.'.format(data['lead_partner_id']))
 
-    # lead__manager_id validation
-    lead_mana = User.find_by_id(data['lead__manager_id'])
+    # lead_manager_id validation
+    lead_mana = User.find_by_id(data['lead_manager_id'])
     if not lead_mana:
-        raise InputError('User id {} does not exist for engagement manager.'.format(data['lead__manager_id']))
+        raise InputError('User id {} does not exist for engagement manager.'.format(data['lead_manager_id']))
 
     # BUILD transaction
     new_project = Project(
         name = data['name'],
         project_client = client,
         lead_partner_user = lead_part,
-        lead__manager_user = lead_mana,
+        lead_manager_user = lead_mana,
 
         has_ts_gst = data['tax_scope']['has_ts_gst'],
         has_ts_hst = data['tax_scope']['has_ts_hst'],
@@ -371,7 +371,7 @@ def update_project(id):
         'client_id': ['int'],
         'project_users': ['list'],
         'lead_partner_id': ['int'],
-        'lead__manager_id': ['int'],
+        'lead_manager_id': ['int'],
         'tax_scope': ['dict'],
         'engagement_scope': ['dict']
     }
@@ -418,11 +418,11 @@ def update_project(id):
     if not lead_part:
         raise InputError('User id does not exist for engagement partner.'.format(data['lead_partner_id']))
     query.lead_partner_user = lead_part
-    # lead__manager_id validation
-    lead_mana = User.find_by_id(data['lead__manager_id'])
+    # lead_manager_id validation
+    lead_mana = User.find_by_id(data['lead_manager_id'])
     if not lead_mana:
-        raise InputError('User id does not exist for engagement manager.'.format(data['lead__manager_id']))
-    query.lead__manager_user = lead_mana
+        raise InputError('User id does not exist for engagement manager.'.format(data['lead_manager_id']))
+    query.lead_manager_user = lead_mana
 
     query.has_ts_gst = data['tax_scope']['has_ts_gst']
     query.has_ts_hst = data['tax_scope']['has_ts_hst']
