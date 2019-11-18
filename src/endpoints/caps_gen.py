@@ -944,13 +944,20 @@ def view_caps(id):
 def caps_to_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-
+    engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
     caps_gen = CapsGen.query.filter_by(id=id)
     if not caps_gen.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (caps_gen.first()).project_id
 
-    # TODO: transform caps to transactions
+    project_id = (caps_gen.first()).project_id
+    print(project_id)
+    print('it got here')
+    if Transaction.query.filter_by(project_id=project_id).first():
+        print('deleting')
+        engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
+
+    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;').format(project_id)
+
 
 
 
