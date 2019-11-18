@@ -207,6 +207,7 @@ def batch_approve_transaction():
             raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
         if query.locked_user_id == current_user.id:
             raise InputError('Transaction ID {} is currently locked by you! Please unlock before approval.'.format(id))
+        db.session.flush()
 
     response['message'] = 'Transactions approved.'
 
@@ -268,11 +269,12 @@ def batch_unapprove_transaction():
 
         # TODO: check if use can even unapprove the given transaction
         query.approved_user_id = None
+        db.session.flush()
 
     response['message'] = 'Transaction unapproved.'
 
     db.session.commit()
-    response['payload'] = [Transaction.find_by_id(id).serialize]
+    response['payload'] = []
 
     return jsonify(response), 200
 
