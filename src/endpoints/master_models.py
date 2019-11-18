@@ -129,14 +129,12 @@ def do_train():
         db.session.add(entry)
         db.session.flush()
         model_id = entry.id
-        lh_model = mm.MasterPredictionModel()
-        transactions = Transaction.query
 
         # Get the required transactions and put them into dataframes
-        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)) #.filter_by(is_approved=True)
+        transactions = Transaction.query.filter(Transaction.approved_user_id != None)
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))
         data_train = transactions_to_dataframe(train_transactions)
-
-        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)) #.filter_by(is_approved=True)
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))
         data_valid = transactions_to_dataframe(test_transactions)
 
         # Training =================================
@@ -145,6 +143,7 @@ def do_train():
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
         print(predictors)
+        lh_model = mm.MasterPredictionModel()
         lh_model.train(data_train,predictors,target)
 
         # Update the model entry with the hyperparameters and pickle

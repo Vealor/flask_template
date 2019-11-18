@@ -315,10 +315,11 @@ def apply_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id)# .filter_by(is_approved=False)
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
+    print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
@@ -337,9 +338,12 @@ def apply_prediction(id):
 
     predictors = active_model.hyper_p['predictors']
 
+
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
+    print("Pull transactions to df.")
     df_predict = transactions_to_dataframe(project_transactions)
+    print("Preprocessing...")
     df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
     # Get probability of each transaction being class '1'
