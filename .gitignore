@@ -127,3 +127,4 @@ db_commands
 .idea/*
 migrations/versions
 caps-gen-processing
+sap_caps.csv
