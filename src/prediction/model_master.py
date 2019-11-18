@@ -75,7 +75,7 @@ class MasterPredictionModel(BasePredictionModel):
 
         xv,yv = validation_data[predictors], validation_data[target]
 
-        if y.value_counts().nunique() < 2:
+        if yv.value_counts().nunique() < 2:
             raise Exception("Error: Only one target class represented in validation data.")
 
         yp = self.predict(xv,predictors)
