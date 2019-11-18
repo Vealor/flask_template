@@ -170,6 +170,52 @@ def approve_transaction(id):
     return jsonify(response), 200
 
 #===============================================================================
+# BATCH Approve Transaction
+@transactions.route('/batch/approve', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def batch_approve_transaction():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+    if not isinstance(data, list):
+        raise InputError("Input batch must be list of IDs")
+
+    # TODO: make sure user has access to the project
+    #       make sure user has permission to approve
+    for id in data:
+        query = Transaction.find_by_id(id)
+        if not query:
+            raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+        if query.transaction_project.has_ts_gst:
+            if not query.gst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_hst:
+            if not query.hst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_qst:
+            if not query.qst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_pst:
+            if not query.pst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on PST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_apo:
+            if not query.apo_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on APO codes before being approved.'.format(id))
+
+        if query.locked_transaction_user and query.locked_user_id != current_user.id:
+            raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
+        if query.locked_user_id == current_user.id:
+            raise InputError('Transaction ID {} is currently locked by you! Please unlock before approval.'.format(id))
+
+    response['message'] = 'Transactions approved.'
+
+    db.session.commit()
+    response['payload'] = []
+
+    return jsonify(response), 200
+
+#===============================================================================
 # UnApprove Transaction
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
@@ -193,6 +239,37 @@ def unapprove_transaction(id):
     else:
         query.approved_user_id = None
         response['message'] = 'Transaction unapproved.'
+
+    db.session.commit()
+    response['payload'] = [Transaction.find_by_id(id).serialize]
+
+    return jsonify(response), 200
+
+#===============================================================================
+# BATCH UnApprove Transaction
+@transactions.route('/batch/unapprove', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def batch_unapprove_transaction():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+    if not isinstance(data, list):
+        raise InputError("Input batch must be list of IDs")
+
+    # TODO: make sure user has access to the project
+    #       make sure user has permission to unapprove
+    for id in data:
+        query = Transaction.find_by_id(id)
+        if not query:
+            raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+        if query.locked_transaction_user and query.locked_user_id != current_user.id:
+            raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
+
+        # TODO: check if use can even unapprove the given transaction
+        query.approved_user_id = None
+
+    response['message'] = 'Transaction unapproved.'
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
