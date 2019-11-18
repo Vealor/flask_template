@@ -69,8 +69,8 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     code_cols = list(set([x+"_codes" for x in ['gst','hst','qst','pst','apo']]) & set(df.columns))
 
     if preprocess_for in ['training','validation']:
-        has_recoverable = lambda codes: True if any(99 < x < 200 for x in codes) else False
-        df_target = pd.DataFrame({'Target':df[code_cols].applymap(has_recoverable).any(axis=1)})
+        has_recoverable = lambda code_list: True if any((99 < code < 200) for code in code_list) else False
+        df_target = pd.DataFrame({'Target':df[code_cols].applymap(lambda d: d if isinstance(d, list) else []).applymap(has_recoverable).any(axis=1)})
         df = df.drop(code_cols, axis = 1)
 
     # Filter the inputs to use only the predictors we want at the moment
