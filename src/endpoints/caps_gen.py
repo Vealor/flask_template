@@ -27,7 +27,7 @@ from src.caps_gen.data_quality_check import map_regex, recursive_find, recursive
 from src.caps_gen.to_aps import *
 from src.caps_gen.to_caps import *
 from src.errors import *
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -79,6 +79,7 @@ def delete_caps_gens(id):
     caps_gen = query.serialize
     db.session.delete(query)
     db.session.commit()
+    # create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
     response['message'] = 'Deleted caps_gen id {}.'.format(caps_gen['id'])
     response['payload'] = [caps_gen]
     return jsonify(response), 200
@@ -101,8 +102,9 @@ def project_path_creation():
         'system': ['str']
     }
     validate_request_data(data, request_types)
-    #todo: If project path creation fails, we need to create rollback code.
+    # TODO: If project path creation fails, we need to create rollback code.
     response = project_path_create(data, response)
+    # create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -246,6 +248,8 @@ def init_caps_gen():
         db.session.commit()
         raise Exception(e)
 
+    # create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -363,13 +367,14 @@ def apply_mappings_build_gst_registration(id):
     #     db.session.add(gst_entry)
     db.session.commit()
 
+    # create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
     response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
 
     return jsonify(response), 200
 
 
 #===============================================================================
-# View Tables Page
+# Get table names for View Tables Page
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
@@ -741,6 +746,8 @@ def data_quality_check(id):
     #     ###completeness check ###
     #         data_dictionary_results[table][column] = {
     #             'completeness': completeness_check(query)}
+
+    # create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
     response['payload'] = final_result
     return jsonify(response), 200
 
@@ -776,6 +783,8 @@ def data_to_aps(id):
     execute(j9(id))
     execute(j10(id))
     execute(j10point5(id))
+
+    # create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -822,6 +831,8 @@ def aps_quality_check(id):
     project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
+
+    # create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -902,6 +913,7 @@ def aps_to_caps(id):
     execute(j64())
     execute(j65())
 
+    # create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -947,6 +959,10 @@ def caps_to_transactions(id):
     result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;').format(project_id)
 
 
+
+
     caps_gen.is_complete = True
     db.session.commit()
+
+    # create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200

@@ -4,6 +4,7 @@ import re
 import sendgrid
 from flask import current_app
 from src.errors import *
+from src.models import *
 
 #==============================================================================
 # prints text with specific colours if adding to print statements
@@ -16,6 +17,23 @@ class bcolours:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+#===============================================================================
+# Create general system log entry
+def create_log(user, action, affected_entity, details):
+    if action not in Actions.__members__:
+        raise Exception('Unable to generate log with the action {}.'.format(action))
+    if not user:
+        raise Exception('Current User does not exist to creat this log entry.')
+    if len(affected_entity) > 255:
+        raise Exception('Affected Entity for log has too long of string. Keep under 256.')
+    db.session.add(Log(
+        user_id = user.id,
+        action = eval("Actions."+action),
+        affected_entity = affected_entity,
+        details = details
+    ))
+    db.session.commit()
 
 #===============================================================================
 # Builds date object from date format "YYYY-MM-DD"

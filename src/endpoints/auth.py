@@ -8,7 +8,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from src.errors import *
 from src.models import *
-from src.util import send_mail, validate_request_data
+from src.util import send_mail, validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 auth = Blueprint('auth', __name__)
@@ -61,7 +61,7 @@ def reset():
         <strong>new pass: </strong>'''+newpass+'''
         '''
         send_mail(data['email'], 'Password Reset', mailbody)
-
+        create_log(current_user, 'modify', 'User requested password reset', 'E-mail sent')
     db.session.commit()
     response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
 
