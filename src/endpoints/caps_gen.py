@@ -956,7 +956,7 @@ def caps_to_transactions(id):
         print('deleting')
         engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
 
-    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;').format(project_id)
+    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;'.format(project_id=project_id))
 
 
 
