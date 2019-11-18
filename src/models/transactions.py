@@ -188,15 +188,15 @@ class Transaction(db.Model):
             'codes': {}
         }
         if self.transaction_project.has_ts_gst and self.gst_signed_off_by_id:
-            output['codes']['gst'] = [c.code_number for c in self.gst_codes]
+            output['codes']['gst'] = [c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []
         if self.transaction_project.has_ts_hst and self.hst_signed_off_by_id:
-            output['codes']['hst'] = [c.code_number for c in self.hst_codes]
+            output['codes']['hst'] = [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []
         if self.transaction_project.has_ts_qst and self.qst_signed_off_by_id:
-            output['codes']['qst'] = [c.code_number for c in self.qst_codes]
+            output['codes']['qst'] = [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []
         if self.transaction_project.has_ts_pst and self.pst_signed_off_by_id:
-            output['codes']['pst'] = [c.code_number for c in self.pst_codes]
+            output['codes']['pst'] = [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []
         if self.transaction_project.has_ts_apo and self.apo_signed_off_by_id:
-            output['codes']['apo'] = [c.code_number for c in self.apo_codes]
+            output['codes']['apo'] = [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []
         return output
 
     @classmethod
