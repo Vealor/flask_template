@@ -41,7 +41,8 @@ class ClientPredictionModel(BasePredictionModel):
 
         if y.value_counts().nunique() < 2:
             raise Exception("Error: Only one target class represented in training data.")
-        if y.value_counts()[1] < 0.2*len(y):
+
+        if any([class_count < 0.2*len(y) for class_count in y.value_counts()]):
             print("Balancing classes...")
             X, y = SMOTE().fit_sample(X, y)
 
@@ -72,6 +73,10 @@ class ClientPredictionModel(BasePredictionModel):
             raise Exception("Error: Target cannot also be a predictor")
 
         xv,yv = validation_data[predictors], validation_data[target]
+
+        if yv.value_counts().nunique() < 2:
+            raise Exception("Error: Only one target class represented in validation data.")
+
         yp = self.predict(xv,predictors)
         n_valid_data = len(yp)
 
