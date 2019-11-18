@@ -16,6 +16,7 @@ PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Retail Unit N', 3, 1, 1);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
+  insert into caps_gen (user_id, project_id, is_completed) values (1, 3, False);
   insert into fx_rates (date, usdtocad) values ('2010-01-01', 1.56);
   insert into fx_rates (date, usdtocad) values ('2010-01-02', 1.57);
   insert into transactions (data, project_id) values ('{}', 1);
