@@ -369,6 +369,7 @@ class SapAps(db.Model):
     @property
     def serialize(self):
         return {
+            'post_key_gl': self.post_key_gl,
             'inv_date': self.inv_date,
             'post_date_gl': self.post_date_gl,
             'fx_rate': self.fx_rate,

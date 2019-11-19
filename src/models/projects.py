@@ -1,4 +1,5 @@
 from .__model_imports import *
+from sqlalchemy import desc
 ################################################################################
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -77,6 +78,7 @@ class Project(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'newest_caps_gen_id': sorted([i.serialize for i in self.project_caps_gen.all()], key=lambda i: i['id'], reverse=True)[0]['id'] if self.project_caps_gen else None,
             'client_id': self.client_id,
             'project_client': self.project_client.serialize,
             'is_paredown_locked': self.is_paredown_locked,
