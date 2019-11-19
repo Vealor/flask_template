@@ -39,28 +39,32 @@ def get_client_models(id):
 
 #===============================================================================
 # Check if a pending model exists
-@client_models.route('/<int:client_id>/has_pending/', methods=['GET'])
+@client_models.route('/has_pending/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def has_pending(client_id):
+def has_pending():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    # validate client existence
-    if not Client.find_by_id(client_id):
-        raise InputError('Client ID {} does not exist.'.format(client_id))
-    response['payload'] = { 'is_pending': (ClientModel.find_pending_for_client(client_id) != None) }
+    args = request.args.to_dict()
+
+    if 'client_id' not in args.keys():
+        raise InputError('Client ID must be specified in arguments')
+
+    response['payload'] = { 'is_pending': (ClientModel.find_pending_for_client(args['client_id']) != None) }
     return jsonify(response), 200
 
 #===============================================================================
 # Check if a model is being trained for the client
-@client_models.route('/<int:client_id>/is_training/', methods=['GET'])
+@client_models.route('/is_training/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def is_training(client_id):
+def is_training():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
-    # validate client existence
-    if not Client.find_by_id(client_id):
-        raise InputError('Client ID {} does not exist.'.format(client_id))
-    response['payload'] = { 'is_training': (ClientModel.find_training_for_client(client_id) != None) }
+    args = request.args.to_dict()
+
+    if 'client_id' not in args.keys():
+        raise InputError('Client ID must be specified in arguments')
+
+    response['payload'] = { 'is_training': (ClientModel.find_training_for_client(args['client_id']) != None) }
     return jsonify(response), 200
 
 
