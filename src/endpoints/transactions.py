@@ -49,7 +49,7 @@ def get_transactions(id):
     for i in query.all():
         txn = i.serialize
         payload['data'].append({**txn[2], **{'id':txn[0]}})
-        payload['transaction_details'][txn[0]] = txm[1]
+        payload['transaction_details'][txn[0]] = txn[1]
 
     response['payload'] = payload
 
