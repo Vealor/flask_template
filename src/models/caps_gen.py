@@ -152,8 +152,6 @@ class SapCaps(db.Model):
     pme_mat = db.Column(db.String(256), nullable=True)
     gst_mat = db.Column(db.String(256), nullable=True)
     flag_cn = db.Column(db.String(256), nullable=True)
-    broker_value = db.Column(db.String(256), nullable=True)
-    broker_pct = db.Column(db.String(256), nullable=True)
     odd_ind = db.Column(db.String(256), nullable=True)
     pme_general = db.Column(db.String(256), nullable=True)
     prov_tax_ind = db.Column(db.String(256), nullable=True)
@@ -369,7 +367,6 @@ class SapAps(db.Model):
     @property
     def serialize(self):
         return {
-            'post_key_gl': self.post_key_gl,
             'inv_date': self.inv_date,
             'post_date_gl': self.post_date_gl,
             'fx_rate': self.fx_rate,

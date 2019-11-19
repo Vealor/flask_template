@@ -33,4 +33,4 @@ elif [[ $1 == *"prod"* ]]; then
   BACKEND=http://localhost #7
 fi
 
-PGPASSWORD=$PASSWORD psql -h $DB_URL -U $USERNAME $DATABASE -c "\\copy sap_caps from '../sap_caps.csv' DELIMITER '|' CSV;"
+PGPASSWORD=$PASSWORD psql -h $DB_URL -U $USERNAME $DATABASE -c "\\copy sap_caps from '../sap_caps.csv' HEADER DELIMITER '|' CSV;"

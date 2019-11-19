@@ -1288,7 +1288,7 @@ def j63():
 
 def j64():
     j64 = """
-
+DROP TABLE IF EXISTS caps_no_attributes;
 select
     case when
     AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
@@ -1451,7 +1451,7 @@ CASE WHEN
 
 def j65():
     j65 = """
-
+    DROP TABLE IF EXISTS caps_with_attributes;
 	select rtrim(concat(noitc_var,
                 itc_var,
                 noitr_var,
@@ -1467,7 +1467,7 @@ def j65():
                 ODD5114_var,
                 ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
                 caps_no_attributes.*
-                into sap_caps_with_attributes
+                into caps_with_attributes
                 from (
     select
     case when GST_HST = 0.00 then 'NoITC, ' else null end as noitc_var,
@@ -1592,6 +1592,9 @@ def j65():
         top_inv_amt,
         amount_local_ccy,
         ap_ar_amt_doc_ccy,
+        vardocamt,
+        vartranamount,
+        varlocamt,
         ap_amt,
         gst_hst,
         pst,
@@ -1733,6 +1736,9 @@ def j65():
         top_inv_amt,
         amount_local_ccy,
         ap_ar_amt_doc_ccy,
+        vardocamt,
+        vartranamount,
+        varlocamt,
         ap_amt,
         gst_hst,
         pst,
@@ -1841,5 +1847,5 @@ def j65():
         handover_loc_po,
         vend_phone,
         vend_person,
-        purch_org_descr_po from sap_caps_with_attributes"""
+        purch_org_descr_po from caps_with_attributes"""
         return j66
