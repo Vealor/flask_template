@@ -42,7 +42,16 @@ def get_transactions(id):
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-    response['payload'] = [i.serialize for i in query.all()]
+    payload = {
+        'data': [],
+        'transaction_details': {}
+    }
+    for i in query.all():
+        txn = i.serialize
+        payload['data'].append({**txn[2], **{'id':txn[0]}})
+        payload['transaction_details'][txn[0]] = txn[1]
+
+    response['payload'] = payload
 
     return jsonify(response), 200
 

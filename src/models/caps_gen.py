@@ -151,8 +151,7 @@ class SapCaps(db.Model):
     even_gst_qst_rate = db.Column(db.String(256), nullable=True)
     pme_mat = db.Column(db.String(256), nullable=True)
     gst_mat = db.Column(db.String(256), nullable=True)
-    broker_value = db.Column(db.String(256), nullable=True)
-    broker_pct = db.Column(db.String(256), nullable=True)
+    flag_cn = db.Column(db.String(256), nullable=True)
     odd_ind = db.Column(db.String(256), nullable=True)
     pme_general = db.Column(db.String(256), nullable=True)
     prov_tax_ind = db.Column(db.String(256), nullable=True)
@@ -163,9 +162,6 @@ class SapCaps(db.Model):
     top_inv_amt = db.Column(db.String(256), nullable=True)
     amount_local_ccy = db.Column(db.String(256), nullable=True)
     ap_ar_amt_doc_ccy = db.Column(db.String(256), nullable=True)
-    vardocamt = db.Column(db.String(256), nullable=True)
-    vartranamount = db.Column(db.String(256), nullable=True)
-    varlocamt = db.Column(db.String(256), nullable=True)
     ap_amt = db.Column(db.String(256), nullable=True)
     gst_hst = db.Column(db.String(256), nullable=True)
     pst = db.Column(db.String(256), nullable=True)
@@ -368,6 +364,7 @@ class SapAps(db.Model):
     @property
     def serialize(self):
         return {
+            'post_key_gl': self.post_key_gl,
             'inv_date': self.inv_date,
             'post_date_gl': self.post_date_gl,
             'fx_rate': self.fx_rate,
