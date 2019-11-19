@@ -83,8 +83,8 @@ class LineOfBusinessSectors(enum.Enum):
 
 class Actions(enum.Enum):
     create = "create"
-    delete = "delete"
     modify = "modify"
+    delete = "delete"
     approve = "approve"
 
 class Activity(enum.Enum):
@@ -117,7 +117,7 @@ class Datatype(enum.Enum):
     dt_blob = BLOB
 
 class ErrorTypes(enum.Enum):
-    temp = "temp"
+    example_error = "example_error"
 
 class Jurisdiction(enum.Enum):
     ab = "Alberta"

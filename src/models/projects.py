@@ -1,11 +1,12 @@
 from .__model_imports import *
+from sqlalchemy import desc
 ################################################################################
 class Project(db.Model):
     __tablename__ = 'projects'
     __table_args__ = (
         db.ForeignKeyConstraint(['client_id'], ['clients.id']),
-        db.ForeignKeyConstraint(['engagement_partner_id'], ['users.id'], ondelete='SET NULL'),
-        db.ForeignKeyConstraint(['engagement_manager_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['lead_partner_id'], ['users.id'], ondelete='SET NULL'),
+        db.ForeignKeyConstraint(['lead_manager_id'], ['users.id'], ondelete='SET NULL'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -16,11 +17,11 @@ class Project(db.Model):
     client_id = db.Column(db.Integer, nullable=False) # FK
     project_client = db.relationship('Client', back_populates='client_projects') # FK
 
-    engagement_partner_id = db.Column(db.Integer, nullable=False) # FK
-    engagement_partner_user = db.relationship('User', foreign_keys='Project.engagement_partner_id') # FK
+    lead_partner_id = db.Column(db.Integer, nullable=False) # FK
+    lead_partner_user = db.relationship('User', foreign_keys='Project.lead_partner_id') # FK
 
-    engagement_manager_id = db.Column(db.Integer, nullable=False) # FK
-    engagement_manager_user = db.relationship('User', foreign_keys='Project.engagement_manager_id') # FK
+    lead_manager_id = db.Column(db.Integer, nullable=False) # FK
+    lead_manager_user = db.relationship('User', foreign_keys='Project.lead_manager_id') # FK
 
     project_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
@@ -77,14 +78,15 @@ class Project(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'newest_caps_gen_id': sorted([i.serialize for i in self.project_caps_gen.all()], key=lambda i: i['id'], reverse=True)[0]['id'] if self.project_caps_gen else None,
             'client_id': self.client_id,
             'project_client': self.project_client.serialize,
             'is_paredown_locked': self.is_paredown_locked,
             'is_completed': self.is_completed,
             'project_users': [{'user_id':i.user_id,'username':i.user_project_user.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
-            'engagement_partner_id': self.engagement_partner_id,
-            'engagement_manager_id': self.engagement_manager_id,
+            'lead_partner_id': self.lead_partner_id,
+            'lead_manager_id': self.lead_manager_id,
             'tax_scope': {
                 'has_ts_gst': self.has_ts_gst,
                 'has_ts_hst': self.has_ts_hst,

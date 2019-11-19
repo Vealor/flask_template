@@ -42,7 +42,16 @@ def get_transactions(id):
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-    response['payload'] = [i.serialize for i in query.all()]
+    payload = {
+        'data': [],
+        'transaction_details': {}
+    }
+    for i in query.all():
+        txn = i.serialize
+        payload['data'].append({**txn[2], **{'id':txn[0]}})
+        payload['transaction_details'][txn[0]] = txn[1]
+
+    response['payload'] = payload
 
     return jsonify(response), 200
 
@@ -170,6 +179,53 @@ def approve_transaction(id):
     return jsonify(response), 200
 
 #===============================================================================
+# BATCH Approve Transaction
+@transactions.route('/batch/approve', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def batch_approve_transaction():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+    if not isinstance(data, list):
+        raise InputError("Input batch must be list of IDs")
+
+    # TODO: make sure user has access to the project
+    #       make sure user has permission to approve
+    for id in data:
+        query = Transaction.find_by_id(id)
+        if not query:
+            raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+        if query.transaction_project.has_ts_gst:
+            if not query.gst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_hst:
+            if not query.hst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_qst:
+            if not query.qst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_pst:
+            if not query.pst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on PST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_apo:
+            if not query.apo_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on APO codes before being approved.'.format(id))
+
+        if query.locked_transaction_user and query.locked_user_id != current_user.id:
+            raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
+        if query.locked_user_id == current_user.id:
+            raise InputError('Transaction ID {} is currently locked by you! Please unlock before approval.'.format(id))
+        db.session.flush()
+
+    response['message'] = 'Transactions approved.'
+
+    db.session.commit()
+    response['payload'] = []
+
+    return jsonify(response), 200
+
+#===============================================================================
 # UnApprove Transaction
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
@@ -200,6 +256,38 @@ def unapprove_transaction(id):
     return jsonify(response), 200
 
 #===============================================================================
+# BATCH UnApprove Transaction
+@transactions.route('/batch/unapprove', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def batch_unapprove_transaction():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+    if not isinstance(data, list):
+        raise InputError("Input batch must be list of IDs")
+
+    # TODO: make sure user has access to the project
+    #       make sure user has permission to unapprove
+    for id in data:
+        query = Transaction.find_by_id(id)
+        if not query:
+            raise NotFoundError('Transaction ID {} does not exist.'.format(id))
+        if query.locked_transaction_user and query.locked_user_id != current_user.id:
+            raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
+
+        # TODO: check if use can even unapprove the given transaction
+        query.approved_user_id = None
+        db.session.flush()
+
+    response['message'] = 'Transaction unapproved.'
+
+    db.session.commit()
+    response['payload'] = []
+
+    return jsonify(response), 200
+
+#===============================================================================
 # UPDATE A TRANSACTION information
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
@@ -211,7 +299,7 @@ def update_transaction(id):
 
     # TODO: make sure user has access to the project
     request_types = {
-        'gst_codes': ['list'],
+        'gst_codes': ['list','NoneType'],
         'gst_notes_internal': ['str','NoneType'],
         'gst_notes_external': ['str','NoneType'],
         'gst_recoveries': ['float','NoneType'],
@@ -219,7 +307,7 @@ def update_transaction(id):
         'gst_coded_by_id': ['int','NoneType'],
         'gst_signed_off_by_id': ['int','NoneType'],
 
-        'hst_codes': ['list'],
+        'hst_codes': ['list','NoneType'],
         'hst_notes_internal': ['str','NoneType'],
         'hst_notes_external': ['str','NoneType'],
         'hst_recoveries': ['float','NoneType'],
@@ -227,7 +315,7 @@ def update_transaction(id):
         'hst_coded_by_id': ['int','NoneType'],
         'hst_signed_off_by_id': ['int','NoneType'],
 
-        'qst_codes': ['list'],
+        'qst_codes': ['list','NoneType'],
         'qst_notes_internal': ['str','NoneType'],
         'qst_notes_external': ['str','NoneType'],
         'qst_recoveries': ['float','NoneType'],
@@ -235,7 +323,7 @@ def update_transaction(id):
         'qst_coded_by_id': ['int','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
-        'pst_codes': ['list'],
+        'pst_codes': ['list','NoneType'],
         'pst_notes_internal': ['str','NoneType'],
         'pst_notes_external': ['str','NoneType'],
         'pst_recoveries': ['float','NoneType'],
@@ -243,7 +331,7 @@ def update_transaction(id):
         'pst_coded_by_id': ['int','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
-        'apo_codes': ['list'],
+        'apo_codes': ['list','NoneType'],
         'apo_notes_internal': ['str','NoneType'],
         'apo_notes_external': ['str','NoneType'],
         'apo_recoveries': ['float','NoneType'],

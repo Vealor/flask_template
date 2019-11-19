@@ -17,7 +17,6 @@ class Log(db.Model):
 
     @property
     def serialize(self):
-        username = ((User.query.filter_by(id=self.user_id).one()).serialize)['username']
         return {
             'id': self.id,
             'timestamp': self.timestamp.strftime("%Y-%m-%d_%H:%M:%S"),
@@ -25,5 +24,5 @@ class Log(db.Model):
             'affected_entity': self.affected_entity,
             'details': self.details,
             'user_id': self.user_id,
-            'username': username
+            'username': self.log_user.username
         }

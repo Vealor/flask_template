@@ -27,7 +27,7 @@ from src.caps_gen.data_quality_check import map_regex, recursive_find, recursive
 from src.caps_gen.to_aps import *
 from src.caps_gen.to_caps import *
 from src.errors import *
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -79,6 +79,7 @@ def delete_caps_gens(id):
     caps_gen = query.serialize
     db.session.delete(query)
     db.session.commit()
+    # create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
     response['message'] = 'Deleted caps_gen id {}.'.format(caps_gen['id'])
     response['payload'] = [caps_gen]
     return jsonify(response), 200
@@ -101,8 +102,9 @@ def project_path_creation():
         'system': ['str']
     }
     validate_request_data(data, request_types)
-    #todo: If project path creation fails, we need to create rollback code.
+    # TODO: If project path creation fails, we need to create rollback code.
     response = project_path_create(data, response)
+    # create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -246,6 +248,8 @@ def init_caps_gen():
         db.session.commit()
         raise Exception(e)
 
+    # create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -348,28 +352,29 @@ def apply_mappings_build_gst_registration(id):
     #         offset += limit
 
     # BUILD GST REGISTRATION
-    # TODO: V2 check for similary/duplicate projects by comparing attributes
-    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
-    for vendor in gst_data:
-        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
-            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
-        gst_entry = GstRegistration(
-            caps_gen_id = id,
-            vendor_country=vendor['lfa1_land1_key'],
-            vendor_number=vendor['lfa1_lifnr_key'],
-            vendor_city=vendor['vend_city'],
-            vendor_region=vendor['vend_region']
-        )
-        db.session.add(gst_entry)
+    #TODO: V2 check for similary/duplicate projects by comparing attributesh
+    # gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    # for vendor in gst_data:
+    #     if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+    #         raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+    #     gst_entry = GstRegistration(
+    #         caps_gen_id = id,
+    #         vendor_country=vendor['lfa1_land1_key'],
+    #         vendor_number=vendor['lfa1_lifnr_key'],
+    #         vendor_city=vendor['vend_city'],
+    #         vendor_region=vendor['vend_region']
+    #     )
+    #     db.session.add(gst_entry)
     db.session.commit()
 
+    # create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
     response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
 
     return jsonify(response), 200
 
 
 #===============================================================================
-# View Tables Page
+# Get table names for View Tables Page
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
@@ -741,6 +746,8 @@ def data_quality_check(id):
     #     ###completeness check ###
     #         data_dictionary_results[table][column] = {
     #             'completeness': completeness_check(query)}
+
+    # create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
     response['payload'] = final_result
     return jsonify(response), 200
 
@@ -777,6 +784,8 @@ def data_to_aps(id):
     execute(j10(id))
     execute(j10point5(id))
 
+    # create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
+
     return jsonify(response), 200
 
 #===============================================================================
@@ -794,6 +803,8 @@ def view_aps(id):
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     query = SapAps.query.filter_by(caps_gen_id = id)
+    # varapkey filter
+    query = query.filter_by(varapkey=args['varapkey']) if 'varapkey' in args.keys() else query
 
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
@@ -822,6 +833,8 @@ def aps_quality_check(id):
     project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
+
+    # create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -902,6 +915,7 @@ def aps_to_caps(id):
     execute(j64())
     execute(j65())
 
+    # create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -932,14 +946,25 @@ def view_caps(id):
 def caps_to_transactions(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-
+    engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
     caps_gen = CapsGen.query.filter_by(id=id)
     if not caps_gen.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (caps_gen.first()).project_id
 
-    # TODO: transform caps to transactions
+    project_id = (caps_gen.first()).project_id
+    print(project_id)
+    print('it got here')
+    if Transaction.query.filter_by(project_id=project_id).first():
+        print('deleting')
+        engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
+
+    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;'.format(project_id=project_id))
+
+
+
 
     caps_gen.is_complete = True
     db.session.commit()
+
+    # create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200
