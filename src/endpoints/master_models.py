@@ -138,14 +138,15 @@ def do_train():
         data_valid = transactions_to_dataframe(test_transactions)
 
         # Training =================================
+        print("\t Preprocessing ... ")
         data_train = preprocess_data(data_train,preprocess_for='training')
-
+        print(data_train.columns)
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
-        print(predictors)
+        print("\t Training Model ... ")
         lh_model = mm.MasterPredictionModel()
         lh_model.train(data_train,predictors,target)
-
+        print("\t Training Complete. ")
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}
@@ -182,7 +183,6 @@ def do_train():
                 'test_data_start': test_start,
                 'test_data_end': test_end
             }
-
 
             new_model = MasterModelPerformance(**model_performance_dict_old)
             db.session.add(new_model)
@@ -254,11 +254,11 @@ def do_validate():
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
     # Pull the transaction data into a dataframe
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     if test_transactions.count() == 0:
         raise ValueError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
-    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
 
     # Evaluate the performance metrics
     performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
