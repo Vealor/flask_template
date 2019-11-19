@@ -118,7 +118,7 @@ class Transaction(db.Model):
             'recovery_probability': self.recovery_probability,
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
-            'data': self.data,
+            'data': self.data if self.data else {},
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
