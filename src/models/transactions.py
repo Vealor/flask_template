@@ -111,7 +111,7 @@ class Transaction(db.Model):
     @property
     def serialize(self):
         output = {
-            # 'id': self.id,
+            'id': self.id,
             'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
             'is_paredowned': self.is_paredowned,
             'is_predicted': self.is_predicted,
