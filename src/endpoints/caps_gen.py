@@ -803,6 +803,8 @@ def view_aps(id):
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
     query = SapAps.query.filter_by(caps_gen_id = id)
+    # varapkey filter
+    query = query.filter_by(varapkey=args['varapkey']) if 'varapkey' in args.keys() else query
 
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
