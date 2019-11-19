@@ -130,35 +130,33 @@ def do_train():
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
     # create placeholder model
-    print("1")
     try:
         model_data_dict['client_id'] = data['client_id']
         entry = ClientModel(**model_data_dict)
         db.session.add(entry)
         db.session.flush()
         model_id = entry.id
-        lh_model = cm.ClientPredictionModel()
-        transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects))
 
-        # Train the instantiated model and edit the db entry
+        # Get the required transactions and put them into dataframes
+        transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None)
         train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))#.filter(Transaction.approved_user_id == None)
         data_train = transactions_to_dataframe(train_transactions)
-
         test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))#.filter(Transaction.approved_user_id != None)
         data_valid = transactions_to_dataframe(test_transactions)
-        print("2")
+
         # Training =================================
         data_train = preprocess_data(data_train,preprocess_for='training')
 
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
+        lh_model = cm.ClientPredictionModel()
         lh_model.train(data_train, predictors, target)
 
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}
         entry.status = Activity.pending
-        print("3")
+
         # Output validation data results, used to assess model quality
         # Positive -> (Target == 1)
         performance_metrics = lh_model.validate(
@@ -264,15 +262,11 @@ def do_validate():
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
     # Pull the transaction data into a dataframe
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     if test_transactions.count() == 0:
         raise ValueError('No transactions to validate in given date range.')
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
-
-    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+    data_valid = transactions_to_dataframe(test_transactions)
+    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
 
     # Evaluate the performance metrics
     performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
