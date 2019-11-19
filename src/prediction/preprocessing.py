@@ -1,16 +1,20 @@
-import pandas as pd
-from src.models import Transaction, Code
 import os
+import pandas as pd
+from functools import reduce
+from src.models import Transaction, Code
+
 
 # ============================================================================ #
 # Configuration :
-PREDICTION_VARS = set([
-    'ccy',
-    'po_tx_jur',
-    'amount_local_ccy',
-    'fx_rate',
-    'gst_hst_qst_pst_local_ccy'
-    ])
+PREDICTION_VARS = {
+    'broker_value': 'float',
+    'ccy': 'str',
+    'cn_flag_ind': 'Int64',
+    'cntry_name': 'str',
+    'eff_rate': 'float',
+    'ap_amt': 'float',
+    'po_tx_jur': 'str'
+}
 
 # ============================================================================ #
 # Take note of the data types and mapping of variables (THIS IS LIKELY TO BE TEMPORARY)
@@ -49,11 +53,13 @@ def transactions_to_dataframe(query,**kwargs):
 
     # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
     #entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
+    print("\t serialize...")
     entries = [tr.predictive_serialize for tr in query]
+    print("\t parse...")
     data = [entry['data'] for entry in entries]
     codes = [entry['codes'] for entry in entries]
-
-    df = pd.read_json('[' + ','.join(data) + ']',orient='records')
+    print("\t put into dataframe...")
+    df = pd.DataFrame(data)
     codes_df = pd.DataFrame(codes)
     codes_df.rename(columns={x:x+"_codes" for x in codes_df.columns},inplace=True)
 
@@ -70,13 +76,12 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     if preprocess_for in ['training','validation']:
         has_recoverable = lambda code_list: True if any((99 < code < 200) for code in code_list) else False
-        df_target = pd.DataFrame({'Target':df[code_cols].applymap(lambda d: d if isinstance(d, list) else []).applymap(has_recoverable).any(axis=1)})
+        df_target = pd.DataFrame({'Target':1*df[code_cols].applymap(lambda d: d if isinstance(d, list) else []).applymap(has_recoverable).any(axis=1)})
         df = df.drop(code_cols, axis = 1)
 
     # Filter the inputs to use only the predictors we want at the moment
-
-    data_types = get_data_types()
-    cols = [x for x in df.columns if x in set(data_types['cdm_label_script_label']) & PREDICTION_VARS]
+    #data_types = get_data_types_loc()
+    cols = [x for x in df.columns if x in PREDICTION_VARS.keys()]
     df = df[cols]
 
     # If training, only consider columns that have informative content
@@ -87,9 +92,11 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     # Enforce the data types here.
     for col in df.columns:
         print("\t{}".format(col))
-        imposed_type = data_types.loc[data_types['cdm_label_script_label'] == col].iloc[0]['data_type']
+        imposed_type = PREDICTION_VARS[col]
         if imposed_type == 'datetime':
             df[col] = pd.to_datetime(df[col],format='%Y%m%d', errors='coerce')
+        if imposed_type == 'list':
+            pass
         else:
             df[col] = df[col].astype(imposed_type)
             if imposed_type == 'str':
@@ -104,12 +111,11 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     # If training, only consider categorical columns with low cardinality
     if preprocess_for == 'training':
         int_columns = [col for col in int_columns if df[col].nunique() < 8]
-        str_columns = [col for col in str_columns if df[col].nunique() < 8]
+        str_columns = [col for col in str_columns if df[col].nunique() < 8 and col != 'transaction_attributes']
 
-    predictors = list(set(['ccy','po_tx_jur','amount_local_ccy','fx_rate','gst_hst_qst_pst_local_ccy']) & set(df.columns))
-
+    predictors = list(set(PREDICTION_VARS.keys()) & set(df.columns))
     df_final = df[predictors]
-
+    print(predictors)
 
     # Do one hot encoding on the low cardinality columns
     encoded_cols = [col for col in predictors if col in int_columns + str_columns]
@@ -117,6 +123,15 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
         temp_df = pd.get_dummies(df[column], prefix=column, prefix_sep=":", dummy_na=True)
         df_final = pd.concat([df_final, temp_df], axis=1)
     df_final = df_final.drop(encoded_cols, 1)
+
+    # Process the transaction attributes, if they exist in the data
+    if 'transaction_attributes' in df.columns:
+        df_attributes = df['transaction_attributes'].str.split(",")
+        l = df_attributes.apply(lambda x: [xx.strip() for xx in x])
+        attribs = reduce(lambda a,b : set(a) | set(b), l)
+        df_attributes = pd.DataFrame([{'transaction_attributes:{}'.format(attrib): 1*(attrib in x) for attrib in attribs} for x in l])
+        df_final.drop('transaction_attributes',axis=1,inplace=True)
+        df_final = df_final.join(df_attributes)
 
     # If validating or predicting, need to ensure all predictors are there.
     if preprocess_for in ['validation','prediction']:
