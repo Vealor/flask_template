@@ -13,7 +13,8 @@ PREDICTION_VARS = {
     'cntry_name': 'str',
     'eff_rate': 'float',
     'ap_amt': 'float',
-    'po_tx_jur': 'str'
+    'po_tx_jur': 'str',
+    'transaction_attributes': 'list'
 }
 
 # ============================================================================ #
@@ -72,17 +73,24 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     # Ensure that the preprocess_for variable is set to one of the correct values
     assert preprocess_for in ['training','validation','prediction']
 
-    code_cols = list(set([x+"_codes" for x in ['gst','hst','qst','pst','apo']]) & set(df.columns))
-
+    # If appropriate, create the code columns
     if preprocess_for in ['training','validation']:
+        code_cols = list(set([x+"_codes" for x in ['gst','hst','qst','pst','apo']]) & set(df.columns))
         has_recoverable = lambda code_list: True if any((99 < code < 200) for code in code_list) else False
         df_target = pd.DataFrame({'Target':1*df[code_cols].applymap(lambda d: d if isinstance(d, list) else []).applymap(has_recoverable).any(axis=1)})
         df = df.drop(code_cols, axis = 1)
 
+    # Ensure that the appropriate arguments are specified in the keywords
+    if preprocess_for in ['validation','prediction']:
+        if not kwargs['predictors']:
+            raise Exception("keyword argument 'predictors' must be specified to do validation or prediction.")
+        train_predictors = kwargs['predictors']
+        print(train_predictors)
+
     # Filter the inputs to use only the predictors we want at the moment
-    #data_types = get_data_types_loc()
-    cols = [x for x in df.columns if x in PREDICTION_VARS.keys()]
-    df = df[cols]
+    df = df[[x for x in df.columns if x in PREDICTION_VARS.keys()]]
+    if preprocess_for in ['validation','prediction']:
+        df = df[list(set(df.columns) & set(train_predictors))]
 
     # If training, only consider columns that have informative content
     if preprocess_for == 'training':
@@ -90,13 +98,13 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
         df = df[informative_columns]
 
     # Enforce the data types here.
+    list_columns = []
     for col in df.columns:
-        print("\t{}".format(col))
         imposed_type = PREDICTION_VARS[col]
         if imposed_type == 'datetime':
             df[col] = pd.to_datetime(df[col],format='%Y%m%d', errors='coerce')
-        if imposed_type == 'list':
-            pass
+        elif imposed_type == 'list':
+            list_columns.append(col)
         else:
             df[col] = df[col].astype(imposed_type)
             if imposed_type == 'str':
@@ -107,15 +115,15 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     float_columns = [col for col in df.columns if df[col].dtype == 'float64']
     datetime_columns = [col for col in df.columns if df[col].dtype == 'datetime64[ns]']
 
-
     # If training, only consider categorical columns with low cardinality
     if preprocess_for == 'training':
         int_columns = [col for col in int_columns if df[col].nunique() < 8]
         str_columns = [col for col in str_columns if df[col].nunique() < 8 and col != 'transaction_attributes']
 
-    predictors = list(set(PREDICTION_VARS.keys()) & set(df.columns))
+    # Only keep the data columns that we can hvaev appropriately treated
+
+    predictors = int_columns + str_columns + float_columns + datetime_columns + list_columns
     df_final = df[predictors]
-    print(predictors)
 
     # Do one hot encoding on the low cardinality columns
     encoded_cols = [col for col in predictors if col in int_columns + str_columns]
@@ -136,8 +144,6 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
     # If validating or predicting, need to ensure all predictors are there.
     if preprocess_for in ['validation','prediction']:
 
-        train_predictors = kwargs['predictors']
-
         # Remove those columns that are not in the training predictors, but are in the data here.
         missing_cols = list(set(df_final.columns) - set(train_predictors))
         df_final.drop(missing_cols,axis=1,inplace=True)
@@ -149,8 +155,13 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     df_final.fillna(-999,inplace=True)
 
-    if preprocess_for in ['training','validation']:
-        return df_final.join(df_target)
+    # Ensure that the data is returned with consistent column ordering
+
+    if preprocess_for != 'training':
+        print(train_predictors)
+        df_final = df_final[train_predictors]
+    if preprocess_for != 'prediction':
+        df_final = df_final.join(df_target)
     return df_final
 
 # Define the preprocessing routine here
