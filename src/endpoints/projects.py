@@ -82,8 +82,8 @@ def post_project():
         'name': ['str'],
         'client_id': ['int'],
         'project_users': ['list'],
-        'engagement_partner_id': ['int'],
-        'engagement_manager_id': ['int'],
+        'lead_partner_id': ['int'],
+        'lead_manager_id': ['int'],
         'tax_scope': ['dict'],
         'engagement_scope': ['dict']
     }
@@ -114,22 +114,22 @@ def post_project():
     if not client:
         raise InputError('Client id does not exist.'.format(data['client_id']))
 
-    # engagement_partner_id validation
-    eng_part = User.find_by_id(data['engagement_partner_id'])
-    if not eng_part:
-        raise InputError('User id {} does not exist for engagement partner.'.format(data['engagement_partner_id']))
+    # lead_partner_id validation
+    lead_part = User.find_by_id(data['lead_partner_id'])
+    if not lead_part:
+        raise InputError('User id {} does not exist for engagement partner.'.format(data['lead_partner_id']))
 
-    # engagement_manager_id validation
-    eng_mana = User.find_by_id(data['engagement_manager_id'])
-    if not eng_mana:
-        raise InputError('User id {} does not exist for engagement manager.'.format(data['engagement_manager_id']))
+    # lead_manager_id validation
+    lead_mana = User.find_by_id(data['lead_manager_id'])
+    if not lead_mana:
+        raise InputError('User id {} does not exist for engagement manager.'.format(data['lead_manager_id']))
 
     # BUILD transaction
     new_project = Project(
         name = data['name'],
         project_client = client,
-        engagement_partner_user = eng_part,
-        engagement_manager_user = eng_mana,
+        lead_partner_user = lead_part,
+        lead_manager_user = lead_mana,
 
         has_ts_gst = data['tax_scope']['has_ts_gst'],
         has_ts_hst = data['tax_scope']['has_ts_hst'],
@@ -372,8 +372,8 @@ def update_project(id):
         'is_completed': ['bool'],
         'client_id': ['int'],
         'project_users': ['list'],
-        'engagement_partner_id': ['int'],
-        'engagement_manager_id': ['int'],
+        'lead_partner_id': ['int'],
+        'lead_manager_id': ['int'],
         'tax_scope': ['dict'],
         'engagement_scope': ['dict']
     }
@@ -415,16 +415,16 @@ def update_project(id):
     query.is_paredown_locked = data['is_paredown_locked']
     # archive project update
     query.is_completed = data['is_completed']
-    # engagement_partner_id validation and update
-    eng_part = User.find_by_id(data['engagement_partner_id'])
-    if not eng_part:
-        raise InputError('User id does not exist for engagement partner.'.format(data['engagement_partner_id']))
-    query.engagement_partner_user = eng_part
-    # engagement_manager_id validation
-    eng_mana = User.find_by_id(data['engagement_manager_id'])
-    if not eng_mana:
-        raise InputError('User id does not exist for engagement manager.'.format(data['engagement_manager_id']))
-    query.engagement_manager_user = eng_mana
+    # lead_partner_id validation and update
+    lead_part = User.find_by_id(data['lead_partner_id'])
+    if not lead_part:
+        raise InputError('User id does not exist for engagement partner.'.format(data['lead_partner_id']))
+    query.lead_partner_user = lead_part
+    # lead_manager_id validation
+    lead_mana = User.find_by_id(data['lead_manager_id'])
+    if not lead_mana:
+        raise InputError('User id does not exist for engagement manager.'.format(data['lead_manager_id']))
+    query.lead_manager_user = lead_mana
 
     query.has_ts_gst = data['tax_scope']['has_ts_gst']
     query.has_ts_hst = data['tax_scope']['has_ts_hst']

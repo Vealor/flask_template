@@ -2,136 +2,23 @@
 
 def j11():
     j11 = """
-        drop table if exists aps_relational;
+        drop table if exists aps_quality_check;
     select
-    L.data ->> 'MANDT' as MANDT,
-    L.data ->> 'BUZID' as BUZID,
-    L.data ->> 'AUGDT' as AUGDT,
-    L.data ->> 'AUGCP' as AUGCP,
-    L.data ->> 'AUGBL' as AUGBL,
-    L.data ->> 'KOART' as KOART,
-    L.data ->> 'UMSKZ' as UMSKZ,
-    L.data ->> 'UMSKS' as UMSKS,
-    L.data ->> 'ZUMSK' as ZUMSK,
-    L.data ->> 'SHKZG' as SHKZG,
-    L.data ->> 'QSSKZ' as QSSKZ,
-    L.data ->> 'KZBTR' as KZBTR,
-    L.data ->> 'PSWBT' as PSWBT,
-    L.data ->> 'PSWSL' as PSWSL,
-    L.data ->> 'HWBAS' as HWBAS,
-    L.data ->> 'TXGRP' as TXGRP,
-    L.data ->> 'KTOSL' as KTOSL,
-    L.data ->> 'QSSHB' as QSSHB,
-    L.data ->> 'ZUONR' as ZUONR,
-    L.data ->> 'VBUND' as VBUND,
-    L.data ->> 'BEWAR' as BEWAR,
-    L.data ->> 'VORGN' as VORGN,
-    L.data ->> 'AUFNR' as AUFNR,
-    L.data ->> 'ANBWA' as ANBWA,
-    L.data ->> 'XUMSW' as XUMSW,
-    L.data ->> 'XCPDD' as XCPDD,
-    L.data ->> 'XAUTO' as XAUTO,
-    L.data ->> 'XZAHL' as XZAHL,
-    L.data ->> 'SAKNR' as SAKNR,
-    L.data ->> 'XBILK' as XBILK,
-    L.data ->> 'GVTYP' as GVTYP,
-    L.data ->> 'ZFBDT' as ZFBDT,
-    L.data ->> 'ZTERM' as ZTERM,
-    L.data ->> 'ZBD1T' as ZBD1T,
-    L.data ->> 'ZBD2T' as ZBD2T,
-    L.data ->> 'ZBD3T' as ZBD3T,
-    L.data ->> 'ZBD1P' as ZBD1P,
-    L.data ->> 'ZBD2P' as ZBD2P,
-    L.data ->> 'SKFBT' as SKFBT,
-    L.data ->> 'SKNTO' as SKNTO,
-    L.data ->> 'ZLSCH' as ZLSCH,
-    L.data ->> 'NEBTR' as NEBTR,
-    L.data ->> 'REBZG' as REBZG,
-    L.data ->> 'REBZJ' as REBZJ,
-    L.data ->> 'REBZZ' as REBZZ,
-    L.data ->> 'QSFBT' as QSFBT,
-    L.data ->> 'WERKS' as WERKS,
-    L.data ->> 'MENGE' as MENGE,
-    L.data ->> 'MEINS' as MEINS,
-    L.data ->> 'ERFME' as ERFME,
-    L.data ->> 'BWKEY' as BWKEY,
-    L.data ->> 'BWTAR' as BWTAR,
-    L.data ->> 'BUSTW' as BUSTW,
-    L.data ->> 'STCEG' as STCEG,
-    L.data ->> 'EGLLD' as EGLLD,
-    L.data ->> 'XHKOM' as XHKOM,
-    L.data ->> 'NPLNR' as NPLNR,
-    L.data ->> 'AUFPL' as AUFPL,
-    L.data ->> 'APLZL' as APLZL,
-    L.data ->> 'DMBE2' as DMBE2,
-    L.data ->> 'HWMET' as HWMET,
-    L.data ->> 'XRAGL' as XRAGL,
-    L.data ->> 'XNEGP' as XNEGP,
-    L.data ->> 'KIDNO' as KIDNO,
-    L.data ->> 'FKBER_LONG' as FKBER_LONG,
-    L.data ->> 'AUGGJ' as AUGGJ,
-    L.data ->> 'SEGMENT' as SEGMENT,
-    L.data ->> 'TAXPS' as TAXPS,
-    L.data ->> 'main_asset_num' as main_asset_num,
-    L.data ->> 'asset_sub_num' as asset_sub_num,
-    L.data ->> 'gl_doc_num' as gl_doc_num,
-    L.data ->> 'post_key_gl' as post_key_gl,
-    L.data ->> 'co_code_gl' as co_code_gl,
-    L.data ->> 'bseg_buzei_key' as bseg_buzei_key,
-    L.data ->> 'amount_local_ccy' as amount_local_ccy,
-    L.data ->> 'po_doc_num' as po_doc_num,
-    L.data ->> 'bseg_ebelp_key' as bseg_ebelp_key,
-    L.data ->> 'func_area_gl' as func_area_gl,
-    L.data ->> 'fiscal_year_gl' as fiscal_year_gl,
-    L.data ->> 'bus_area_dept_num_gl' as bus_area_dept_num_gl,
-    L.data ->> 'largest_debit_half_acct_num_gl' as largest_debit_half_acct_num_gl,
-    L.data ->> 'cost_ctr_num_gl' as cost_ctr_num_gl,
-    L.data ->> 'cx_num' as cx_num,
-    L.data ->> 'material_num_gl' as material_num_gl,
-    L.data ->> 'po_tax_code_gl' as po_tax_code_gl,
-    L.data ->> 'gst_hst_qst_pst_local_ccy' as gst_hst_qst_pst_local_ccy,
-    L.data ->> 'bseg_pargb_key' as bseg_pargb_key,
-    L.data ->> 'profit_ctr_num' as profit_ctr_num,
-    L.data ->> 'wbs_gl' as wbs_gl,
-    L.data ->> 'item_descr_gl' as item_descr_gl,
-    L.data ->> 'tax_jur_gl' as tax_jur_gl,
-    L.data ->> 'sales_doc_num_gl' as sales_doc_num_gl,
-    L.data ->> 'billing_doc_num' as billing_doc_num,
-    L.data ->> 'gst_hst_pst_qst_doc_ccy' as gst_hst_pst_qst_doc_ccy,
-    L.data ->> 'ap_ar_amt_doc_ccy' as ap_ar_amt_doc_ccy,
-    L.varapkey,
-    L.vend_num,
-    L.varmultivnd,
-    L.doc_type_gl,
-    L.inv_date,
-    L.inv_num,
-    L.ccy,
-    L.fiscal_period_gl,
-    L.cputm,
-    L.fx_rate,
-    L.trnx_code_gl,
-    L.ktopl,
-    L.vend_name,
-    L.name2,
-    L.lfa1_land1_key,
-    L.vend_region,
-    L.vend_city,
-    L.pstlz,
-    L.stras,
+    L.*,
     R.vardocamt,
     R.varlocamt
-    into aps_relational
+    into aps_quality_check
     from
-    aps as L
+    sap_aps as L
     left join
     (select id,
-     -(cast(data ->> 'ap_ar_amt_doc_ccy' as FLOAT)) as vardocamt,
-     -(cast(data ->> 'amount_local_ccy' as FLOAT)) as varlocamt
-     from aps where cast(data ->> 'SHKZG' as TEXT) = 'H') as R on L.id = R.id
+     -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
+     -(cast(amount_local_ccy as FLOAT)) as varlocamt
+     from sap_aps where bseg_shkzg_key = 'H') as R on L.id = R.id
     """
     return j11
 
-# Generates raw account sum, groups varaccountcode and varapkey, sums on dmbtr,
+# Generates raw account sum, groups largest_debit_half_acct_num_gl and varapkey, sums on dmbtr,
 # wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for
 # everything else. order by vartranamount
 def j12():
@@ -145,18 +32,17 @@ def j12():
     SELECT
      Sum(Cast(amount_local_ccy AS FLOAT)) AS amount_local_ccy,
      Sum(Cast(ap_ar_amt_doc_ccy AS FLOAT)) AS ap_ar_amt_doc_ccy,
-     Sum(Cast(pswbt AS FLOAT)) AS PSWBT,
-     Sum(Cast(dmbe2 AS FLOAT)) AS DMBE2,
+     Sum(Cast(bseg_pswbt_key AS FLOAT)) AS bseg_pswbt_key,
+     Sum(Cast(bseg_dmbe2_key AS FLOAT)) AS bseg_dmbe2_key,
     SUM(vardocamt) as vardocamt,
     SUM(varlocamt) as varlocamt,
-
      l.varapkey,
-     Trim(largest_debit_half_acct_num_gl) AS varaccountcode
+     Trim(largest_debit_half_acct_num_gl) AS largest_debit_half_acct_num_gl
     FROM
-     aps_relational AS l
+     aps_quality_check AS l
     GROUP BY
      varapkey,
-     varaccountcode
+     largest_debit_half_acct_num_gl
     )
     AS l
     INNER JOIN
@@ -167,231 +53,142 @@ def j12():
         (
         SELECT
             varapkey as varapkey_temp,
-            Trim(largest_debit_half_acct_num_gl) AS varaccountcode_temp,
-        MANDT,
-        BUZID,
-        AUGDT,
-        AUGCP,
-        AUGBL,
-        KOART,
-        UMSKZ,
-        UMSKS,
-        ZUMSK,
-        SHKZG,
-        QSSKZ,
-        KZBTR,
-        PSWSL,
-        HWBAS,
-        TXGRP,
-        KTOSL,
-        QSSHB,
-        ZUONR,
-        VBUND,
-        BEWAR,
-        VORGN,
-        AUFNR,
-        ANBWA,
-        XUMSW,
-        XCPDD,
-        XAUTO,
-        XZAHL,
-        SAKNR,
-        XBILK,
-        GVTYP,
-        ZFBDT,
-        ZTERM,
-        ZBD1T,
-        ZBD2T,
-        ZBD3T,
-        ZBD1P,
-        ZBD2P,
-        SKFBT,
-        SKNTO,
-        ZLSCH,
-        NEBTR,
-        REBZG,
-        REBZJ,
-        REBZZ,
-        QSFBT,
-        WERKS,
-        MENGE,
-        MEINS,
-        ERFME,
-        BWKEY,
-        BWTAR,
-        BUSTW,
-        STCEG,
-        EGLLD,
-        XHKOM,
-        NPLNR,
-        AUFPL,
-        APLZL,
-        HWMET,
-        XRAGL,
-        XNEGP,
-        KIDNO,
-        FKBER_LONG,
-        AUGGJ,
-        SEGMENT,
-        TAXPS,
-        main_asset_num,
-        asset_sub_num,
-        gl_doc_num,
-        post_key_gl,
-        co_code_gl,
-        bseg_buzei_key,
-        po_doc_num,
-        bseg_ebelp_key,
-        func_area_gl,
-        fiscal_year_gl,
-        bus_area_dept_num_gl,
-        largest_debit_half_acct_num_gl,
-        cost_ctr_num_gl,
-        cx_num,
-        vend_num,
-        material_num_gl,
-        po_tax_code_gl,
-        gst_hst_qst_pst_local_ccy,
-        bseg_pargb_key,
-        profit_ctr_num,
-        wbs_gl,
-        item_descr_gl,
-        tax_jur_gl,
-        sales_doc_num_gl,
-        billing_doc_num,
-        gst_hst_pst_qst_doc_ccy,
-         varmultivnd,
-         doc_type_gl,
-        inv_date,
-         inv_num,
-         ccy,
-         fiscal_period_gl,
-         cputm,
-         fx_rate,
-         trnx_code_gl,
-         ktopl,
-         vend_name,
-         name2,
-         lfa1_land1_key,
-         vend_region,
-         vend_city,
-         pstlz,
-         stras,
+            Trim(largest_debit_half_acct_num_gl) AS largest_debit_half_acct_num_gl_temp,
+        bkpf_belnr_key,
+doc_type_gl,
+inv_date,
+post_date_gl,
+bkpf_bukrs_key,
+bkpf_gjahr_key,
+fx_rate,
+bkpf_kzwrs_key,
+fiscal_period_gl,
+trnx_code_gl,
+ccy,
+inv_num,
+main_asset_num,
+asset_sub_num,
+gl_doc_num,
+post_key_gl,
+gl_doc_status,
+bseg_budat_key,
+co_code_gl,
+bseg_buzei_key,
+po_doc_num,
+bseg_ebelp_key,
+func_area_gl,
+fiscal_year_gl,
+bus_area_dept_num_gl,
+control_area_gl,
+cost_ctr_num_gl,
+cx_num,
+vend_num,
+material_num_gl,
+tax_type_gl,
+bseg_mwsk3_key,
+po_tax_code_gl,
+gst_hst_qst_pst_local_ccy,
+bseg_pargb_key,
+profit_ctr_num,
+wbs_gl,
+item_descr_gl,
+reverse_doc_num,
+reverse_reason_gl,
+tax_jur_gl,
+sales_doc_num_gl,
+billing_doc_num,
+gst_hst_pst_qst_doc_ccy,
+lfa1_land1_key,
+lfa1_lifnr_key,
+vend_name,
+vend_city,
+vend_region,
+vend_tax_num_1,
+vend_tax_num_2,
+vend_tax_num_3,
+vend_tax_num_4,
+vend_tax_num_5,
+vend_tax_num_type,
+vend_reg_num,
+skat_ktopl_key,
+skat_saknr_key,
+skat_spras_key,
+lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+caps_gen_id,
+bkpf_ktopl_key,
+bseg_shkzg_key,
+bseg_umskz_key,
 
         Row_number() OVER( partition BY varapkey, Trim(largest_debit_half_acct_num_gl)
         ORDER BY
-        MANDT,
-        BUZID,
-        AUGDT,
-        AUGCP,
-        AUGBL,
-        KOART,
-        UMSKZ,
-        UMSKS,
-        ZUMSK,
-        SHKZG,
-        QSSKZ,
-        KZBTR,
-        PSWSL,
-        HWBAS,
-        TXGRP,
-        KTOSL,
-        QSSHB,
-        ZUONR,
-        VBUND,
-        BEWAR,
-        VORGN,
-        AUFNR,
-        ANBWA,
-        XUMSW,
-        XCPDD,
-        XAUTO,
-        XZAHL,
-        SAKNR,
-        XBILK,
-        GVTYP,
-        ZFBDT,
-        ZTERM,
-        ZBD1T,
-        ZBD2T,
-        ZBD3T,
-        ZBD1P,
-        ZBD2P,
-        SKFBT,
-        SKNTO,
-        ZLSCH,
-        NEBTR,
-        REBZG,
-        REBZJ,
-        REBZZ,
-        QSFBT,
-        WERKS,
-        MENGE,
-        MEINS,
-        ERFME,
-        BWKEY,
-        BWTAR,
-        BUSTW,
-        STCEG,
-        EGLLD,
-        XHKOM,
-        NPLNR,
-        AUFPL,
-        APLZL,
-        HWMET,
-        XRAGL,
-        XNEGP,
-        KIDNO,
-        FKBER_LONG,
-        AUGGJ,
-        SEGMENT,
-        TAXPS,
-        main_asset_num,
-        asset_sub_num,
-        gl_doc_num,
-        post_key_gl,
-        co_code_gl,
-        bseg_buzei_key,
-        po_doc_num,
-        bseg_ebelp_key,
-        func_area_gl,
-        fiscal_year_gl,
-        bus_area_dept_num_gl,
-        largest_debit_half_acct_num_gl,
-        cost_ctr_num_gl,
-        cx_num,
-        material_num_gl,
-        po_tax_code_gl,
-        gst_hst_qst_pst_local_ccy,
-        bseg_pargb_key,
-        profit_ctr_num,
-        wbs_gl,
-        item_descr_gl,
-        tax_jur_gl,
-        sales_doc_num_gl,
-        billing_doc_num,
-        gst_hst_pst_qst_doc_ccy,
-         vend_num,
-         varmultivnd,
-         doc_type_gl,
-        inv_date,
-         inv_num,
-         ccy,
-         fiscal_period_gl,
-         cputm,
-         fx_rate,
-         trnx_code_gl,
-         ktopl,
-         vend_name,
-         name2,
-         lfa1_land1_key,
-         vend_region,
-         vend_city,
-         pstlz,
-         stras
+
+bkpf_belnr_key,
+doc_type_gl,
+inv_date,
+post_date_gl,
+bkpf_bukrs_key,
+bkpf_gjahr_key,
+fx_rate,
+bkpf_kzwrs_key,
+fiscal_period_gl,
+trnx_code_gl,
+ccy,
+inv_num,
+main_asset_num,
+asset_sub_num,
+gl_doc_num,
+post_key_gl,
+gl_doc_status,
+bseg_budat_key,
+co_code_gl,
+bseg_buzei_key,
+po_doc_num,
+bseg_ebelp_key,
+func_area_gl,
+fiscal_year_gl,
+bus_area_dept_num_gl,
+control_area_gl,
+cost_ctr_num_gl,
+cx_num,
+vend_num,
+material_num_gl,
+tax_type_gl,
+bseg_mwsk3_key,
+po_tax_code_gl,
+gst_hst_qst_pst_local_ccy,
+bseg_pargb_key,
+profit_ctr_num,
+wbs_gl,
+item_descr_gl,
+reverse_doc_num,
+reverse_reason_gl,
+tax_jur_gl,
+sales_doc_num_gl,
+billing_doc_num,
+gst_hst_pst_qst_doc_ccy,
+lfa1_land1_key,
+lfa1_lifnr_key,
+vend_name,
+vend_city,
+vend_region,
+vend_tax_num_1,
+vend_tax_num_2,
+vend_tax_num_3,
+vend_tax_num_4,
+vend_tax_num_5,
+vend_tax_num_type,
+vend_reg_num,
+skat_ktopl_key,
+skat_saknr_key,
+skat_spras_key,
+lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+caps_gen_id,
+bkpf_ktopl_key,
+bseg_shkzg_key,
+bseg_umskz_key
          DESC) AS roworder
            FROM
-              aps_relational
+              aps_quality_check
         )
         AS subq
      WHERE
@@ -399,7 +196,7 @@ def j12():
     )
     AS r
     ON l.varapkey = r.varapkey_temp
-    AND l.varaccountcode = r.varaccountcode_temp
+    AND l.largest_debit_half_acct_num_gl = r.largest_debit_half_acct_num_gl_temp
     order by varlocamt desc
     """
     return j12
@@ -417,12 +214,12 @@ def j13():
         into aps_tax_calc
         from (
         select
-        case when varaccountcode in ('0000140500','0000220040') then 'G'
-        when varaccountcode in ('NA') then 'P'
-        when varaccountcode in ('0000220080') then 'P_SA'
-        when varaccountcode in ('NA') then 'O'
-        when varaccountcode in ('NA') then 'Q'
-        when varaccountcode in ('0000210010',
+        case when largest_debit_half_acct_num_gl in ('0000140500','0000220040') then 'G'
+        when largest_debit_half_acct_num_gl in ('NA') then 'P'
+        when largest_debit_half_acct_num_gl in ('0000220080') then 'P_SA'
+        when largest_debit_half_acct_num_gl in ('NA') then 'O'
+        when largest_debit_half_acct_num_gl in ('NA') then 'Q'
+        when largest_debit_half_acct_num_gl in ('0000210010',
         '0000210025',
         '0000210030',
         '0000210050',
@@ -441,7 +238,7 @@ def j13():
 
 def j14():
     j14 = """
-               DROP TABLE IF EXISTS aps_summ;
+                    DROP TABLE IF EXISTS aps_summ;
     SELECT
        *
        INTO aps_summ
@@ -450,8 +247,8 @@ def j14():
           SELECT
              Sum(Cast(amount_local_ccy AS FLOAT)) AS amount_local_ccy,
              Sum(Cast(ap_ar_amt_doc_ccy AS FLOAT)) AS ap_ar_amt_doc_ccy,
-             Sum(Cast(pswbt AS FLOAT)) AS PSWBT,
-             Sum(Cast(dmbe2 AS FLOAT)) AS DMBE2,
+             Sum(Cast(bseg_pswbt_key AS FLOAT)) AS bseg_pswbt_key,
+             Sum(Cast(bseg_dmbe2_key AS FLOAT)) AS bseg_dmbe2_key,
     	   SUM(vardocamt) as vardocamt,
     	   SUM(varlocamt) as vartranamount,
     	   SUM(varlocamt) as varlocamt,
@@ -463,7 +260,7 @@ def j14():
     	   sum(TAXES_OTHER) as TAXES_OTHER,
              varapkey
           FROM
-             raw_tax_calc
+             aps_tax_calc
           GROUP BY
              varapkey
        )
@@ -475,228 +272,140 @@ def j14():
              FROM
                 (
                    SELECT
+                   largest_debit_half_acct_num_gl,
                     varapkey as varapkey_temp,
-                   MANDT,
-                    BUZID,
-                    AUGDT,
-                    AUGCP,
-                    AUGBL,
-                    KOART,
-                    UMSKZ,
-                    UMSKS,
-                    ZUMSK,
-                    SHKZG,
-                    QSSKZ,
-                    KZBTR,
-                    PSWSL,
-                    HWBAS,
-                    TXGRP,
-                    KTOSL,
-                    QSSHB,
-                    ZUONR,
-                    VBUND,
-                    BEWAR,
-                    VORGN,
-                    AUFNR,
-                    ANBWA,
-                    XUMSW,
-                    XCPDD,
-                    XAUTO,
-                    XZAHL,
-                    SAKNR,
-                    XBILK,
-                    GVTYP,
-                    ZFBDT,
-                    ZTERM,
-                    ZBD1T,
-                    ZBD2T,
-                    ZBD3T,
-                    ZBD1P,
-                    ZBD2P,
-                    SKFBT,
-                    SKNTO,
-                    ZLSCH,
-                    NEBTR,
-                    REBZG,
-                    REBZJ,
-                    REBZZ,
-                    QSFBT,
-                    WERKS,
-                    MENGE,
-                    MEINS,
-                    ERFME,
-                    BWKEY,
-                    BWTAR,
-                    BUSTW,
-                    STCEG,
-                    EGLLD,
-                    XHKOM,
-                    NPLNR,
-                    AUFPL,
-                    APLZL,
-                    HWMET,
-                    XRAGL,
-                    XNEGP,
-                    KIDNO,
-                    FKBER_LONG,
-                    AUGGJ,
-                    SEGMENT,
-                    TAXPS,
-                    main_asset_num,
-                    asset_sub_num,
-                    gl_doc_num,
-                    post_key_gl,
-                    co_code_gl,
-                    bseg_buzei_key,
-                    po_doc_num,
-                    bseg_ebelp_key,
-                    func_area_gl,
-                    fiscal_year_gl,
-                    bus_area_dept_num_gl,
-                    largest_debit_half_acct_num_gl,
-                    cost_ctr_num_gl,
-                    cx_num,
-                    material_num_gl,
-                    po_tax_code_gl,
-                    gst_hst_qst_pst_local_ccy,
-                    bseg_pargb_key,
-                    profit_ctr_num,
-                    wbs_gl,
-                    item_descr_gl,
-                    tax_jur_gl,
-                    sales_doc_num_gl,
-                    billing_doc_num,
-                    gst_hst_pst_qst_doc_ccy,
-                     varmultivnd,
-                     doc_type_gl,
-                    inv_date,
-                     inv_num,
-                     ccy,
-                     fiscal_period_gl,
-                     cputm,
-                     fx_rate,
-                     trnx_code_gl,
-                     ktopl,
-                     vend_name,
-                     name2,
-                     lfa1_land1_key,
-                     vend_region,
-                     vend_city,
-                     pstlz,
-                     stras,
+                   bkpf_belnr_key,
+doc_type_gl,
+inv_date,
+post_date_gl,
+bkpf_bukrs_key,
+bkpf_gjahr_key,
+fx_rate,
+bkpf_kzwrs_key,
+fiscal_period_gl,
+trnx_code_gl,
+ccy,
+inv_num,
+main_asset_num,
+asset_sub_num,
+gl_doc_num,
+post_key_gl,
+gl_doc_status,
+bseg_budat_key,
+co_code_gl,
+bseg_buzei_key,
+po_doc_num,
+bseg_ebelp_key,
+func_area_gl,
+fiscal_year_gl,
+bus_area_dept_num_gl,
+control_area_gl,
+cost_ctr_num_gl,
+cx_num,
+vend_num,
+material_num_gl,
+tax_type_gl,
+bseg_mwsk3_key,
+po_tax_code_gl,
+gst_hst_qst_pst_local_ccy,
+bseg_pargb_key,
+profit_ctr_num,
+wbs_gl,
+item_descr_gl,
+reverse_doc_num,
+reverse_reason_gl,
+tax_jur_gl,
+sales_doc_num_gl,
+billing_doc_num,
+gst_hst_pst_qst_doc_ccy,
+lfa1_land1_key,
+lfa1_lifnr_key,
+vend_name,
+vend_city,
+vend_region,
+vend_tax_num_1,
+vend_tax_num_2,
+vend_tax_num_3,
+vend_tax_num_4,
+vend_tax_num_5,
+vend_tax_num_type,
+vend_reg_num,
+skat_ktopl_key,
+skat_saknr_key,
+skat_spras_key,
+lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+caps_gen_id,
+bkpf_ktopl_key,
+bseg_shkzg_key,
+bseg_umskz_key,
 
     				      Row_number() OVER( partition BY varapkey
                    ORDER BY
-    				MANDT,
-                    BUZID,
-                    AUGDT,
-                    AUGCP,
-                    AUGBL,
-                    KOART,
-                    UMSKZ,
-                    UMSKS,
-                    ZUMSK,
-                    SHKZG,
-                    QSSKZ,
-                    KZBTR,
-                    PSWSL,
-                    HWBAS,
-                    TXGRP,
-                    KTOSL,
-                    QSSHB,
-                    ZUONR,
-                    VBUND,
-                    BEWAR,
-                    VORGN,
-                    AUFNR,
-                    ANBWA,
-                    XUMSW,
-                    XCPDD,
-                    XAUTO,
-                    XZAHL,
-                    SAKNR,
-                    XBILK,
-                    GVTYP,
-                    ZFBDT,
-                    ZTERM,
-                    ZBD1T,
-                    ZBD2T,
-                    ZBD3T,
-                    ZBD1P,
-                    ZBD2P,
-                    SKFBT,
-                    SKNTO,
-                    ZLSCH,
-                    NEBTR,
-                    REBZG,
-                    REBZJ,
-                    REBZZ,
-                    QSFBT,
-                    WERKS,
-                    MENGE,
-                    MEINS,
-                    ERFME,
-                    BWKEY,
-                    BWTAR,
-                    BUSTW,
-                    STCEG,
-                    EGLLD,
-                    XHKOM,
-                    NPLNR,
-                    AUFPL,
-                    APLZL,
-                    HWMET,
-                    XRAGL,
-                    XNEGP,
-                    KIDNO,
-                    FKBER_LONG,
-                    AUGGJ,
-                    SEGMENT,
-                    TAXPS,
-                    main_asset_num,
-                    asset_sub_num,
-                    gl_doc_num,
-                    post_key_gl,
-                    co_code_gl,
-                    bseg_buzei_key,
-                    po_doc_num,
-                    bseg_ebelp_key,
-                    func_area_gl,
-                    fiscal_year_gl,
-                    bus_area_dept_num_gl,
                     largest_debit_half_acct_num_gl,
-                    cost_ctr_num_gl,
-                    cx_num,
-                    vend_num,
-                    material_num_gl,
-                    po_tax_code_gl,
-                    gst_hst_qst_pst_local_ccy,
-                    bseg_pargb_key,
-                    profit_ctr_num,
-                    wbs_gl,
-                    item_descr_gl,
-                    tax_jur_gl,
-                    sales_doc_num_gl,
-                    billing_doc_num,
-                    gst_hst_pst_qst_doc_ccy,
-                     vend_num,
-                     varmultivnd,
-                     doc_type_gl,
-                    inv_date,
-                     inv_num,
-                     ccy,
-                     fiscal_period_gl,
-                     cputm,
-                     fx_rate,
-                     trnx_code_gl,
-                     ktopl,
-                     vend_name,
-                     name2,
-                     lfa1_land1_key,
-                     vend_region,
-                     vend_city,
-                     pstlz,
-                     stras
+    				bkpf_belnr_key,
+doc_type_gl,
+inv_date,
+post_date_gl,
+bkpf_bukrs_key,
+bkpf_gjahr_key,
+fx_rate,
+bkpf_kzwrs_key,
+fiscal_period_gl,
+trnx_code_gl,
+ccy,
+inv_num,
+main_asset_num,
+asset_sub_num,
+gl_doc_num,
+post_key_gl,
+gl_doc_status,
+bseg_budat_key,
+co_code_gl,
+bseg_buzei_key,
+po_doc_num,
+bseg_ebelp_key,
+func_area_gl,
+fiscal_year_gl,
+bus_area_dept_num_gl,
+control_area_gl,
+cost_ctr_num_gl,
+cx_num,
+vend_num,
+material_num_gl,
+tax_type_gl,
+bseg_mwsk3_key,
+po_tax_code_gl,
+gst_hst_qst_pst_local_ccy,
+bseg_pargb_key,
+profit_ctr_num,
+wbs_gl,
+item_descr_gl,
+reverse_doc_num,
+reverse_reason_gl,
+tax_jur_gl,
+sales_doc_num_gl,
+billing_doc_num,
+gst_hst_pst_qst_doc_ccy,
+lfa1_land1_key,
+lfa1_lifnr_key,
+vend_name,
+vend_city,
+vend_region,
+vend_tax_num_1,
+vend_tax_num_2,
+vend_tax_num_3,
+vend_tax_num_4,
+vend_tax_num_5,
+vend_tax_num_type,
+vend_reg_num,
+skat_ktopl_key,
+skat_saknr_key,
+skat_spras_key,
+lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+caps_gen_id,
+bkpf_ktopl_key,
+bseg_shkzg_key,
+bseg_umskz_key
 
                        DESC) AS roworder
     									   FROM
@@ -723,9 +432,10 @@ def j15():
     R.data ->> 'tbslt_umskz_key' as tbslt_umskz_key,
     R.data ->> 'tbslt_spras_key' as tbslt_spras_key
     into caps_1
-    from caps as L
+    from aps_summ as L
     left join (select * from sap_tbslt where caps_gen_id = {caps_gen_id}) as R
     on L.post_key_gl = R.data ->> 'tbslt_bschl_key'
+    and L.bseg_umskz_key = R.data ->> 'tbslt_umskz_key'
     """.format(caps_gen_id = caps_gen_id)
     return j15
 
@@ -734,14 +444,14 @@ def j16():
     j16 = """
     drop table if exists caps_2;
 
-    select   L.*,
-    R.data ->> 'co_name' as co_name,
-    R.data ->> 't001_land1_key' as t001_land1_key,
-    R.data ->> 't001_bukrs_key' as t001_bukrs_key
+    select  distinct on (L.varapkey) L.*,
+    first_value(R.data ->> 'co_name') OVER (order by R.data ->> 'co_name' is null) as co_name,
+    first_value(R.data ->> 't001_land1_key') OVER (order by R.data ->> 't001_land1_key' is null) as t001_land1_key,
+    first_value(R.data ->> 't001_bukrs_key') OVER (order by R.data ->> 't001_bukrs_key' is null) as t001_bukrs_key
     into caps_2
     from caps_1 as L
-    left join (select * from sap_T001 where caps_gen_id = {caps_gen_id}) as R
-    on L.data ->> 'co_code_gl' = R.data ->> 't001_bukrs_key'
+    left join (select * from sap_T001 where caps_gen_id = 3) as R
+    on L.co_code_gl = R.data ->> 't001_bukrs_key'
     """.format(caps_gen_id = caps_gen_id)
     return j16
 
@@ -788,7 +498,7 @@ def j18():
 def j19():
     j19 = """
     drop table if exists caps_4;
-    select L.*,
+    select distinct on (L.control_area_gl) L.*,
     R.*
     into caps_4
     from (select * from caps_3) as L
@@ -834,20 +544,37 @@ def j19():
 #     """
 #     return j20
 
+def j21():
+    j21 = """
+    drop table if exists j1_PRPS_PROJ;
+    select
+	L.data ->> 'prps_pspnr_key' as prps_pspnr_key,
+	L.data ->> 'prps_psphi_key' as prps_psphi_key,
+	L.data ->> 'proj_loc_proj' as proj_loc_proj,
+	L.data ->> 'proj_type_proj' as proj_type_proj,
+	L.data ->> 'wbs_elem_descr_proj' as wbs_elem_descr_proj,
+	L.data ->> 'wbs_elem_id_proj' as wbs_elem_id_proj,
+	L.data ->> 'wbs_cntrl_area_proj' as wbs_cntrl_area_proj,
+	L.data ->> 'wbs_bus_area_proj' as wbs_bus_area_proj,
+	L.data ->> 'jv_obj_type_proj' as jv_obj_type_proj,
+	L.data ->> 'object_num_proj' as object_num_proj,
+	R.data ->> 'proj_descr_proj' as proj_descr_proj,
+	R.data ->> 'proj_defin_proj' as proj_defin_proj,
+	R.data ->> 'proj_internal_proj' as proj_internal_proj,
+	R.data ->> 'proj_tx_jur_proj' as proj_tx_jur_proj,
+	R.data ->> 'proj_mngr_name_proj' as proj_mngr_name_proj,
+	R.data ->> 'proj_mngr_num_proj' as proj_mngr_num_proj,
+	R.data ->> 'bus_area_proj' as bus_area_proj,
+	R.data ->> 'plant_proj' as plant_proj
+    into j1_PRPS_PROJ
+    from (select * from sap_prps where caps_gen_id = {caps_gen_id}) as L
+    left join (select * from sap_proj where caps_gen_id = {caps_gen_id}) as R
+    on L.data ->> 'prps_psphi_key' = R.data ->> 'proj_internal_proj'
+    """
+
+
 def j22():
     j22 = """
-    drop table if exists caps_4;
-    select L.*,
-    R.*
-    into caps_4
-    from (select * from caps_3) as L
-    left join (select * from j1_csks_cskt) as R
-    on L.control_area_gl = R.csks_kokrs_key
-    """
-    return j22
-
-def j23():
-    j23 = """
     drop table if exists j2_PRPS_PROJ_TTXJT;
     select L.*,
     R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key,
@@ -859,7 +586,7 @@ def j23():
     left join (select * from sap_ttxjt where caps_gen_id = {caps_gen_id}) as R
     on L.proj_tx_jur_proj = R.data ->> 'ttxjt_txjcd_key'
     """.format(caps_gen_id = caps_gen_id)
-    return j23
+    return j22
 
 def j24():
     j24 = """
@@ -887,37 +614,37 @@ def j25():
     """
     return j25
 
-# def j26(caps_gen_id):
-#     j26 = """
-#     drop table if exists j1_T007A_T007S;
-#     select
-#     L.data ->> 't007a_kalsm_key' as t007a_kalsm_key,
-#     L.data ->> 't007a_mwskz_key' as t007a_mwskz_key,
-#     R.data ->> 't007s_kalsm_key' as t007s_kalsm_key,
-#     R.data ->> 't007s_mwskz_key' as t007s_mwskz_key,
-#     R.data ->> 't007s_spras_key' as t007s_spras_key,
-#     R.data ->> 'tx_name_tx' as tx_name_tx
-#     into j1_T007A_T007S
-#     from (select * from sap_t007a where caps_gen_id = {caps_gen_id}) as L
-#     left join (select * from sap_t007s where caps_gen_id = {caps_gen_id}) as R
-#     on L.data ->> 't007a_kalsm_key' = R.data ->> 't007s_kalsm_key'
-#     and
-#     L.data ->> 't007a_mwskz_key' = R.data ->> 't007s_mwskz_key'
-#     """.format(caps_gen_id = caps_gen_id)
-#     return j26
+def j26(caps_gen_id):
+    j26 = """
+    drop table if exists j1_T007A_T007S;
+    select
+    L.data ->> 't007a_kalsm_key' as t007a_kalsm_key,
+    L.data ->> 't007a_mwskz_key' as t007a_mwskz_key,
+    R.data ->> 't007s_kalsm_key' as t007s_kalsm_key,
+    R.data ->> 't007s_mwskz_key' as t007s_mwskz_key,
+    R.data ->> 't007s_spras_key' as t007s_spras_key,
+    R.data ->> 'tx_name_tx' as tx_name_tx
+    into j1_T007A_T007S
+    from (select * from sap_t007a where caps_gen_id = {caps_gen_id}) as L
+    left join (select * from sap_t007s where caps_gen_id = {caps_gen_id}) as R
+    on L.data ->> 't007a_kalsm_key' = R.data ->> 't007s_kalsm_key'
+    and
+    L.data ->> 't007a_mwskz_key' = R.data ->> 't007s_mwskz_key'
+    """.format(caps_gen_id = caps_gen_id)
+    return j26
 
 # Join CAPS to T007A T007S
-# def j27():
-#     j27 = """
-#     drop table if exists caps_12;
-#     select L.*,
-#     R.*
-#     into caps_12
-#     from caps_11 as L
-#     left join j1_T007A_T007S as R
-#     on L.data ->> 'bseg_mwsk3_key' = R.t007s_mwskz_key
-#     """
-#     return j27
+def j27():
+    j27 = """
+    drop table if exists caps_12;
+    select L.*,
+    R.*
+    into caps_12
+    from caps_11 as L
+    left join j1_T007A_T007S as R
+    on L.bseg_mwsk3_key = R.t007s_mwskz_key
+    """
+    return j27
 
 # Join caps to TTXJT
 # def j28(caps_gen_id):
@@ -955,6 +682,7 @@ def j25():
 #     """.format(caps_gen_id = caps_gen_id)
 #     return j29
 
+#join SKB1 to SKA1 SKAT
 # def j30(caps_gen_id):
 #     j30 = """
 #     drop table if exists J2_SKB1_SKA1_SKAT;
@@ -968,6 +696,7 @@ def j25():
 #     and L.data ->> 'skb1_saknr_key' = R.ska1_saknr_key
 #     """.format(caps_gen_id = caps_gen_id)
 #     return j30
+
 
 # def j31():
 #     j31 = """
@@ -1002,10 +731,7 @@ def j32(caps_gen_id):
     L.data ->> 'regup_vblnr_key' as regup_vblnr_key,
     L.data ->> 'regup_xvorl_key' as regup_xvorl_key,
     L.data ->> 'co_code_pmt' as co_code_pmt,
-    L.data ->> 'regup_zlsch_key' as regup_zlsch_key,
-    R.data ->> 't001_bukrs_key' as t001_bukrs_key,
-    R.data ->> 'co_name' as co_name,
-    R.data ->> 't001_land1_key' as t001_land1_key
+    L.data ->> 'regup_zlsch_key' as regup_zlsch_key
     into J1_REGUP_T001
     from (select * from sap_regup where caps_gen_id = {caps_gen_id}) as L
     left join (select * from sap_t001 where caps_gen_id = {caps_gen_id}) as R
@@ -1037,7 +763,7 @@ def j32(caps_gen_id):
 # Join REGUP to T042ZT+PAYR, However T042ZT is missing in data request
 # def j34():
 #     j34 = """
-#     drop table if exists J2_REGUP_T001_T042ZT_PAYR
+#     drop table if exists J2_REGUP_T001_T042ZT_PAYR;
 #     select
 #     L.*,
 #     R.*
@@ -1054,7 +780,7 @@ def j32(caps_gen_id):
 #     drop table if exists J3_REGUP_T001_T042ZT_PAYR_KNA1;
 #     select L.*,
 #     R.data ->> 'kna1_kunnr_key' as kna1_kunnr_key
-#     into J3_REGUP_T001_T042ZT_PAYR_KNA1;
+#     into J3_REGUP_T001_T042ZT_PAYR_KNA1
 #     from J2_REGUP_T001_T042ZT_PAYR as L
 #     left join (select * from sap_kna1 where caps_gen_id = {caps_gen_id}) as R
 #     on L.cx_num_pmt = R.data ->> 'kna1_kunnr_key'
@@ -1066,7 +792,6 @@ def j36(caps_gen_id):
     j36 = """
     drop table if exists J2_REGUP_T001_LFA1;
     select L.*,
-    R.data ->> 'lfa1_lifnr_key' as lfa1_lifnr_key
     into J2_REGUP_T001_LFA1
     from J1_REGUP_T001 as L
     left join (select * from sap_lfa1 where caps_gen_id = {caps_gen_id}) as R
@@ -1229,34 +954,34 @@ def j44(caps_gen_id):
 #     """.format(caps_gen_id = caps_gen_id)
 #     return j45
 
-# Join LFA1 to BSAK
-def j46(caps_gen_id):
-    j46 = """
-    drop table if exists j4_lfa1_lfm1_lfas_t005t_bsak;
-    select
-    L.*,
-    R.data ->> 'bsak_augbl_key' as bsak_augbl_key,
-    R.data ->> 'bsak_augdt_key' as bsak_augdt_key,
-    R.data ->> 'bsak_belnr_key' as bsak_belnr_key,
-    R.data ->> 'bsak_bukrs_key' as bsak_bukrs_key,
-    R.data ->> 'bsak_buzei_key' as bsak_buzei_key,
-    R.data ->> 'bsak_gjahr_key' as bsak_gjahr_key,
-    R.data ->> 'bsak_lifnr_key' as bsak_lifnr_key,
-    R.data ->> 'spec_trnx_type_gl' as spec_trnx_type_gl,
-    R.data ->> 'spec_indicator_gl' as spec_indicator_gl,
-    R.data ->> 'cash_disc_percent_1_gl' as cash_disc_percent_1_gl,
-    R.data ->> 'cash_disc_days_1_gl' as cash_disc_days_1_gl,
-    R.data ->> 'cash_disc_percent_2_gl' as cash_disc_percent_2_gl,
-    R.data ->> 'cash_disc_days_2_gl' as cash_disc_days_2_gl,
-    R.data ->> 'pymt_period_gl' as pymt_period_gl,
-    R.data ->> 'pymt_terms_gl' as pymt_terms_gl,
-    R.data ->> 'assign_num_gl' as assign_num_gl
-    into j4_lfa1_lfm1_lfas_t005t_bsak
-    from j3_lfa_lfm1_lfas_t005t as L
-    left join (select * from sap_bsak where caps_gen_id = {caps_gen_id}) as R
-    on L.lfa1_lifnr_key = R.bsak_lifnr_key
-    """.format(caps_gen_id = caps_gen_id)
-    return j46
+# # Join LFA1 to BSAK
+# def j46(caps_gen_id):
+#     j46 = """
+#     drop table if exists j4_lfa1_lfm1_lfas_t005t_bsak;
+#     select
+#     L.*,
+#     R.data ->> 'bsak_augbl_key' as bsak_augbl_key,
+#     R.data ->> 'bsak_augdt_key' as bsak_augdt_key,
+#     R.data ->> 'bsak_belnr_key' as bsak_belnr_key,
+#     R.data ->> 'bsak_bukrs_key' as bsak_bukrs_key,
+#     R.data ->> 'bsak_buzei_key' as bsak_buzei_key,
+#     R.data ->> 'bsak_gjahr_key' as bsak_gjahr_key,
+#     R.data ->> 'bsak_lifnr_key' as bsak_lifnr_key,
+#     R.data ->> 'spec_trnx_type_gl' as spec_trnx_type_gl,
+#     R.data ->> 'spec_indicator_gl' as spec_indicator_gl,
+#     R.data ->> 'cash_disc_percent_1_gl' as cash_disc_percent_1_gl,
+#     R.data ->> 'cash_disc_days_1_gl' as cash_disc_days_1_gl,
+#     R.data ->> 'cash_disc_percent_2_gl' as cash_disc_percent_2_gl,
+#     R.data ->> 'cash_disc_days_2_gl' as cash_disc_days_2_gl,
+#     R.data ->> 'pymt_period_gl' as pymt_period_gl,
+#     R.data ->> 'pymt_terms_gl' as pymt_terms_gl,
+#     R.data ->> 'assign_num_gl' as assign_num_gl
+#     into j4_lfa1_lfm1_lfas_t005t_bsak
+#     from j3_lfa1_lfm1_lfas_t005t as L
+#     left join (select * from sap_bsak where caps_gen_id = {caps_gen_id}) as R
+#     on L.lfa1_lifnr_key = R.bsak_lifnr_key
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j46
 
 # Join LFA1+LFM1+LFAS+T005T+bsak on CAPS
 # dropped vend name, vend_region, lfa1_land1_key, vend_city, lfa1_lifnr_key,
@@ -1553,115 +1278,98 @@ def j62():
 def j63():
     j63 = """
     ## WARNING: Not every client uses these document types consistently.
-    DROP TABLE IF EXISTS RAW;
+    DROP TABLE IF EXISTS caps_pre_calc;
     select *
-    into RAW
-    from J10_BSEG_BKPF_LFA1_SKAT_OnlyAP_EKPO_MAKT_REGUP_REGUH_PAYR_CSKT_T007
+    into caps_pre_calc
+    from caps_8
     where ltrim(rtrim(BLART)) in ('AN', 'FD', 'FP', 'FY', 'RE', 'RX', 'SA', 'GG', 'GP', 'VC', 'VT')
     """
     return j63
 
 def j64():
     j64 = """
-    select
+DROP TABLE IF EXISTS caps_no_attributes;
+select
     case when
-    AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_PEI_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_ORST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
-    when AP_AMT <> 0 and (SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 2, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 3) = '000' or SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 1, 3) = '999' ) then 'Y'
+    AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST13_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST14_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST15_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_MB_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
     else 'F'
     end
     EVEN_GST_IND,
-    * from (
+	case when PME_IMM = 'Y' and GST_IMM = 'Y' then 'Y' else 'N' end ODD_IMM,
+	--case when GST_COUNT = COUNT_TRANS_VEN then 'Y' else '' end FLAG_CN what is count_trans_ven?
+	case when abs(PROV_AP) >= 5000 then 'Y' else 'N' end PROV_AP_AMT,
+    *
+	into caps_no_attributes
+	from (
+	select
+	case when abs(PME_MAT) > 350.00 then 'N' else 'Y' end PME_IMM,
+	case when abs(GST_MAT) > 250.00
+	--and TOTAL_GST_HST <> 0.00 TOTAL_GST_HST DOESN'T EXIST
+	then 'N'
+	when abs(GST_MAT) > 250.00
+	--and TOTAL_GST_HST = 0.00  TOTAL_GST_HST DOESN'T EXIST
+	then 'N'
+	else 'Y' end GST_IMM,
+	* from (
     select
-    CASE WHEN
-    EFF_RATE >= 6.9800000  and EFF_RATE <= 7.0999999 and New_Rate_Ind = 'A' then 'F'
-    when EFF_RATE >= 5.9800000  and  EFF_RATE <= 6.0999999 and New_Rate_Ind = 'B' then 'F'
-    when EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then 'F'
-    when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.949999 and New_Rate_Ind = 'A' then 'F'
-    when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.949999  and New_Rate_Ind = 'B' then 'F'
-    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.949999  and New_Rate_Ind = 'C' then 'F'
-    when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and New_Rate_Ind = 'D' then 'F'
-    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and New_Rate_Ind = 'D' then 'F'
-    when EFF_RATE = 0.000000000 then 'F'
-    else 'T' end ODD_IND,
+
     --calculation for prov tax ind PROV_TAX_IND <> '         '  'F'
     case when ABS(GST_HST) > 0 then 1 else 0 end GST_COUNT,
     case
-    when EFF_RATE >= 6.980000  and  EFF_RATE <= 7.099999 then 'T'
-    when EFF_RATE >= 5.980000  and  EFF_RATE <= 6.099999 then 'T'
-    when EFF_RATE >= 4.980000  and  EFF_RATE <= 5.099999 then 'T'
-    when EFF_RATE >= 14.980000 and  EFF_RATE <= 15.950000 then 'T'
-    when EFF_RATE >= 13.980000 and  EFF_RATE <= 14.950000 then 'T'
-    when EFF_RATE >= 12.980000 and  EFF_RATE <= 13.950000 then 'T'
-    when EFF_RATE >= 11.980000 and  EFF_RATE <= 12.950000 then 'T'
-    else 'F' end CN_FLAG_IND,
-    case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'T'
-    else 'F' end CN_REP2_IND,
-    --prov_ap code to be added
+    when EFF_RATE >= 4.980000  and  EFF_RATE <= 5.099999 then 'F'
+    when EFF_RATE >= 14.980000 and  EFF_RATE <= 15.950000 then 'F'
+    when EFF_RATE >= 13.980000 and  EFF_RATE <= 14.950000 then 'F'
+    when EFF_RATE >= 12.980000 and  EFF_RATE <= 13.950000 then 'F'
+    else 'T' end CN_FLAG_IND,
+    case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'F'
+    else 'T' end CN_REP2_IND,
+    case when PME_GENERAL <> '' and PME_GENERAL <> 'QC' and PME_GENERAL <> 'QST as GST' then AP_AMT
+	else 0.00 end PROV_AP,
     case when
-    PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*7.0000000000)/107.0000000000
-    when PROV_TAX_IND = '' and GST_HST = 0 then ABS(AP_AMT*6.0000000000)/106.0000000000
-    when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*5.0000000000)/105.0000000000
-    when PROV_TAX_IND = '' and GST_HST = 0 then  ABS(AP_AMT*12.0000000000)/112.0000000000
+    (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*5.0000000000)/105.0000000000
     else 0.5555555555 end EVEN_GST_RATE,
-    case when
-    New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'PEI-GST 7%'  then ABS(AP_AMT*7.0000000000)/117.7000000000
-    when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 6%' then ABS(AP_AMT*6.0000000000)/116.6000000000
-    when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'PEI-GST 5%' then  ABS(AP_AMT*5.0000000000)/115.5000000000
-    else 0.5555555555 end EVEN_GST_PEI_RATE,
-    case when
-    (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC 7.5%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.5000000000
-    when  New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 7%' then ABS(AP_AMT*7.0000000000)/114.0000000000
-    when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN-SASK 7%-GST 6%' then  ABS(AP_AMT*6.0000000000)/113.0000000000
-    when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'BC-MAN 7%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.0000000000
+	case when
+    (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*13.0000000000)/113.0000000000
+    else 0.5555555555 end EVEN_HST13_RATE,
+	case when
+    (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*14.0000000000)/114.0000000000
+    else 0.5555555555 end EVEN_HST14_RATE,
+	case when
+    (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*15.0000000000)/115.0000000000
+    else 0.5555555555 end EVEN_HST15_RATE,
+	case when
+    ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'BC' then ABS(AP_AMT*5.0000000000)/112.0000000000
     else 0.5555555555 end EVEN_GST_BC_RATE,
+	case when
+    ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'MB' then ABS(AP_AMT*5.0000000000)/113.0000000000
+    else 0.5555555555 end EVEN_GST_MB_RATE,
+	case when
+    ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'SK5' then ABS(AP_AMT*5.0000000000)/110.0000000000
+	when ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'SK6' then ABS(AP_AMT*5.0000000000)/111.0000000000
+    else 0.5555555555 end EVEN_GST_SASK_RATE,
+	case when
+    ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'QC' then ABS(AP_AMT*5.0000000000)/114.97500000000
+    else 0.5555555555 end EVEN_GST_QST_RATE,
+	case when
+    (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and ODD_IND = 'T' then ABS(AP_AMT) - ABS(GST_HST)/0.0500000000
+    else 0.0 end PME_MAT,
     case when
-    (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 6%-GST 7%' then  ABS(AP_AMT*7.0000000000)/113.0000000000
-    when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 6%' then ABS(AP_AMT*6.0000000000)/111.0000000000
-    when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'SASK 5%-GST 5%' then  ABS(AP_AMT*5.0000000000)/110.0000000000
-    else  0.5555555555
-    end EVEN_GST_SASK_RATE,
-    case when
-    (New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0000000000
-    when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 6%' then  ABS(AP_AMT*6.0000000000)/114.0000000000
-    when (New_Rate_Ind = 'C' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'ORST-GST 5%' then ABS(AP_AMT*5.0000000000)/113.0000000000
-    else  0.5555555555 end EVEN_GST_ORST_RATE,
-    case when
-    New_Rate_Ind = 'A' and PROV_TAX_IND = '' and GST_HST = 0 or PROV_TAX_IND = 'QST 6.48%-GST 7%' then ABS(AP_AMT*7.0000000000)/115.0250000000
-    when (New_Rate_Ind = 'B' and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 6%' then ABS(AP_AMT*6.0000000000)/113.9500000000
-    when ((New_Rate_Ind = 'C' or New_Rate_Ind = 'D') and PROV_TAX_IND = '' and GST_HST = 0) or PROV_TAX_IND = 'QST 6.48%-GST 5%' then  ABS(AP_AMT*5.0000000000)/112.8750000000
-    else 0.5555555555
-    end EVEN_GST_QST_RATE,
-    case when
-    New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000)) - abs(GST_HST)
-    when New_Rate_Ind = 'B' then (abs(AP_AMT) - (abs(GST_HST)/0.0600000000)) - abs(GST_HST)
-    when New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000)) - abs(GST_HST)
-    else 0.00
-    end PST_MAT,
-    case when
-    (New_Rate_Ind = 'A' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST)) * -1
-    when (New_Rate_Ind = 'B' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST)) * -1
-    when (New_Rate_Ind = 'C' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
-    when (New_Rate_Ind = 'D' AND (GST_HST < 0)) then (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST)) * -1
-    when New_Rate_Ind = 'A' then  (((abs(AP_AMT)-abs(PST)) * (7.0000000000/107.0000000000)) - abs(GST_HST))
-    when  New_Rate_Ind = 'B' then (((abs(AP_AMT)-abs(PST)) * (6.0000000000/106.0000000000)) - abs(GST_HST))
-    when New_Rate_Ind = 'C' then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST))
-    when New_Rate_Ind = 'D' then  (((abs(AP_AMT)-abs(PST)) * (12.0000000000/112.0000000000)) - abs(GST_HST))
+    Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E' then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST))
+	when Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E' and GST_HST < 0 then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
     else 0.00
     end GST_MAT,
     case when
-    New_Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000))
-    when New_Rate_Ind = 'B' then  (abs(AP_AMT) - (abs(GST_HST)/0.0600000000))
-    when  New_Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000))
-    when New_Rate_Ind = 'D' then  (abs(AP_AMT) - (abs(GST_HST)/0.1200000000))
+    Rate_Ind = 'A' then (abs(AP_AMT) - (abs(GST_HST)/0.0700000000))
+    when Rate_Ind = 'B' then  (abs(AP_AMT) - (abs(GST_HST)/0.0600000000))
+    when  Rate_Ind = 'C' then (abs(AP_AMT) - (abs(GST_HST)/0.0500000000))
+    when Rate_Ind = 'D' then  (abs(AP_AMT) - (abs(GST_HST)/0.1200000000))
     else 0.00
     end BROKER_VALUE,
     case when
@@ -1672,23 +1380,49 @@ def j64():
     BROKER_PCT,
      *
     from
+		(
+		select
+CASE WHEN
+	EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (Rate_Ind = 'B'  or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
+    when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.099999 and (Rate_Ind = 'B'  or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
+    when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.099999  and (Rate_Ind = 'B' or Rate_Ind = 'C') then 'F'
+    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and (Rate_Ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
+    when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and Rate_Ind = 'D' then 'F'
+    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and Rate_Ind = 'D' then 'F'
+    when EFF_RATE = 0.000000000 then 'F'
+	when PME_GENERAL <> '' then 'F'
+    else 'T' end ODD_IND,
+			*
+		from
     (
     select
+
+		CASE WHEN
+    EFF_RATE >= 4.6713972  and EFF_RATE <= 4.6743972 and Rate_Ind = 'A' then 'F'
+    when EFF_RATE >= 5.9800000  and  EFF_RATE <= 6.0999999 and Rate_Ind = 'B' then 'F'
+    when EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (Rate_Ind = 'C' or Rate_Ind = 'D') then 'F'
+    when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.949999 and Rate_Ind = 'A' then 'F'
+    when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.949999  and Rate_Ind = 'B' then 'F'
+    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.949999  and Rate_Ind = 'C' then 'F'
+    when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and Rate_Ind = 'D' then 'F'
+    when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and Rate_Ind = 'D' then 'F'
+    when EFF_RATE = 0.000000000 then 'F'
+    else 'T' end PME_GENERAL,
     case when
-    EFF_RATE >= 5.4235000 and eff_rate <= 5.4265000 and new_rate_ind = 'B' then  'PEI-GST 6%'
-    when EFF_RATE >= 4.5233869 and eff_rate <= 4.5263869 and new_rate_ind ='C' or New_rate_ind = 'D' then  'PEI-GST 5%'
-    when EFF_RATE >= 5.606000 AND EFF_RATE <= 5.6090000 and New_Rate_Ind = 'B' then  'BC-MAN-SASK 7%-GST 6%'
-    when EFF_RATE >= 4.6713972 AND EFF_RATE <= 4.6743972 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'BC-MAN 7%-GST 5%'
-    when EFF_RATE >= 5.7127000 AND EFF_RATE <= 5.7160000 and New_Rate_Ind = 'B' then 'SASK 5%-GST 6%'
-    when EFF_RATE >= 4.7604048 AND EFF_RATE <= 4.7634048 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'SASK 5%-GST 5%'
-    when EFF_RATE >= 5.5540000 AND EFF_RATE <= 5.5569990 and New_Rate_Ind = 'B' then  'ORST-GST 6%'
-    when EFF_RATE >= 4.6281296 AND EFF_RATE <= 4.6311296 and (New_Rate_Ind = 'C' or New_Rate_Ind = 'D') then  'ORST-GST 5%'
-    when EFF_RATE >= 5.5570000 AND EFF_RATE <= 5.5600000 and extract(year from cast(BLDAT as date)) <= 2007 then  'QST 6.48%-GST 6%'
-    when EFF_RATE >= 4.6334942 AND EFF_RATE <= 4.6364942 and extract(year from cast(BLDAT as date)) < 2010  and extract(month from cast(BLDAT as date)) < 12 then  'QST 6.48%-GST 5%'
-    when EFF_RATE >= 7.8720000 AND EFF_RATE <= 7.8780000 and extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) <= 12 then  'QST 7.50%-GST 5%'
-    when EFF_RATE >= 8.9220000 AND EFF_RATE <= 8.9280000 and extract(year from cast(BLDAT as date)) =2011 and extract(month from cast(BLDAT as date))<=12 then  'QST 8.50%-GST 5%'
-    when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))=2012 and extract(month from cast(BLDAT as date)) <=12 then  'QST 9.50%-GST 5%'
-    when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(BLDAT as date))>=2013 then  'HST_Quebec'
+    EFF_RATE >= 5.4235000 and eff_rate <= 5.4265000 and Rate_Ind = 'B' then  'PEI-GST 6%'
+    when EFF_RATE >= 4.5233869 and eff_rate <= 4.5263869 and Rate_Ind ='C' or Rate_Ind = 'D' then  'PEI-GST 5%'
+    when EFF_RATE >= 5.606000 AND EFF_RATE <= 5.6090000 and Rate_Ind = 'B' then  'BC-MAN-SASK 7%-GST 6%'
+    when EFF_RATE >= 4.6713972 AND EFF_RATE <= 4.6743972 and (Rate_Ind = 'C' or Rate_Ind = 'D') then  'BC-MAN 7%-GST 5%'
+    when EFF_RATE >= 5.7127000 AND EFF_RATE <= 5.7160000 and Rate_Ind = 'B' then 'SASK 5%-GST 6%'
+    when EFF_RATE >= 4.7604048 AND EFF_RATE <= 4.7634048 and (Rate_Ind = 'C' or Rate_Ind = 'D') then  'SASK 5%-GST 5%'
+    when EFF_RATE >= 5.5540000 AND EFF_RATE <= 5.5569990 and Rate_Ind = 'B' then  'ORST-GST 6%'
+    when EFF_RATE >= 4.6281296 AND EFF_RATE <= 4.6311296 and (Rate_Ind = 'C' or Rate_Ind = 'D') then  'ORST-GST 5%'
+    when EFF_RATE >= 5.5570000 AND EFF_RATE <= 5.5600000 and extract(year from cast(inv_date as date)) <= 2007 then  'QST 6.48%-GST 6%'
+    when EFF_RATE >= 4.6334942 AND EFF_RATE <= 4.6364942 and extract(year from cast(inv_date as date)) < 2010  and extract(month from cast(inv_date as date)) < 12 then  'QST 6.48%-GST 5%'
+    when EFF_RATE >= 7.8720000 AND EFF_RATE <= 7.8780000 and extract(year from cast(inv_date as date)) = 2010 and extract(month from cast(inv_date as date)) <= 12 then  'QST 7.50%-GST 5%'
+    when EFF_RATE >= 8.9220000 AND EFF_RATE <= 8.9280000 and extract(year from cast(inv_date as date)) =2011 and extract(month from cast(inv_date as date))<=12 then  'QST 8.50%-GST 5%'
+    when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(inv_date as date))=2012 and extract(month from cast(inv_date as date)) <=12 then  'QST 9.50%-GST 5%'
+    when EFF_RATE >= 9.9720000 AND EFF_RATE <= 9.9780000 and extract(year from cast(inv_date as date))>=2013 then  'HST_Quebec'
     when EFF_RATE >= 7.4980190 AND EFF_RATE <= 7.5007180  then  'QST AS GST'
     else '' end PROV_TAX_IND,
     *
@@ -1698,33 +1432,27 @@ def j64():
     --should be GST_HST = 0, but some bug is preventing me from doing the proper calculation.
     --PostgreSQL cannot handle mixed data types, setting this from text to numeric
     net_value = 0 then '9999' else abs(round(cast(GST_HST*1000000/NET_VALUE as numeric), 6)) end EFF_RATE,
-    net_value,
     *
     from (
     select
-    case when extract(year from cast(BLDAT as date)) = 2006 and extract(month from cast(BLDAT as date)) > 6 then 'B'
-    when extract(year from cast(BLDAT as date)) = 2007  then 'B'
-    when extract(year from cast(BLDAT as date)) = 2008  then 'C'
-    when extract(year from cast(BLDAT as date)) = 2009  then 'C'
-    when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) < 7 then 'C'
-    when extract(year from cast(BLDAT as date)) = 2010 and extract(month from cast(BLDAT as date)) >= 7 then 'D'
-    when extract(year from cast(BLDAT as date)) = 2011  then 'D'
-    when extract(year from cast(BLDAT as date)) = 2012  then 'D'
-    when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) < 4 then 'D'
-    when extract(year from cast(BLDAT as date)) = 2013 and extract(month from cast(BLDAT as date)) >= 4 then 'C'
-    when extract(year from cast(BLDAT as date)) >= 2014 then 'C'
+    case when extract(year from cast(inv_date as date)) <= 2015 and extract(year from cast(inv_date as date)) >= 2014 OR ( extract(year from cast(inv_date as date)) = 2016 and  extract(month from cast(inv_date as date)) < 7) then 'B'
+    when extract(year from cast(inv_date as date)) = 2016  and extract(month from cast(inv_date as date)) >= 7 and extract(month from cast(inv_date as date)) < 10 then 'C'
+    when (extract(year from cast(inv_date as date)) = 2016 and extract(month from cast(inv_date as date)) >= 10) or (extract(year from cast(inv_date as date)) = 2017 and extract(month from cast(inv_date as date)) <= 3 and extract(day from cast(inv_date as date)) < 24 ) then 'D'
+    when (extract(year from cast(inv_date as date)) = 2017 and extract(month from cast(inv_date as date)) >= 3 and extract(day from cast(inv_date as date)) < 24 ) or (extract(year from cast(inv_date as date)) >= 2018) then 'E'
     else 'A' end
-    New_Rate_Ind,
-    upper(trim(name1)) as New_Vend_Name,
+    Rate_Ind,
+    upper(trim(vend_name)) as New_Vend_Name,
     abs(AP_AMT) - abs(GST_HST) - abs(PST) as Net_Value,
+	 ap_amt as TOP_INV_AMT,
     *
-    from raw_summ) subq) subq1 ) subq2 ) subq3
+    from caps_8) subq) subq1 ) subq2 ) subq3 ) subq4 ) subq5
     """
     return j64
 
 def j65():
     j65 = """
-            select rtrim(concat(noitc_var,
+    DROP TABLE IF EXISTS caps_with_attributes;
+	select rtrim(concat(noitc_var,
                 itc_var,
                 noitr_var,
                 Even_var,
@@ -1739,7 +1467,7 @@ def j65():
                 ODD5114_var,
                 ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
                 caps_no_attributes.*
-                --into caps_with_attributes
+                into caps_with_attributes
                 from (
     select
     case when GST_HST = 0.00 then 'NoITC, ' else null end as noitc_var,
@@ -1756,39 +1484,39 @@ def j65():
     case when even_gst_ind = 'Y' and GST_HST = 0.00 and GST_HST <> 0.00 then 'Even, ' else null end Even_var,
     case when eff_rate >= 4.544987838 and eff_rate <= 4.547987838 then 'QC, ' else null end QC_var,
     case when eff_rate >= 4.7604048 and eff_rate <= 4.7634048
-            and extract(year from cast(BLDAT as date)) <= 2015
-            and extract(year from cast(BLDAT as date)) >= 2014
-            or (extract(year from cast(BLDAT as date)) = 2017
+            and extract(year from cast(inv_date as date)) <= 2015
+            and extract(year from cast(inv_date as date)) >= 2014
+            or (extract(year from cast(inv_date as date)) = 2017
                 and
-                extract(month from cast(BLDAT as date)) <= 3
+                extract(month from cast(inv_date as date)) <= 3
                and
-                extract(day from cast(BLDAT as date)) <= 24
+                extract(day from cast(inv_date as date)) <= 24
                )
             then 'QC, '
             else null
             end P5_var,
     case when eff_rate >= 4.715481132
             and eff_rate <= 4.718481132
-            and (extract(year from cast(bldat as date)) = 2017
-            and extract(month from cast(bldat as date)) >= 3
-            and extract(date from cast(bldat as date)) >= 24)
+            and (extract(year from cast(inv_date as date)) = 2017
+            and extract(month from cast(inv_date as date)) >= 3
+            and extract(date from cast(inv_date as date)) >= 24)
             or
-            extract(year from cast(bldat as date)) >= 2018
+            extract(year from cast(inv_date as date)) >= 2018
             then 'P6, '
             else null
             end P6_var,
     case when (eff_rate >= 4.6713972 and eff_rate <= 4.6743972)
             and (
-                extract(year from cast(bldat as date)) <= 2015
+                extract(year from cast(inv_date as date)) <= 2015
                 and
-                extract(year from cast(bldat as date)) <= 2015
+                extract(year from cast(inv_date as date)) <= 2015
                 or
                 (
-                extract(year from cast(bldat as date)) = 2017
+                extract(year from cast(inv_date as date)) = 2017
                 and
-                extract(month from cast(bldat as date)) <= 3
+                extract(month from cast(inv_date as date)) <= 3
                 and
-                extract(day from cast(bldat as date)) < 24
+                extract(day from cast(inv_date as date)) < 24
                 )
             )
             then 'P7, '
@@ -1796,17 +1524,17 @@ def j65():
             end P7_var,
     case when (eff_rate >= 4.6281296 and eff_rate <= 4.6311296)
     and (
-    extract(year from cast(bldat as date)) <= 2015
+    extract(year from cast(inv_date as date)) <= 2015
     )
     and (
-    extract(year from cast(bldat as date)) >= 2014
+    extract(year from cast(inv_date as date)) >= 2014
     )
     or (
-        extract(year from cast(bldat as date)) = 2017
+        extract(year from cast(inv_date as date)) = 2017
         and
-        extract(month from cast(bldat as date)) <= 3
+        extract(month from cast(inv_date as date)) <= 3
         and
-        extract(day from cast(bldat as date)) < 24
+        extract(day from cast(inv_date as date)) < 24
         )
     then 'P8, '
     else null
@@ -1815,9 +1543,9 @@ def j65():
     --case when vend_cntry = 'Canada' then 'CdnVend' else null end CdnVend,
     --case when vend_cntry <> 'Canada' then 'ForeignVend' else null end ForeignVend,
     case when eff_rate = '0.000000' then 'AP=GST, ' else null end APGST_var,
-    case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and new_rate_ind = 'D' then 'ODD_5/113, ' else null end ODD5113_var,
-    case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and new_rate_ind = 'D' then 'ODD_5/114, ' else null end ODD5114_var,
-    case when (eff_rate >= 4.542454545455 and eff_rate <= 4.548454545455) and new_rate_ind = 'D' then 'ODD_5/115, ' else null end ODD5115_var,
+    case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and Rate_Ind = 'D' then 'ODD_5/113, ' else null end ODD5113_var,
+    case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and Rate_Ind = 'D' then 'ODD_5/114, ' else null end ODD5114_var,
+    case when (eff_rate >= 4.542454545455 and eff_rate <= 4.548454545455) and Rate_Ind = 'D' then 'ODD_5/115, ' else null end ODD5115_var,
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM,
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
     case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
@@ -1829,3 +1557,295 @@ def j65():
     on caps_no_attributes.varapkey = transaction_attributes.varapkey
     """
     return j65
+
+    def j66():
+        j66 = """
+        INSERT INTO sap_caps (
+        transaction_attributes,
+        even_gst_ind,
+        odd_imm,
+        prov_ap_amt,
+        pme_imm,
+        gst_imm,
+        gst_count,
+        cn_flag_ind,
+        cn_rep2_ind,
+        prov_ap,
+        even_gst_rate,
+        even_hst13_rate,
+        even_hst14_rate,
+        even_hst15_rate,
+        even_gst_bc_rate,
+        even_gst_mb_rate,
+        even_gst_sask_rate,
+        even_gst_qst_rate,
+        pme_mat,
+        gst_mat,
+        flag_cn,
+        odd_ind,
+        pme_general,
+        prov_tax_ind,
+        eff_rate,
+        rate_ind,
+        new_vend_name,
+        net_value,
+        top_inv_amt,
+        amount_local_ccy,
+        ap_ar_amt_doc_ccy,
+        vardocamt,
+        vartranamount,
+        varlocamt,
+        ap_amt,
+        gst_hst,
+        pst,
+        pst_sa,
+        qst,
+        taxes_other,
+        varapkey,
+        doc_type_gl,
+        inv_date,
+        post_date_gl,
+        fx_rate,
+        fiscal_period_gl,
+        trnx_code_gl,
+        ccy,
+        inv_num,
+        main_asset_num,
+        asset_sub_num,
+        gl_doc_num,
+        post_key_gl,
+        gl_doc_status,
+        co_code_gl,
+        po_doc_num,
+        func_area_gl,
+        fiscal_year_gl,
+        bus_area_dept_num_gl,
+        control_area_gl,
+        cost_ctr_num_gl,
+        cx_num,
+        vend_num,
+        material_num_gl,
+        tax_type_gl,
+        po_tax_code_gl,
+        gst_hst_qst_pst_local_ccy,
+        profit_ctr_num,
+        wbs_gl,
+        item_descr_gl,
+        reverse_doc_num,
+        reverse_reason_gl,
+        tax_jur_gl,
+        sales_doc_num_gl,
+        billing_doc_num,
+        gst_hst_pst_qst_doc_ccy,
+        vend_name,
+        vend_city,
+        vend_region,
+        vend_tax_num_1,
+        vend_tax_num_2,
+        vend_tax_num_3,
+        vend_tax_num_4,
+        vend_tax_num_5,
+        vend_tax_num_type,
+        vend_reg_num,
+        lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+        caps_gen_id,
+        post_key_descr,
+        co_name,
+        proj_loc_proj,
+        proj_type_proj,
+        wbs_elem_descr_proj,
+        wbs_elem_id_proj,
+        wbs_cntrl_area_proj,
+        wbs_bus_area_proj,
+        jv_obj_type_proj,
+        object_num_proj,
+        proj_descr_proj,
+        proj_defin_proj,
+        proj_internal_proj,
+        proj_tx_jur_proj,
+        proj_mngr_name_proj,
+        proj_mngr_num_proj,
+        bus_area_proj,
+        plant_proj,
+        tx_jur_descr_tx,
+        plant_name_plant,
+        plant_tx_jur_plant,
+        tx_name_tx,
+        largest_debit_half_acct_num_gl,
+        pymt_doc_num_pmt,
+        payee_code_pmt,
+        cx_num_pmt,
+        co_code_pmt,
+        incoterms1,
+        incoterms2,
+        cntry_name,
+        ean_upc_num_mat,
+        mat_orig_ctry_mat,
+        ean_categ_mat,
+        mat_tx_class_mat,
+        mat_tx_class_descr_mat,
+        mat_group_descr_mat,
+        mat_descr_mat,
+        mat_dept_ctry_mat,
+        mat_tx_ind_mat,
+        wbs_po,
+        po_tx_code_po,
+        plant_num,
+        po_tx_jur,
+        po_item_descr,
+        stor_loc_desc_mat,
+        stor_loc_mat,
+        stor_plant_mat,
+        mat_doc_num_mat,
+        mat_plnt_mat,
+        punch_grp_po,
+        punch_org_po,
+        handover_loc_po,
+        vend_phone,
+        vend_person,
+        purch_org_descr_po)
+        SELECT
+        transaction_attributes,
+        even_gst_ind,
+        odd_imm,
+        prov_ap_amt,
+        pme_imm,
+        gst_imm,
+        gst_count,
+        cn_flag_ind,
+        cn_rep2_ind,
+        prov_ap,
+        even_gst_rate,
+        even_hst13_rate,
+        even_hst14_rate,
+        even_hst15_rate,
+        even_gst_bc_rate,
+        even_gst_mb_rate,
+        even_gst_sask_rate,
+        even_gst_qst_rate,
+        pme_mat,
+        gst_mat,
+        flag_cn,
+        odd_ind,
+        pme_general,
+        prov_tax_ind,
+        eff_rate,
+        rate_ind,
+        new_vend_name,
+        net_value,
+        top_inv_amt,
+        amount_local_ccy,
+        ap_ar_amt_doc_ccy,
+        vardocamt,
+        vartranamount,
+        varlocamt,
+        ap_amt,
+        gst_hst,
+        pst,
+        pst_sa,
+        qst,
+        taxes_other,
+        varapkey,
+        doc_type_gl,
+        inv_date,
+        post_date_gl,
+        fx_rate,
+        fiscal_period_gl,
+        trnx_code_gl,
+        ccy,
+        inv_num,
+        main_asset_num,
+        asset_sub_num,
+        gl_doc_num,
+        post_key_gl,
+        gl_doc_status,
+        co_code_gl,
+        po_doc_num,
+        func_area_gl,
+        fiscal_year_gl,
+        bus_area_dept_num_gl,
+        control_area_gl,
+        cost_ctr_num_gl,
+        cx_num,
+        vend_num,
+        material_num_gl,
+        tax_type_gl,
+        po_tax_code_gl,
+        gst_hst_qst_pst_local_ccy,
+        profit_ctr_num,
+        wbs_gl,
+        item_descr_gl,
+        reverse_doc_num,
+        reverse_reason_gl,
+        tax_jur_gl,
+        sales_doc_num_gl,
+        billing_doc_num,
+        gst_hst_pst_qst_doc_ccy,
+        vend_name,
+        vend_city,
+        vend_region,
+        vend_tax_num_1,
+        vend_tax_num_2,
+        vend_tax_num_3,
+        vend_tax_num_4,
+        vend_tax_num_5,
+        vend_tax_num_type,
+        vend_reg_num,
+        lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+        caps_gen_id,
+        post_key_descr,
+        co_name,
+        proj_loc_proj,
+        proj_type_proj,
+        wbs_elem_descr_proj,
+        wbs_elem_id_proj,
+        wbs_cntrl_area_proj,
+        wbs_bus_area_proj,
+        jv_obj_type_proj,
+        object_num_proj,
+        proj_descr_proj,
+        proj_defin_proj,
+        proj_internal_proj,
+        proj_tx_jur_proj,
+        proj_mngr_name_proj,
+        proj_mngr_num_proj,
+        bus_area_proj,
+        plant_proj,
+        tx_jur_descr_tx,
+        plant_name_plant,
+        plant_tx_jur_plant,
+        tx_name_tx,
+        largest_debit_half_acct_num_gl,
+        pymt_doc_num_pmt,
+        payee_code_pmt,
+        cx_num_pmt,
+        co_code_pmt,
+        incoterms1,
+        incoterms2,
+        cntry_name,
+        ean_upc_num_mat,
+        mat_orig_ctry_mat,
+        ean_categ_mat,
+        mat_tx_class_mat,
+        mat_tx_class_descr_mat,
+        mat_group_descr_mat,
+        mat_descr_mat,
+        mat_dept_ctry_mat,
+        mat_tx_ind_mat,
+        wbs_po,
+        po_tx_code_po,
+        plant_num,
+        po_tx_jur,
+        po_item_descr,
+        stor_loc_desc_mat,
+        stor_loc_mat,
+        stor_plant_mat,
+        mat_doc_num_mat,
+        mat_plnt_mat,
+        punch_grp_po,
+        punch_org_po,
+        handover_loc_po,
+        vend_phone,
+        vend_person,
+        purch_org_descr_po from caps_with_attributes"""
+        return j66

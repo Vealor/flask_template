@@ -1,5 +1,6 @@
 from .__model_imports import *
 from .codes import *
+from src.errors import *
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -38,7 +39,7 @@ class Transaction(db.Model):
     data = db.Column(postgresql.JSON, nullable=False)
 
     # gst_code_id = db.Column(db.Integer, nullable=True) #FK
-    gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     gst_notes_internal = db.Column(db.String(2048), nullable=True)
     gst_notes_external = db.Column(db.String(2048), nullable=True)
     gst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -49,7 +50,7 @@ class Transaction(db.Model):
     gst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_signed_off_by_id') # FK
 
     # hst_code_id = db.Column(db.Integer, nullable=True) #FK
-    hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     hst_notes_internal = db.Column(db.String(2048), nullable=True)
     hst_notes_external = db.Column(db.String(2048), nullable=True)
     hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -60,7 +61,7 @@ class Transaction(db.Model):
     hst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.hst_signed_off_by_id') # FK
 
     # qst_code_id = db.Column(db.Integer, nullable=True) #FK
-    qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     qst_notes_internal = db.Column(db.String(2048), nullable=True)
     qst_notes_external = db.Column(db.String(2048), nullable=True)
     qst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -71,7 +72,7 @@ class Transaction(db.Model):
     qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id') # FK
 
     # pst_code_id = db.Column(db.Integer, nullable=True) #FK
-    pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     pst_notes_internal = db.Column(db.String(2048), nullable=True)
     pst_notes_external = db.Column(db.String(2048), nullable=True)
     pst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -82,7 +83,7 @@ class Transaction(db.Model):
     pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id') # FK
 
     # apo_code_id = db.Column(db.Integer, nullable=True) #FK
-    apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True) #FK
+    apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
     apo_notes_internal = db.Column(db.String(2048), nullable=True)
     apo_notes_external = db.Column(db.String(2048), nullable=True)
     apo_recoveries = db.Column(db.Float, nullable=True, default=0.0)
@@ -109,7 +110,7 @@ class Transaction(db.Model):
 
     @property
     def serialize(self):
-        return {
+        output = {
             'id': self.id,
             'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
             'is_paredowned': self.is_paredowned,
@@ -117,7 +118,7 @@ class Transaction(db.Model):
             'recovery_probability': self.recovery_probability,
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
-            'data': self.data,
+            # 'data': self.data if self.data else {},
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
@@ -131,52 +132,53 @@ class Transaction(db.Model):
             'gst_notes_internal': self.gst_notes_internal,
             'gst_notes_external': self.gst_notes_external,
             'gst_recoveries': self.gst_recoveries,
-            'gst_error_type': self.gst_error_type,
+            'gst_error_type': self.gst_error_type.name if self.gst_error_type else None,
             'gst_coded_by_id': self.gst_coded_by_id,
-            'gst_coded_by_user': self.gst_coded_by_user,
+            'gst_coded_by_user': self.gst_coded_by_user.username if self.gst_coded_by_user else None,
             'gst_signed_off_by_id': self.gst_signed_off_by_id,
-            'gst_signed_off_by_user': self.gst_signed_off_by_user,
+            'gst_signed_off_by_user': self.gst_signed_off_by_user.username if self.gst_signed_off_by_user else None,
 
             'hst_codes': [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else [],
             'hst_notes_internal': self.hst_notes_internal,
             'hst_notes_external': self.hst_notes_external,
             'hst_recoveries': self.hst_recoveries,
-            'hst_error_type': self.hst_error_type,
+            'hst_error_type': self.hst_error_type.name if self.hst_error_type else None,
             'hst_coded_by_id': self.hst_coded_by_id,
-            'hst_coded_by_user': self.hst_coded_by_user,
+            'hst_coded_by_user': self.hst_coded_by_user.username if self.hst_coded_by_user else None,
             'hst_signed_off_by_id': self.hst_signed_off_by_id,
-            'hst_signed_off_by_user': self.hst_signed_off_by_user,
+            'hst_signed_off_by_user': self.hst_signed_off_by_user.username if self.hst_signed_off_by_user else None,
 
             'qst_codes': [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else [],
             'qst_notes_internal': self.qst_notes_internal,
             'qst_notes_external': self.qst_notes_external,
             'qst_recoveries': self.qst_recoveries,
-            'qst_error_type': self.qst_error_type,
+            'qst_error_type': self.qst_error_type.name if self.qst_error_type else None,
             'qst_coded_by_id': self.qst_coded_by_id,
-            'qst_coded_by_user': self.qst_coded_by_user,
+            'qst_coded_by_user': self.qst_coded_by_user.username if self.qst_coded_by_user else None,
             'qst_signed_off_by_id': self.qst_signed_off_by_id,
-            'qst_signed_off_by_user': self.qst_signed_off_by_user,
+            'qst_signed_off_by_user': self.qst_signed_off_by_user.username if self.qst_signed_off_by_user else None,
 
             'pst_codes': [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else [],
             'pst_notes_internal': self.pst_notes_internal,
             'pst_notes_external': self.pst_notes_external,
             'pst_recoveries': self.pst_recoveries,
-            'pst_error_type': self.pst_error_type,
+            'pst_error_type': self.pst_error_type.name if self.pst_error_type else None,
             'pst_coded_by_id': self.pst_coded_by_id,
-            'pst_coded_by_user': self.pst_coded_by_user,
+            'pst_coded_by_user': self.pst_coded_by_user.username if self.pst_coded_by_user else None,
             'pst_signed_off_by_id': self.pst_signed_off_by_id,
-            'pst_signed_off_by_user': self.pst_signed_off_by_user,
+            'pst_signed_off_by_user': self.pst_signed_off_by_user.username if self.pst_signed_off_by_user else None,
 
             'apo_codes': [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else [],
             'apo_notes_internal': self.apo_notes_internal,
             'apo_notes_external': self.apo_notes_external,
             'apo_recoveries': self.apo_recoveries,
-            'apo_error_type': self.apo_error_type,
+            'apo_error_type': self.apo_error_type.name if self.apo_error_type else None,
             'apo_coded_by_id': self.apo_coded_by_id,
-            'apo_coded_by_user': self.apo_coded_by_user,
+            'apo_coded_by_user': self.apo_coded_by_user.username if self.apo_coded_by_user else None,
             'apo_signed_off_by_id': self.apo_signed_off_by_id,
-            'apo_signed_off_by_user': self.apo_signed_off_by_user
+            'apo_signed_off_by_user': self.apo_signed_off_by_user.username if self.apo_signed_off_by_user else None
         }
+        return (self.id, output, self.data if self.data else {})
 
     @property
     def predictive_serialize(self):
@@ -187,15 +189,15 @@ class Transaction(db.Model):
             'codes': {}
         }
         if self.transaction_project.has_ts_gst and self.gst_signed_off_by_id:
-            output['codes']['gst'] = [c.code_number for c in self.gst_codes]
+            output['codes']['gst'] = [c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []
         if self.transaction_project.has_ts_hst and self.hst_signed_off_by_id:
-            output['codes']['hst'] = [c.code_number for c in self.hst_codes]
+            output['codes']['hst'] = [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []
         if self.transaction_project.has_ts_qst and self.qst_signed_off_by_id:
-            output['codes']['qst'] = [c.code_number for c in self.qst_codes]
+            output['codes']['qst'] = [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []
         if self.transaction_project.has_ts_pst and self.pst_signed_off_by_id:
-            output['codes']['pst'] = [c.code_number for c in self.pst_codes]
+            output['codes']['pst'] = [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []
         if self.transaction_project.has_ts_apo and self.apo_signed_off_by_id:
-            output['codes']['apo'] = [c.code_number for c in self.apo_codes]
+            output['codes']['apo'] = [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []
         return output
 
     @classmethod
