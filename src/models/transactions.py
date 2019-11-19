@@ -110,7 +110,7 @@ class Transaction(db.Model):
 
     @property
     def serialize(self):
-        return {
+        output = {
             'id': self.id,
             'modified': self.modified.strftime("%Y-%m-%d_%H:%M:%S") if self.modified else None,
             'is_paredowned': self.is_paredowned,
@@ -118,7 +118,7 @@ class Transaction(db.Model):
             'recovery_probability': self.recovery_probability,
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
-            'data': self.data if self.data else {},
+            # 'data': self.data if self.data else {},
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
             'locked_user_initials': self.locked_transaction_user.initials if self.locked_transaction_user else None,
@@ -178,6 +178,7 @@ class Transaction(db.Model):
             'apo_signed_off_by_id': self.apo_signed_off_by_id,
             'apo_signed_off_by_user': self.apo_signed_off_by_user.username if self.apo_signed_off_by_user else None
         }
+        return {**output, **self.data}
 
     @property
     def predictive_serialize(self):
