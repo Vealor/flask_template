@@ -86,8 +86,8 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     # If training, only consider categorical columns with low cardinality
     if preprocess_for == 'training':
-        int_columns = [col for col in int_columns if df[col].nunique() < 8]
-        str_columns = [col for col in str_columns if df[col].nunique() < 8 and col != 'transaction_attributes']
+        int_columns = [col for col in int_columns if df[col].nunique() < 20]
+        str_columns = [col for col in str_columns if df[col].nunique() < 20 and col != 'transaction_attributes']
 
     # Only keep the data columns that we can hvaev appropriately treated
 
