@@ -294,11 +294,17 @@ def do_validate():
 
 #===============================================================================
 # Compare active and pending models
-@client_models.route('/<int:client_id>/compare/', methods=['GET'])
+@client_models.route('/compare/', methods=['GET'])
 # @jwt_required
 @exception_wrapper()
-def compare_active_and_pending(client_id):
+def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
+    args = request.args.to_dict()
+
+    if 'client_id' not in args.keys():
+        raise InputError("Client ID is a required argument to compare client models")
+    client_id = args['client_id']
+
     active_model = ClientModel.find_active_for_client(client_id)
     if not active_model:
         raise ValueError('No client model has been trained or is active for client ID {}.'.format(client_id))
