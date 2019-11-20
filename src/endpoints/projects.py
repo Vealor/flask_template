@@ -51,7 +51,7 @@ def get_projects(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise NotFoundError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ProjectID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('name')
     # Query on is_approved (is_approved, 1 or 0)
@@ -64,6 +64,41 @@ def get_projects(id):
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
     response['payload'] = [i.serialize for i in query.all()]
+
+    return jsonify(response)
+
+#===============================================================================
+# GET ALL Predictive Calculations
+@projects.route('/<int:id>/predictive_calculations', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def get_predictive_calculations(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = Project.query.filter_by(id=id)
+    if not query.first():
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
+    if 'vendor_num' not in args.keys():
+        raise InputError('Please specify a vendor_num as an argument for the query.')
+
+    green_pst_but_no_qst = None
+    yellow_pst_but_no_qst = None
+
+    transaction_set = Transaction.query.filter_by(project_id=id)
+    transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
+
+    for txn in transaction_set:
+        # do calculations
+        pass
+
+
+
+    response['payload'] = {
+        'green_pst_but_no_qst': green_pst_but_no_qst,
+        'yellow_pst_but_no_qst': yellow_pst_but_no_qst,
+    }
 
     return jsonify(response)
 
