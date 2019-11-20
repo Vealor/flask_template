@@ -8,11 +8,11 @@ import pickle
 import random
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
+from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
-from src.util import get_date_obj_from_str, validate_request_data
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
+from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
 
 master_models = Blueprint('master_models', __name__)
@@ -45,11 +45,31 @@ def get_master_models(id):
 
     return jsonify(response), 200
 
+#===============================================================================
+# Check if master models has a model in pending status
+@master_models.route('/has_pending/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def has_pending():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = { 'is_pending' : (MasterModel.find_pending() != None) }
+    return jsonify(response), 200
+
+
+#===============================================================================
+# Check if master models has a model in pending status
+@master_models.route('/is_training/', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+def is_training():
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response['payload'] = { 'is_training' : (MasterModel.find_training() != None) }
+    return jsonify(response), 200
 
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -88,89 +108,115 @@ def do_train():
     # At this point, all database independent checks have been perfrm'd
     # Now, database dependent checks begin
 
+    # validate if training mode, stop on exist
+    if MasterModel.query.filter_by(status=Activity.training.value).all():
+        raise InputError('A master model is currently being trained.')
+
     # validate if pending mode, stop on exist
     if MasterModel.query.filter_by(status=Activity.pending.value).all():
         raise InputError('A pending master model exists.')
 
     # validate sufficient transactions for training
-    transaction_count = Transaction.query.filter_by(is_approved=True).count()
-    if transaction_count < 10000:
-        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 10,000 approved transactions.'.format(transaction_count))
+    #transaction_count = Transaction.query.filter_by(is_approved=True).count()
+    transaction_count = Transaction.query.count()
+    if transaction_count < 5000:
+        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 5,000 approved transactions.'.format(transaction_count))
 
-    # create placeholder model
-    entry = MasterModel(**model_data_dict)
-    db.session.add(entry)
-    db.session.flush()
-    model_id = entry.id
-    lh_model = mm.MasterPredictionModel()
-    transactions = Transaction.query
+    #Try to create model. If model creation fails, delete placeholder and raise Exception
+    try:
+        # create placeholder model
+        entry = MasterModel(**model_data_dict)
+        db.session.add(entry)
+        db.session.commit()
+        model_id = entry.id
 
-    # Train the instantiated model and edit the db entry
-    train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end)).filter_by(is_approved=True)
-    train_entries = [tr.serialize['data'] for tr in train_transactions]
-    data_train = pd.read_json('[' + ','.join(train_entries) + ']',orient='records')
-    data_train['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in train_transactions]
-    print("TRAIN DATA LEN: {}".format(len(data_train)))
+        # Get the required transactions and put them into dataframes
+        transactions = Transaction.query.filter(Transaction.approved_user_id != None)
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))
+        data_train = transactions_to_dataframe(train_transactions)
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))
+        data_valid = transactions_to_dataframe(test_transactions)
 
-    test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    data_valid['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
-    print("TEST DATA LEN: {}".format(len(data_valid)))
+        # Training =================================
+        data_train = preprocess_data(data_train,preprocess_for='training')
+        target = "Target"
+        predictors = list(set(data_train.columns) - set([target]))
 
-    # Training =================================
-    data_train = preprocessing_train(data_train)
+        lh_model = mm.MasterPredictionModel()
+        lh_model.train(data_train,predictors,target)
 
-    target = "Target"
-    predictors = list(set(data_train.columns) - set([target]))
-    lh_model.train(data_train,predictors,target)
-    # Update the model entry with the hyperparameters and pickle
-    entry.pickle = lh_model.as_pickle()
-    entry.hyper_p = {'predictors': predictors, 'target': target}
+        # Update the model entry with the hyperparameters and pickle
+        entry.pickle = lh_model.as_pickle()
+        entry.hyper_p = {'predictors': predictors, 'target': target}
+        entry.status = Activity.pending
 
-    # Output validation data results, used to assess model quality
-    # Positive -> (Target == 1)
-    performance_metrics = lh_model.validate(
-        preprocessing_predict(data_valid, predictors, for_validation=True), predictors, target)
-    model_performance_dict = {
-        'accuracy': performance_metrics['accuracy'],
-        'precision': performance_metrics['precision'],
-        'recall': performance_metrics['recall'],
-        'test_data_start': test_start,
-        'test_data_end': test_end
-    }
-
-    # Push trained model and performance metrics
-    model_performance_dict['master_model_id'] = model_id
-    new_model = MasterModelPerformance(**model_performance_dict)
-    db.session.add(new_model)
-    # If there is no active model, set the current one to be the active one.
-    active_model = MasterModel.find_active()
-    if active_model:
-        lh_model_old = mm.MasterPredictionModel(active_model.pickle)
-        predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
-        performance_metrics_old = lh_model_old.validate(
-            preprocessing_predict(data_valid, predictors_old, for_validation=True), predictors_old, target_old)
-        model_performance_dict_old = {
-            'master_model_id': active_model.id,
-            'accuracy': performance_metrics_old['accuracy'],
-            'precision': performance_metrics_old['precision'],
-            'recall': performance_metrics_old['recall'],
+        # Output validation data results, used to assess model quality
+        # Positive -> (Target == 1)
+        data_valid_new = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
+        performance_metrics = lh_model.validate(data_valid_new, predictors, target)
+        model_performance_dict = {
+            'accuracy': performance_metrics['accuracy'],
+            'precision': performance_metrics['precision'],
+            'recall': performance_metrics['recall'],
             'test_data_start': test_start,
             'test_data_end': test_end
         }
-        new_model = MasterModelPerformance(**model_performance_dict_old)
-        db.session.add(new_model)
-    else:
-        MasterModel.set_active(model_id)
 
-    # Send an email here?
-    # ==================
+        # Push trained model and performance metrics
+        model_performance_dict['master_model_id'] = model_id
+        new_model = MasterModelPerformance(**model_performance_dict)
+        db.session.add(new_model)
+        # If there is no active model, set the current one to be the active one.
+        active_model = MasterModel.find_active()
+        if active_model:
+            lh_model_old = mm.MasterPredictionModel(active_model.pickle)
+            predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
+            data_valid_old = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors_old)
+            performance_metrics_old = lh_model_old.validate(data_valid_old, predictors_old, target_old)
+            model_performance_dict_old = {
+                'master_model_id': active_model.id,
+                'accuracy': performance_metrics_old['accuracy'],
+                'precision': performance_metrics_old['precision'],
+                'recall': performance_metrics_old['recall'],
+                'test_data_start': test_start,
+                'test_data_end': test_end
+            }
+
+            new_model = MasterModelPerformance(**model_performance_dict_old)
+            db.session.add(new_model)
+        else:
+            MasterModel.set_active(model_id)
+    # If exception occurs delete placholder model and raise.
+    except Exception as e:
+        db.session.delete(MasterModel.find_by_id(model_id))
+        db.session.commit()
+
+        # Send an email to the user
+        subj = "Master model training failed."
+        content = """
+        <p>Sorry. Model Training failed. Please contact the Vancouver KPMG Lighthouse team for more information.</p>
+        <ul>
+        <li>Error: {}</li>
+        </ul>
+        """.format(str(e))
+        send_mail(current_user.email ,subj, content)
+
+        raise Exception("Error occured during model training: " + str(e))
 
     db.session.commit()
     response['payload']['performance_metrics'] = performance_metrics
     response['payload']['model_id'] = model_id
     response['message'] = 'Model trained and created.'
+
+    # Send an email to the user
+    subj = "Master model training is complete!"
+    content = """
+    <p>Please log into the ARRT application to confirm the acceptability of the model</p>
+    <ul>
+    <li>Model Name: {}</li>
+    </ul>
+    """.format(MasterModel.find_by_id(model_id).serialize['name'])
+    send_mail(current_user.email ,subj, content)
 
     return jsonify(response), 201
 
@@ -206,12 +252,11 @@ def do_validate():
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
     # Pull the transaction data into a dataframe
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     if test_transactions.count() == 0:
         raise ValueError('No transactions to validate in given date range.')
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    data_valid = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    data_valid = preprocessing_predict(data_valid,predictors,for_validation=True)
+    data_valid = transactions_to_dataframe(test_transactions)
+    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
 
     # Evaluate the performance metrics
     performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
@@ -249,38 +294,12 @@ def compare_active_and_pending():
     if not pending_model:
         raise ValueError('There is no pending model to compare to the active model.')
 
-    request_types = {
-        'test_data_start_date': ['str'],
-        'test_data_end_date': ['str']
-    }
-    validate_request_data(data, request_types)
-    test_start = get_date_obj_from_str(data['test_data_start_date'])
-    test_end = get_date_obj_from_str(data['test_data_end_date'])
+    # Get the performance metrics for the pending and active models
+    active_metrics = MasterModelPerformance.get_most_recent_for_model(active_model.id).serialize
+    pending_metrics = MasterModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
-    # Check if date range is acceptable for comparing the two models
-    if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
-    if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_start.date()):
-        raise ValueError('Cannot validate active model on data it was trained on.')
-    if not (pending_model.train_data_end.date() < test_start or test_end < pending_model.train_data_start.date()):
-        raise ValueError('Cannot validate pending model on data it was trained on.')
-
-    # Pull the validation transaction data into a dataframe
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter_by(is_approved=True)
-    if test_transactions.count() == 0:
-        raise ValueError('No transactions to validate in given date range.')
-    test_entries = [tr.serialize['data'] for tr in test_transactions]
-    test_entries = pd.read_json('[' + ','.join(test_entries) + ']',orient='records')
-    test_entries['Code'] = [Code.find_by_id(tr.gst_hst_code_id).code_number if tr.gst_hst_code_id else -999 for tr in test_transactions]
-
-    performance_metrics = {}
-    for model in [active_model, pending_model]:
-        lh_model = mm.MasterPredictionModel(model.pickle)
-        predictors, target = model.hyper_p['predictors'], model.hyper_p['target']
-        performance_metrics[model.id] = lh_model.validate(preprocessing_predict(test_entries,predictors,for_validation=True),predictors,target)
-
+    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
     response['message'] = 'Master model comparison complete'
-    response['payload'] = performance_metrics
 
     return jsonify(response), 200
 

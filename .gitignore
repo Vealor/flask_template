@@ -74,6 +74,12 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Data
+DATA/*
+paredown_data/*
+*.ipynb
+caps_gen_processing/*
+
 # IPython
 profile_default/
 ipython_config.py

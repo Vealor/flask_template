@@ -4,15 +4,15 @@ Project Endpoints
 import json
 import pandas as pd
 import random
+import re
 import src.prediction.model_client as cm
 import src.prediction.model_master as mm
-from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocessing_predict
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -236,46 +236,86 @@ def apply_paredown_rules(id):
 
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
-    # rules = []
-    # for i in ParedownRule.query.all():
-    #     if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-    #         rules.append(i.serialize)
-    #     elif i.lob_sectors:
-    #         has_sec = False
-    #         for l in i.lob_sectors:
-    #             if l['code'] in lobsecs:
-    #                 rules.append(i.serialize)
-    #         if has_sec:
-    #             rules.append(i.serialize)
+    rules = []
+    for i in ParedownRule.query.all():
+        # if it's core and is approved
+        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
+            rules.append(i.serialize)
+        # if it is
+        elif i.lob_sectors:
+            has_sec = False
+            for l in i.lob_sectors:
+                if l['code'] in lobsecs:
+                    rules.append(i.serialize)
+            if has_sec:
+                rules.append(i.serialize)
 
-    # for txn in Transaction.query.filter_by(project_id=id).all():
-    #     print(txn.id)
-    #     if not txn.locked_user_id and not txn.approved_user_id:
-    #         for rule in rules:
-    #             do_paredown = 0
-    #             for condition in rule['conditions']:
-    #                 print(condition)
-    #                 if condition['field'] in txn.data:
-    #                     if operator == 'contains':
-    #                         print("\tCONTAINS")
-    #                         if condition.value in txn.data[condition.field]:
-    #                             do_paredown +=1
-    #                     elif operator in ['>','<','==','>=','<=','!=']:
-    #                         print("\tLOGICAL OPERATOR")
-    #                         #check for compare
-    #                         if True:
-    #                             do_paredown +=1
-    #                         pass
-    #                     else:
-    #                         failed +=1
-    #                         raise Exception("Database issue for ParedownRuleCondition operator.")
-    #                 else:
-    #                     failed +=1
-    #                     print("field not in data")
-    #             if do_paredown == len(rule['conditions']):
-    #                 applied +=1
-    #                 print("APPLY PAREDOWN TO TXN")
-                    # for each tax type, create a new many to many link to the code it needs
+    # apply rules to transactions
+    # all transactions that aren't approved yet or locked
+    for txn in Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all():
+        print(txn.id)
+        for rule in rules:
+            # variable for checking conditions
+            do_paredown = 0
+            for condition in rule['conditions']:
+                print(condition)
+                # ensure the field for the condition is in the data keys
+                if condition['field'] in txn.data:
+
+                    if condition.operator == 'contains':
+                        print("\tCONTAINS")
+                        if re.search('(?<!\S)'+condition.value.lower()+'(?!\S)', txn.data[condition.field].lower()):
+                            do_paredown +=1
+
+                    elif condition.operator in ['>','<','==','>=','<=','!=']:
+                        print("\tLOGICAL OPERATOR")
+                        proceed_operator = True
+
+                        try:
+                            value = float(condition.value)
+                            field = float(txn.data[condition.field])
+                        except ValueError as e:
+                            failed +=1
+                            proceed_operator = False
+
+                        if proceed_operator:
+                            if condition.operator == '>' and value > field:
+                                do_paredown +=1
+                            elif condition.operator == '<' and value < field:
+                                do_paredown +=1
+                            elif condition.operator == '==' and value == field:
+                                do_paredown +=1
+                            elif condition.operator == '>=' and value >= field:
+                                do_paredown +=1
+                            elif condition.operator == '<=' and value <= field:
+                                do_paredown +=1
+                            elif condition.operator == '!=' and value != field:
+                                do_paredown +=1
+                        else:
+                            failed +=1
+                            print("Condition value or Transaction data field not fit for operator comparison.")
+                    else:
+                        failed +=1
+                        raise Exception("Database issue for ParedownRuleCondition operator.")
+                else:
+                    failed +=1
+                    print("field not in data")
+
+            # if all conditions succeeded
+            if do_paredown == len(rule['conditions']):
+                print("APPLY PAREDOWN TO TXN")
+                if not txn.gst_signed_off_by_id:
+                    txn.update_gst_codes([rule.paredown_rule_code.code_number] + ([c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []))
+                if not txn.hst_signed_off_by_id:
+                    txn.update_hst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []))
+                if not txn.qst_signed_off_by_id:
+                    txn.update_qst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []))
+                if not txn.pst_signed_off_by_id:
+                    txn.update_pst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []))
+                if not txn.apo_signed_off_by_id:
+                    txn.update_apo_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []))
+
+                applied +=1
 
 
     ### PSEUDO CODE:
@@ -315,11 +355,12 @@ def apply_prediction(id):
     # Get the data to predict
     project = Project.find_by_id(id)
     if not project:
-        raise ValueError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter_by(is_approved=False)
+        raise NotFoundError('Project with ID {} does not exist.'.format(id))
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
+    print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
@@ -338,11 +379,13 @@ def apply_prediction(id):
 
     predictors = active_model.hyper_p['predictors']
 
+
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
-    entries = [entry.serialize['data'] for entry in project_transactions]
-    df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
-    df_predict = preprocessing_predict(df_predict, predictors)
+    print("Pull transactions to df.")
+    df_predict = transactions_to_dataframe(project_transactions)
+    print("Preprocessing...")
+    df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
