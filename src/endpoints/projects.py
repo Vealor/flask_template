@@ -6,13 +6,12 @@ import pandas as pd
 import random
 import src.prediction.model_client as cm
 import src.prediction.model_master as mm
-from src.prediction.preprocessing import preprocessing_train, preprocessing_predict
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
 from src.errors import *
 from src.models import *
-from src.prediction.preprocessing import preprocessing_predict
+from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
@@ -315,11 +314,12 @@ def apply_prediction(id):
     # Get the data to predict
     project = Project.find_by_id(id)
     if not project:
-        raise ValueError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter_by(is_approved=False)
+        raise NotFoundError('Project with ID {} does not exist.'.format(id))
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
+    print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
@@ -338,11 +338,13 @@ def apply_prediction(id):
 
     predictors = active_model.hyper_p['predictors']
 
+
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
-    entries = [entry.serialize['data'] for entry in project_transactions]
-    df_predict = pd.read_json('[' + ','.join(entries) + ']',orient='records')
-    df_predict = preprocessing_predict(df_predict, predictors)
+    print("Pull transactions to df.")
+    df_predict = transactions_to_dataframe(project_transactions)
+    print("Preprocessing...")
+    df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
