@@ -87,7 +87,7 @@ def get_predictive_calculations(id):
     yellow_pst_but_no_qst = None
 
     transaction_set = Transaction.query.filter_by(project_id=id)
-    transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext.cast(Integer) == int(args['vendor_num'])).all()
+    transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
 
     for txn in transaction_set:
         # do calculations
