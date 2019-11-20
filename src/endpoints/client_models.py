@@ -297,25 +297,25 @@ def do_validate():
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
+    response['payload']['can_compare'] = True
 
     if 'client_id' not in args.keys():
         raise InputError("Client ID is a required argument to compare client models")
     client_id = args['client_id']
 
-    active_model = ClientModel.find_active_for_client(client_id)
-    if not active_model:
-        raise ValueError('No client model has been trained or is active for client ID {}.'.format(client_id))
     pending_model = ClientModel.find_pending_for_client(client_id)
     if not pending_model:
         raise ValueError('There is no pending model to compare to the active model.')
+    else:
+        response['payload']['pending_metrics'] = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
-    # Get the performance metrics for the pending and active models
-    active_metrics = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
-    pending_metrics = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
+    active_model = ClientModel.find_active_for_client(client_id)
+    if not active_model:
+        response['payload']['can_compare'] = False
+    else:
+        response['payload']['active_metrics'] = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
 
-    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
     response['message'] = 'Client model comparison complete'
-
     return jsonify(response), 200
 
 
