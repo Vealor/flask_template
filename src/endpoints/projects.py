@@ -142,7 +142,7 @@ def post_project():
     # CHECK CONSTRAINTS: name
     check = Project.query.filter_by(name=data['name']).first()
     if check:
-        raise InputError('Project {} already exist.'.format(data['name']))
+        raise InputError('Project {} already exists.'.format(data['name']))
 
     # client_id validation
     client = Client.find_by_id(data['client_id'])
@@ -216,13 +216,14 @@ def post_project():
     db.session.flush()
 
     # project_users validation
-    for user_id in data['project_users']:
+    user_set = list(set(data['project_users'] + [data['lead_manager_id']] + [data['lead_partner_id']]))
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         if not user:
             raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
-    for user_id in data['project_users']:
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         new_user_project = UserProject(
             user_project_user = user,
@@ -550,20 +551,20 @@ def update_project(id):
     query.has_es_daf = data['engagement_scope']['data']['has_es_daf']
 
     # project_users update
-    for user_id in data['project_users']:
+    user_set = list(set(data['project_users'] + [data['lead_manager_id']] + [data['lead_partner_id']]))
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         if not user:
             raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
     user_projects = UserProject.query.filter_by(project_id=id).all()
-    user_list = list(set(data['project_users']))
     for user_project in user_projects:
-        if user_project.user_id in user_list:
-            user_list.remove(user_project.user_id)
+        if user_project.user_id in user_set:
+            user_set.remove(user_project.user_id)
         else:
             db.session.delete(user_project)
-    for user_id in user_list:
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         new_user_project = UserProject(
             user_project_user = user,
