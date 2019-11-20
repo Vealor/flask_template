@@ -138,7 +138,7 @@ def do_train():
         model_data_dict['client_id'] = data['client_id']
         entry = ClientModel(**model_data_dict)
         db.session.add(entry)
-        db.session.flush()
+        db.session.commit()
         model_id = entry.id
 
         # Get the required transactions and put them into dataframes
