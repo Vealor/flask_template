@@ -127,7 +127,7 @@ def do_train():
         # create placeholder model
         entry = MasterModel(**model_data_dict)
         db.session.add(entry)
-        db.session.flush()
+        db.session.commit()
         model_id = entry.id
 
         # Get the required transactions and put them into dataframes
@@ -138,15 +138,13 @@ def do_train():
         data_valid = transactions_to_dataframe(test_transactions)
 
         # Training =================================
-        print("\t Preprocessing ... ")
         data_train = preprocess_data(data_train,preprocess_for='training')
-        print(data_train.columns)
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
-        print("\t Training Model ... ")
+
         lh_model = mm.MasterPredictionModel()
         lh_model.train(data_train,predictors,target)
-        print("\t Training Complete. ")
+
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
         entry.hyper_p = {'predictors': predictors, 'target': target}
