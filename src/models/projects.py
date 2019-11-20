@@ -73,6 +73,8 @@ class Project(db.Model):
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
+    pst_but_no_qst = db.Column(db.Float, nullable=True)
+
     @property
     def serialize(self):
         return {
@@ -142,6 +144,9 @@ class Project(db.Model):
                     'has_es_fxrates': self.has_es_fxrates,
                     'has_es_trt': self.has_es_trt,
                     'has_es_daf': self.has_es_daf
+                },
+                'caps_multicolor_calculations' : {
+                    'pst_but_no_qst' : self.pst_but_no_qst
                 }
             }
         }

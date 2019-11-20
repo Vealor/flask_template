@@ -92,3 +92,12 @@ This script ALSO updates all existing packages.
 
 ### Updating models and creating a new migration
 ```FLASK_ENV='development' flask db migrate```
+
+### Cloud Credentials
+<strong> VM Playground </strong>
+```ssh lh_admin_tax@40.82.190.135```
+password: Kpmg1234@Kpmg1234@
+
+<strong> Database Server </strong>
+```psql --host=itra-uat-sql.postgres.database.azure.com --port=5432 --username=lh_admin_tax@itra-uat-sql --dbname=itra_db```
+password: Kpmg1234@
