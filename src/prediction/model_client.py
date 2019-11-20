@@ -4,7 +4,7 @@ from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, fbeta_score, make_scorer
 
 class ClientPredictionModel(BasePredictionModel):
 
@@ -12,14 +12,17 @@ class ClientPredictionModel(BasePredictionModel):
         if model_pickle:
             super().__init__(model_pickle)
         else:
-            model_params = {
-                'class_weight': {1:1.1, 0:1}
-                }
+            #Define the client model here
+            model_params = {}
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
-                param_grid={'max_depth':[3,5], 'n_estimators':[50,100,200]},
+                param_grid={
+                    'max_depth':[3,5],
+                    'n_estimators':[50,100],
+                    'class_weight': [{1:x, 0:1} for x in [1, 2]]
+                    },
                 cv=5,
-                scoring='f1'
+                scoring=make_scorer(fbeta_score, beta=5)
                 )
             self.is_trained = False
 
@@ -38,11 +41,13 @@ class ClientPredictionModel(BasePredictionModel):
 
         if y.value_counts().nunique() < 2:
             raise Exception("Error: Only one target class represented in training data.")
-        if y.value_counts()[1] < 0.2*len(y):
+
+        if any([class_count < 0.2*len(y) for class_count in y.value_counts()]):
             print("Balancing classes...")
             X, y = SMOTE().fit_sample(X, y)
 
         # Train the model here.
+        print("Training model. Please wait.")
         self.model.fit(X,y)
         self.model = self.model.best_estimator_
         self.model_params = dict(self.model.get_params())
@@ -68,16 +73,24 @@ class ClientPredictionModel(BasePredictionModel):
             raise Exception("Error: Target cannot also be a predictor")
 
         xv,yv = validation_data[predictors], validation_data[target]
-        yp = self.predict(xv,predictors)
-        test_set_size = len(yp)
 
-        true_negatives, false_positives, false_negatives, true_positives = confusion_matrix(yv,yp).ravel()
-        accuracy, recall, precision = 0, 0, 0
-        if len(yp) != 0:
-            accuracy = (true_positives + true_negatives) / len(yp)
-        if (true_positives + false_negatives) != 0:
-            recall = true_positives / (true_positives + false_negatives)
-        if (true_positives + false_negatives) != 0:
-            precision = true_positives / (true_positives + false_positives)
+        if yv.value_counts().nunique() < 2:
+            raise Exception("Error: Only one target class represented in validation data.")
+
+        yp = self.predict(xv,predictors)
+        n_valid_data = len(yp)
+
+        recall = recall_score(yv,yp)
+        precision = precision_score(yv,yp)
+        accuracy = accuracy_score(yv,yp)
+
         yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
-        return {"test_set_size": test_set_size, "recall": recall, "precision": precision, "accuracy": accuracy, "roc_auc_score": roc_auc_score(yv,yp_prob)}
+        roc_auc = roc_auc_score(yv,yp_prob)
+
+        return {
+            "n_valid_data": n_valid_data,
+            "recall": recall,
+            "precision": precision,
+            "accuracy": accuracy,
+            "roc_auc": roc_auc
+            }
