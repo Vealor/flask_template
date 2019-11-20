@@ -179,7 +179,6 @@ def do_train():
 
         # If there is an active model for this client, check to compare performance
         # Else, automatically push newly trained model to active
-        print("4")
         active_model = ClientModel.find_active_for_client(data['client_id'])
         if active_model:
             lh_model_old = cm.ClientPredictionModel(active_model.pickle)
@@ -195,8 +194,6 @@ def do_train():
                 'test_data_end': test_end
             }
             db.session.add(ClientModelPerformance(**model_performance_dict_old))
-        else:
-            ClientModel.set_active_for_client(model_id, data['client_id'])
 
     # If exception occurs delete placholder model and raise.
     except Exception as e:

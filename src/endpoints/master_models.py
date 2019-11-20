@@ -69,7 +69,7 @@ def is_training():
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -184,8 +184,7 @@ def do_train():
 
             new_model = MasterModelPerformance(**model_performance_dict_old)
             db.session.add(new_model)
-        else:
-            MasterModel.set_active(model_id)
+            
     # If exception occurs delete placholder model and raise.
     except Exception as e:
         db.session.delete(MasterModel.find_by_id(model_id))
@@ -199,7 +198,7 @@ def do_train():
         <li>Error: {}</li>
         </ul>
         """.format(str(e))
-        send_mail(current_user.email ,subj, content)
+        send_mail("willthompson@kpmg.ca" ,subj, content)
 
         raise Exception("Error occured during model training: " + str(e))
 
@@ -216,7 +215,7 @@ def do_train():
     <li>Model Name: {}</li>
     </ul>
     """.format(MasterModel.find_by_id(model_id).serialize['name'])
-    send_mail(current_user.email ,subj, content)
+    send_mail("willthompson@kpmg.ca" ,subj, content)
 
     return jsonify(response), 201
 
