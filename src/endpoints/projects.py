@@ -298,34 +298,34 @@ def apply_paredown_rules(id):
                 # ensure the field for the condition is in the data keys
                 if condition['field'] in txn.data:
 
-                    if condition.operator == 'contains':
+                    if condition['operator'] == 'contains':
                         print("\tCONTAINS")
-                        if re.search('(?<!\S)'+condition.value.lower()+'(?!\S)', txn.data[condition.field].lower()):
+                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
                             do_paredown +=1
 
-                    elif condition.operator in ['>','<','==','>=','<=','!=']:
+                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
                         print("\tLOGICAL OPERATOR")
                         proceed_operator = True
 
                         try:
-                            value = float(condition.value)
-                            field = float(txn.data[condition.field])
+                            value = float(condition['value'])
+                            field = float(txn.data[condition['field']])
                         except ValueError as e:
                             failed +=1
                             proceed_operator = False
 
                         if proceed_operator:
-                            if condition.operator == '>' and value > field:
+                            if condition['operator'] == '>' and value > field:
                                 do_paredown +=1
-                            elif condition.operator == '<' and value < field:
+                            elif condition['operator'] == '<' and value < field:
                                 do_paredown +=1
-                            elif condition.operator == '==' and value == field:
+                            elif condition['operator'] == '==' and value == field:
                                 do_paredown +=1
-                            elif condition.operator == '>=' and value >= field:
+                            elif condition['operator'] == '>=' and value >= field:
                                 do_paredown +=1
-                            elif condition.operator == '<=' and value <= field:
+                            elif condition['operator'] == '<=' and value <= field:
                                 do_paredown +=1
-                            elif condition.operator == '!=' and value != field:
+                            elif condition['operator'] == '!=' and value != field:
                                 do_paredown +=1
                         else:
                             failed +=1
