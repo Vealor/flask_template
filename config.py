@@ -92,7 +92,6 @@ class TestingConfig(Config):
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
     CAPS_MASTER_LOCATION = 'caps_gen_master'
-    CDM_TABLES = ['BKPF', 'BSEG', 'CSKT', 'EKPO', 'LFA1', 'MAKT', 'PAYR', 'SKAT', 'T001', 'T007S']
     FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
 
 
