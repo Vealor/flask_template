@@ -62,7 +62,7 @@ if __name__ == '__main__':
     print("Gathering Data..")
     train_start = get_date_obj_from_str("2000-01-01")
     train_end = get_date_obj_from_str('2019-07-01')
-    test_start = get_date_obj_from_str("2018-07-02")
+    test_start = get_date_obj_from_str("2019-07-02")
     test_end = get_date_obj_from_str('2019-01-01')
     train_transactions = Transaction.query.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
