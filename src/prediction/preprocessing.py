@@ -3,19 +3,29 @@ import pandas as pd
 from functools import reduce
 from src.models import Transaction, Code
 
-
 # ============================================================================ #
 # Configuration :
 PREDICTION_VARS = {
-    'gst_hst_qst_pst_local_ccy': float,
+    'ap_amt': 'float',
     'broker_value': 'float',
     'ccy': 'str',
     'cn_flag_ind': 'Int64',
     'cntry_name': 'str',
+    'doc_type_gl': 'str',
     'eff_rate': 'float',
-    'ap_amt': 'float',
+    'even_gst_bc_rate': 'float',
+    'even_gst_mb_rate': 'float',
+    'even_gst_qst_rate': 'float',
+    'even_gst_sask_rate': 'float',
+    'even_hst13_rate': 'float',
+    'even_hst14_rate': 'float',
+    'even_hst15_rate': 'float',
+    'gst_hst_qst_pst_local_ccy': 'float',
     'po_tx_jur': 'str',
-    'vend_region': 'float',
+    'pst': 'float',
+    'pst_sa': 'float'
+    'qst': 'float',
+    'vend_region': 'str',
     'transaction_attributes': 'list'
 }
 
