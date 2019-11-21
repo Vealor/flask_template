@@ -23,7 +23,7 @@ PREDICTION_VARS = {
     'gst_hst_qst_pst_local_ccy': 'float',
     'po_tx_jur': 'str',
     'pst': 'float',
-    'pst_sa': 'float'
+    'pst_sa': 'float',
     'qst': 'float',
     'vend_region': 'str',
     'transaction_attributes': 'list'
