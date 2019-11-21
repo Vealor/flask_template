@@ -274,27 +274,25 @@ def apply_paredown_rules(id):
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
     rules = []
     for i in ParedownRule.query.all():
-        # if it's core and is approved
-        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-            rules.append(i.serialize)
-        # if it is
-        elif i.lob_sectors:
-            has_sec = False
-            for l in i.lob_sectors:
-                if l['code'] in lobsecs:
-                    rules.append(i.serialize)
-            if has_sec:
+        if i.is_active:
+            if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
                 rules.append(i.serialize)
+            elif i.lob_sectors:
+                has_sec = False
+                for l in i.lob_sectors:
+                    if l['code'] in lobsecs:
+                        rules.append(i.serialize)
+                if has_sec:
+                    rules.append(i.serialize)
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
     for txn in Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all():
-        print(txn.id)
         for rule in rules:
             # variable for checking conditions
             do_paredown = 0
             for condition in rule['conditions']:
-                print(condition)
+                # print(condition)
                 # ensure the field for the condition is in the data keys
                 if condition['field'] in txn.data:
 
@@ -335,7 +333,7 @@ def apply_paredown_rules(id):
                         raise Exception("Database issue for ParedownRuleCondition operator.")
                 else:
                     failed +=1
-                    print("field not in data")
+                    # print("field not in data")
 
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):

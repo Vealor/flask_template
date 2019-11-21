@@ -138,7 +138,8 @@ def update_paredown_rule(id):
     validate_request_data(data, request_types)
     request_types_conditions = {
         'field': ['str'],
-        'operator': ['str']
+        'operator': ['str'],
+        'value': ['str']
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
