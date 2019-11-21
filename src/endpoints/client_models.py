@@ -71,7 +71,7 @@ def is_training():
 #===============================================================================
 # Train a new client model.
 @client_models.route('/train/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -133,6 +133,11 @@ def do_train():
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
+    active_model = ClientModel.find_active_for_client(data['client_id'])
+    if active_model:
+        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_end.date()):
+            raise InputError('Cannot validate currently active model on data it was trained on. Choose a different test data range.')
+
     # create placeholder model
     try:
         model_data_dict['client_id'] = data['client_id']
@@ -179,7 +184,6 @@ def do_train():
 
         # If there is an active model for this client, check to compare performance
         # Else, automatically push newly trained model to active
-        active_model = ClientModel.find_active_for_client(data['client_id'])
         if active_model:
             lh_model_old = cm.ClientPredictionModel(active_model.pickle)
             predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
