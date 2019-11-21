@@ -932,7 +932,16 @@ def view_caps(id):
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
 
-    # TODO: PULL FROM CAPS TABLES FILTER ON SPECIFIC CAPSGEN ID
+    query = SapCaps.query.filter_by(caps_gen_id = id)
+    # varapkey filter
+    query = query.filter_by(varapkey=args['varapkey']) if 'varapkey' in args.keys() else query
+
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
+    response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
 
