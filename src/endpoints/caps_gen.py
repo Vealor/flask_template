@@ -962,7 +962,7 @@ def caps_to_transactions(id):
     db.session.commit()
 
 
-    #caps_gen.caps_gen_project
+    # caps_gen.caps_gen_project
     caps_gen.is_complete = True
     db.session.commit()
 
