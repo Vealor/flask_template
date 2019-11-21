@@ -274,27 +274,25 @@ def apply_paredown_rules(id):
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
     rules = []
     for i in ParedownRule.query.all():
-        # if it's core and is approved
-        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-            rules.append(i.serialize)
-        # if it is
-        elif i.lob_sectors:
-            has_sec = False
-            for l in i.lob_sectors:
-                if l['code'] in lobsecs:
-                    rules.append(i.serialize)
-            if has_sec:
+        if i.is_active:
+            if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
                 rules.append(i.serialize)
+            elif i.lob_sectors:
+                has_sec = False
+                for l in i.lob_sectors:
+                    if l['code'] in lobsecs:
+                        rules.append(i.serialize)
+                if has_sec:
+                    rules.append(i.serialize)
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
     for txn in Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all():
-        print(txn.id)
         for rule in rules:
             # variable for checking conditions
             do_paredown = 0
             for condition in rule['conditions']:
-                print(condition)
+                # print(condition)
                 # ensure the field for the condition is in the data keys
                 if condition['field'] in txn.data:
 
@@ -335,21 +333,21 @@ def apply_paredown_rules(id):
                         raise Exception("Database issue for ParedownRuleCondition operator.")
                 else:
                     failed +=1
-                    print("field not in data")
+                    # print("field not in data")
 
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):
                 print("APPLY PAREDOWN TO TXN")
                 if not txn.gst_signed_off_by_id:
-                    txn.update_gst_codes([rule.paredown_rule_code.code_number] + ([c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []))
+                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
                 if not txn.hst_signed_off_by_id:
-                    txn.update_hst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []))
+                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
                 if not txn.qst_signed_off_by_id:
-                    txn.update_qst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []))
+                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
                 if not txn.pst_signed_off_by_id:
-                    txn.update_pst_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []))
+                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
                 if not txn.apo_signed_off_by_id:
-                    txn.update_apo_code(rule.paredown_rule_code.code_number + ([c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []))
+                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
 
                 applied +=1
 
@@ -375,7 +373,7 @@ def apply_paredown_rules(id):
 
 #===============================================================================
 # APPLY PREDICTION MODEL TO A PROJECT
-@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
+#@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -425,6 +423,69 @@ def apply_prediction(id):
 
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
+
+    project_transactions.update({Transaction.is_predicted : True})
+    for tr,pr in zip(project_transactions, probability_recoverable):
+        tr.recovery_probability = pr
+
+    db.session.commit()
+    response['message'] = 'Prediction successful. Transactions have been marked.'
+    return jsonify(response), 201
+#===============================================================================
+# APPLY PREDICTION MODEL TO A PROJECT
+import numpy as np
+@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
+# @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def apply_dummy_prediction(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+
+    request_types = {
+        'use_client_model': ['bool'],
+    }
+    validate_request_data(data, request_types)
+
+    # Get the data to predict
+    project = Project.find_by_id(id)
+    if not project:
+        raise NotFoundError('Project with ID {} does not exist.'.format(id))
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
+    if project_transactions.count() == 0:
+        raise ValueError('Project has no transactions to predict.')
+
+    print("Create model.")
+    # Get the appropriate active model, create the model object and alter transcation flags
+    if data['use_client_model']:
+        active_model = ClientModel.find_active_for_client(project.client_id)
+        if not active_model:
+            raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
+        lh_model = cm.ClientPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.master_model_id : None})
+        project_transactions.update({Transaction.client_model_id :active_model.id})
+    else:
+        active_model = MasterModel.find_active()
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+        lh_model = mm.MasterPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.client_model_id : None})
+        project_transactions.update({Transaction.master_model_id :active_model.id})
+
+    predictors = active_model.hyper_p['predictors']
+
+
+    # TODO: fix separation of data so that prediction happens on transactions with IDs
+    # Can't assume that final zip lines up arrays properly
+    print("Pull transactions to df.")
+    #df_predict = transactions_to_dataframe(project_transactions)
+    print("Preprocessing...")
+    #df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
+
+    # Get probability of each transaction being class '1'
+    #probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
+
+    probability_recoverable = [min(100, np.random.normal(loc=80, scale=10)/100) if x > 0.8 else max(0, np.random.normal(loc=20, scale=10)/100) for x in np.random.random(project_transactions.count())]
 
     project_transactions.update({Transaction.is_predicted : True})
     for tr,pr in zip(project_transactions, probability_recoverable):
