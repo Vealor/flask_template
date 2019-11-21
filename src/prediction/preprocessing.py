@@ -3,17 +3,29 @@ import pandas as pd
 from functools import reduce
 from src.models import Transaction, Code
 
-
 # ============================================================================ #
 # Configuration :
 PREDICTION_VARS = {
+    'ap_amt': 'float',
     'broker_value': 'float',
     'ccy': 'str',
     'cn_flag_ind': 'Int64',
     'cntry_name': 'str',
+    'doc_type_gl': 'str',
     'eff_rate': 'float',
-    'ap_amt': 'float',
+    'even_gst_bc_rate': 'float',
+    'even_gst_mb_rate': 'float',
+    'even_gst_qst_rate': 'float',
+    'even_gst_sask_rate': 'float',
+    'even_hst13_rate': 'float',
+    'even_hst14_rate': 'float',
+    'even_hst15_rate': 'float',
+    'gst_hst_qst_pst_local_ccy': 'float',
     'po_tx_jur': 'str',
+    'pst': 'float',
+    'pst_sa': 'float',
+    'qst': 'float',
+    'vend_region': 'str',
     'transaction_attributes': 'list'
 }
 
@@ -23,12 +35,9 @@ def transactions_to_dataframe(query,**kwargs):
 
     # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
     #entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
-    print("\t serialize...")
     entries = [tr.predictive_serialize for tr in query]
-    print("\t parse...")
     data = [entry['data'] for entry in entries]
     codes = [entry['codes'] for entry in entries]
-    print("\t put into dataframe...")
     df = pd.DataFrame(data)
     codes_df = pd.DataFrame(codes)
     codes_df.rename(columns={x:x+"_codes" for x in codes_df.columns},inplace=True)
@@ -86,8 +95,8 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     # If training, only consider categorical columns with low cardinality
     if preprocess_for == 'training':
-        int_columns = [col for col in int_columns if df[col].nunique() < 8]
-        str_columns = [col for col in str_columns if df[col].nunique() < 8 and col != 'transaction_attributes']
+        int_columns = [col for col in int_columns if df[col].nunique() < 20]
+        str_columns = [col for col in str_columns if df[col].nunique() < 20 and col != 'transaction_attributes']
 
     # Only keep the data columns that we can hvaev appropriately treated
 
