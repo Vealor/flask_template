@@ -339,15 +339,15 @@ def apply_paredown_rules(id):
             if do_paredown == len(rule['conditions']):
                 print("APPLY PAREDOWN TO TXN")
                 if not txn.gst_signed_off_by_id:
-                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []))
+                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
                 if not txn.hst_signed_off_by_id:
-                    txn.update_hst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []))
+                    txn.update_hst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
                 if not txn.qst_signed_off_by_id:
-                    txn.update_qst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []))
+                    txn.update_qst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
                 if not txn.pst_signed_off_by_id:
-                    txn.update_pst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []))
+                    txn.update_pst_code(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
                 if not txn.apo_signed_off_by_id:
-                    txn.update_apo_code(rule['code']['code_number'] + ([c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []))
+                    txn.update_apo_code(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
 
                 applied +=1
 
