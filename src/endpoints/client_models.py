@@ -71,7 +71,7 @@ def is_training():
 #===============================================================================
 # Train a new client model.
 @client_models.route('/train/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -133,6 +133,11 @@ def do_train():
     if transaction_count < 2000:
         raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
 
+    active_model = ClientModel.find_active_for_client(data['client_id'])
+    if active_model:
+        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_end.date()):
+            raise InputError('Cannot validate currently active model on data it was trained on. Choose a different test data range.')
+
     # create placeholder model
     try:
         model_data_dict['client_id'] = data['client_id']
@@ -179,8 +184,6 @@ def do_train():
 
         # If there is an active model for this client, check to compare performance
         # Else, automatically push newly trained model to active
-        print("4")
-        active_model = ClientModel.find_active_for_client(data['client_id'])
         if active_model:
             lh_model_old = cm.ClientPredictionModel(active_model.pickle)
             predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -195,8 +198,6 @@ def do_train():
                 'test_data_end': test_end
             }
             db.session.add(ClientModelPerformance(**model_performance_dict_old))
-        else:
-            ClientModel.set_active_for_client(model_id, data['client_id'])
 
     # If exception occurs delete placholder model and raise.
     except Exception as e:
@@ -300,25 +301,25 @@ def do_validate():
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
     args = request.args.to_dict()
+    response['payload']['can_compare'] = True
 
     if 'client_id' not in args.keys():
         raise InputError("Client ID is a required argument to compare client models")
     client_id = args['client_id']
 
-    active_model = ClientModel.find_active_for_client(client_id)
-    if not active_model:
-        raise ValueError('No client model has been trained or is active for client ID {}.'.format(client_id))
     pending_model = ClientModel.find_pending_for_client(client_id)
     if not pending_model:
         raise ValueError('There is no pending model to compare to the active model.')
+    else:
+        response['payload']['pending_metrics'] = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
-    # Get the performance metrics for the pending and active models
-    active_metrics = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
-    pending_metrics = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
+    active_model = ClientModel.find_active_for_client(client_id)
+    if not active_model:
+        response['payload']['can_compare'] = False
+    else:
+        response['payload']['active_metrics'] = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
 
-    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
     response['message'] = 'Client model comparison complete'
-
     return jsonify(response), 200
 
 
