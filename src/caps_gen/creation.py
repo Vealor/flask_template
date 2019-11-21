@@ -49,6 +49,8 @@ def source_data_unzipper(data, response):
                     queue = zips
                 else:
                     queue = []
+
+            os.remove(os.path.join(indir,file))
         else:
             raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':
