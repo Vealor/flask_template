@@ -7,6 +7,7 @@ from src.models import Transaction, Code
 # ============================================================================ #
 # Configuration :
 PREDICTION_VARS = {
+    'gst_hst_qst_pst_local_ccy': float,
     'broker_value': 'float',
     'ccy': 'str',
     'cn_flag_ind': 'Int64',
@@ -14,6 +15,7 @@ PREDICTION_VARS = {
     'eff_rate': 'float',
     'ap_amt': 'float',
     'po_tx_jur': 'str',
+    'vend_region': 'float',
     'transaction_attributes': 'list'
 }
 
@@ -23,12 +25,9 @@ def transactions_to_dataframe(query,**kwargs):
 
     # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
     #entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
-    print("\t serialize...")
     entries = [tr.predictive_serialize for tr in query]
-    print("\t parse...")
     data = [entry['data'] for entry in entries]
     codes = [entry['codes'] for entry in entries]
-    print("\t put into dataframe...")
     df = pd.DataFrame(data)
     codes_df = pd.DataFrame(codes)
     codes_df.rename(columns={x:x+"_codes" for x in codes_df.columns},inplace=True)
