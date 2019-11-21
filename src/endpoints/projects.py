@@ -2,6 +2,7 @@
 Project Endpoints
 '''
 import json
+import multiprocessing as mp
 import pandas as pd
 import random
 import re
@@ -12,6 +13,7 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from functools import reduce
 from src.errors import *
 from src.models import *
+from src.offload.apply_paredown import *
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -267,107 +269,29 @@ def apply_paredown_rules(id):
 
     # CHECK IF PROJECT PAREDOWN LOCKED
 
-    applied = 0
-    failed = 0
-
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
     rules = []
-    for i in ParedownRule.query.all():
-        if i.is_active:
-            if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-                rules.append(i.serialize)
-            elif i.lob_sectors:
-                has_sec = False
-                for l in i.lob_sectors:
-                    if l['code'] in lobsecs:
-                        rules.append(i.serialize)
-                if has_sec:
+    for i in ParedownRule.query.filter_by(is_active=True).all():
+        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
+            rules.append(i.serialize)
+        elif i.lob_sectors:
+            has_sec = False
+            for l in i.lob_sectors:
+                if l['code'] in lobsecs:
                     rules.append(i.serialize)
+            if has_sec:
+                rules.append(i.serialize)
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
-    for txn in Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all():
-        for rule in rules:
-            # variable for checking conditions
-            do_paredown = 0
-            for condition in rule['conditions']:
-                # print(condition)
-                # ensure the field for the condition is in the data keys
-                if condition['field'] in txn.data:
+    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all()
+    N = mp.cpu_count()
+    with mp.Pool(processes = N) as p:
+        p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
 
-                    if condition['operator'] == 'contains':
-                        print("\tCONTAINS")
-                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
-                            do_paredown +=1
-
-                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
-                        print("\tLOGICAL OPERATOR")
-                        proceed_operator = True
-
-                        try:
-                            value = float(condition['value'])
-                            field = float(txn.data[condition['field']])
-                        except ValueError as e:
-                            failed +=1
-                            proceed_operator = False
-
-                        if proceed_operator:
-                            if condition['operator'] == '>' and value > field:
-                                do_paredown +=1
-                            elif condition['operator'] == '<' and value < field:
-                                do_paredown +=1
-                            elif condition['operator'] == '==' and value == field:
-                                do_paredown +=1
-                            elif condition['operator'] == '>=' and value >= field:
-                                do_paredown +=1
-                            elif condition['operator'] == '<=' and value <= field:
-                                do_paredown +=1
-                            elif condition['operator'] == '!=' and value != field:
-                                do_paredown +=1
-                        else:
-                            failed +=1
-                            print("Condition value or Transaction data field not fit for operator comparison.")
-                    else:
-                        failed +=1
-                        raise Exception("Database issue for ParedownRuleCondition operator.")
-                else:
-                    failed +=1
-                    # print("field not in data")
-
-            # if all conditions succeeded
-            if do_paredown == len(rule['conditions']):
-                print("APPLY PAREDOWN TO TXN")
-                if not txn.gst_signed_off_by_id:
-                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
-                if not txn.hst_signed_off_by_id:
-                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
-                if not txn.qst_signed_off_by_id:
-                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
-                if not txn.pst_signed_off_by_id:
-                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
-                if not txn.apo_signed_off_by_id:
-                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
-
-                applied +=1
-
-
-    ### PSEUDO CODE:
-
-    # get list of rules associated with core and with project's LoBSec
-    #   do filter on project.project_client.client_client_entities.lob_sector
-    #   with paredownrule.paredown_rule_lob_sectors
-
-    # for each rule associated with project
-    #   for each condition in rule
-    #     for each transaction for filter project - apply paredown rule
-    #       if operator contains then find value in
-    #       else if operator in ['>','<','==','>=','<=','!=']
-    #       else raise Error generic for 500 as DB problem
-
-    # db.session.commit()
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
-    response['payload'] = [{'applied': applied,'failed':failed}]
+    response['payload'] = []
 
     return jsonify(response), 200
 

@@ -4,12 +4,11 @@ import re
 import json
 import requests
 import multiprocessing as mp
+from config import *
+from flask import Blueprint, current_app, jsonify, request
 from os import path
 from src.models import *
-from config import *
 from sqlalchemy import exists, desc, create_engine
-from flask import Blueprint, current_app, jsonify, request
-from src.models import *
 from sqlalchemy.sql.expression import bindparam
 
 def build_master_file(args):
@@ -63,7 +62,7 @@ def build_master_table(args):
             engine.execute(referenceclass.__table__.insert(), list_to_insert)
 
 def apply_mapping(args):
-    
+
     table = args['table']
     print("start:{}".format(table))
     table_name = args['table'].lower().partition('sap')[2]
@@ -78,7 +77,7 @@ def apply_mapping(args):
         query_string = '''
         SELECT * from sap_{table} WHERE caps_gen_id={id} ORDER BY id LIMIT {limit} OFFSET {offset};
         '''.format(table = table_name, limit = limit, offset = offset, id = id )
-    
+
         result = engine.execute(query_string)
         stmt = referenceclass.__table__.update().\
                 where(referenceclass.id == bindparam('_id')).\

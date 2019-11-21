@@ -205,92 +205,97 @@ class Transaction(db.Model):
         return cls.query.filter_by(id = id).first()
 
 
-    def update_gst_codes(self, codes):
-        gst_codes = codes
-        gst_query = TransactionGSTCode.query.filter_by(transaction_id=self.id).all()
+    def update_gst_codes(self, codes, tempsession=None):
+        gst_codes = list(set(codes))
+        used_session = tempsession if tempsession else db.session
+        gst_query = used_session.query(TransactionGSTCode).filter_by(transaction_id=self.id).all()
         for gst in gst_query:
             if gst.transaction_gst_code_code.code_number in gst_codes:
                 gst_codes.remove(gst.transaction_gst_code_code.code_number)
             else:
-                db.session.delete(gst)
+                used_session.delete(gst)
         for code in gst_codes:
-            code_query = Code.query.filter_by(code_number=code).first()
+            code_query = used_session.query(Code).filter_by(code_number=code).first()
             if not code_query:
                 raise InputError("Code number {} does not exist.".format(code))
-            db.session.add(TransactionGSTCode(
+            used_session.add(TransactionGSTCode(
                 transaction_id = self.id,
                 code_id = code_query.id
             ))
-        db.session.flush()
+        used_session.flush()
 
-    def update_hst_codes(self, codes):
-        hst_codes = codes
-        hst_query = TransactionHSTCode.query.filter_by(transaction_id=self.id).all()
+    def update_hst_codes(self, codes, tempsession=None):
+        hst_codes = list(set(codes))
+        used_session = tempsession if tempsession else db.session
+        hst_query = used_session.query(TransactionHSTCode).filter_by(transaction_id=self.id).all()
         for hst in hst_query:
             if hst.transaction_hst_code_code.code_number in hst_codes:
                 hst_codes.remove(hst.transaction_hst_code_code.code_number)
             else:
-                db.session.delete(hst)
+                used_session.delete(hst)
         for code in hst_codes:
-            code_query = Code.query.filter_by(code_number=code).first()
+            code_query = used_session.query(Code).filter_by(code_number=code).first()
             if not code_query:
                 raise InputError("Code number {} does not exist.".format(code))
-            db.session.add(TransactionHSTCode(
+            used_session.add(TransactionHSTCode(
                 transaction_id = self.id,
                 code_id = code_query.id
             ))
-        db.session.flush()
+        used_session.flush()
 
-    def update_qst_codes(self, codes):
-        qst_codes = codes
-        qst_query = TransactionQSTCode.query.filter_by(transaction_id=self.id).all()
+    def update_qst_codes(self, codes, tempsession=None):
+        qst_codes = list(set(codes))
+        used_session = tempsession if tempsession else db.session
+        qst_query = used_session.query(TransactionQSTCode).filter_by(transaction_id=self.id).all()
         for qst in qst_query:
             if qst.transaction_qst_code_code.code_number in qst_codes:
                 qst_codes.remove(qst.transaction_qst_code_code.code_number)
             else:
-                db.session.delete(qst)
+                used_session.delete(qst)
         for code in qst_codes:
-            code_query = Code.query.filter_by(code_number=code).first()
+            code_query = used_session.query(Code).filter_by(code_number=code).first()
             if not code_query:
                 raise InputError("Code number {} does not exist.".format(code))
-            db.session.add(TransactionQSTCode(
+            used_session.add(TransactionQSTCode(
                 transaction_id = self.id,
                 code_id = code_query.id
             ))
-        db.session.flush()
+        used_session.flush()
 
-    def update_pst_codes(self, codes):
-        pst_codes = codes
-        pst_query = TransactionPSTCode.query.filter_by(transaction_id=self.id).all()
+    def update_pst_codes(self, codes, tempsession=None):
+        pst_codes = list(set(codes))
+        used_session = tempsession if tempsession else db.session
+        pst_query = used_session.query(TransactionPSTCode).filter_by(transaction_id=self.id).all()
         for pst in pst_query:
             if pst.transaction_pst_code_code.code_number in pst_codes:
                 pst_codes.remove(pst.transaction_pst_code_code.code_number)
             else:
-                db.session.delete(pst)
+                used_session.delete(pst)
         for code in pst_codes:
-            code_query = Code.query.filter_by(code_number=code).first()
+            code_query = used_session.query(Code).filter_by(code_number=code).first()
             if not code_query:
                 raise InputError("Code number {} does not exist.".format(code))
-            db.session.add(TransactionPSTCode(
+            used_session.add(TransactionPSTCode(
                 transaction_id = self.id,
                 code_id = code_query.id
             ))
-        db.session.flush()
+        used_session.flush()
 
-    def update_apo_codes(self, codes):
-        apo_codes = codes
-        apo_query = TransactionAPOCode.query.filter_by(transaction_id=self.id).all()
+    def update_apo_codes(self, codes, tempsession=None):
+        apo_codes = list(set(codes))
+        used_session = tempsession if tempsession else db.session
+        apo_query = used_session.query(TransactionAPOCode).filter_by(transaction_id=self.id).all()
         for apo in apo_query:
             if apo.transaction_apo_code_code.code_number in apo_codes:
                 apo_codes.remove(apo.transaction_apo_code_code.code_number)
             else:
-                db.session.delete(apo)
+                used_session.delete(apo)
         for code in apo_codes:
-            code_query = Code.query.filter_by(code_number=code).first()
+            code_query = used_session.query(Code).filter_by(code_number=code).first()
             if not code_query:
                 raise InputError("Code number {} does not exist.".format(code))
-            db.session.add(TransactionAPOCode(
+            used_session.add(TransactionAPOCode(
                 transaction_id = self.id,
                 code_id = code_query.id
             ))
-        db.session.flush()
+        used_session.flush()
