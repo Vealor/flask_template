@@ -288,7 +288,6 @@ def apply_paredown_rules(id):
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
     for txn in Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all():
-        print(txn)
         for rule in rules:
             # variable for checking conditions
             do_paredown = 0
@@ -342,13 +341,13 @@ def apply_paredown_rules(id):
                 if not txn.gst_signed_off_by_id:
                     txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
                 if not txn.hst_signed_off_by_id:
-                    txn.update_hst_codes(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
                 if not txn.qst_signed_off_by_id:
-                    txn.update_qst_codes(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
                 if not txn.pst_signed_off_by_id:
-                    txn.update_pst_codes(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
                 if not txn.apo_signed_off_by_id:
-                    txn.update_apo_codes(rule['code']['code_number'] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
 
                 applied +=1
 
