@@ -1,7 +1,7 @@
 from .__model_imports import *
 ################################################################################
 class GstRegistration(db.Model):
-    _tablename__ = 'gst_registration'
+    __tablename__ = 'gst_registration'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
