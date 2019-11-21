@@ -202,7 +202,7 @@ def do_train():
         <li>Error: {}</li>
         </ul>
         """.format(str(e))
-        send_mail("willthompson@kpmg.ca" ,subj, content)
+        send_mail(current_user.email ,subj, content)
 
         raise Exception("Error occured during model training: " + str(e))
 
@@ -219,7 +219,7 @@ def do_train():
     <li>Model Name: {}</li>
     </ul>
     """.format(MasterModel.find_by_id(model_id).serialize['name'])
-    send_mail("willthompson@kpmg.ca" ,subj, content)
+    send_mail(current_user.email ,subj, content)
 
     return jsonify(response), 201
 
