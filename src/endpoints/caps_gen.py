@@ -229,11 +229,11 @@ def init_caps_gen():
 
         db.session.commit()
         ## Remove data from caps_gen_master
-        master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
-        list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
-        ## Remove data from caps_gen_unzipped
-        current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
-        list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
+        # master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
+        # list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
+        # ## Remove data from caps_gen_unzipped
+        # current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
+        # list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
     except Exception as e:
