@@ -273,8 +273,8 @@ def apply_paredown_rules(id):
     query = Project.find_by_id(id)
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
-
-    # CHECK IF PROJECT PAREDOWN LOCKED
+    if query.is_paredown_locked:
+        raise InputError('Paredown is Locked for Project with ID {}'.format(id))
 
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
@@ -292,10 +292,70 @@ def apply_paredown_rules(id):
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
-    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all()
-    N = mp.cpu_count()
-    with mp.Pool(processes = N) as p:
-        p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
+    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).order_by("id").limit(50).all()
+    # N = mp.cpu_count()
+    # with mp.Pool(processes = N) as p:
+    #     p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
+
+    for txn in txn_list:
+        print(txn.id)
+        for rule in rules:
+            # variable for checking conditions
+            do_paredown = 0
+            for condition in rule['conditions']:
+                # print(condition)
+                # ensure the field for the condition is in the data keys
+                if condition['field'] in txn.data:
+
+                    if condition['operator'] == 'contains':
+                        # print("\tCONTAINS")
+                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
+                            do_paredown +=1
+
+                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
+                        # print("\tLOGICAL OPERATOR")
+                        proceed_operator = True
+
+                        try:
+                            value = float(condition['value'])
+                            field = float(txn.data[condition['field']])
+                        except ValueError as e:
+                            # failed +=1
+                            proceed_operator = False
+
+                        if proceed_operator:
+                            if condition['operator'] == '>' and field > value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<' and field < value:
+                                do_paredown +=1
+                            elif condition['operator'] == '==' and field == value:
+                                do_paredown +=1
+                            elif condition['operator'] == '>=' and field >= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<=' and field <= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '!=' and field != value:
+                                do_paredown +=1
+                        else:
+                            print("Condition value or Transaction data field not fit for operator comparison.")
+                    else:
+                        raise Exception("Database issue for ParedownRuleCondition operator.")
+
+            # if all conditions succeeded
+            if do_paredown == len(rule['conditions']):
+                # print("APPLY PAREDOWN TO TXN")
+                if not txn.gst_signed_off_by_id:
+                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
+                if not txn.hst_signed_off_by_id:
+                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                if not txn.qst_signed_off_by_id:
+                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                if not txn.pst_signed_off_by_id:
+                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                if not txn.apo_signed_off_by_id:
+                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+
+    db.session.commit()
 
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
     response['payload'] = []
@@ -382,46 +442,51 @@ def apply_dummy_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
+
+    #####################################
+    #FOR DEMO
+    trans_ids = list(range(1,45)) + [46] + [49,50]
+    probability_recoverable = [x/100 for x in [10,80,80,80,90,80,75,10,80,80,80,80,65,85,80,60,80,80,80,80,60,80,15,75,10,75,75,75,75,75,75,75,75,60,85,80,80,10,75,70,55,10,10,55,10,5,5]]
+    ######################################
+
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.id.in_(trans_ids))
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
-    print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
         if not active_model:
             raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.master_model_id : None})
-        project_transactions.update({Transaction.client_model_id :active_model.id})
+        project_transactions.update({Transaction.master_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.client_model_id :active_model.id},synchronize_session="fetch")
     else:
         active_model = MasterModel.find_active()
         if not active_model:
             raise ValueError('No master model has been trained or is active.')
         lh_model = mm.MasterPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.client_model_id : None})
-        project_transactions.update({Transaction.master_model_id :active_model.id})
+        project_transactions.update({Transaction.client_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.master_model_id :active_model.id},synchronize_session="fetch")
 
     predictors = active_model.hyper_p['predictors']
 
 
-    # TODO: fix separation of data so that prediction happens on transactions with IDs
-    # Can't assume that final zip lines up arrays properly
-    print("Pull transactions to df.")
+    ## TODO: fix separation of data so that prediction happens on transactions with IDs
+    ## Can't assume that final zip lines up arrays properly
     #df_predict = transactions_to_dataframe(project_transactions)
-    print("Preprocessing...")
     #df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
-    # Get probability of each transaction being class '1'
+    ## Get probability of each transaction being class '1'
     #probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
-    probability_recoverable = [min(100, np.random.normal(loc=80, scale=10)/100) if x > 0.8 else max(0, np.random.normal(loc=20, scale=10)/100) for x in np.random.random(project_transactions.count())]
 
-    project_transactions.update({Transaction.is_predicted : True})
+    project_transactions.update({Transaction.is_predicted : True}, synchronize_session="fetch")
     for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
+        #tr.is_recoverable = True
 
+    print("HERE!")
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
     return jsonify(response), 201

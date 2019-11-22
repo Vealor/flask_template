@@ -9,7 +9,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from src.models import *
 from src.util import *
-from src.prediction import model_master as mpm
+from src.prediction import model_client as cpm
 from src.prediction import preprocessing as prepr
 
 def create_app():
@@ -32,62 +32,63 @@ def progress(count, total, status=''):
     sys.stdout.flush()
 
 if __name__ == '__main__':
-    
+
     query = Transaction.query
-    
+
     negative, positive = 201, 101
-    trans_codes = [positive if tr.data['cntry_name'] != 'Canada' and float(tr.data['ap_amt']) > -15000 else negative for tr in query]
+    trans_codes = [positive if tr.data['cntry_name'] != 'Canada' or float(tr.data['ap_amt']) > -15000 else negative for tr in query]
     l = len(trans_codes)
     approv_user = [1 if r < 0.8 else None for r in np.random.random(l)]
-    
+
     # This is very slow, keep a progress bar
     c = 0
     for (tr,co,au,ii) in zip(query.all(),trans_codes, approv_user,range(l)):
         tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
         tr.update_gst_codes([co])
-        tr.update_hst_codes([co])
+        #tr.update_hst_codes([co])
         tr.gst_signed_off_by_id = 2
-        tr.hst_signed_off_by_id = 3
+        #tr.hst_signed_off_by_id = 3
         tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
-    
+
     print("..AND EVERYWHERE!")
     proj = Project.find_by_id(1)
     proj.has_ts_gst = True
-    proj.has_ts_hst = True
-    
+    #proj.has_ts_hst = True
+
     db.session.commit()
-    
+
     # Now insert a pretrained predictive models for master and client.
     print("Gathering Data..")
     train_start = get_date_obj_from_str("2000-01-01")
-    train_end = get_date_obj_from_str('2019-07-01')
-    test_start = get_date_obj_from_str("2019-07-02")
-    test_end = get_date_obj_from_str('2019-01-01')
+    train_end = get_date_obj_from_str('2018-12-31')
+    test_start = get_date_obj_from_str("2019-01-01")
+    test_end = get_date_obj_from_str('2019-08-01')
     train_transactions = Transaction.query.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
     data_train = prepr.transactions_to_dataframe(train_transactions)
     data_valid = prepr.transactions_to_dataframe(test_transactions)
-    
+
     df_train = prepr.preprocess_data(data_train,preprocess_for='training')
-    print("Training master model!")
-    m = mpm.MasterPredictionModel()
+    print("Training client model!")
+    m = cpm.ClientPredictionModel()
     target = "Target"
     predictors = list(set(df_train.columns) - set([target]))
     m.train(df_train,predictors,target)
 
     model_data_dict = {
+            'client_id': 1,
             'train_data_start': train_start,
             'train_data_end': train_end,
             'pickle': m.as_pickle(),
             'hyper_p': {'predictors': predictors, 'target': target}
         }
-    entry = MasterModel(**model_data_dict)
+    entry = ClientModel(**model_data_dict)
     entry.status = Activity.active
     db.session.add(entry)
     db.session.commit()
     model_id = entry.id
-    
+
     df_valid = prepr.preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
     performance_metrics = m.validate(df_valid, predictors, target)
     model_performance_dict = {
@@ -99,9 +100,7 @@ if __name__ == '__main__':
     }
 
     # Push trained model and performance metrics
-    model_performance_dict['master_model_id'] = model_id
-    new_model = MasterModelPerformance(**model_performance_dict)
+    model_performance_dict['client_model_id'] = model_id
+    new_model = ClientModelPerformance(**model_performance_dict)
     db.session.add(new_model)
     db.session.commit()
-    
-    
