@@ -83,7 +83,7 @@ if __name__ == '__main__':
             'pickle': m.as_pickle(),
             'hyper_p': {'predictors': predictors, 'target': target}
         }
-    entry = MasterModel(**model_data_dict)
+    entry = ClientModel(**model_data_dict)
     entry.status = Activity.active
     db.session.add(entry)
     db.session.commit()
