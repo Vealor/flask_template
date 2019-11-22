@@ -375,7 +375,7 @@ def apply_dummy_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.id < 11)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -410,6 +410,8 @@ def apply_dummy_prediction(id):
     #probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
     probability_recoverable = [min(100, np.random.normal(loc=80, scale=10)/100) if x > 0.8 else max(0, np.random.normal(loc=20, scale=10)/100) for x in np.random.random(project_transactions.count())]
+
+
 
     project_transactions.update({Transaction.is_predicted : True})
     for tr,pr in zip(project_transactions, probability_recoverable):
