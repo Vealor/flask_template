@@ -71,7 +71,7 @@ def is_training():
 #===============================================================================
 # Train a new client model.
 @client_models.route('/train/', methods=['POST'])
-#@jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     query = Transaction.query
     
     negative, positive = 201, 101
-    trans_codes = [positive if tr.data['cntry_name'] != 'Canada' and float(tr.data['ap_amt']) > -15000 else negative for tr in query]
+    trans_codes = [positive if tr.data['cntry_name'] != 'Canada' or float(tr.data['ap_amt']) > -15000 else negative for tr in query]
     l = len(trans_codes)
     approv_user = [1 if r < 0.8 else None for r in np.random.random(l)]
     
