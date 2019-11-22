@@ -446,8 +446,7 @@ def apply_dummy_prediction(id):
     #####################################
     #FOR DEMO
     trans_ids = list(range(1,45)) + [46] + [49,50]
-    probability_recoverable = [x/100 for x in [10,80,80,80,90,80,75,10,80,80,80,80,65,85,80,60,80,80,80,80,60,80,15,75,10,75,75,75,75,75,75,75,75,60,85,80,80,10,75,70,55,10,10,55, 10, 5, 5]]
-
+    probability_recoverable = [x/100 for x in [10,80,80,80,90,80,75,10,80,80,80,80,65,85,80,60,80,80,80,80,60,80,15,75,10,75,75,75,75,75,75,75,75,60,85,80,80,10,75,70,55,10,10,55,10,5,5]]
     ######################################
 
     project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.id.in_(trans_ids))
@@ -460,8 +459,8 @@ def apply_dummy_prediction(id):
         if not active_model:
             raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.master_model_id : None})
-        project_transactions.update({Transaction.client_model_id :active_model.id})
+        project_transactions.update({Transaction.master_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.client_model_id :active_model.id},synchronize_session="fetch")
     else:
         active_model = MasterModel.find_active()
         if not active_model:
