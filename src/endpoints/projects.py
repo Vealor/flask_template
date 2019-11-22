@@ -292,10 +292,70 @@ def apply_paredown_rules(id):
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
-    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).all()
-    N = mp.cpu_count()
-    with mp.Pool(processes = N) as p:
-        p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
+    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).order_by("id").limit(50).all()
+    # N = mp.cpu_count()
+    # with mp.Pool(processes = N) as p:
+    #     p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
+
+    for txn in txn_list:
+        print(txn.id)
+        for rule in rules:
+            # variable for checking conditions
+            do_paredown = 0
+            for condition in rule['conditions']:
+                # print(condition)
+                # ensure the field for the condition is in the data keys
+                if condition['field'] in txn.data:
+
+                    if condition['operator'] == 'contains':
+                        # print("\tCONTAINS")
+                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
+                            do_paredown +=1
+
+                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
+                        # print("\tLOGICAL OPERATOR")
+                        proceed_operator = True
+
+                        try:
+                            value = float(condition['value'])
+                            field = float(txn.data[condition['field']])
+                        except ValueError as e:
+                            # failed +=1
+                            proceed_operator = False
+
+                        if proceed_operator:
+                            if condition['operator'] == '>' and field > value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<' and field < value:
+                                do_paredown +=1
+                            elif condition['operator'] == '==' and field == value:
+                                do_paredown +=1
+                            elif condition['operator'] == '>=' and field >= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<=' and field <= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '!=' and field != value:
+                                do_paredown +=1
+                        else:
+                            print("Condition value or Transaction data field not fit for operator comparison.")
+                    else:
+                        raise Exception("Database issue for ParedownRuleCondition operator.")
+
+            # if all conditions succeeded
+            if do_paredown == len(rule['conditions']):
+                # print("APPLY PAREDOWN TO TXN")
+                if not txn.gst_signed_off_by_id:
+                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
+                if not txn.hst_signed_off_by_id:
+                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                if not txn.qst_signed_off_by_id:
+                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                if not txn.pst_signed_off_by_id:
+                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                if not txn.apo_signed_off_by_id:
+                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+
+    db.session.commit()
 
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
     response['payload'] = []
