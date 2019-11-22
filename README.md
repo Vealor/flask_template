@@ -101,3 +101,7 @@ password: Kpmg1234@Kpmg1234@
 <strong> Database Server </strong>
 ```psql --host=itra-uat-sql.postgres.database.azure.com --port=5432 --username=lh_admin_tax@itra-uat-sql --dbname=itra_db```
 password: Kpmg1234@
+
+<strong> ITRA Backend </strong>
+user = lh-admin-tax
+password: Kpmg1234$
