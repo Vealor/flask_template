@@ -9,7 +9,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from src.models import *
 from src.util import *
-from src.prediction import model_master as mpm
+from src.prediction import model_client as cpm
 from src.prediction import preprocessing as prepr
 
 def create_app():
