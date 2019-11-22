@@ -268,7 +268,7 @@ class Transaction(db.Model):
             'is_paredowned': self.is_paredowned,
             'is_predicted': self.is_predicted,
             'recovery_probability': self.recovery_probability,
-            'has_recoverable': self.recovery_probability >= 0.5,
+            'has_recoverable': self.recovery_probability >= 0.5 if self.recovery_probability else None,
             'rbc_predicted': self.rbc_predicted,
             'rbc_recovery_probability': self.rbc_recovery_probability,
             # 'data': self.data if self.data else {},
