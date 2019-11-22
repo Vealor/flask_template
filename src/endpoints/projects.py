@@ -273,8 +273,8 @@ def apply_paredown_rules(id):
     query = Project.find_by_id(id)
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
-
-    # CHECK IF PROJECT PAREDOWN LOCKED
+    if query.is_paredown_locked:
+        raise InputError('Paredown is Locked for Project with ID {}'.format(id))    
 
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
