@@ -59,6 +59,7 @@ class DevelopmentConfig(Config):
                   'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
                   'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
                   'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT']
+    #CDM_TABLES = ['BKPF', 'BSEG', 'CSKT', 'EKPO', 'LFA1', 'MAKT', 'T007S', 'T001']
     FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
 
 class TestingConfig(Config):

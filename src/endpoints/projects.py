@@ -88,6 +88,13 @@ def get_predictive_calculations(id):
     green_pst_but_no_qst = None
     yellow_pst_but_no_qst = None
 
+    average_number = engine.execute("""select AVG(cast(data ->> 'eff_rate' as float))
+                from transactions as R
+                where cast(data ->> 'vend_num' as text) = '{vend_num}'
+                and project_id = {project_id}
+                and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
+                """)
+
     transaction_set = Transaction.query.filter_by(project_id=id)
     transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
 
