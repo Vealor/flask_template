@@ -274,7 +274,7 @@ def apply_paredown_rules(id):
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
     if query.is_paredown_locked:
-        raise InputError('Paredown is Locked for Project with ID {}'.format(id))    
+        raise InputError('Paredown is Locked for Project with ID {}'.format(id))
 
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
@@ -445,8 +445,8 @@ def apply_dummy_prediction(id):
 
     #####################################
     #FOR DEMO
-    trans_ids = list(range(1,11))
-    probability_recoverable = [x/len(trans_ids) for x in trans_ids]
+    trans_ids = list(range(1,45)) + [46] + [49,50]
+    probability_recoverable = [x/100 for x in [10,80,80,80,90,80,75,10,80,80,80,80,65,85,80,60,80,80,80,80,60,80,15,75,10,75,75,75,75,75,75,75,75,60,85,80,80,10,75,70,55,10,10,55, 10, 5, 5]]
 
     ######################################
 
