@@ -310,12 +310,6 @@ def get_master_table_headers(id):
 def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
-    request_types = {
-        'project_id': ['int'],
-        'file_name': ['str'],
-        'system': ['str']
-    }
-    validate_request_data(data, request_types)
 
     # APPLY MAPPINGS
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
@@ -353,18 +347,18 @@ def apply_mappings_build_gst_registration(id):
 
     # BUILD GST REGISTRATION
     #TODO: V2 check for similary/duplicate projects by comparing attributesh
-    # gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
-    # for vendor in gst_data:
-    #     if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
-    #         raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
-    #     gst_entry = GstRegistration(
-    #         caps_gen_id = id,
-    #         vendor_country=vendor['lfa1_land1_key'],
-    #         vendor_number=vendor['lfa1_lifnr_key'],
-    #         vendor_city=vendor['vend_city'],
-    #         vendor_region=vendor['vend_region']
-    #     )
-    #     db.session.add(gst_entry)
+    gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
+    for vendor in gst_data:
+        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+            raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
+        gst_entry = GstRegistration(
+            caps_gen_id = id,
+            vendor_country=vendor['lfa1_land1_key'],
+            vendor_number=vendor['lfa1_lifnr_key'],
+            vendor_city=vendor['vend_city'],
+            vendor_region=vendor['vend_region']
+        )
+        db.session.add(gst_entry)
     db.session.commit()
 
     # create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
