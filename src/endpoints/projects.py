@@ -382,11 +382,18 @@ def apply_dummy_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
+
+    #####################################
+    #FOR DEMO
+    trans_ids = list(range(1,11))
+    probability_recoverable = [x/len(trans_ids) for x in trans_ids]
+
+    ######################################
+
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.id.in_(trans_ids))
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
-    print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
@@ -400,28 +407,27 @@ def apply_dummy_prediction(id):
         if not active_model:
             raise ValueError('No master model has been trained or is active.')
         lh_model = mm.MasterPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.client_model_id : None})
-        project_transactions.update({Transaction.master_model_id :active_model.id})
+        project_transactions.update({Transaction.client_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.master_model_id :active_model.id},synchronize_session="fetch")
 
     predictors = active_model.hyper_p['predictors']
 
 
-    # TODO: fix separation of data so that prediction happens on transactions with IDs
-    # Can't assume that final zip lines up arrays properly
-    print("Pull transactions to df.")
+    ## TODO: fix separation of data so that prediction happens on transactions with IDs
+    ## Can't assume that final zip lines up arrays properly
     #df_predict = transactions_to_dataframe(project_transactions)
-    print("Preprocessing...")
     #df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
 
-    # Get probability of each transaction being class '1'
+    ## Get probability of each transaction being class '1'
     #probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
-    probability_recoverable = [min(100, np.random.normal(loc=80, scale=10)/100) if x > 0.8 else max(0, np.random.normal(loc=20, scale=10)/100) for x in np.random.random(project_transactions.count())]
 
-    project_transactions.update({Transaction.is_predicted : True})
+    project_transactions.update({Transaction.is_predicted : True}, synchronize_session="fetch")
     for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
+        #tr.is_recoverable = True
 
+    print("HERE!")
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
     return jsonify(response), 201
