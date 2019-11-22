@@ -42,17 +42,17 @@ def apply_rules_to_txn(args):
                         proceed_operator = False
 
                     if proceed_operator:
-                        if condition['operator'] == '>' and value > field:
+                        if condition['operator'] == '>' and field > value:
                             do_paredown +=1
-                        elif condition['operator'] == '<' and value < field:
+                        elif condition['operator'] == '<' and field < value:
                             do_paredown +=1
-                        elif condition['operator'] == '==' and value == field:
+                        elif condition['operator'] == '==' and field == value:
                             do_paredown +=1
-                        elif condition['operator'] == '>=' and value >= field:
+                        elif condition['operator'] == '>=' and field >= value:
                             do_paredown +=1
-                        elif condition['operator'] == '<=' and value <= field:
+                        elif condition['operator'] == '<=' and field <= value:
                             do_paredown +=1
-                        elif condition['operator'] == '!=' and value != field:
+                        elif condition['operator'] == '!=' and field != value:
                             do_paredown +=1
                     else:
                         print("Condition value or Transaction data field not fit for operator comparison.")
