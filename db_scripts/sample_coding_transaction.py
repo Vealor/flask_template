@@ -86,9 +86,9 @@ if __name__ == '__main__':
     #df_valid = prepr.preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
     #performance_metrics = m.validate(df_valid, predictors, target)
     model_performance_dict = {
-        'accuracy': 0.76,
-        'precision': 0.45,
-        'recall': 0.95,
+        'accuracy': 0.76453543,
+        'precision': 0.451991239,
+        'recall': 0.9509423490,
         'test_data_start': test_start,
         'test_data_end': test_end
     }

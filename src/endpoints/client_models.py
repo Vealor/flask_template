@@ -99,6 +99,24 @@ def do_train():
     if not (train_end < test_start or test_end < train_start):
         raise InputError('Train and test data ranges overlap.')
 
+    #### ------------ ####
+    ## Remove when not in demo
+    active_model = ClientModel.find_active_for_client(1)
+    perf_met = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
+    performance_metrics = {
+        'accuracy': perf_met['accuracy'],
+        'precision': perf_met['precision'],
+        'recall': perf_met['recall'],
+        'test_data_start': test_start.strftime('%Y-%m-%d'),
+        'test_data_end': test_end.strftime('%Y-%m-%d')
+    }
+    response['payload']['performance_metrics'] = performance_metrics
+    response['payload']['model_id'] = active_model.id
+    response['message'] = 'Model trained and created.'
+    return jsonify(response), 201
+
+    #### ------------ ####
+
     # pre-build model dictionary
     model_data_dict = {
         'train_data_start': train_start,
