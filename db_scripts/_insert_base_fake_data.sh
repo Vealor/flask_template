@@ -13,7 +13,7 @@ PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into clients (name) values ('Inter Pipeline');
   insert into clients (name) values ('Keyera');
   insert into clients (name) values ('Pretium');
-  insert into client_entities (client_id, company_code, lob_sector) values (1, '78GK', 'consumer_retail_food_beverage');
+  insert into client_entities (client_id, company_code, lob_sector) values (1, '78GK', 'energy_natural_resources_oil_gas_upstream');
   insert into client_entity_jurisdictions (client_entity_id, jurisdiction) values (1, 'bc');
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Nexen Energy 2017 IndTaxRA 2013-2016', 1, 18, 1);
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Westcoast 2014 IndTaxRA 2010-2013', 2, 18, 1);
