@@ -44,14 +44,8 @@ if __name__ == '__main__':
     c = 0
     for (tr,co,au,ii) in zip(query.all(),trans_codes, approv_user,range(l)):
         tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
-        tr.update_gst_codes([co])
-        #tr.update_hst_codes([co])
-        tr.gst_signed_off_by_id = 2
-        #tr.hst_signed_off_by_id = 3
-        tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
 
-    print("..AND EVERYWHERE!")
     proj = Project.find_by_id(1)
     proj.has_ts_gst = True
     #proj.has_ts_hst = True
@@ -64,24 +58,24 @@ if __name__ == '__main__':
     train_end = get_date_obj_from_str('2018-12-31')
     test_start = get_date_obj_from_str("2019-01-01")
     test_end = get_date_obj_from_str('2019-08-01')
-    train_transactions = Transaction.query.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
-    data_train = prepr.transactions_to_dataframe(train_transactions)
-    data_valid = prepr.transactions_to_dataframe(test_transactions)
+    #train_transactions = Transaction.query.filter(Transaction.modified.between(train_start,train_end)).filter(Transaction.approved_user_id != None)
+    #test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
+    #data_train = prepr.transactions_to_dataframe(train_transactions)
+    #data_valid = prepr.transactions_to_dataframe(test_transactions)
 
-    df_train = prepr.preprocess_data(data_train,preprocess_for='training')
+    #df_train = prepr.preprocess_data(data_train,preprocess_for='training')
     print("Training client model!")
-    m = cpm.ClientPredictionModel()
-    target = "Target"
-    predictors = list(set(df_train.columns) - set([target]))
-    m.train(df_train,predictors,target)
+    #m = cpm.ClientPredictionModel()
+    #target = "Target"
+    #predictors = list(set(df_train.columns) - set([target]))
+    #m.train(df_train,predictors,target)
 
     model_data_dict = {
             'client_id': 1,
             'train_data_start': train_start,
             'train_data_end': train_end,
-            'pickle': m.as_pickle(),
-            'hyper_p': {'predictors': predictors, 'target': target}
+            'pickle': pickle.dumps(None),
+            'hyper_p': {'predictors': [], 'target': "Target"}
         }
     entry = ClientModel(**model_data_dict)
     entry.status = Activity.active
@@ -89,18 +83,18 @@ if __name__ == '__main__':
     db.session.commit()
     model_id = entry.id
 
-    df_valid = prepr.preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
-    performance_metrics = m.validate(df_valid, predictors, target)
+    #df_valid = prepr.preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
+    #performance_metrics = m.validate(df_valid, predictors, target)
     model_performance_dict = {
-        'accuracy': performance_metrics['accuracy'],
-        'precision': performance_metrics['precision'],
-        'recall': performance_metrics['recall'],
+        'accuracy': 0.76,
+        'precision': 0.45,
+        'recall': 0.95,
         'test_data_start': test_start,
         'test_data_end': test_end
     }
 
     # Push trained model and performance metrics
     model_performance_dict['client_model_id'] = model_id
-    new_model = ClientModelPerformance(**model_performance_dict)
-    db.session.add(new_model)
+    new_model_perf = ClientModelPerformance(**model_performance_dict)
+    db.session.add(new_model_perf)
     db.session.commit()
