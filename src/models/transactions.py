@@ -192,57 +192,57 @@ class Transaction(db.Model):
 
     # gst_code_id = db.Column(db.Integer, nullable=True) #FK
     gst_codes = db.relationship('TransactionGSTCode', back_populates='transaction_gst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
-    gst_notes_internal = db.Column(db.String(2048), nullable=True)
-    gst_notes_external = db.Column(db.String(2048), nullable=True)
+    gst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
+    gst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     gst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
-    gst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    gst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    gst_error_type = db.Column(db.Enum(ErrorTypes), server_default=None, nullable=True)
+    gst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
     gst_coded_by_user = db.relationship('User', foreign_keys='Transaction.gst_coded_by_id') # FK
-    gst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    gst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     gst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_signed_off_by_id') # FK
 
     # hst_code_id = db.Column(db.Integer, nullable=True) #FK
     hst_codes = db.relationship('TransactionHSTCode', back_populates='transaction_hst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
-    hst_notes_internal = db.Column(db.String(2048), nullable=True)
-    hst_notes_external = db.Column(db.String(2048), nullable=True)
+    hst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
+    hst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
-    hst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    hst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    hst_error_type = db.Column(db.Enum(ErrorTypes), server_default=None, nullable=True)
+    hst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
     hst_coded_by_user = db.relationship('User', foreign_keys='Transaction.hst_coded_by_id') # FK
-    hst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    hst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     hst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.hst_signed_off_by_id') # FK
 
     # qst_code_id = db.Column(db.Integer, nullable=True) #FK
     qst_codes = db.relationship('TransactionQSTCode', back_populates='transaction_qst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
-    qst_notes_internal = db.Column(db.String(2048), nullable=True)
-    qst_notes_external = db.Column(db.String(2048), nullable=True)
-    qst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    qst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
+    qst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
+    qst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    qst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    qst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
     qst_coded_by_user = db.relationship('User', foreign_keys='Transaction.qst_coded_by_id') # FK
-    qst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    qst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id') # FK
 
     # pst_code_id = db.Column(db.Integer, nullable=True) #FK
     pst_codes = db.relationship('TransactionPSTCode', back_populates='transaction_pst_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
-    pst_notes_internal = db.Column(db.String(2048), nullable=True)
-    pst_notes_external = db.Column(db.String(2048), nullable=True)
-    pst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    pst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
+    pst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
+    pst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    pst_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    pst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
     pst_coded_by_user = db.relationship('User', foreign_keys='Transaction.pst_coded_by_id') # FK
-    pst_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    pst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id') # FK
 
     # apo_code_id = db.Column(db.Integer, nullable=True) #FK
     apo_codes = db.relationship('TransactionAPOCode', back_populates='transaction_apo_code_transaction', cascade="save-update", lazy='dynamic', uselist=True, passive_deletes=True) #FK
-    apo_notes_internal = db.Column(db.String(2048), nullable=True)
-    apo_notes_external = db.Column(db.String(2048), nullable=True)
-    apo_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    apo_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
+    apo_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
+    apo_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    apo_coded_by_id = db.Column(db.Integer, nullable=True) #FK
+    apo_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
     apo_coded_by_user = db.relationship('User', foreign_keys='Transaction.apo_coded_by_id') # FK
-    apo_signed_off_by_id = db.Column(db.Integer, nullable=True) # FK
+    apo_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
     apo_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.apo_signed_off_by_id') # FK
 
     locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK

@@ -133,7 +133,7 @@ class Jurisdiction(enum.Enum):
     pe = "Prince Edward Island"
     qc = "Quebec"
     sk = "Saskatchewan"
-    ty = "Yukon"
+    yt = "Yukon"
     foreign = "Outside Canada"
 
     @property
