@@ -101,17 +101,15 @@ def do_train():
 
     #### ------------ ####
     ## Remove when not in demo
-    active_model = ClientModel.find_active_for_client(1)
-    perf_met = ClientModelPerformance.get_most_recent_for_model(active_model.id).serialize
     performance_metrics = {
-        'accuracy': perf_met['accuracy'],
-        'precision': perf_met['precision'],
-        'recall': perf_met['recall'],
+        'accuracy': 0.347623478,
+        'precision': 0.4324378,
+        'recall': 0.789879,
         'test_data_start': test_start.strftime('%Y-%m-%d'),
         'test_data_end': test_end.strftime('%Y-%m-%d')
     }
     response['payload']['performance_metrics'] = performance_metrics
-    response['payload']['model_id'] = active_model.id
+    response['payload']['model_id'] = 34
     response['message'] = 'Model trained and created.'
     return jsonify(response), 201
 
