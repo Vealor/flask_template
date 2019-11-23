@@ -70,7 +70,7 @@ if __name__ == '__main__':
     data_valid = prepr.transactions_to_dataframe(test_transactions)
 
     df_train = prepr.preprocess_data(data_train,preprocess_for='training')
-    print("Training master model!")
+    print("Training client model!")
     m = cpm.ClientPredictionModel()
     target = "Target"
     predictors = list(set(df_train.columns) - set([target]))
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             'pickle': m.as_pickle(),
             'hyper_p': {'predictors': predictors, 'target': target}
         }
-    entry = MasterModel(**model_data_dict)
+    entry = ClientModel(**model_data_dict)
     entry.status = Activity.active
     db.session.add(entry)
     db.session.commit()
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     }
 
     # Push trained model and performance metrics
-    model_performance_dict['master_model_id'] = model_id
+    model_performance_dict['client_model_id'] = model_id
     new_model = ClientModelPerformance(**model_performance_dict)
     db.session.add(new_model)
     db.session.commit()
