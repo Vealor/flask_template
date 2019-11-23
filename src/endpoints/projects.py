@@ -93,7 +93,16 @@ def get_predictive_calculations(id):
                 where cast(data ->> 'vend_num' as text) = '{vend_num}'
                 and project_id = {project_id}
                 and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
-                """)
+                """.format(project_id = project_id, vend_num = vend_num))
+
+    print(average_number)
+
+    engine.execute("""
+    select id, (cast(data ->> 'ap_amt' as float) * {average_number}) - cast(data ->> 'gst_hst' as float) from transactions
+    where data ->> 'ap_amt' is not null and id = {transaction_id};
+    """.format(transaction_id = transaction_id, average_number = average_number))
+
+
 
     transaction_set = Transaction.query.filter_by(project_id=id)
     transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
