@@ -104,7 +104,7 @@ def do_train():
     performance_metrics = {
         'accuracy': 0.347623478,
         'precision': 0.4324378,
-        'recall': 0.789879,
+        'recall': 0.949879,
         'test_data_start': test_start.strftime('%Y-%m-%d'),
         'test_data_end': test_end.strftime('%Y-%m-%d')
     }
