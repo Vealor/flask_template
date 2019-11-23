@@ -60,8 +60,8 @@ sleep 1 && echo -e "$BASE\tInserting CDM labels" && sleep 1
 sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings" && sleep 1
 ./db_scripts/_insert_nexen_data_mappings.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
 
-sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings - EMPTY CAPSGEN MAPPING" && sleep 1
-./db_scripts/_insert_nexen_data_mappings_mk2.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
+# sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings - EMPTY CAPSGEN MAPPING" && sleep 1
+# ./db_scripts/_insert_nexen_data_mappings_mk2.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
 
-sleep 1 && echo -e "$FAKE\tInserting dummy prediction models" && sleep 1
-./db_scripts/_insert_dummy_prediction_models.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
+#sleep 1 && echo -e "$FAKE\tInserting dummy prediction models" && sleep 1
+#./db_scripts/_insert_dummy_prediction_models.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND

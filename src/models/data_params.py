@@ -1,7 +1,7 @@
 from .__model_imports import *
 ################################################################################
 class DataParam(db.Model):
-    _tablename_ = 'data_params'
+    __tablename__ = 'data_params'
     __table_args__ = (
         db.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
     )

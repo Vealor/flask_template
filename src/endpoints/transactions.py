@@ -396,6 +396,8 @@ def update_transaction(id):
     query.apo_coded_by_id = data['apo_coded_by_id']
     query.apo_signed_off_by_id = data['apo_signed_off_by_id']
 
+    # TODO: ADD MODIFIED DATETIME
+
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
 

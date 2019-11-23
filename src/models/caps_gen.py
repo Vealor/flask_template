@@ -126,7 +126,7 @@ class CapsGen(db.Model):
 ################################################################################
 # SAP Tables
 class SapCaps(db.Model):
-    _tablename__ = 'sap_caps'
+    __tablename____ = 'sap_caps'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -199,6 +199,10 @@ class SapCaps(db.Model):
     po_tax_code_gl = db.Column(db.String(256), nullable=True)
     gst_hst_qst_pst_local_ccy = db.Column(db.String(256), nullable=True)
     profit_ctr_num = db.Column(db.String(256), nullable=True)
+    profit_ctr_name = db.Column(db.String(256), nullable=True)
+    profit_ctr_descr = db.Column(db.String(256), nullable=True)
+    cost_ctr_name = db.Column(db.String(256), nullable=True)
+    cost_ctr_descr = db.Column(db.String(256), nullable=True)
     wbs_gl = db.Column(db.String(256), nullable=True)
     item_descr_gl = db.Column(db.String(256), nullable=True)
     reverse_doc_num = db.Column(db.String(256), nullable=True)
@@ -210,6 +214,7 @@ class SapCaps(db.Model):
     vend_name = db.Column(db.String(256), nullable=True)
     vend_city = db.Column(db.String(256), nullable=True)
     vend_region = db.Column(db.String(256), nullable=True)
+    vend_cntry = db.Column(db.String(256), nullable=True)
     vend_tax_num_1 = db.Column(db.String(256), nullable=True)
     vend_tax_num_2 = db.Column(db.String(256), nullable=True)
     vend_tax_num_3 = db.Column(db.String(256), nullable=True)
@@ -282,11 +287,153 @@ class SapCaps(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "caps_gen_id": self.caps_gen_id
+            "caps_gen_id": self.caps_gen_id,
+            'transaction_attributes': self.transaction_attributes,
+            'even_gst_ind': self.even_gst_ind,
+            'odd_imm': self.odd_imm,
+            'prov_ap_amt': self.prov_ap_amt,
+            'pme_imm': self.pme_imm,
+            'gst_imm': self.gst_imm,
+            'gst_count': self.gst_count,
+            'cn_flag_ind': self.cn_flag_ind,
+            'cn_rep2_ind': self.cn_rep2_ind,
+            'prov_ap': self.prov_ap,
+            'even_gst_rate': self.even_gst_rate,
+            'even_hst13_rate': self.even_hst13_rate,
+            'even_hst14_rate': self.even_hst14_rate,
+            'even_hst15_rate': self.even_hst15_rate,
+            'even_gst_bc_rate': self.even_gst_bc_rate,
+            'even_gst_mb_rate': self.even_gst_mb_rate,
+            'even_gst_sask_rate': self.even_gst_sask_rate,
+            'even_gst_qst_rate': self.even_gst_qst_rate,
+            'pme_mat': self.pme_mat,
+            'gst_mat': self.gst_mat,
+            'flag_cn': self.flag_cn,
+            'odd_ind': self.odd_ind,
+            'pme_general': self.pme_general,
+            'prov_tax_ind': self.prov_tax_ind,
+            'eff_rate': self.eff_rate,
+            'rate_ind': self.rate_ind,
+            'new_vend_name': self.new_vend_name,
+            'net_value': self.net_value,
+            'top_inv_amt': self.top_inv_amt,
+            'amount_local_ccy': self.amount_local_ccy,
+            'ap_ar_amt_doc_ccy': self.ap_ar_amt_doc_ccy,
+            'vardocamt': self.vardocamt,
+            'vartranamount': self.vartranamount,
+            'varlocamt': self.varlocamt,
+            'ap_amt': self.ap_amt,
+            'gst_hst': self.gst_hst,
+            'pst': self.pst,
+            'pst_sa': self.pst_sa,
+            'qst': self.qst,
+            'taxes_other': self.taxes_other,
+            'varapkey': self.varapkey,
+            'doc_type_gl': self.doc_type_gl,
+            'inv_date': self.inv_date,
+            'post_date_gl': self.post_date_gl,
+            'fx_rate': self.fx_rate,
+            'fiscal_period_gl': self.fiscal_period_gl,
+            'trnx_code_gl': self.trnx_code_gl,
+            'ccy': self.ccy,
+            'inv_num': self.inv_num,
+            'main_asset_num': self.main_asset_num,
+            'asset_sub_num': self.asset_sub_num,
+            'gl_doc_num': self.gl_doc_num,
+            'post_key_gl': self.post_key_gl,
+            'gl_doc_status': self.gl_doc_status,
+            'co_code_gl': self.co_code_gl,
+            'po_doc_num': self.po_doc_num,
+            'func_area_gl': self.func_area_gl,
+            'fiscal_year_gl': self.fiscal_year_gl,
+            'bus_area_dept_num_gl': self.bus_area_dept_num_gl,
+            'control_area_gl': self.control_area_gl,
+            'cost_ctr_num_gl': self.cost_ctr_num_gl,
+            'cx_num': self.cx_num,
+            'vend_num': self.vend_num,
+            'material_num_gl': self.material_num_gl,
+            'tax_type_gl': self.tax_type_gl,
+            'po_tax_code_gl': self.po_tax_code_gl,
+            'gst_hst_qst_pst_local_ccy': self.gst_hst_qst_pst_local_ccy,
+            'profit_ctr_num': self.profit_ctr_num,
+            'wbs_gl': self.wbs_gl,
+            'item_descr_gl': self.item_descr_gl,
+            'reverse_doc_num': self.reverse_doc_num,
+            'reverse_reason_gl': self.reverse_reason_gl,
+            'tax_jur_gl': self.tax_jur_gl,
+            'sales_doc_num_gl': self.sales_doc_num_gl,
+            'billing_doc_num': self.billing_doc_num,
+            'gst_hst_pst_qst_doc_ccy': self.gst_hst_pst_qst_doc_ccy,
+            'vend_name': self.vend_name,
+            'vend_city': self.vend_city,
+            'vend_region': self.vend_region,
+            'vend_tax_num_1': self.vend_tax_num_1,
+            'vend_tax_num_2': self.vend_tax_num_2,
+            'vend_tax_num_3': self.vend_tax_num_3,
+            'vend_tax_num_4': self.vend_tax_num_4,
+            'vend_tax_num_5': self.vend_tax_num_5,
+            'vend_tax_num_type': self.vend_tax_num_type,
+            'vend_reg_num': self.vend_reg_num,
+            'lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl': self.lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+            'post_key_descr': self.post_key_descr,
+            'co_name': self.co_name,
+            'proj_loc_proj': self.proj_loc_proj,
+            'proj_type_proj': self.proj_type_proj,
+            'wbs_elem_descr_proj': self.wbs_elem_descr_proj,
+            'wbs_elem_id_proj': self.wbs_elem_id_proj,
+            'wbs_cntrl_area_proj': self.wbs_cntrl_area_proj,
+            'wbs_bus_area_proj': self.wbs_bus_area_proj,
+            'jv_obj_type_proj': self.jv_obj_type_proj,
+            'object_num_proj': self.object_num_proj,
+            'proj_descr_proj': self.proj_descr_proj,
+            'proj_defin_proj': self.proj_defin_proj,
+            'proj_internal_proj': self.proj_internal_proj,
+            'proj_tx_jur_proj': self.proj_tx_jur_proj,
+            'proj_mngr_name_proj': self.proj_mngr_name_proj,
+            'proj_mngr_num_proj': self.proj_mngr_num_proj,
+            'bus_area_proj': self.bus_area_proj,
+            'plant_proj': self.plant_proj,
+            'tx_jur_descr_tx': self.tx_jur_descr_tx,
+            'plant_name_plant': self.plant_name_plant,
+            'plant_tx_jur_plant': self.plant_tx_jur_plant,
+            'tx_name_tx': self.tx_name_tx,
+            'largest_debit_half_acct_num_gl': self.largest_debit_half_acct_num_gl,
+            'pymt_doc_num_pmt': self.pymt_doc_num_pmt,
+            'payee_code_pmt': self.payee_code_pmt,
+            'cx_num_pmt': self.cx_num_pmt,
+            'co_code_pmt': self.co_code_pmt,
+            'incoterms1': self.incoterms1,
+            'incoterms2': self.incoterms2,
+            'cntry_name': self.cntry_name,
+            'ean_upc_num_mat': self.ean_upc_num_mat,
+            'mat_orig_ctry_mat': self.mat_orig_ctry_mat,
+            'ean_categ_mat': self.ean_categ_mat,
+            'mat_tx_class_mat': self.mat_tx_class_mat,
+            'mat_tx_class_descr_mat': self.mat_tx_class_descr_mat,
+            'mat_group_descr_mat': self.mat_group_descr_mat,
+            'mat_descr_mat': self.mat_descr_mat,
+            'mat_dept_ctry_mat': self.mat_dept_ctry_mat,
+            'mat_tx_ind_mat': self.mat_tx_ind_mat,
+            'wbs_po': self.wbs_po,
+            'po_tx_code_po': self.po_tx_code_po,
+            'plant_num': self.plant_num,
+            'po_tx_jur': self.po_tx_jur,
+            'po_item_descr': self.po_item_descr,
+            'stor_loc_desc_mat': self.stor_loc_desc_mat,
+            'stor_loc_mat': self.stor_loc_mat,
+            'stor_plant_mat': self.stor_plant_mat,
+            'mat_doc_num_mat': self.mat_doc_num_mat,
+            'mat_plnt_mat': self.mat_plnt_mat,
+            'punch_grp_po': self.punch_grp_po,
+            'punch_org_po': self.punch_org_po,
+            'handover_loc_po': self.handover_loc_po,
+            'vend_phone': self.vend_phone,
+            'vend_person': self.vend_person,
+            'purch_org_descr_po': self.purch_org_descr_po
         }
 
 class SapAps(db.Model):
-    _tablename__ = 'sap_aps'
+    __tablename____ = 'sap_aps'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -417,7 +564,7 @@ class SapAps(db.Model):
         }
 
 class SapBseg(db.Model):
-    _tablename__ = 'sap_bseg'
+    __tablename__ = 'sap_bseg'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -428,7 +575,7 @@ class SapBseg(db.Model):
     sapbseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbseg') # FK
 
 class SapAufk(db.Model):
-    _tablename__ = 'sap_aufk'
+    __tablename__ = 'sap_aufk'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -439,7 +586,7 @@ class SapAufk(db.Model):
     sapaufk_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaufk') # FK
 
 class SapBkpf(db.Model):
-    _tablename__ = 'sap_bkpf'
+    __tablename__ = 'sap_bkpf'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -450,7 +597,7 @@ class SapBkpf(db.Model):
     sapbkpf_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbkpf') # FK
 
 class SapRegup(db.Model):
-    _tablename__ = 'sap_regup'
+    __tablename__ = 'sap_regup'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -461,7 +608,7 @@ class SapRegup(db.Model):
     sapregup_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapregup') # FK
 
 class SapT042zt(db.Model):
-    _tablename__ = 'sap_t042zt'
+    __tablename__ = 'sap_t042zt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -472,7 +619,7 @@ class SapT042zt(db.Model):
     sapt042zt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt042zt') # FK
 
 class SapJ_1atodct(db.Model):
-    _tablename__ = 'sap_j_1atodct'
+    __tablename__ = 'sap_j_1atodct'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -483,7 +630,7 @@ class SapJ_1atodct(db.Model):
     sapj_1atodct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapj_1atodct') # FK
 
 class SapCepc(db.Model):
-    _tablename__ = 'sap_cepc'
+    __tablename__ = 'sap_cepc'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -494,7 +641,7 @@ class SapCepc(db.Model):
     sapcepc_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepc') # FK
 
 class SapCepct(db.Model):
-    _tablename__ = 'sap_cepct'
+    __tablename__ = 'sap_cepct'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -505,7 +652,7 @@ class SapCepct(db.Model):
     sapcepct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepct') # FK
 
 class SapCskt(db.Model):
-    _tablename__ = 'sap_cskt'
+    __tablename__ = 'sap_cskt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -516,7 +663,7 @@ class SapCskt(db.Model):
     sapcskt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcskt') # FK
 
 class SapEkpo(db.Model):
-    _tablename__ = 'sap_ekpo'
+    __tablename__ = 'sap_ekpo'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -527,7 +674,7 @@ class SapEkpo(db.Model):
     sapekpo_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekpo') # FK
 
 class SapPayr(db.Model):
-    _tablename__ = 'sap_payr'
+    __tablename__ = 'sap_payr'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -538,7 +685,7 @@ class SapPayr(db.Model):
     sappayr_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sappayr') # FK
 
 class SapBsak(db.Model):
-    _tablename__ = 'sap_bsak'
+    __tablename__ = 'sap_bsak'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -549,7 +696,7 @@ class SapBsak(db.Model):
     sapbsak_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbsak') # FK
 
 class SapCsks(db.Model):
-    _tablename__ = 'sap_csks'
+    __tablename__ = 'sap_csks'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -560,7 +707,7 @@ class SapCsks(db.Model):
     sapcsks_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcsks') # FK
 
 class SapEkko(db.Model):
-    _tablename__ = 'sap_ekko'
+    __tablename__ = 'sap_ekko'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -571,7 +718,7 @@ class SapEkko(db.Model):
     sapekko_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekko') # FK
 
 class SapIflot(db.Model):
-    _tablename__ = 'sap_iflot'
+    __tablename__ = 'sap_iflot'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -582,7 +729,7 @@ class SapIflot(db.Model):
     sapiflot_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiflot') # FK
 
 class SapIloa(db.Model):
-    _tablename__ = 'sap_iloa'
+    __tablename__ = 'sap_iloa'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -593,7 +740,7 @@ class SapIloa(db.Model):
     sapiloa_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiloa') # FK
 
 class SapSkat(db.Model):
-    _tablename__ = 'sap_skat'
+    __tablename__ = 'sap_skat'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -604,7 +751,7 @@ class SapSkat(db.Model):
     sapskat_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskat') # FK
 
 class SapLfa1(db.Model):
-    _tablename__ = 'sap_lfa1'
+    __tablename__ = 'sap_lfa1'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -615,7 +762,7 @@ class SapLfa1(db.Model):
     saplfa1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfa1') # FK
 
 class SapMakt(db.Model):
-    _tablename__ = 'sap_makt'
+    __tablename__ = 'sap_makt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -626,7 +773,7 @@ class SapMakt(db.Model):
     sapmakt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmakt') # FK
 
 class SapMara(db.Model):
-    _tablename__ = 'sap_mara'
+    __tablename__ = 'sap_mara'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -637,7 +784,7 @@ class SapMara(db.Model):
     sapmara_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmara') # FK
 
 class SapProj(db.Model):
-    _tablename__ = 'sap_proj'
+    __tablename____ = 'sap_proj'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -648,7 +795,7 @@ class SapProj(db.Model):
     sapproj_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapproj') # FK
 
 class SapPrps(db.Model):
-    _tablename__ = 'sap_prps'
+    __tablename____ = 'sap_prps'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -659,7 +806,7 @@ class SapPrps(db.Model):
     sapprps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapprps') # FK
 
 class SapT001(db.Model):
-    _tablename__ = 'sap_t001'
+    __tablename____ = 'sap_t001'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -670,7 +817,7 @@ class SapT001(db.Model):
     sapt001_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001') # FK
 
 class SapT007s(db.Model):
-    _tablename__ = 'sap_t007s'
+    __tablename____ = 'sap_t007s'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -682,7 +829,7 @@ class SapT007s(db.Model):
 
 
 class SapSka1(db.Model):
-    _tablename__ = 'sap_ska1'
+    __tablename____ = 'sap_ska1'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -694,7 +841,7 @@ class SapSka1(db.Model):
 
 
 class SapSkb1(db.Model):
-    _tablename__ = 'sap_skb1'
+    __tablename____ = 'sap_skb1'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -705,7 +852,7 @@ class SapSkb1(db.Model):
     sapskb1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskb1') # FK
 
 class SapT003t(db.Model):
-    _tablename__ = 'sap_t003t'
+    __tablename____ = 'sap_t003t'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -716,7 +863,7 @@ class SapT003t(db.Model):
     sapt003t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt003t') # FK
 
 class SapTbslt(db.Model):
-    _tablename__ = 'sap_tbslt'
+    __tablename____ = 'sap_tbslt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -727,7 +874,7 @@ class SapTbslt(db.Model):
     saptbslt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptbslt') # FK
 
 class SapTcurt(db.Model):
-    _tablename__ = 'sap_tcurt'
+    __tablename____ = 'sap_tcurt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -738,7 +885,7 @@ class SapTcurt(db.Model):
     saptcurt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptcurt') # FK
 
 class SapTgsbt(db.Model):
-    _tablename__ = 'sap_tbslt'
+    __tablename____ = 'sap_tbslt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -749,7 +896,7 @@ class SapTgsbt(db.Model):
     saptgsbt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptgsbt') # FK
 
 class SapLfas(db.Model):
-    _tablename__ = 'sap_lfas'
+    __tablename____ = 'sap_lfas'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -760,7 +907,7 @@ class SapLfas(db.Model):
     saplfas_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfas') # FK
 
 class SapLfm1(db.Model):
-    _tablename__ = 'sap_lfm1'
+    __tablename____ = 'sap_lfm1'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -771,7 +918,7 @@ class SapLfm1(db.Model):
     saplfm1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfm1') # FK
 
 class SapT024(db.Model):
-    _tablename__ = 'sap_t024'
+    __tablename____ = 'sap_t024'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -782,7 +929,7 @@ class SapT024(db.Model):
     sapt024_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024') # FK
 
 class SapT024e(db.Model):
-    _tablename__ = 'sap_t024e'
+    __tablename____ = 'sap_t024e'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -793,7 +940,7 @@ class SapT024e(db.Model):
     sapt024e_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024e') # FK
 
 class SapToa01(db.Model):
-    _tablename__ = 'sap_toa01'
+    __tablename____ = 'sap_toa01'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -804,7 +951,7 @@ class SapToa01(db.Model):
     saptoa01_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptoa01') # FK
 
 class SapMlan(db.Model):
-    _tablename__ = 'sap_mlan'
+    __tablename____ = 'sap_mlan'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -815,7 +962,7 @@ class SapMlan(db.Model):
     sapmlan_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmlan') # FK
 
 class SapMseg(db.Model):
-    _tablename__ = 'sap_mseg'
+    __tablename____ = 'sap_mseg'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -826,7 +973,7 @@ class SapMseg(db.Model):
     sapmseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmseg') # FK
 
 class SapT001l(db.Model):
-    _tablename__ = 'sap_t001l'
+    __tablename____ = 'sap_t001l'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -837,7 +984,7 @@ class SapT001l(db.Model):
     sapt001l_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001l') # FK
 
 class SapT006a(db.Model):
-    _tablename__ = 'sap_t006a'
+    __tablename____ = 'sap_t006a'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -848,7 +995,7 @@ class SapT006a(db.Model):
     sapt006a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt006a') # FK
 
 class SapTmkm1t(db.Model):
-    _tablename__ = 'sap_tmkm1t'
+    __tablename____ = 'sap_tmkm1t'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -859,7 +1006,7 @@ class SapTmkm1t(db.Model):
     saptmkm1t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptmkm1t') # FK
 
 class SapTntpb(db.Model):
-    _tablename__ = 'sap_tntpb'
+    __tablename____ = 'sap_tntpb'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -870,7 +1017,7 @@ class SapTntpb(db.Model):
     saptntpb_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptntpb') # FK
 
 class SapT023t(db.Model):
-    _tablename__ = 'sap_t023t'
+    __tablename____ = 'sap_t023t'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -881,7 +1028,7 @@ class SapT023t(db.Model):
     sapt023t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt023t') # FK
 
 class SapTskmt(db.Model):
-    _tablename__ = 'sap_tskmt'
+    __tablename____ = 'sap_tskmt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -892,7 +1039,7 @@ class SapTskmt(db.Model):
     saptskmt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptskmt') # FK
 
 class SapTvegrt(db.Model):
-    _tablename__ = 'sap_tvegrt'
+    __tablename____ = 'sap_tvegrt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -903,7 +1050,7 @@ class SapTvegrt(db.Model):
     saptvegrt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvegrt') # FK
 
 class SapTvtyt(db.Model):
-    _tablename__ = 'sap_tvtyt'
+    __tablename____ = 'sap_tvtyt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -914,7 +1061,7 @@ class SapTvtyt(db.Model):
     saptvtyt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvtyt') # FK
 
 class SapT005s(db.Model):
-    _tablename__ = 'sap_t005s'
+    __tablename____ = 'sap_t005s'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -925,7 +1072,7 @@ class SapT005s(db.Model):
     sapt005s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005s') # FK
 
 class SapT007a(db.Model):
-    _tablename__ = 'sap_t007a'
+    __tablename____ = 'sap_t007a'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -936,7 +1083,7 @@ class SapT007a(db.Model):
     sapt007a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007a') # FK
 
 class SapTtxjt(db.Model):
-    _tablename__ = 'sap_ttxjt'
+    __tablename____ = 'sap_ttxjt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -947,7 +1094,7 @@ class SapTtxjt(db.Model):
     sapttxjt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapttxjt') # FK
 
 class SapT001w(db.Model):
-    _tablename__ = 'sap_t001w'
+    __tablename____ = 'sap_t001w'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -958,7 +1105,7 @@ class SapT001w(db.Model):
     sapt001w_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001w') # FK
 
 class SapT005t(db.Model):
-    _tablename__ = 'sap_t005t'
+    __tablename____ = 'sap_t005t'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
@@ -969,7 +1116,7 @@ class SapT005t(db.Model):
     sapt005t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005t') # FK
 
 class SapTinct(db.Model):
-    _tablename__ = 'sap_tinct'
+    __tablename____ = 'sap_tinct'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
