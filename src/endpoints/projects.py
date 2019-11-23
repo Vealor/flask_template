@@ -2,8 +2,10 @@
 Project Endpoints
 '''
 import json
+import multiprocessing as mp
 import pandas as pd
 import random
+import re
 import src.prediction.model_client as cm
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
@@ -11,6 +13,7 @@ from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jw
 from functools import reduce
 from src.errors import *
 from src.models import *
+from src.offload.apply_paredown import *
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -50,7 +53,7 @@ def get_projects(id):
     if id is not None:
         query = query.filter_by(id=id)
         if not query.first():
-            raise NotFoundError('ID {} does not exist.'.format(id))
+            raise NotFoundError('ProjectID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('name')
     # Query on is_approved (is_approved, 1 or 0)
@@ -63,6 +66,57 @@ def get_projects(id):
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
     response['payload'] = [i.serialize for i in query.all()]
+
+    return jsonify(response)
+
+#===============================================================================
+# GET ALL Predictive Calculations
+@projects.route('/<int:id>/predictive_calculations', methods=['GET'])
+# @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def get_predictive_calculations(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+
+    query = Project.query.filter_by(id=id)
+    if not query.first():
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
+    if 'vendor_num' not in args.keys():
+        raise InputError('Please specify a vendor_num as an argument for the query.')
+
+    green_pst_but_no_qst = None
+    yellow_pst_but_no_qst = None
+
+    average_number = engine.execute("""select AVG(cast(data ->> 'eff_rate' as float))
+                from transactions as R
+                where cast(data ->> 'vend_num' as text) = '{vend_num}'
+                and project_id = {project_id}
+                and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
+                """.format(project_id = project_id, vend_num = vend_num))
+
+    print(average_number)
+
+    engine.execute("""
+    select id, (cast(data ->> 'ap_amt' as float) * {average_number}) - cast(data ->> 'gst_hst' as float) from transactions
+    where data ->> 'ap_amt' is not null and id = {transaction_id};
+    """.format(transaction_id = transaction_id, average_number = average_number))
+
+
+
+    transaction_set = Transaction.query.filter_by(project_id=id)
+    transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
+
+    for txn in transaction_set:
+        # do calculations
+        pass
+
+
+
+    response['payload'] = {
+        'green_pst_but_no_qst': green_pst_but_no_qst,
+        'yellow_pst_but_no_qst': yellow_pst_but_no_qst,
+    }
 
     return jsonify(response)
 
@@ -106,7 +160,7 @@ def post_project():
     # CHECK CONSTRAINTS: name
     check = Project.query.filter_by(name=data['name']).first()
     if check:
-        raise InputError('Project {} already exist.'.format(data['name']))
+        raise InputError('Project {} already exists.'.format(data['name']))
 
     # client_id validation
     client = Client.find_by_id(data['client_id'])
@@ -180,13 +234,14 @@ def post_project():
     db.session.flush()
 
     # project_users validation
-    for user_id in data['project_users']:
+    user_set = list(set(data['project_users'] + [data['lead_manager_id']] + [data['lead_partner_id']]))
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         if not user:
             raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
-    for user_id in data['project_users']:
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         new_user_project = UserProject(
             user_project_user = user,
@@ -227,78 +282,98 @@ def apply_paredown_rules(id):
     query = Project.find_by_id(id)
     if not query:
         raise NotFoundError('Project ID {} does not exist.'.format(id))
-
-    # CHECK IF PROJECT PAREDOWN LOCKED
-
-    applied = 0
-    failed = 0
+    if query.is_paredown_locked:
+        raise InputError('Paredown is Locked for Project with ID {}'.format(id))
 
     # get list of rules
     lobsecs = [i.lob_sector.name for i in query.project_client.client_client_entities]
-    # rules = []
-    # for i in ParedownRule.query.all():
-    #     if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
-    #         rules.append(i.serialize)
-    #     elif i.lob_sectors:
-    #         has_sec = False
-    #         for l in i.lob_sectors:
-    #             if l['code'] in lobsecs:
-    #                 rules.append(i.serialize)
-    #         if has_sec:
-    #             rules.append(i.serialize)
+    rules = []
+    for i in ParedownRule.query.filter_by(is_active=True).all():
+        if i.is_core and i.paredown_rule_approver1_id and i.paredown_rule_approver2_id:
+            rules.append(i.serialize)
+        elif i.lob_sectors:
+            has_sec = False
+            for l in i.lob_sectors:
+                if l['code'] in lobsecs:
+                    rules.append(i.serialize)
+            if has_sec:
+                rules.append(i.serialize)
 
-    # for txn in Transaction.query.filter_by(project_id=id).all():
-    #     print(txn.id)
-    #     if not txn.locked_user_id and not txn.approved_user_id:
-    #         for rule in rules:
-    #             do_paredown = 0
-    #             for condition in rule['conditions']:
-    #                 print(condition)
-    #                 if condition['field'] in txn.data:
-    #                     if operator == 'contains':
-    #                         print("\tCONTAINS")
-    #                         if condition.value in txn.data[condition.field]:
-    #                             do_paredown +=1
-    #                     elif operator in ['>','<','==','>=','<=','!=']:
-    #                         print("\tLOGICAL OPERATOR")
-    #                         #check for compare
-    #                         if True:
-    #                             do_paredown +=1
-    #                         pass
-    #                     else:
-    #                         failed +=1
-    #                         raise Exception("Database issue for ParedownRuleCondition operator.")
-    #                 else:
-    #                     failed +=1
-    #                     print("field not in data")
-    #             if do_paredown == len(rule['conditions']):
-    #                 applied +=1
-    #                 print("APPLY PAREDOWN TO TXN")
-                    # for each tax type, create a new many to many link to the code it needs
+    # apply rules to transactions
+    # all transactions that aren't approved yet or locked
+    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).order_by("id").limit(50).all()
+    # N = mp.cpu_count()
+    # with mp.Pool(processes = N) as p:
+    #     p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
 
+    for txn in txn_list:
+        print(txn.id)
+        for rule in rules:
+            # variable for checking conditions
+            do_paredown = 0
+            for condition in rule['conditions']:
+                # print(condition)
+                # ensure the field for the condition is in the data keys
+                if condition['field'] in txn.data:
 
-    ### PSEUDO CODE:
+                    if condition['operator'] == 'contains':
+                        # print("\tCONTAINS")
+                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
+                            do_paredown +=1
 
-    # get list of rules associated with core and with project's LoBSec
-    #   do filter on project.project_client.client_client_entities.lob_sector
-    #   with paredownrule.paredown_rule_lob_sectors
+                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
+                        # print("\tLOGICAL OPERATOR")
+                        proceed_operator = True
 
-    # for each rule associated with project
-    #   for each condition in rule
-    #     for each transaction for filter project - apply paredown rule
-    #       if operator contains then find value in
-    #       else if operator in ['>','<','==','>=','<=','!=']
-    #       else raise Error generic for 500 as DB problem
+                        try:
+                            value = float(condition['value'])
+                            field = float(txn.data[condition['field']])
+                        except ValueError as e:
+                            # failed +=1
+                            proceed_operator = False
 
-    # db.session.commit()
+                        if proceed_operator:
+                            if condition['operator'] == '>' and field > value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<' and field < value:
+                                do_paredown +=1
+                            elif condition['operator'] == '==' and field == value:
+                                do_paredown +=1
+                            elif condition['operator'] == '>=' and field >= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '<=' and field <= value:
+                                do_paredown +=1
+                            elif condition['operator'] == '!=' and field != value:
+                                do_paredown +=1
+                        else:
+                            print("Condition value or Transaction data field not fit for operator comparison.")
+                    else:
+                        raise Exception("Database issue for ParedownRuleCondition operator {}".format(condition['operator']))
+
+            # if all conditions succeeded
+            if do_paredown == len(rule['conditions']):
+                # print("APPLY PAREDOWN TO TXN")
+                if not txn.gst_signed_off_by_id:
+                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
+                if not txn.hst_signed_off_by_id:
+                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                if not txn.qst_signed_off_by_id:
+                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                if not txn.pst_signed_off_by_id:
+                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                if not txn.apo_signed_off_by_id:
+                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+
+    db.session.commit()
+
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
-    response['payload'] = [{'applied': applied,'failed':failed}]
+    response['payload'] = []
 
     return jsonify(response), 200
 
 #===============================================================================
 # APPLY PREDICTION MODEL TO A PROJECT
-@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
+#@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -353,6 +428,74 @@ def apply_prediction(id):
     for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
 
+    db.session.commit()
+    response['message'] = 'Prediction successful. Transactions have been marked.'
+    return jsonify(response), 201
+#===============================================================================
+# APPLY PREDICTION MODEL TO A PROJECT
+import numpy as np
+@projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
+# @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def apply_dummy_prediction(id):
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    data = request.get_json()
+
+    request_types = {
+        'use_client_model': ['bool'],
+    }
+    validate_request_data(data, request_types)
+
+    # Get the data to predict
+    project = Project.find_by_id(id)
+    if not project:
+        raise NotFoundError('Project with ID {} does not exist.'.format(id))
+
+    #####################################
+    #FOR DEMO
+    trans_ids = list(range(1,45)) + [46] + [49,50]
+    probability_recoverable = [x/100 for x in [10,80,80,80,90,80,75,10,80,80,80,80,65,85,80,60,80,80,80,80,60,80,15,75,10,75,75,75,75,75,75,75,75,60,85,80,80,10,75,70,55,10,10,55,10,5,5]]
+    ######################################
+
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.id.in_(trans_ids))
+    if project_transactions.count() == 0:
+        raise ValueError('Project has no transactions to predict.')
+
+    # Get the appropriate active model, create the model object and alter transcation flags
+    if data['use_client_model']:
+        active_model = ClientModel.find_active_for_client(project.client_id)
+        if not active_model:
+            raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
+        lh_model = cm.ClientPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.master_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.client_model_id :active_model.id},synchronize_session="fetch")
+    else:
+        active_model = MasterModel.find_active()
+        if not active_model:
+            raise ValueError('No master model has been trained or is active.')
+        lh_model = mm.MasterPredictionModel(active_model.pickle)
+        project_transactions.update({Transaction.client_model_id : None},synchronize_session="fetch")
+        project_transactions.update({Transaction.master_model_id :active_model.id},synchronize_session="fetch")
+
+    predictors = active_model.hyper_p['predictors']
+
+
+    ## TODO: fix separation of data so that prediction happens on transactions with IDs
+    ## Can't assume that final zip lines up arrays properly
+    #df_predict = transactions_to_dataframe(project_transactions)
+    #df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
+
+    ## Get probability of each transaction being class '1'
+    #probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
+
+
+    project_transactions.update({Transaction.is_predicted : True}, synchronize_session="fetch")
+    for tr,pr in zip(project_transactions, probability_recoverable):
+        tr.recovery_probability = pr
+        #tr.is_recoverable = True
+
+    print("HERE!")
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
     return jsonify(response), 201
@@ -474,20 +617,20 @@ def update_project(id):
     query.has_es_daf = data['engagement_scope']['data']['has_es_daf']
 
     # project_users update
-    for user_id in data['project_users']:
+    user_set = list(set(data['project_users'] + [data['lead_manager_id']] + [data['lead_partner_id']]))
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         if not user:
             raise InputError('Added project user with id {} does not exist'.format(user_id))
 
     # Add user_projects from project_users
     user_projects = UserProject.query.filter_by(project_id=id).all()
-    user_list = list(set(data['project_users']))
     for user_project in user_projects:
-        if user_project.user_id in user_list:
-            user_list.remove(user_project.user_id)
+        if user_project.user_id in user_set:
+            user_set.remove(user_project.user_id)
         else:
             db.session.delete(user_project)
-    for user_id in user_list:
+    for user_id in user_set:
         user = User.find_by_id(user_id)
         new_user_project = UserProject(
             user_project_user = user,

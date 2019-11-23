@@ -1451,7 +1451,7 @@ CASE WHEN
 
 def j65():
     j65 = """
-    DROP TABLE IF EXISTS caps_with_attributes;
+        DROP TABLE IF EXISTS caps_with_attributes;
 	select rtrim(concat(noitc_var,
                 itc_var,
                 noitr_var,
@@ -1479,8 +1479,8 @@ def j65():
     --case when TOTAL_QST <> 0.00 then 'TotalITR<>0.00' else null end totalitrnot0,
     --case when GST_PCT >= 60 then 'GST_PCT>=60' else null end gst_pctgr60,
     --case when GST_PCT >= 20 and GST_PCT < 60 then '60<GST_PCT>=20' else null end gst_pctgr20less60,
-    --case when varCurrency = 'CAD' then 'CCY' else null end CCY,
-    --case when varCurrency <> 'CAD' then 'FCY' else null end FCY,
+    case when ccy = 'CAD' then 'CCY' else null end CCY,
+    case when ccy <> 'CAD' then 'FCY' else null end FCY,
     case when even_gst_ind = 'Y' and GST_HST = 0.00 and GST_HST <> 0.00 then 'Even, ' else null end Even_var,
     case when eff_rate >= 4.544987838 and eff_rate <= 4.547987838 then 'QC, ' else null end QC_var,
     case when eff_rate >= 4.7604048 and eff_rate <= 4.7634048
@@ -1540,8 +1540,8 @@ def j65():
     else null
     end P8_var,
     case when PST_SA <> 0 then 'PST_SA, ' else null end PST_SA_var,
-    --case when vend_cntry = 'Canada' then 'CdnVend' else null end CdnVend,
-    --case when vend_cntry <> 'Canada' then 'ForeignVend' else null end ForeignVend,
+    case when vend_cntry = 'Canada' then 'CdnVend' else null end CdnVend,
+    case when vend_cntry <> 'Canada' then 'ForeignVend' else null end ForeignVend,
     case when eff_rate = '0.000000' then 'AP=GST, ' else null end APGST_var,
     case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and Rate_Ind = 'D' then 'ODD_5/113, ' else null end ODD5113_var,
     case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and Rate_Ind = 'D' then 'ODD_5/114, ' else null end ODD5114_var,
@@ -1549,7 +1549,8 @@ def j65():
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM,
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
     case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
-    --EPD, Broker, GST, QST, NoGST, NoQST remaining
+	case when cast(pymt_dt_pmt as date)
+     --EPD, Broker, GST, QST, NoGST, NoQST remaining
                     varapkey
     from
     caps_no_attributes) transaction_attributes

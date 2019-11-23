@@ -73,12 +73,14 @@ class Project(db.Model):
     has_es_trt = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_es_daf = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
+    pst_but_no_qst = db.Column(db.Float, nullable=True)
+
     @property
     def serialize(self):
         return {
             'id': self.id,
             'name': self.name,
-            'newest_caps_gen_id': sorted([i.serialize for i in self.project_caps_gen.all()], key=lambda i: i['id'], reverse=True)[0]['id'] if self.project_caps_gen else None,
+            'newest_caps_gen_id': (sorted([i.serialize for i in self.project_caps_gen.all()], key=lambda i: i['id'], reverse=True)[0]['id']) if self.project_caps_gen.all() else None,
             'client_id': self.client_id,
             'project_client': self.project_client.serialize,
             'is_paredown_locked': self.is_paredown_locked,
@@ -142,6 +144,9 @@ class Project(db.Model):
                     'has_es_fxrates': self.has_es_fxrates,
                     'has_es_trt': self.has_es_trt,
                     'has_es_daf': self.has_es_daf
+                },
+                'caps_multicolor_calculations' : {
+                    'pst_but_no_qst' : self.pst_but_no_qst
                 }
             }
         }

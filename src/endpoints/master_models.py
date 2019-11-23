@@ -122,6 +122,11 @@ def do_train():
     if transaction_count < 5000:
         raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 5,000 approved transactions.'.format(transaction_count))
 
+    active_model = MasterModel.find_active()
+    if active_model:
+        if not (active_model.train_data_end.date() < test_start or test_end < active_model.train_data_end.date()):
+            raise InputError('Cannot validate currently active model on data it was trained on. Choose a different test data range.')
+
     #Try to create model. If model creation fails, delete placeholder and raise Exception
     try:
         # create placeholder model
@@ -167,7 +172,6 @@ def do_train():
         new_model = MasterModelPerformance(**model_performance_dict)
         db.session.add(new_model)
         # If there is no active model, set the current one to be the active one.
-        active_model = MasterModel.find_active()
         if active_model:
             lh_model_old = mm.MasterPredictionModel(active_model.pickle)
             predictors_old, target_old = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -184,8 +188,7 @@ def do_train():
 
             new_model = MasterModelPerformance(**model_performance_dict_old)
             db.session.add(new_model)
-        else:
-            MasterModel.set_active(model_id)
+
     # If exception occurs delete placholder model and raise.
     except Exception as e:
         db.session.delete(MasterModel.find_by_id(model_id))

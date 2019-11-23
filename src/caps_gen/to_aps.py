@@ -201,8 +201,15 @@ def j10(caps_gen_id):
 def j10point5(caps_gen_id):
     j10point5 = """
     DELETE FROM sap_aps WHERE caps_gen_id = {caps_gen_id};
-    INSERT INTO sap_aps (caps_gen_id, main_asset_num,
+    INSERT INTO sap_aps (
+    caps_gen_id,
+    bseg_pswbt_key,
+    bseg_dmbe2_key,
+    bseg_umskz_key,
+    bseg_shkzg_key,
+    bkpf_ktopl_key,
     varapkey,
+    main_asset_num,
     asset_sub_num,
     gl_doc_num,
     post_key_gl,
@@ -266,6 +273,11 @@ def j10point5(caps_gen_id):
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl)
     select
     {caps_gen_id} caps_gen_id,
+    L.bseg_pswbt_key,
+    L.bseg_dmbe2_key,
+    L.bseg_umskz_key,
+    L.bseg_shkzg_key,
+    L.bkpf_ktopl_key,
     L.varapkey,
     L.main_asset_num,
     L.asset_sub_num,
