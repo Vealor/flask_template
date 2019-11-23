@@ -348,7 +348,7 @@ def apply_paredown_rules(id):
                         else:
                             print("Condition value or Transaction data field not fit for operator comparison.")
                     else:
-                        raise Exception("Database issue for ParedownRuleCondition operator.")
+                        raise Exception("Database issue for ParedownRuleCondition operator {}".format(condition['operator']))
 
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):

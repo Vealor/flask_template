@@ -101,6 +101,9 @@ def create_paredown_rule():
 
     # Create the conditions for the paredown rule
     for cond in data['conditions']:
+        op_types = ['contains','>','<','==','>=','<=','!=']
+        if cond['operator'] not in op_types:
+            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
             field = cond['field'],
             operator = cond['operator'],
@@ -183,6 +186,9 @@ def update_paredown_rule(id):
         db.session.flush()
 
     for cond in data['conditions']:
+        op_types = ['contains','>','<','==','>=','<=','!=']
+        if cond['operator'] not in op_types:
+            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
             field = cond['field'],
             operator = cond['operator'],
