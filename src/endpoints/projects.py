@@ -301,7 +301,7 @@ def apply_paredown_rules(id):
 
     # apply rules to transactions
     # all transactions that aren't approved yet or locked
-    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).order_by("id").limit(50).all()
+    txn_list = Transaction.query.filter_by(project_id=id).filter_by(approved_user_id=None).filter_by(locked_user_id=None).order_by("id").limit(52).all()
     # N = mp.cpu_count()
     # with mp.Pool(processes = N) as p:
     #     p.map(apply_rules_to_txn, [ {'rules': rules, 'txn_id': txn.id} for txn in txn_list])
