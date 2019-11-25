@@ -318,6 +318,7 @@ def apply_paredown_rules(id):
 
                     if condition['operator'] == 'contains':
                         # print("\tCONTAINS")
+                        print('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower())
                         if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
                             do_paredown +=1
 
