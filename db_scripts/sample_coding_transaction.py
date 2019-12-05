@@ -36,14 +36,17 @@ if __name__ == '__main__':
     query = Transaction.query
 
     negative, positive = 201, 101
-    trans_codes = [positive if tr.data['cntry_name'] != 'Canada' or float(tr.data['ap_amt']) > -15000 else negative for tr in query]
+    trans_codes = [positive if float(tr.data['gst_mat']) > 1000 else negative for tr in query]
     l = len(trans_codes)
     approv_user = [1 if r < 0.8 else None for r in np.random.random(l)]
 
     # This is very slow, keep a progress bar
     c = 0
-    for (tr,co,au,ii) in zip(query.all(),trans_codes, approv_user,range(l)):
+    for (tr,co,au,ii) in zip(query.all(), trans_codes, approv_user, range(l)):
         tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
+        tr.update_gst_codes([co])
+        tr.gst_signed_off_by_id = 2
+        tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
 
     proj = Project.find_by_id(1)
