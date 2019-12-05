@@ -777,6 +777,7 @@ def data_to_aps(id):
     execute(j9(id))
     execute(j10(id))
     execute(j10point5(id))
+    execute(j11())
 
     # create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
 
@@ -827,7 +828,8 @@ def aps_quality_check(id):
     project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
-
+    query_glnetcheck = SapGLNetCheck.query.filter_by(caps_gen_id=id)
+    response['payload'] = [i.serialize for i in query_glnetcheck.first()]
     # create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
@@ -852,7 +854,6 @@ def aps_to_caps(id):
         result = db.session.execute(query)
         db.session.commit()
         return
-    execute(j11())
     execute(j12())
     execute(j13())
     execute(j14())

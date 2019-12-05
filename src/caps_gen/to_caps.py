@@ -1,23 +1,4 @@
 
-
-def j11():
-    j11 = """
-        drop table if exists aps_quality_check;
-    select
-    L.*,
-    R.vardocamt,
-    R.varlocamt
-    into aps_quality_check
-    from
-    sap_aps as L
-    left join
-    (select id,
-     -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
-     -(cast(amount_local_ccy as FLOAT)) as varlocamt
-     from sap_aps where bseg_shkzg_key = 'H') as R on L.id = R.id
-    """
-    return j11
-
 # Generates raw account sum, groups largest_debit_half_acct_num_gl and varapkey, sums on dmbtr,
 # wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for
 # everything else. order by vartranamount

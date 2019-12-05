@@ -30,7 +30,10 @@ PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSAK','ZTERM',4,'pymt_terms_gl');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSAK','ZUONR',4,'assign_num_gl');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','ANLN1',4,'main_asset_num');
-  INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','ANLN2',4,'asset_sub_num');
+  INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','SHKZG',4,'bseg_shkzg_key');
+  INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','UMSKZ',4,'bseg_umskz_key');
+  INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','DMBE2',4,'bseg_dmbe2_key');
+  INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','PSWBT',4,'bseg_pswbt_key');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','BELNR',4,'gl_doc_num');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','BSCHL',4,'post_key_gl');
   INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BSEG','BSTAT',4,'gl_doc_status');

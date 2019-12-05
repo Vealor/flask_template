@@ -22,7 +22,8 @@ class CapsGen(db.Model):
     caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapcaps = db.relationship('SapCaps', back_populates='sapcaps_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapaps = db.relationship('SapAps', back_populates='sapaps_caps_gen', lazy='dynamic', passive_deletes=True)
-
+    caps_gen_sap_glnetcheck = db.relationship('SapGLNetCheck', back_populates='sap_glnetcheck_caps_gen', lazy='dynamic', passive_deletes=True)
+    caps_gen_sap_taxglextract = db.relationship('SapTaxGLExtract', back_populates='sap_taxglextract_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapaufk = db.relationship('SapAufk', back_populates='sapaufk_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapbkpf = db.relationship('SapBkpf', back_populates='sapbkpf_caps_gen', lazy='dynamic', passive_deletes=True)
     caps_gen_sapbsak = db.relationship('SapBsak', back_populates='sapbsak_caps_gen', lazy='dynamic', passive_deletes=True)
@@ -561,6 +562,46 @@ class SapAps(db.Model):
             'vend_tax_num_5': self.vend_tax_num_5,
             'vend_tax_num_type': self.vend_tax_num_type,
             'vend_reg_num': self.vend_reg_num
+        }
+
+
+class SapTaxGLExtract(db.Model):
+    __tablename__ = 'sap_taxglextract'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    varlocamt = db.Column(db.Float, nullable=False)
+    vardocamt = db.Column(db.Float, nullable=False)
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sap_taxglextract_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_taxglextract') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'varlocamt': self.varlocamt,
+            'vardocamt': self.vardocamt
+        }
+
+
+class SapGLNetCheck(db.Model):
+    __tablename__ = 'sap_glnetcheck'
+    __table_args__ = (
+        db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
+    )
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    varlocamt = db.Column(db.Float, nullable=False)
+    vardocamt = db.Column(db.Float, nullable=False)
+
+    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
+    sap_glnetcheck_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_glnetcheck') # FK
+
+    @property
+    def serialize(self):
+        return {
+            'varlocamt': self.varlocamt,
+            'vardocamt': self.vardocamt
         }
 
 class SapBseg(db.Model):

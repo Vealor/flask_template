@@ -158,6 +158,89 @@ def j7(caps_gen_id):
     """.format(caps_gen_id = caps_gen_id)
     return j7
 
+def j8():
+    j8 = """
+    drop table if exists J2_BSEG_BKPF_LFA1_docloc;
+    select
+    L.*,
+    R.vardocamt,
+    R.varlocamt
+    into J2_BSEG_BKPF_LFA1_docloc
+    from
+    J2_BSEG_BKPF_LFA1 as L
+    left join
+    (select id,
+    -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
+    -(cast(amount_local_ccy as FLOAT)) as varlocamt
+    from J2_BSEG_BKPF_LFA1 where bseg_shkzg_key = 'H') as R on L.id = R.id
+    """.format(caps_gen_id = caps_gen_id)
+
+
+
+    def tax_gl_extract():
+        tax_gl_extract = """
+        DELETE FROM sap_taxglextract WHERE caps_gen_id = {caps_gen_id};
+        INSERT INTO sap_taxglextract (
+        co_code_gl,
+        gl_doc_num,
+        fiscal_year_gl,
+        bseg_buzei_key,
+        fiscal_period_gl,
+        doc_type_gl,
+        trnx_code_gl,
+        post_key_gl,
+        bseg_shkzg_key,
+        bus_area_dept_num_gl,
+        po_tax_code_gl,
+        item_descr_gl,
+        cost_ctr_num_gl,
+        largest_debit_half_acct_num_gl,
+        vend_num,
+        vend_name,
+        inv_num,
+        inv_date,
+        po_doc_num,
+        bseg_ebelp_key,
+        profit_ctr_num,
+        tax_jur_gl,
+        wbs_gl,
+        varapkey,
+        varlocamt,
+        vardocamt,
+        caps_gen_id
+        )
+        select
+        co_code_gl,
+        gl_doc_num,
+        fiscal_year_gl,
+        bseg_buzei_key,
+        fiscal_period_gl,
+        doc_type_gl,
+        trnx_code_gl,
+        post_key_gl,
+        bseg_shkzg_key,
+        bus_area_dept_num_gl,
+        po_tax_code_gl,
+        item_descr_gl,
+        cost_ctr_num_gl,
+        largest_debit_half_acct_num_gl,
+        vend_num,
+        vend_name,
+        inv_num,
+        inv_date,
+        po_doc_num,
+        bseg_ebelp_key,
+        profit_ctr_num,
+        tax_jur_gl,
+        wbs_gl,
+        varapkey,
+        sum(varlocamt) as varlocamt,
+        sum(vardocamt) as vardocamt,
+        {caps_gen_id} caps_gen_id
+        from
+        J2_BSEG_BKPF_LFA1_docloc
+        """.format(caps_gen_id = caps_gen_id)
+
 def j8(caps_gen_id):
     j8 = """
     DROP TABLE IF EXISTS distinctVarAPKey;
@@ -176,7 +259,7 @@ def j9(caps_gen_id):
 
     SELECT L.*
     INTO J3_BSEG_BKPF_LFA1_OnlyAP
-    FROM J2_BSEG_BKPF_LFA1 AS L
+    FROM J2_BSEG_BKPF_LFA1_docloc AS L
     INNER JOIN distinctVarAPKey AS R
     ON L.varAPKey = R.varAPKey
     """
@@ -348,3 +431,36 @@ def j10point5(caps_gen_id):
     L.T001_KTOPL_KEY = R.data ->> 'skat_ktopl_key'
     """.format(caps_gen_id = caps_gen_id)
     return j10point5
+
+    def j11():
+        j11 = """
+            drop table if exists aps_quality_check;
+        select
+        L.*,
+        R.vardocamt,
+        R.varlocamt
+        into aps_quality_check
+        from
+        sap_aps as L
+        left join
+        (select id,
+         -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
+         -(cast(amount_local_ccy as FLOAT)) as varlocamt
+         from sap_aps where bseg_shkzg_key = 'H') as R on L.id = R.id
+        """
+        return j11
+
+    def j12():
+        j12 = """
+        DELETE FROM sap_glnetcheck WHERE caps_gen_id = {caps_gen_id};
+        INSERT INTO sap_glnetcheck (
+        varlocamt,
+        vardocamt,
+        caps_gen_id)
+        select
+        sum(varlocamt) as varlocamt,
+        sum(vardocamt) as vardocamt,
+        {caps_gen_id} caps_gen_id
+        from
+        aps_quality_check
+        """.format(caps_gen_id = caps_gen_id)

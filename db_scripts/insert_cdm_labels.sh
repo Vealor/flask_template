@@ -1,6 +1,9 @@
 #!/bin/bash
 
-PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
+PGPASSWORD=LHDEV1234 psql -h localhost -U itra itra_db -c "
+INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('bseg_umskz_key',NULL,'FALSE','TRUE','dt_varchar',10,NULL,'accounting');
+INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('bseg_dmbe2_key',NULL,'FALSE','TRUE','dt_varchar',10,NULL,'accounting');
+INSERT INTO cdm_labels(script_label,display_name,is_calculated,is_unique,datatype,length,caps_interface,category) VALUES ('bseg_pswbt_key',NULL,'FALSE','TRUE','dt_varchar',10,NULL,'accounting');
 INSERT INTO cdm_labels(script_label,display_name,is_active,is_calculated,is_unique,datatype,length,precision,caps_interface,category) VALUES ('ap_amt','AP Amount','TRUE','TRUE','FALSE','dt_varchar',99,99,'caps_basic','other');
 INSERT INTO cdm_labels(script_label,display_name,is_active,is_calculated,is_unique,datatype,length,precision,caps_interface,category) VALUES ('cn_flag_ind',NULL,'TRUE','TRUE','FALSE','dt_varchar',99,99,NULL,'other');
 INSERT INTO cdm_labels(script_label,display_name,is_active,is_calculated,is_unique,datatype,length,precision,caps_interface,category) VALUES ('cn_rep2_ind',NULL,'TRUE','TRUE','FALSE','dt_varchar',99,99,NULL,'other');

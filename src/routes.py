@@ -32,6 +32,10 @@ api.register_blueprint(client_models, url_prefix='/client_models')
 from src.endpoints.client_vendor_master import client_vendor_master
 api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
+# Client Tax GL Extract Endpoint
+from src.endpoints.client_tax_gl_extract import client_tax_gl_extract
+api.register_blueprint(client_tax_gl_extract, url_prefix='/client_tax_gl_extract')
+
 # Code Endpoint
 from src.endpoints.codes import codes
 api.register_blueprint(codes, url_prefix='/codes')
