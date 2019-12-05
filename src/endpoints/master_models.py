@@ -69,7 +69,7 @@ def is_training():
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -119,8 +119,8 @@ def do_train():
     # validate sufficient transactions for training
     #transaction_count = Transaction.query.filter_by(is_approved=True).count()
     transaction_count = Transaction.query.count()
-    if transaction_count < 5000:
-        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 5,000 approved transactions.'.format(transaction_count))
+    if transaction_count < 1:
+        raise InputError('Not enough data to train a master model. Only {} approved transactions. Requires >= 1 approved transactions.'.format(transaction_count))
 
     active_model = MasterModel.find_active()
     if active_model:
