@@ -221,23 +221,47 @@ def update_user_password(id):
     return jsonify(response), 201
 
 #===============================================================================
-# DELETE A USER
-@users.route('/<int:id>', methods=['DELETE'])
+# ACTIVATE A USER
+@users.route('/<int:id>/activate', methods=['PUT'])
 # @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
-def delete_user(id):
+def activate_user(id):
     response = { 'status': '', 'message': '', 'payload': [] }
 
     query = User.query.filter_by(id=id).first()
     if not query:
         raise NotFoundError('User ID {} does not exist.'.format(id))
 
-    user = query.serialize
-    db.session.delete(query)
+    if query.is_active:
+        response['message'] = 'User id {} is already active'.format(id)
+    else:
+        response['message'] = 'Activated user id {}'.format(id)
+        query.is_active = True
+        db.session.commit()
+    response['payload'] = [query.serialize]
 
-    db.session.commit()
-    response['message'] = 'Deleted user id {}'.format(user['id'])
-    response['payload'] = [user]
+    return jsonify(response), 200
+
+#===============================================================================
+# DEACTIVATE A USER
+@users.route('/<int:id>/deactivate', methods=['PUT'])
+# @jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def deactivate_user(id):
+    response = { 'status': '', 'message': '', 'payload': [] }
+
+    query = User.query.filter_by(id=id).first()
+    if not query:
+        raise NotFoundError('User ID {} does not exist.'.format(id))
+
+    if not query.is_active:
+        response['message'] = 'User id {} is already deactivated'.format(id)
+    else:
+        response['message'] = 'Deactivated user id {}'.format(id)
+        query.is_active = False
+        db.session.commit()
+    response['payload'] = [query.serialize]
 
     return jsonify(response), 200
