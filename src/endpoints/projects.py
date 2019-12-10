@@ -11,6 +11,7 @@ import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
+from sqlalchemy.sql import func
 from src.errors import *
 from src.models import *
 from src.offload.apply_paredown import *
@@ -354,16 +355,32 @@ def apply_paredown_rules(id):
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):
                 # print("APPLY PAREDOWN TO TXN")
+                gst_code_list = [c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []
+                hst_code_list = [c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []
+                qst_code_list = [c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []
+                pst_code_list = [c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []
+                apo_code_list = [c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []
                 if not txn.gst_signed_off_by_id:
-                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
+                    if rule['code']['code_number'] not in gst_code_list:
+                        txn.modified = func.now()
+                    txn.update_gst_codes([rule['code']['code_number']] + gst_code_list)
                 if not txn.hst_signed_off_by_id:
-                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                    if rule['code']['code_number'] not in hst_code_list:
+                        txn.modified = func.now()
+                    txn.update_hst_codes([rule['code']['code_number']] + hst_code_list)
                 if not txn.qst_signed_off_by_id:
-                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                    if rule['code']['code_number'] not in qst_code_list:
+                        txn.modified = func.now()
+                    txn.update_qst_codes([rule['code']['code_number']] + qst_code_list)
                 if not txn.pst_signed_off_by_id:
-                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                    if rule['code']['code_number'] not in pst_code_list:
+                        txn.modified = func.now()
+                    txn.update_pst_codes([rule['code']['code_number']] + pst_code_list)
                 if not txn.apo_signed_off_by_id:
-                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+                    if rule['code']['code_number'] not in apo_code_list:
+                        txn.modified = func.now()
+                    txn.update_apo_codes([rule['code']['code_number']] + apo_code_list)
+                db.session.flush()
 
     db.session.commit()
 
@@ -428,6 +445,7 @@ def apply_prediction(id):
     project_transactions.update({Transaction.is_predicted : True})
     for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
+        tr.modified = func.now()
 
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'

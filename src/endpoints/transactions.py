@@ -171,6 +171,7 @@ def approve_transaction(id):
         response['message'] = 'You have already approved this transaction!'
     else:
         query.approved_user_id = current_user.id
+        query.modified = func.now()
         response['message'] = 'Transaction approved.'
 
     db.session.commit()
@@ -216,6 +217,9 @@ def batch_approve_transaction():
             raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
         if query.locked_user_id == current_user.id:
             raise InputError('Transaction ID {} is currently locked by you! Please unlock before approval.'.format(id))
+
+        query.approved_user_id = current_user.id
+        query.modified = func.now()
         db.session.flush()
 
     response['message'] = 'Transactions approved.'
@@ -248,6 +252,7 @@ def unapprove_transaction(id):
         response['message'] = 'This transaction is already unapproved!'
     else:
         query.approved_user_id = None
+        query.modified = func.now()
         response['message'] = 'Transaction unapproved.'
 
     db.session.commit()
@@ -278,6 +283,7 @@ def batch_unapprove_transaction():
 
         # TODO: check if use can even unapprove the given transaction
         query.approved_user_id = None
+        query.modified = func.now()
         db.session.flush()
 
     response['message'] = 'Transaction unapproved.'
@@ -395,6 +401,8 @@ def update_transaction(id):
     query.apo_error_type = data['apo_error_type']
     query.apo_coded_by_id = data['apo_coded_by_id']
     query.apo_signed_off_by_id = data['apo_signed_off_by_id']
+    
+    query.modified = func.now()
 
     # TODO: ADD MODIFIED DATETIME
 
