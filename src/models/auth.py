@@ -3,6 +3,7 @@ from .__model_imports import *
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    is_active = db.Column(db.Boolean, unique=False, default=True, server_default='t', nullable=False)
     username = db.Column(db.String(64), unique=True, index=True, nullable=False)
     password = db.Column(db.String(128), nullable = False)
     email = db.Column(db.String(128), unique=True, nullable=False)
