@@ -76,65 +76,73 @@ def get_projects(id):
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_predictive_calculations(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
-    engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
-
-    query = Project.query.filter_by(id=id)
-    if not query.first():
-        raise NotFoundError('Project ID {} does not exist.'.format(id))
-    client_id = query.first().serialize['client_id']
-    # TODO: get itc claimed
-    itc_claimed = 0
-    jurisdiction = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
-    # ap_amt_sum = engine.execute("""SELECT SUM(CAST(data->>'ap_amt' AS FLOAT)) 
-    #                             FROM transactions 
-    #                             WHERE project_id = {project_id}
-    #                             AND recovery_probability >= 0.9;
-    #                             """.format(project_id=id))
-    if len(jurisdiction) == 1:
-        province = jurisdiction[0]['code'].lower()
-        results = engine.execute("""SELECT SUM(CAST(data->>'ap_amt' AS FLOAT)),
+   
+    # helper function to calculate recovery value and volume for step 1
+    def calculate_tax(province,  prediction_strength_lower=0, prediction_strength_upper=1):
+        engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
+        results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                               COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
                                 COUNT(id)
                                 FROM transactions 
-                                WHERE project_id = {project_id};
-                                """.format(project_id=id)).first()
-        ap_amt_sum, tx_num = results[0], results[1]
+                                WHERE project_id = {project_id}
+                                AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                                """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        ap_amt_sum, itc_claimed, tx_num = results[0], results[1], results[2]
         if province == "ab" or province == "nt" or province == "yt" or province  == "nu":
-            total_value = (-1 * ap_amt_sum) * 5 / 105 - itc_claime
+            total_value = (-1 * ap_amt_sum) * 5 / 105 - itc_claimed
         elif province == "bc" or province == "sk" or province == "mb":
             gst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0), 
                             COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
                             COALESCE(COUNT(id), 0)
                             FROM transactions 
                             WHERE project_id = {project_id}
-                            AND CAST(data->>'pst_sa' AS FLOAT) > 0; 
-                            """.format(project_id=id)).first()
+                            AND CAST(data->>'pst_sa' AS FLOAT) > 0
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
             ap_amt_sum, pst_sa_sum, none_zero_tx_num = gst_results[0], gst_results[1], gst_results[2]
             pst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                             COALESCE(COUNT(id), 0)
                             FROM transactions 
                             WHERE project_id = {project_id}
-                            AND CAST(data->>'pst_sa' AS FLOAT) = 0; 
-                            """.format(project_id=id)).first()
+                            AND CAST(data->>'pst_sa' AS FLOAT) = 0
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
             zero_pst_amt_sum, zero_pst_tx_num = pst_results[0], pst_results[1]
-            print("here")
             total_value = (-1 * ap_amt_sum + -1 * zero_pst_amt_sum) * 5 / 112 - itc_claimed + pst_sa_sum + ( -1 *  zero_pst_amt_sum * 7 / 112)
             tx_num = none_zero_tx_num + zero_pst_tx_num
         elif province == "qc" :
-            # TODO: get qst claimed
-            qst_claimed = 0
+            qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0) 
+                            FROM transactions 
+                            WHERE project_id = {project_id}
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+            qst_claimed =  qst_results[0]
             gst_value = (-1 * ap_amt_sum) * 5 / 114.975 - itc_claimed
             qst_value = (-1 * ap_amt_sum) * 9.975 / 114.975 - qst_claimed
             total_value = gst_value + qst_value
-        elif province == "nb" or province == "ns" or procince.lower() == "on" or prvince.lower() == "pe":
+        elif province == "nb" or province == "ns" or province == "on" or province == "pe" or province == "nl":
             total_value = (-1 * ap_amt_sum) * 13 / 113 - itc_claimed
         else:
             raise ValueError("No matching jurisdiction rule found for:{ }".format(province))
+        return total_value, tx_num
+    
+    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    args = request.args.to_dict()
+    query = Project.query.filter_by(id=id)
+    if not query.first():
+        raise NotFoundError('Project ID {} does not exist.'.format(id))
+    client_id = query.first().serialize['client_id']
+    jurisdiction = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
+    if len(jurisdiction) == 1:
+        province = jurisdiction[0]['code'].lower()
+        green_total_value, green_tx_num = calculate_tax(province, prediction_strength_lower=0.9)
+        yellow_total_value, yellow_tx_num = calculate_tax(province, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
 
     response['payload'] = {
-        "green_value": total_value,
-        "green_volume": tx_num
+        "green_value": green_total_value,
+        "green_volume": green_tx_num,
+        "yellow_value": yellow_total_value,
+        "yellow_volume": yellow_tx_num
     }
     #  engine.execute("""select data ->> 'ap_amout' as float))
     #             from transactions as R
