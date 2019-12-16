@@ -20,7 +20,7 @@ master_models = Blueprint('master_models', __name__)
 # Get all master models
 @master_models.route('/', defaults={'id':None}, methods=['GET'])
 @master_models.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_master_models(id):
@@ -48,7 +48,7 @@ def get_master_models(id):
 #===============================================================================
 # Check if master models has a model in pending status
 @master_models.route('/has_pending/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def has_pending():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -59,7 +59,7 @@ def has_pending():
 #===============================================================================
 # Check if master models has a model in pending status
 @master_models.route('/is_training/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def is_training():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -69,7 +69,7 @@ def is_training():
 #===============================================================================
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
-#@jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -226,7 +226,7 @@ def do_train():
 #===============================================================================
 # Validate the active master model.
 @master_models.route('/validate/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_validate():
@@ -283,7 +283,7 @@ def do_validate():
 #===============================================================================
 # Compare active and pending models
 @master_models.route('/compare/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
@@ -310,7 +310,7 @@ def compare_active_and_pending():
 #===============================================================================
 # Update the active master model
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def set_active_model(model_id):
@@ -329,7 +329,7 @@ def set_active_model(model_id):
 #===============================================================================
 # Delete a master model
 @master_models.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_master_model(id):
