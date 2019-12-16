@@ -42,7 +42,7 @@ def toggle_favourite(id):
 # GET ALL PROJECT
 @projects.route('/', defaults={'id':None}, methods=['GET'])
 @projects.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_projects(id):
@@ -73,7 +73,7 @@ def get_projects(id):
 #===============================================================================
 # GET ALL Predictive Calculations
 @projects.route('/<int:id>/predictive_calculations', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_predictive_calculations(id):
@@ -124,7 +124,7 @@ def get_predictive_calculations(id):
 #===============================================================================
 # POST NEW PROJECT
 @projects.route('/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def post_project():
@@ -273,7 +273,7 @@ def post_project():
 #===============================================================================
 # APPLY PAREDOWN RULES TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
 @projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def apply_paredown_rules(id):
@@ -392,7 +392,7 @@ def apply_paredown_rules(id):
 #===============================================================================
 # APPLY PREDICTION MODEL TO A PROJECT
 @projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
-#@jwt_required
+@jwt_required
 @exception_wrapper()
 #@has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def apply_prediction(id):
@@ -454,7 +454,7 @@ def apply_prediction(id):
 #===============================================================================
 # UPDATE A PROJECT
 @projects.route('/<int:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_project(id):
@@ -598,7 +598,7 @@ def update_project(id):
 #===============================================================================
 # DELETE A PROJECT
 @projects.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_project(id):

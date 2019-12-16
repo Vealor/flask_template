@@ -15,7 +15,7 @@ data_mappings = Blueprint('data_mappings', __name__)
 # GET ALL DATA MAPPINGS
 @data_mappings.route('/', defaults={'id':None}, methods=['GET'])
 @data_mappings.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_data_mappings(id):
@@ -51,7 +51,7 @@ def get_data_mappings(id):
 #===============================================================================
 # UPDATE DATA MAPPING
 @data_mappings.route('/<int:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_data_mapping(id):

@@ -16,7 +16,7 @@ transactions = Blueprint('transactions', __name__)
 # GET ALL TRANSACTION
 @transactions.route('/', defaults={'id':None}, methods=['GET'])
 @transactions.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_transactions(id):
@@ -58,7 +58,7 @@ def get_transactions(id):
 #===============================================================================
 # Check if transaction locked
 @transactions.route('/<int:id>/is_locked', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def check_transaction_lock(id):

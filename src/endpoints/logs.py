@@ -14,7 +14,7 @@ logs = Blueprint('logs', __name__)
 #===============================================================================
 # GET ALL LOGS
 @logs.route('/', methods=['GET'])
-# @jwt_required
+@jwt_required
 # PERMISSION IT ADMIN
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])

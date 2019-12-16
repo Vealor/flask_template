@@ -7,6 +7,7 @@ import datetime
 import json
 import requests
 from flask import Blueprint, current_app, jsonify, request
+from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from sqlalchemy import desc, exc
 from src.errors import *
 from src.models import *
@@ -17,7 +18,7 @@ fx_rates = Blueprint('fx_rates', __name__)
 #===============================================================================
 # GET AND UPDATE FXRATES
 @fx_rates.route('/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_fx_rates():
