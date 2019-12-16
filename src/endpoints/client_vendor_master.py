@@ -12,7 +12,7 @@ client_vendor_master = Blueprint('client_vendor_master', __name__)
 #===============================================================================
 # Get ClientVendorMaster information for project
 @client_vendor_master.route('/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_client_vendor_master():

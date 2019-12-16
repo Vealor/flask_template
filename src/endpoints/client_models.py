@@ -19,7 +19,7 @@ client_models = Blueprint('client_models', __name__)
 # Get all client models
 @client_models.route('/', defaults={'id':None}, methods=['GET'])
 @client_models.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_client_models(id):
@@ -40,7 +40,7 @@ def get_client_models(id):
 #===============================================================================
 # Check if a pending model exists
 @client_models.route('/has_pending/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def has_pending():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -55,7 +55,7 @@ def has_pending():
 #===============================================================================
 # Check if a model is being trained for the client
 @client_models.route('/is_training/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def is_training():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -71,7 +71,7 @@ def is_training():
 #===============================================================================
 # Train a new client model.
 @client_models.route('/train/', methods=['POST'])
-#@jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def do_train():
@@ -236,7 +236,7 @@ def do_train():
 #===============================================================================
 # Validate the active client model based on input ID.
 @client_models.route('/validate/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def do_validate():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -295,7 +295,7 @@ def do_validate():
 #===============================================================================
 # Compare active and pending models
 @client_models.route('/compare/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -325,7 +325,7 @@ def compare_active_and_pending():
 #===============================================================================
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -345,7 +345,7 @@ def set_active_model(model_id):
 #===============================================================================
 # Delete a client model
 @client_models.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_client_model(id):
