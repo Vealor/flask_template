@@ -26,6 +26,12 @@ class Transaction(db.Model):
         # db.ForeignKeyConstraint(['apo_code_id'], ['codes.id']),
         db.ForeignKeyConstraint(['apo_coded_by_id'], ['users.id']),
         db.ForeignKeyConstraint(['apo_signed_off_by_id'], ['users.id']),
+
+        db.CheckConstraint('gst_coded_by_id != gst_signed_off_by_id'),
+        db.CheckConstraint('hst_coded_by_id != hst_signed_off_by_id'),
+        db.CheckConstraint('qst_coded_by_id != qst_signed_off_by_id'),
+        db.CheckConstraint('pst_coded_by_id != pst_signed_off_by_id'),
+        db.CheckConstraint('apo_coded_by_id != apo_signed_off_by_id'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     modified = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -344,14 +350,18 @@ class Transaction(db.Model):
         if self.transaction_project.has_ts_gst and self.gst_signed_off_by_id:
             # output['codes']['gst'] = [c.serialize['code'] for c in self.gst_codes] if self.gst_codes else []
             output['codes']['gst'] = [c.transaction_gst_code_code.code_number for c in self.gst_codes] if self.gst_codes else []
-        # if self.transaction_project.has_ts_hst and self.hst_signed_off_by_id:
-        #     output['codes']['hst'] = [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []
-        # if self.transaction_project.has_ts_qst and self.qst_signed_off_by_id:
-        #     output['codes']['qst'] = [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []
-        # if self.transaction_project.has_ts_pst and self.pst_signed_off_by_id:
-        #     output['codes']['pst'] = [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []
-        # if self.transaction_project.has_ts_apo and self.apo_signed_off_by_id:
-        #     output['codes']['apo'] = [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []
+        if self.transaction_project.has_ts_hst and self.hst_signed_off_by_id:
+            # output['codes']['hst'] = [c.serialize['code'] for c in self.hst_codes] if self.hst_codes else []
+            output['codes']['hst'] = [c.transaction_hst_code_code.code_number for c in self.hst_codes] if self.hst_codes else []
+        if self.transaction_project.has_ts_qst and self.qst_signed_off_by_id:
+            # output['codes']['qst'] = [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []
+            output['codes']['qst'] = [c.transaction_qst_code_code.code_number for c in self.qst_codes] if self.qst_codes else []
+        if self.transaction_project.has_ts_pst and self.pst_signed_off_by_id:
+            # output['codes']['pst'] = [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []
+            output['codes']['pst'] = [c.transaction_pst_code_code.code_number for c in self.pst_codes] if self.pst_codes else []
+        if self.transaction_project.has_ts_apo and self.apo_signed_off_by_id:
+            # output['codes']['apo'] = [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []
+            output['codes']['apo'] = [c.transaction_apo_code_code.code_number for c in self.apo_codes] if self.apo_codes else []
         return output
 
     @classmethod

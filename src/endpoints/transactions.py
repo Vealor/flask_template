@@ -357,6 +357,14 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
+    if (data['gst_coded_by_id'] == data['gst_signed_off_by_id']
+        or data['hst_coded_by_id'] == data['hst_signed_off_by_id']
+        or data['hst_coded_by_id'] == data['hst_signed_off_by_id']
+        or data['hst_coded_by_id'] == data['hst_signed_off_by_id']
+        or data['hst_coded_by_id'] == data['hst_signed_off_by_id']
+    ):
+        raise InputError('You can not code and sign off the same transaction tax type!')
+
     ### GST
     query.update_gst_codes(list(set(data['gst_codes'])))
     query.gst_notes_internal = data['gst_notes_internal']
@@ -401,7 +409,7 @@ def update_transaction(id):
     query.apo_error_type = data['apo_error_type']
     query.apo_coded_by_id = data['apo_coded_by_id']
     query.apo_signed_off_by_id = data['apo_signed_off_by_id']
-    
+
     query.modified = func.now()
 
     # TODO: ADD MODIFIED DATETIME
