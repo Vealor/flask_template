@@ -42,7 +42,7 @@ def get_users(id):
 #===============================================================================
 # POST NEW USER
 @users.route('/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def create_user():
