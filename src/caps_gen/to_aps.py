@@ -29,6 +29,7 @@ def j2(caps_gen_id):
     return j2
 
     #Filtering for fiscal year and working period NEXEN ONLY
+    #cast(data ->> 'fiscal_year_gl' as text) = '2013'
 
 def j3(caps_gen_id):
     j3 = """
@@ -76,10 +77,10 @@ def j6(caps_gen_id):
     DROP TABLE IF EXISTS J1_BSEG_BKPF;
     SELECT
     L.varapkey,
-    LTRIM(RTRIM(L.data ->> 'PSWBT')) as bseg_pswbt_key,
-    LTRIM(RTRIM(L.data ->> 'DMBE2')) AS bseg_dmbe2_key,
-    LTRIM(RTRIM(L.data ->> 'UMSKZ')) as bseg_umskz_key,
-    LTRIM(RTRIM(L.data ->> 'SHKZG')) AS bseg_shkzg_key,
+    LTRIM(RTRIM(L.data ->> 'bseg_pswbt_key')) as bseg_pswbt_key,
+    LTRIM(RTRIM(L.data ->> 'bseg_dmbe2_key')) AS bseg_dmbe2_key,
+    LTRIM(RTRIM(L.data ->> 'bseg_umskz_key')) as bseg_umskz_key,
+    LTRIM(RTRIM(L.data ->> 'bseg_shkzg_key')) AS bseg_shkzg_key,
 	LTRIM(RTRIM(L.data ->> 'main_asset_num')) AS main_asset_num,
 	LTRIM(RTRIM(L.data ->> 'asset_sub_num')) AS asset_sub_num,
 	LTRIM(RTRIM(L.data ->> 'gl_doc_num')) AS gl_doc_num,
