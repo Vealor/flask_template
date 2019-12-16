@@ -15,7 +15,7 @@ data_params = Blueprint('data_params', __name__)
 # GET ALL DATA PARAMS
 @data_params.route('/', defaults={'id':None}, methods=['GET'])
 @data_params.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_data_params(id):
@@ -48,7 +48,7 @@ def get_data_params(id):
 #===============================================================================
 # UPDATE A Data Parameter information
 @data_params.route('/<int:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_data_params(id):

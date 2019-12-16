@@ -35,7 +35,7 @@ caps_gen = Blueprint('caps_gen', __name__)
 # GET ALL CAPS GEN
 @caps_gen.route('/', defaults={'id':None}, methods=['GET'])
 @caps_gen.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_caps_gens(id):
@@ -65,7 +65,7 @@ def get_caps_gens(id):
 #===============================================================================
 # DELETE A CAPS GEN
 @caps_gen.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_caps_gens(id):
@@ -256,7 +256,7 @@ def init_caps_gen():
 # Master Table headers  `table_name::column_name` list
 # get master table data from caps_gen tables
 @caps_gen.route('/<int:id>/master_table_headers', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_master_table_headers(id):
@@ -304,7 +304,7 @@ def get_master_table_headers(id):
 # the top priority is to complete caps; and CDM is not final yet so CDM labels
 # will not be written in.
 @caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def apply_mappings_build_gst_registration(id):
@@ -370,7 +370,7 @@ def apply_mappings_build_gst_registration(id):
 #===============================================================================
 # Get table names for View Tables Page
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_tables(id):
@@ -390,7 +390,7 @@ def get_tables(id):
 #===============================================================================
 # View Tables Page
 @caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def view_tables(id, table):
@@ -421,7 +421,7 @@ def view_tables(id, table):
 # (nulls/total cols), uniqueness (uniqueness of specified key grouping from data
 # dictionary)
 @caps_gen.route('/<int:id>/data_quality_check', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def data_quality_check(id):
@@ -749,7 +749,7 @@ def data_quality_check(id):
 # Data to APS
 # j1 to j10 joins to create APS j1_j10
 @caps_gen.route('/<int:id>/data_to_aps', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def data_to_aps(id):
@@ -785,7 +785,7 @@ def data_to_aps(id):
 #===============================================================================
 # View APS Page
 @caps_gen.route('/<int:id>/view_aps', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def view_aps(id):
@@ -814,7 +814,7 @@ def view_aps(id):
 # This is the check that needs to be done to see whether vardocamt and varlocamt
 # net to 0. This is referring to GL netting to 0. Ask Andy for more details.
 @caps_gen.route('/<int:id>/aps_quality_check', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def aps_quality_check(id):
@@ -836,7 +836,7 @@ def aps_quality_check(id):
 # APS to CAPS
 # see feature branch 72-aps_to_caps for more info
 @caps_gen.route('/<int:id>/aps_to_caps', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def aps_to_caps(id):
@@ -915,7 +915,7 @@ def aps_to_caps(id):
 #===============================================================================
 # View CAPS Page
 @caps_gen.route('/<int:id>/view_caps', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def view_caps(id):
@@ -943,7 +943,7 @@ def view_caps(id):
 # CAPS to Transactions
 # This transforms all approved caps_gen tables to Transactions for the project
 @caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def caps_to_transactions(id):
