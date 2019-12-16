@@ -165,6 +165,7 @@ def init_caps_gen():
         N = mp.cpu_count()
         with mp.Pool(processes = N) as p:
            p.map(build_master_file, [ {'table': table, 'data': data} for table in list_tablenames])
+        print('build_master_files completed')
         with mp.Pool(processes = N) as p:
            p.map(build_master_table, [ {'table': table, 'data': data, 'id': caps_gen.id} for table in list_tablenames])
         # engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))

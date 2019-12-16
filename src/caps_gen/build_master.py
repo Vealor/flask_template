@@ -38,6 +38,7 @@ def build_master_table(args):
     table = args['table']
     data = args['data']
     caps_gen_id = args['id']
+    print('starting insert' + str(table))
     #initialize variables for bulk insertion
     referenceclass = eval('Sap' + str(table.lower().capitalize()))
     list_to_insert = []
@@ -60,6 +61,7 @@ def build_master_table(args):
                 list_to_insert.append({"caps_gen_id": caps_gen_id, 'data': dict(zip(header, line.rstrip('\n').split('#|#')))})
         if counter > 0:
             engine.execute(referenceclass.__table__.insert(), list_to_insert)
+    print('complete insert' + str(table))
 
 def apply_mapping(args):
 
