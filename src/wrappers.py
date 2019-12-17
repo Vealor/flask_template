@@ -28,6 +28,9 @@ def exception_wrapper():
             except NotFoundError as e:
                 db.session.rollback()
                 abort(404, str(e)) if str(e) else abort(404)
+            except(DataConflictError) as e:
+                db.session.rollback()
+                abort(409, str(e)) if str(e) else abort(409)
             except Exception as e:
                 db.session.rollback()
                 abort(500, str(e)) if str(e) else abort(500)

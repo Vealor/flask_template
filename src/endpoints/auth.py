@@ -47,7 +47,7 @@ def reset():
     validate_request_data(data, request_types)
 
     user = User.find_by_username(data['username'])
-    if user and user.email == data['email']:
+    if user and user.email == data['email'] and not user.is_active:
         lettersAndDigits = string.ascii_letters + string.digits
         newpass = ''.join(random.choice(lettersAndDigits) for i in range(10))
         passhash = User.generate_hash(newpass)
@@ -84,6 +84,8 @@ def login():
     user = User.find_by_username(data['username'])
     if not user or not User.verify_hash(data['password'], user.password):
         raise UnauthorizedError("Wrong Credentials")
+    elif not user.is_active:
+        raise UnauthorizedError("This account is deactivated")
 
     response['access_token'] = create_access_token(identity = data['username'])
     response['refresh_token'] = create_refresh_token(identity = data['username'])

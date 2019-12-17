@@ -2,6 +2,7 @@
 User Endpoints
 '''
 import json
+import psycopg2
 import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
@@ -42,7 +43,7 @@ def get_users(id):
 #===============================================================================
 # POST NEW USER
 @users.route('/', methods=['POST'])
-@jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def create_user():
@@ -268,7 +269,7 @@ def deactivate_user(id):
 
 #===============================================================================
 # DELETE A USER
-@users.route('/<int:id>/deactivate', methods=['DELETE'])
+@users.route('/<int:id>/delete', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
@@ -278,10 +279,13 @@ def delete_user(id):
     query = User.query.filter_by(id=id).first()
     if not query:
         raise NotFoundError('User ID {} does not exist.'.format(id))
+    try:
+        user = query.serialize
+        db.session.delete(query)
+        db.session.commit()
+    except psycopg2.errors.NotNullViolation:
+        raise DataConflictError('User can not be deleted because they have system data tied to their account.')
 
-    user = query.serialize
-    db.session.delete(query)
-    db.session.commit()
     response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
 
