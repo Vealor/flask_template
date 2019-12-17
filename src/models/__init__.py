@@ -18,3 +18,4 @@ from .master_models import *
 from .paredown_rules import *
 from .projects import *
 from .transactions import *
+from .users import *

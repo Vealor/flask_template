@@ -161,8 +161,7 @@ class Process(enum.Enum):
     caps_calculations = "CAPS Calculation fields"
 
 class TaxTypes(enum.Enum):
-    gst = "gst"
-    hst = "hst"
+    gst_hst = "gst_hst"
     qst = "qst"
     pst = "pst"
     apo = "apo"

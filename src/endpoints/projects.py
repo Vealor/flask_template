@@ -150,7 +150,7 @@ def post_project():
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
     scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
     scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
@@ -185,8 +185,7 @@ def post_project():
         lead_partner_user = lead_part,
         lead_manager_user = lead_mana,
 
-        has_ts_gst = data['tax_scope']['has_ts_gst'],
-        has_ts_hst = data['tax_scope']['has_ts_hst'],
+        has_ts_gst_hst = data['tax_scope']['has_ts_gst_hst'],
         has_ts_qst = data['tax_scope']['has_ts_qst'],
         has_ts_pst = data['tax_scope']['has_ts_pst'],
         has_ts_apo = data['tax_scope']['has_ts_apo'],
@@ -355,19 +354,14 @@ def apply_paredown_rules(id):
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):
                 # print("APPLY PAREDOWN TO TXN")
-                gst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'gst'] if txn.transaction_codes else []
-                hst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'hst'] if txn.transaction_codes else []
+                gst_hst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'gst_hst'] if txn.transaction_codes else []
                 qst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'qst'] if txn.transaction_codes else []
                 pst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'pst'] if txn.transaction_codes else []
                 apo_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'apo'] if txn.transaction_codes else []
-                if not txn.gst_signed_off_by_id:
-                    if rule['code']['code_number'] not in gst_code_list:
+                if not txn.gst_hst_signed_off_by_id:
+                    if rule['code']['code_number'] not in gst_hst_code_list:
                         txn.modified = func.now()
-                    txn.update_codes([rule['code']['code_number']] + gst_code_list, 'gst')
-                if not txn.hst_signed_off_by_id:
-                    if rule['code']['code_number'] not in hst_code_list:
-                        txn.modified = func.now()
-                    txn.update_codes([rule['code']['code_number']] + hst_code_list, 'hst')
+                    txn.update_codes([rule['code']['code_number']] + gst_hst_code_list, 'gst_hst')
                 if not txn.qst_signed_off_by_id:
                     if rule['code']['code_number'] not in qst_code_list:
                         txn.modified = func.now()
@@ -482,7 +476,7 @@ def update_project(id):
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
     scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
     scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
@@ -522,8 +516,7 @@ def update_project(id):
         raise InputError('User id does not exist for engagement manager.'.format(data['lead_manager_id']))
     query.lead_manager_user = lead_mana
 
-    query.has_ts_gst = data['tax_scope']['has_ts_gst']
-    query.has_ts_hst = data['tax_scope']['has_ts_hst']
+    query.has_ts_gst_hst = data['tax_scope']['has_ts_gst_hst']
     query.has_ts_qst = data['tax_scope']['has_ts_qst']
     query.has_ts_pst = data['tax_scope']['has_ts_pst']
     query.has_ts_apo = data['tax_scope']['has_ts_apo']
