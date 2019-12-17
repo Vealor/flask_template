@@ -63,14 +63,14 @@ def apply_rules_to_txn(args):
         if do_paredown == len(rule['conditions']):
             # print("APPLY PAREDOWN TO TXN")
             if not txn.gst_signed_off_by_id:
-                txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []),tempsession)
+                txn.update_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'gst'] if txn.transaction_codes else []), 'gst', tempsession)
             if not txn.hst_signed_off_by_id:
-                txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []),tempsession)
+                txn.update_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'hst'] if txn.transaction_codes else []), 'hst', tempsession)
             if not txn.qst_signed_off_by_id:
-                txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []),tempsession)
+                txn.update_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'qst'] if txn.transaction_codes else []), 'qst', tempsession)
             if not txn.pst_signed_off_by_id:
-                txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []),tempsession)
+                txn.update_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'pst'] if txn.transaction_codes else []), 'pst', tempsession)
             if not txn.apo_signed_off_by_id:
-                txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []),tempsession)
+                txn.update_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'apo'] if txn.transaction_codes else []), 'apo', tempsession)
 
     tempsession.commit()

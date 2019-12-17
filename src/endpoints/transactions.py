@@ -366,7 +366,7 @@ def update_transaction(id):
         raise InputError('You can not code and sign off the same transaction tax type!')
 
     ### GST
-    query.update_gst_codes(list(set(data['gst_codes'])))
+    query.update_codes(list(set(data['gst_codes'])), 'gst')
     query.gst_notes_internal = data['gst_notes_internal']
     query.gst_notes_external = data['gst_notes_external']
     query.gst_recoveries = data['gst_recoveries']
@@ -375,7 +375,7 @@ def update_transaction(id):
     query.gst_signed_off_by_id = data['gst_signed_off_by_id']
 
     ### HST
-    query.update_hst_codes(list(set(data['hst_codes'])))
+    query.update_codes(list(set(data['hst_codes'])), 'hst')
     query.hst_notes_internal = data['hst_notes_internal']
     query.hst_notes_external = data['hst_notes_external']
     query.hst_recoveries = data['hst_recoveries']
@@ -384,7 +384,7 @@ def update_transaction(id):
     query.hst_signed_off_by_id = data['hst_signed_off_by_id']
 
     ### QST
-    query.update_qst_codes(list(set(data['qst_codes'])))
+    query.update_codes(list(set(data['qst_codes'])), 'qst')
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
@@ -393,7 +393,7 @@ def update_transaction(id):
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     ### PST
-    query.update_pst_codes(list(set(data['pst_codes'])))
+    query.update_codes(list(set(data['pst_codes'])), 'pst')
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
@@ -402,7 +402,7 @@ def update_transaction(id):
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     ### APO
-    query.update_apo_codes(list(set(data['apo_codes'])))
+    query.update_codes(list(set(data['apo_codes'])), 'apo')
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']

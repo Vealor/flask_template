@@ -355,31 +355,31 @@ def apply_paredown_rules(id):
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):
                 # print("APPLY PAREDOWN TO TXN")
-                gst_code_list = [c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []
-                hst_code_list = [c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []
-                qst_code_list = [c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []
-                pst_code_list = [c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []
-                apo_code_list = [c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []
+                gst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'gst'] if txn.transaction_codes else []
+                hst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'hst'] if txn.transaction_codes else []
+                qst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'qst'] if txn.transaction_codes else []
+                pst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'pst'] if txn.transaction_codes else []
+                apo_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'apo'] if txn.transaction_codes else []
                 if not txn.gst_signed_off_by_id:
                     if rule['code']['code_number'] not in gst_code_list:
                         txn.modified = func.now()
-                    txn.update_gst_codes([rule['code']['code_number']] + gst_code_list)
+                    txn.update_codes([rule['code']['code_number']] + gst_code_list, 'gst')
                 if not txn.hst_signed_off_by_id:
                     if rule['code']['code_number'] not in hst_code_list:
                         txn.modified = func.now()
-                    txn.update_hst_codes([rule['code']['code_number']] + hst_code_list)
+                    txn.update_codes([rule['code']['code_number']] + hst_code_list, 'hst')
                 if not txn.qst_signed_off_by_id:
                     if rule['code']['code_number'] not in qst_code_list:
                         txn.modified = func.now()
-                    txn.update_qst_codes([rule['code']['code_number']] + qst_code_list)
+                    txn.update_codes([rule['code']['code_number']] + qst_code_list, 'qst')
                 if not txn.pst_signed_off_by_id:
                     if rule['code']['code_number'] not in pst_code_list:
                         txn.modified = func.now()
-                    txn.update_pst_codes([rule['code']['code_number']] + pst_code_list)
+                    txn.update_codes([rule['code']['code_number']] + pst_code_list, 'pst')
                 if not txn.apo_signed_off_by_id:
                     if rule['code']['code_number'] not in apo_code_list:
                         txn.modified = func.now()
-                    txn.update_apo_codes([rule['code']['code_number']] + apo_code_list)
+                    txn.update_codes([rule['code']['code_number']] + apo_code_list, 'apo')
                 db.session.flush()
 
     db.session.commit()
