@@ -286,7 +286,7 @@ def delete_user(id):
         db.session.commit()
     except IntegrityError as e:
         assert isinstance(e.orig, NotNullViolation)
-        raise DataConflictError('User can not be deleted because they have system data tied to their account.')
+        raise DataConflictError('User can not be deleted because they have system data tied to their account. Please try deactivating the user instead.')
 
     response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
