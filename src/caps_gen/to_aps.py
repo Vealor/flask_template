@@ -163,17 +163,12 @@ def j8():
     j8 = """
     drop table if exists J2_BSEG_BKPF_LFA1_docloc;
     select
-    L.*,
-    R.vardocamt,
-    R.varlocamt
+    *,
+	case when bseg_shkzg_key = 'H' then -(cast(ap_ar_amt_doc_ccy as FLOAT)) else 0 end as vardocamt,
+	case when bseg_shkzg_key = 'H' then -(cast(amount_local_ccy as FLOAT)) else 0 end as  varlocamt
     into J2_BSEG_BKPF_LFA1_docloc
     from
-    J2_BSEG_BKPF_LFA1 as L
-    left join
-    (select id,
-    -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
-    -(cast(amount_local_ccy as FLOAT)) as varlocamt
-    from J2_BSEG_BKPF_LFA1 where bseg_shkzg_key = 'H') as R on L.id = R.id
+    J2_BSEG_BKPF_LFA1
     """.format(caps_gen_id = caps_gen_id)
 
 
@@ -235,8 +230,8 @@ def j8():
         tax_jur_gl,
         wbs_gl,
         varapkey,
-        sum(varlocamt) as varlocamt,
-        sum(vardocamt) as vardocamt,
+        varlocamt as varlocamt,
+        vardocamt as vardocamt,
         {caps_gen_id} caps_gen_id
         from
         J2_BSEG_BKPF_LFA1_docloc
@@ -287,6 +282,8 @@ def j10point5(caps_gen_id):
     DELETE FROM sap_aps WHERE caps_gen_id = {caps_gen_id};
     INSERT INTO sap_aps (
     caps_gen_id,
+    vardocamt,
+    varlocamt,
     bseg_pswbt_key,
     bseg_dmbe2_key,
     bseg_umskz_key,
@@ -357,6 +354,8 @@ def j10point5(caps_gen_id):
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl)
     select
     {caps_gen_id} caps_gen_id,
+    L.vardocamt,
+    L.varlocamt,
     L.bseg_pswbt_key,
     L.bseg_dmbe2_key,
     L.bseg_umskz_key,
@@ -435,33 +434,15 @@ def j10point5(caps_gen_id):
 
     def j11():
         j11 = """
-            drop table if exists aps_quality_check;
-        select
-        L.*,
-        R.vardocamt,
-        R.varlocamt
-        into aps_quality_check
-        from
-        sap_aps as L
-        left join
-        (select id,
-         -(cast(ap_ar_amt_doc_ccy as FLOAT)) as vardocamt,
-         -(cast(amount_local_ccy as FLOAT)) as varlocamt
-         from sap_aps where bseg_shkzg_key = 'H') as R on L.id = R.id
-        """
-        return j11
-
-    def j12():
-        j12 = """
-        DELETE FROM sap_glnetcheck WHERE caps_gen_id = {caps_gen_id};
+    DELETE FROM sap_glnetcheck WHERE caps_gen_id = 4;
         INSERT INTO sap_glnetcheck (
         varlocamt,
         vardocamt,
         caps_gen_id)
         select
-        sum(varlocamt) as varlocamt,
-        sum(vardocamt) as vardocamt,
-        {caps_gen_id} caps_gen_id
+        sum(cast(varlocamt as float)) as varlocamt,
+        sum(cast(vardocamt as float)) as vardocamt,
+        4 caps_gen_id
         from
-        aps_quality_check
+        sap_aps
         """.format(caps_gen_id = caps_gen_id)

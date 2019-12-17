@@ -224,7 +224,6 @@ class SapCaps(db.Model):
     vend_tax_num_type = db.Column(db.String(256), nullable=True)
     vend_reg_num = db.Column(db.String(256), nullable=True)
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl = db.Column(db.String(256), nullable=True)
-
     post_key_descr = db.Column(db.String(256), nullable=True)
     co_name = db.Column(db.String(256), nullable=True)
     proj_loc_proj = db.Column(db.String(256), nullable=True)
@@ -280,7 +279,6 @@ class SapCaps(db.Model):
     vend_phone = db.Column(db.String(256), nullable=True)
     vend_person = db.Column(db.String(256), nullable=True)
     purch_org_descr_po = db.Column(db.String(256), nullable=True)
-
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps') # FK
 
@@ -440,6 +438,8 @@ class SapAps(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True, nullable=True)
     varapkey = db.Column(db.String(256), nullable=False)
+    vardocamt = db.Column(db.String(256), nullable=True)
+    varlocamt = db.Column(db.String(256), nullable=True)
     bseg_shkzg_key = db.Column(db.String(256), nullable=True)
     bseg_pswbt_key = db.Column(db.String(256), nullable=True)
     bseg_dmbe2_key = db.Column(db.String(256), nullable=True)
@@ -571,8 +571,32 @@ class SapTaxGLExtract(db.Model):
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    varlocamt = db.Column(db.Float, nullable=False)
-    vardocamt = db.Column(db.Float, nullable=False)
+    co_code_gl = db.Column(db.String(256), nullable=True)
+    gl_doc_num = db.Column(db.String(256), nullable=True)
+    fiscal_year_gl = db.Column(db.String(256), nullable=True)
+    bseg_buzei_key = db.Column(db.String(256), nullable=True)
+    fiscal_period_gl = db.Column(db.String(256), nullable=True)
+    doc_type_gl = db.Column(db.String(256), nullable=True)
+    trnx_code_gl = db.Column(db.String(256), nullable=True)
+    post_key_gl = db.Column(db.String(256), nullable=True)
+    bseg_shkzg_key = db.Column(db.String(256), nullable=True)
+    bus_area_dept_num_gl = db.Column(db.String(256), nullable=True)
+    po_tax_code_gl = db.Column(db.String(256), nullable=True)
+    item_descr_gl = db.Column(db.String(256), nullable=True)
+    cost_ctr_num_gl = db.Column(db.String(256), nullable=True)
+    largest_debit_half_acct_num_gl = db.Column(db.String(256), nullable=True)
+    vend_num = db.Column(db.String(256), nullable=True)
+    vend_name = db.Column(db.String(256), nullable=True)
+    inv_num = db.Column(db.String(256), nullable=True)
+    inv_date = db.Column(db.String(256), nullable=True)
+    po_doc_num = db.Column(db.String(256), nullable=True)
+    bseg_ebelp_key = db.Column(db.String(256), nullable=True)
+    profit_ctr_num = db.Column(db.String(256), nullable=True)
+    tax_jur_gl = db.Column(db.String(256), nullable=True)
+    wbs_gl = db.Column(db.String(256), nullable=True)
+    varapkey = db.Column(db.String(256), nullable=True)
+    varlocamt = db.Column(db.String(256), nullable=True)
+    vardocamt = db.Column(db.String(256), nullable=True)
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sap_taxglextract_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_taxglextract') # FK

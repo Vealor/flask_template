@@ -15,12 +15,12 @@ def j12():
      Sum(Cast(ap_ar_amt_doc_ccy AS FLOAT)) AS ap_ar_amt_doc_ccy,
      Sum(Cast(bseg_pswbt_key AS FLOAT)) AS bseg_pswbt_key,
      Sum(Cast(bseg_dmbe2_key AS FLOAT)) AS bseg_dmbe2_key,
-    SUM(vardocamt) as vardocamt,
-    SUM(varlocamt) as varlocamt,
+    SUM(cast(vardocamt AS FLOAT)) as vardocamt,
+    SUM(cast(varLocamt AS FLOAT)) as varlocamt,
      l.varapkey,
      Trim(largest_debit_half_acct_num_gl) AS largest_debit_half_acct_num_gl
     FROM
-     aps_quality_check AS l
+     sap_aps AS l
     GROUP BY
      varapkey,
      largest_debit_half_acct_num_gl
@@ -169,7 +169,7 @@ bseg_shkzg_key,
 bseg_umskz_key
          DESC) AS roworder
            FROM
-              aps_quality_check
+              sap_aps
         )
         AS subq
      WHERE
@@ -179,6 +179,8 @@ bseg_umskz_key
     ON l.varapkey = r.varapkey_temp
     AND l.largest_debit_half_acct_num_gl = r.largest_debit_half_acct_num_gl_temp
     order by varlocamt desc
+
+
     """
     return j12
 
@@ -1446,7 +1448,8 @@ def j65():
                 APGST_var,
                 ODD5113_var,
                 ODD5114_var,
-                ODD5115_var, GSTSeperate_var), ', ') transaction_attributes,
+                ODD5115_var,
+                GSTSeperate_var), ', ') transaction_attributes,
                 caps_no_attributes.*
                 into caps_with_attributes
                 from (
@@ -1521,8 +1524,8 @@ def j65():
     else null
     end P8_var,
     case when PST_SA <> 0 then 'PST_SA, ' else null end PST_SA_var,
-    case when vend_cntry = 'Canada' then 'CdnVend' else null end CdnVend,
-    case when vend_cntry <> 'Canada' then 'ForeignVend' else null end ForeignVend,
+    case when lfa1_land1_key = 'CA' then 'CdnVend' else null end CdnVend,
+    case when lfa1_land1_key <> 'CA' then 'ForeignVend' else null end ForeignVend,
     case when eff_rate = '0.000000' then 'AP=GST, ' else null end APGST_var,
     case when (eff_rate >= 4.626629629630 and eff_rate <= 4.632629629630) and Rate_Ind = 'D' then 'ODD_5/113, ' else null end ODD5113_var,
     case when (eff_rate >= 4.584155963303 and eff_rate <= 4.590155963303) and Rate_Ind = 'D' then 'ODD_5/114, ' else null end ODD5114_var,
@@ -1530,8 +1533,8 @@ def j65():
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM,
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
     case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
-	case when cast(pymt_dt_pmt as date)
-     --EPD, Broker, GST, QST, NoGST, NoQST remaining
+	--case when (cast(pymt_dt_pmt as date) - cast(inv_date as date)) <= 30 then 'EPD, ' else null end EPD,
+     -- Broker, GST, QST, NoGST, NoQST remaining
                     varapkey
     from
     caps_no_attributes) transaction_attributes
