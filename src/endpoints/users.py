@@ -3,9 +3,10 @@ User Endpoints
 '''
 import json
 import psycopg2
-import random
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from psycopg2.errors import NotNullViolation
+from sqlalchemy.exc import IntegrityError
 from src.errors import *
 from src.models import *
 from src.util import validate_request_data
@@ -283,8 +284,9 @@ def delete_user(id):
         user = query.serialize
         db.session.delete(query)
         db.session.commit()
-    except psycopg2.errors.NotNullViolation:
-        raise DataConflictError('User can not be deleted because they have system data tied to their account.')
+    except IntegrityError as e:
+        assert isinstance(e.orig, NotNullViolation)
+        raise DataConflictError('User can not be deleted because they have system data tied to their account. Please try deactivating the user instead.')
 
     response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
