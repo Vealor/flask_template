@@ -152,6 +152,19 @@ def update_user(id):
     }
     validate_request_data(data, request_types)
 
+    if len(data['username']) < 1 or len(data['username']) > 64:
+        raise InputError('Username must be greater than 1 character and no more than 64')
+    if len(data['email']) < 1 or len(data['email']) > 128:
+        raise InputError('Password must be greater than 8 character and no more than 128')
+    if not re.match(r"\@.+(?:\..+)+", data['email']):
+        raise InputError('E-mail must be of a valid e-mail format.')
+    if len(data['initials']) < 1 or len(data['initials']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+    if len(data['first_name']) < 1 or len(data['first_name']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+    if len(data['last_name']) < 1 or len(data['last_name']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+
     # UPDATE user
     query = User.find_by_id(id)
     if not query:

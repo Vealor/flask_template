@@ -332,6 +332,22 @@ def update_transaction(id):
         'apo_signed_off_by_id': ['int','NoneType']
     }
     validate_request_data(data, request_types)
+    if len(data['gst_hst_notes_internal']) > 2048:
+        raise InputError('GST_HST Internal Notes must be greater than 0 characters and no more than 2048')
+    if len(data['gst_hst_notes_external']) > 2048:
+        raise InputError('GST_HST External Notes must be greater than 0 characters and no more than 2048')
+    if len(data['qst_notes_internal']) > 2048:
+        raise InputError('QST Internal Notes must be greater than 0 characters and no more than 2048')
+    if len(data['qst_notes_external']) > 2048:
+        raise InputError('QST External Notes must be greater than 0 characters and no more than 2048')
+    if len(data['pst_notes_internal']) > 2048:
+        raise InputError('PST Internal Notes must be greater than 0 characters and no more than 2048')
+    if len(data['pst_notes_external']) > 2048:
+        raise InputError('PST External Notes must be greater than 0 characters and no more than 2048')
+    if len(data['apo_notes_internal']) > 2048:
+        raise InputError('APO Internal Notes must be greater than 0 characters and no more than 2048')
+    if len(data['apo_notes_external']) > 2048:
+        raise InputError('APO External Notes must be greater than 0 characters and no more than 2048')
 
     # UPDATE user
     query = Transaction.find_by_id(id)

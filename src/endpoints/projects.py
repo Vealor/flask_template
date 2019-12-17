@@ -142,6 +142,9 @@ def post_project():
         'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
+    if len(data['name']) < 1 or len(data['name']) > 128:
+        raise InputError('Name must be greater than 1 character and no more than 128')
+
     # scope key checking
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
@@ -468,6 +471,9 @@ def update_project(id):
         'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
+    if len(data['name']) < 1 or len(data['name']) > 128:
+        raise InputError('Name must be greater than 1 character and no more than 128')
+
     # scope key checking
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
