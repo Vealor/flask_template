@@ -3,6 +3,7 @@ User Endpoints
 '''
 import json
 import psycopg2
+import re
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
 from psycopg2.errors import NotNullViolation
@@ -62,6 +63,31 @@ def create_user():
         'role': ['str']
     }
     validate_request_data(data, request_types)
+    # PASSWORD STRENGTH CHECKING
+    if len(data['password']) < 8:
+        raise InputError("Password length must be greater than 8.")
+    if not any(x.isupper() for x in data['newpassword']):
+        raise InputError("Password must contain a capital letter.")
+    if not any(x.lower() for x in data['newpassword']):
+        raise InputError("Password must contain a lowercase letter.")
+    if not any(x.isdigit() for x in data['newpassword']):
+        raise InputError("Password must contain a number.")
+    # Length checking
+    if len(data['username']) < 1 or len(data['username']) > 64:
+        raise InputError('Username must be greater than 1 character and no more than 64')
+    if len(data['password']) < 8 or len(data['password']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+    if len(data['email']) < 1 or len(data['email']) > 128:
+        raise InputError('Password must be greater than 8 character and no more than 128')
+    if not re.match(r"\@.+(?:\..+)+", data['email']):
+        raise InputError('E-mail must be of a valid e-mail format.')
+    if len(data['initials']) < 1 or len(data['initials']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+    if len(data['first_name']) < 1 or len(data['first_name']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+    if len(data['last_name']) < 1 or len(data['last_name']) > 128:
+        raise InputError('Password must be greater than 1 character and no more than 128')
+
     # check if this username exists
     check = User.query.filter_by(username=data['username']).first()
     if check:
@@ -201,14 +227,14 @@ def update_user_password(id):
     validate_request_data(data, request_types)
 
     # PASSWORD STRENGTH CHECKING
-    # if len(data['newpassword']) < 8:
-    #     raise InputError("Password length must be greater than 8.")
-    # if not any(x.isupper() for x in data['newpassword']):
-    #     raise InputError("Password must contain a capital letter.")
-    # if not any(x.lower() for x in data['newpassword']):
-    #     raise InputError("Password must contain a lowercase letter.")
-    # if not any(x.isdigit() for x in data['newpassword']):
-    #     raise InputError("Password must contain a number.")
+    if len(data['newpassword']) < 8:
+        raise InputError("Password length must be greater than 8.")
+    if not any(x.isupper() for x in data['newpassword']):
+        raise InputError("Password must contain a capital letter.")
+    if not any(x.lower() for x in data['newpassword']):
+        raise InputError("Password must contain a lowercase letter.")
+    if not any(x.isdigit() for x in data['newpassword']):
+        raise InputError("Password must contain a number.")
 
     query = User.find_by_id(id)
     if not User.verify_hash(data['password'], query.password):
