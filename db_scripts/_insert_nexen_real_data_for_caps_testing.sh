@@ -189,4 +189,4 @@ cost_ctr_name,
 profit_ctr_descr,
 profit_ctr_name,
 vend_cntry
-) from '../caps_50_final.csv' HEADER DELIMITER '|' CSV QUOTE '\"' ESCAPE '''';"
+) from '../sap_caps.csv' HEADER DELIMITER '|' CSV QUOTE '\"' ESCAPE '''';"
