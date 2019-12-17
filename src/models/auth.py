@@ -23,6 +23,7 @@ class User(db.Model):
     def serialize(self):
         return {
             'id': self.id,
+            'is_active': self.is_active,
             'username': self.username,
             'email': self.email,
             'initials': self.initials.upper(),
@@ -40,6 +41,7 @@ class User(db.Model):
     def serialize_user_proj(self):
         return {
             'id': self.id,
+            'is_active': self.is_active,
             'username': self.username,
             'email': self.email,
             'initials': self.initials.upper(),
