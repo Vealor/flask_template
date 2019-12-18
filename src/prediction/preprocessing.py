@@ -9,7 +9,7 @@ PREDICTION_VARS = {
     'ap_amt': 'float',
     'broker_value': 'float',
     'ccy': 'str',
-    'cn_flag_ind': 'Int64',
+    'cn_flag_ind': 'bool',
     'cntry_name': 'str',
     'doc_type_gl': 'str',
     'eff_rate': 'float',
