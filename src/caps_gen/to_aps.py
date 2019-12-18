@@ -169,76 +169,78 @@ def j8():
     into J2_BSEG_BKPF_LFA1_docloc
     from
     J2_BSEG_BKPF_LFA1
+    """
+    return j8
+
+
+
+def tax_gl_extract(caps_gen_id):
+    tax_gl_extract = """
+    DELETE FROM sap_taxglextract WHERE caps_gen_id = {caps_gen_id};
+    INSERT INTO sap_taxglextract (
+    co_code_gl,
+    gl_doc_num,
+    fiscal_year_gl,
+    bseg_buzei_key,
+    fiscal_period_gl,
+    doc_type_gl,
+    trnx_code_gl,
+    post_key_gl,
+    bseg_shkzg_key,
+    bus_area_dept_num_gl,
+    po_tax_code_gl,
+    item_descr_gl,
+    cost_ctr_num_gl,
+    largest_debit_half_acct_num_gl,
+    vend_num,
+    vend_name,
+    inv_num,
+    inv_date,
+    po_doc_num,
+    bseg_ebelp_key,
+    profit_ctr_num,
+    tax_jur_gl,
+    wbs_gl,
+    varapkey,
+    varlocamt,
+    vardocamt,
+    caps_gen_id
+    )
+    select
+    co_code_gl,
+    gl_doc_num,
+    fiscal_year_gl,
+    bseg_buzei_key,
+    fiscal_period_gl,
+    doc_type_gl,
+    trnx_code_gl,
+    post_key_gl,
+    bseg_shkzg_key,
+    bus_area_dept_num_gl,
+    po_tax_code_gl,
+    item_descr_gl,
+    cost_ctr_num_gl,
+    largest_debit_half_acct_num_gl,
+    vend_num,
+    vend_name,
+    inv_num,
+    inv_date,
+    po_doc_num,
+    bseg_ebelp_key,
+    profit_ctr_num,
+    tax_jur_gl,
+    wbs_gl,
+    varapkey,
+    varlocamt as varlocamt,
+    vardocamt as vardocamt,
+    {caps_gen_id} caps_gen_id
+    from
+    J2_BSEG_BKPF_LFA1_docloc
     """.format(caps_gen_id = caps_gen_id)
+    return tax_gl_extract
 
-
-
-    def tax_gl_extract():
-        tax_gl_extract = """
-        DELETE FROM sap_taxglextract WHERE caps_gen_id = {caps_gen_id};
-        INSERT INTO sap_taxglextract (
-        co_code_gl,
-        gl_doc_num,
-        fiscal_year_gl,
-        bseg_buzei_key,
-        fiscal_period_gl,
-        doc_type_gl,
-        trnx_code_gl,
-        post_key_gl,
-        bseg_shkzg_key,
-        bus_area_dept_num_gl,
-        po_tax_code_gl,
-        item_descr_gl,
-        cost_ctr_num_gl,
-        largest_debit_half_acct_num_gl,
-        vend_num,
-        vend_name,
-        inv_num,
-        inv_date,
-        po_doc_num,
-        bseg_ebelp_key,
-        profit_ctr_num,
-        tax_jur_gl,
-        wbs_gl,
-        varapkey,
-        varlocamt,
-        vardocamt,
-        caps_gen_id
-        )
-        select
-        co_code_gl,
-        gl_doc_num,
-        fiscal_year_gl,
-        bseg_buzei_key,
-        fiscal_period_gl,
-        doc_type_gl,
-        trnx_code_gl,
-        post_key_gl,
-        bseg_shkzg_key,
-        bus_area_dept_num_gl,
-        po_tax_code_gl,
-        item_descr_gl,
-        cost_ctr_num_gl,
-        largest_debit_half_acct_num_gl,
-        vend_num,
-        vend_name,
-        inv_num,
-        inv_date,
-        po_doc_num,
-        bseg_ebelp_key,
-        profit_ctr_num,
-        tax_jur_gl,
-        wbs_gl,
-        varapkey,
-        varlocamt as varlocamt,
-        vardocamt as vardocamt,
-        {caps_gen_id} caps_gen_id
-        from
-        J2_BSEG_BKPF_LFA1_docloc
-        """.format(caps_gen_id = caps_gen_id)
-
-def j8(caps_gen_id):
-    j8 = """
+def j9(caps_gen_id):
+    j9 = """
     DROP TABLE IF EXISTS distinctVarAPKey;
 
     SELECT CONCAT(L.data ->> 'co_code_gl', '_', L.data ->> 'gl_doc_num', '_', L.data ->> 'fiscal_year_gl') AS varAPKey
@@ -247,10 +249,10 @@ def j8(caps_gen_id):
     WHERE cast(L.data ->> 'KOART' as text) = 'K' and caps_gen_id = {caps_gen_id}
     GROUP BY L.data ->> 'co_code_gl', L.data ->> 'gl_doc_num', L.data ->> 'fiscal_year_gl'
     """.format(caps_gen_id = caps_gen_id)
-    return j8
+    return j9
 
-def j9(caps_gen_id):
-    j9 = """
+def j10(caps_gen_id):
+    j10 = """
     DROP TABLE IF EXISTS J3_BSEG_BKPF_LFA1_OnlyAP;
 
     SELECT L.*
@@ -259,10 +261,10 @@ def j9(caps_gen_id):
     INNER JOIN distinctVarAPKey AS R
     ON L.varAPKey = R.varAPKey
     """
-    return j9
+    return j10
 
-def j10(caps_gen_id):
-    j10 = """
+def j11(caps_gen_id):
+    j11 = """
     DROP TABLE IF EXISTS j4_BSEG_BKPF_LFA1_T001_OnlyAP;
     select L.*,
     R.data ->> 't001_bukrs_key' as t001_bukrs_key,
@@ -270,15 +272,15 @@ def j10(caps_gen_id):
     R.data ->> 'KTOPL'  as t001_ktopl_key
     into j4_BSEG_BKPF_LFA1_T001_OnlyAP
     from (select * from j3_BSEG_BKPF_LFA1_OnlyAP) as L
-    inner join (select * from sap_t001 where caps_gen_id = {caps_gen_id}) as R
+    left join (select * from sap_t001 where caps_gen_id = {caps_gen_id}) as R
     on L.co_code_gl = R.data ->> 't001_bukrs_key'
     """.format(caps_gen_id = caps_gen_id)
-    return j10
+    return j11
 
     #fiscal_year_gl =  '2013' NEXEN ONLY
 
-def j10point5(caps_gen_id):
-    j10point5 = """
+def j12(caps_gen_id):
+    j12 = """
     DELETE FROM sap_aps WHERE caps_gen_id = {caps_gen_id};
     INSERT INTO sap_aps (
     caps_gen_id,
@@ -425,24 +427,25 @@ def j10point5(caps_gen_id):
     R.data ->>   'skat_spras_key' as skat_spras_key,
     R.data ->>   'lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl' as lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl
     from j4_BSEG_BKPF_LFA1_T001_OnlyAP as L
-    inner join (select * from sap_skat where caps_gen_id = {caps_gen_id}) as R
+    left join (select * from sap_skat where caps_gen_id = {caps_gen_id}) as R
     on L.largest_debit_half_acct_num_gl = R.data ->> 'skat_saknr_key'
     and
     L.T001_KTOPL_KEY = R.data ->> 'skat_ktopl_key'
     """.format(caps_gen_id = caps_gen_id)
-    return j10point5
+    return j12
 
-    def j11():
-        j11 = """
+def j13(caps_gen_id):
+    j13 = """
     DELETE FROM sap_glnetcheck WHERE caps_gen_id = 4;
-        INSERT INTO sap_glnetcheck (
-        varlocamt,
-        vardocamt,
-        caps_gen_id)
-        select
-        sum(cast(varlocamt as float)) as varlocamt,
-        sum(cast(vardocamt as float)) as vardocamt,
-        4 caps_gen_id
-        from
-        sap_aps
-        """.format(caps_gen_id = caps_gen_id)
+    INSERT INTO sap_glnetcheck (
+    varlocamt,
+    vardocamt,
+    caps_gen_id)
+    select
+    sum(cast(varlocamt as float)) as varlocamt,
+    sum(cast(vardocamt as float)) as vardocamt,
+    {caps_gen_id} caps_gen_id
+    from
+    sap_aps
+    """.format(caps_gen_id = caps_gen_id)
+    return j13

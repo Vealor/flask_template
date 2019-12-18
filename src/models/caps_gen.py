@@ -615,8 +615,8 @@ class SapGLNetCheck(db.Model):
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    varlocamt = db.Column(db.Float, nullable=False)
-    vardocamt = db.Column(db.Float, nullable=False)
+    varlocamt = db.Column(db.Float, nullable=True)
+    vardocamt = db.Column(db.Float, nullable=True)
 
     caps_gen_id = db.Column(db.Integer, nullable=False) # FK
     sap_glnetcheck_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_glnetcheck') # FK
