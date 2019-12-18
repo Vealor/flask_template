@@ -66,11 +66,11 @@ def create_user():
     # PASSWORD STRENGTH CHECKING
     if len(data['password']) < 8:
         raise InputError("Password length must be greater than 8.")
-    if not any(x.isupper() for x in data['newpassword']):
+    if not any(x.isupper() for x in data['password']):
         raise InputError("Password must contain a capital letter.")
-    if not any(x.lower() for x in data['newpassword']):
+    if not any(x.lower() for x in data['password']):
         raise InputError("Password must contain a lowercase letter.")
-    if not any(x.isdigit() for x in data['newpassword']):
+    if not any(x.isdigit() for x in data['password']):
         raise InputError("Password must contain a number.")
     # Length checking
     if len(data['username']) < 1 or len(data['username']) > 64:
@@ -79,7 +79,7 @@ def create_user():
         raise InputError('Password must be greater than 1 character and no more than 128')
     if len(data['email']) < 1 or len(data['email']) > 128:
         raise InputError('Password must be greater than 8 character and no more than 128')
-    if not re.match(r"\@.+(?:\..+)+", data['email']):
+    if not re.match(r".*\@.+(?:\..+)+", data['email']):
         raise InputError('E-mail must be of a valid e-mail format.')
     if len(data['initials']) < 1 or len(data['initials']) > 128:
         raise InputError('Password must be greater than 1 character and no more than 128')
@@ -156,7 +156,7 @@ def update_user(id):
         raise InputError('Username must be greater than 1 character and no more than 64')
     if len(data['email']) < 1 or len(data['email']) > 128:
         raise InputError('Password must be greater than 8 character and no more than 128')
-    if not re.match(r"\@.+(?:\..+)+", data['email']):
+    if not re.match(r".*\@.+(?:\..+)+", data['email']):
         raise InputError('E-mail must be of a valid e-mail format.')
     if len(data['initials']) < 1 or len(data['initials']) > 128:
         raise InputError('Password must be greater than 1 character and no more than 128')
@@ -309,7 +309,7 @@ def deactivate_user(id):
 
 #===============================================================================
 # DELETE A USER
-@users.route('/<int:id>/delete', methods=['DELETE'])
+@users.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
