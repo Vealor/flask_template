@@ -67,37 +67,37 @@ if __name__ == '__main__':
     #data_valid = prepr.transactions_to_dataframe(test_transactions)
 
     #df_train = prepr.preprocess_data(data_train,preprocess_for='training')
-    print("Training client model!")
+    # print("Training client model!")
     #m = cpm.ClientPredictionModel()
     #target = "Target"
     #predictors = list(set(df_train.columns) - set([target]))
     #m.train(df_train,predictors,target)
 
-    model_data_dict = {
-            'client_id': 1,
-            'train_data_start': train_start,
-            'train_data_end': train_end,
-            'pickle': pickle.dumps(None),
-            'hyper_p': {'predictors': [], 'target': "Target"}
-        }
-    entry = ClientModel(**model_data_dict)
-    entry.status = Activity.active
-    db.session.add(entry)
-    db.session.commit()
-    model_id = entry.id
+    # model_data_dict = {
+    #         'client_id': 1,
+    #         'train_data_start': train_start,
+    #         'train_data_end': train_end,
+    #         'pickle': pickle.dumps(None),
+    #         'hyper_p': {'predictors': [], 'target': "Target"}
+    #     }
+    # entry = ClientModel(**model_data_dict)
+    # entry.status = Activity.active
+    # db.session.add(entry)
+    # db.session.commit()
+    # model_id = entry.id
 
     #df_valid = prepr.preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
     #performance_metrics = m.validate(df_valid, predictors, target)
-    model_performance_dict = {
-        'accuracy': 0.76453543,
-        'precision': 0.451991239,
-        'recall': 0.9509423490,
-        'test_data_start': test_start,
-        'test_data_end': test_end
-    }
-
-    # Push trained model and performance metrics
-    model_performance_dict['client_model_id'] = model_id
-    new_model_perf = ClientModelPerformance(**model_performance_dict)
-    db.session.add(new_model_perf)
-    db.session.commit()
+    # model_performance_dict = {
+    #     'accuracy': 0.76453543,
+    #     'precision': 0.451991239,
+    #     'recall': 0.9509423490,
+    #     'test_data_start': test_start,
+    #     'test_data_end': test_end
+    # }
+    #
+    # # Push trained model and performance metrics
+    # model_performance_dict['client_model_id'] = model_id
+    # new_model_perf = ClientModelPerformance(**model_performance_dict)
+    # db.session.add(new_model_perf)
+    # db.session.commit()
