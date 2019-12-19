@@ -44,7 +44,7 @@ if __name__ == '__main__':
     c = 0
     for (tr,co,au,ii) in zip(query.all(), trans_codes, approv_user, range(l)):
         tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
-        tr.update_gst_codes([co])
+        tr.update_codes([co],'gst_hst')
         tr.gst_signed_off_by_id = 2
         tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
