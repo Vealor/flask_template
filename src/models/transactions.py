@@ -338,8 +338,6 @@ class Transaction(db.Model):
         query_codes = ([txn.transaction_code_code.code_number for txn in query])
         codes.sort()
         query_codes.sort()
-        print(codes)
-        print(query_codes)
         if not codes == query_codes:
             for txn_codes in query:
                 if txn_codes.transaction_code_code.code_number in codes:
