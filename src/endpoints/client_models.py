@@ -19,7 +19,7 @@ client_models = Blueprint('client_models', __name__)
 # Get all client models
 @client_models.route('/', defaults={'id':None}, methods=['GET'])
 @client_models.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_client_models(id):
@@ -40,7 +40,7 @@ def get_client_models(id):
 #===============================================================================
 # Check if a pending model exists
 @client_models.route('/has_pending/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def has_pending():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -55,7 +55,7 @@ def has_pending():
 #===============================================================================
 # Check if a model is being trained for the client
 @client_models.route('/is_training/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def is_training():
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -99,22 +99,6 @@ def do_train():
     if not (train_end < test_start or test_end < train_start):
         raise InputError('Train and test data ranges overlap.')
 
-    #### ------------ ####
-    ## Remove when not in demo
-    performance_metrics = {
-        'accuracy': 0.347623478,
-        'precision': 0.4324378,
-        'recall': 0.949879,
-        'test_data_start': test_start.strftime('%Y-%m-%d'),
-        'test_data_end': test_end.strftime('%Y-%m-%d')
-    }
-    response['payload']['performance_metrics'] = performance_metrics
-    response['payload']['model_id'] = 34
-    response['message'] = 'Model trained and created.'
-    return jsonify(response), 201
-
-    #### ------------ ####
-
     # pre-build model dictionary
     model_data_dict = {
         'train_data_start': train_start,
@@ -146,8 +130,8 @@ def do_train():
     # validate sufficient transactions for training
     #transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None).count()
     transaction_count = Transaction.query.filter(Transaction.project_id.in_(client_projects)).count()
-    if transaction_count < 2000:
-        raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 2,000 approved transactions.'.format(data['client_id'],transaction_count))
+    if transaction_count < 1:
+        raise InputError('Not enough data to train a model for client ID {}. Only {} approved transactions. Requires >= 1 approved transactions.'.format(data['client_id'],transaction_count))
 
     active_model = ClientModel.find_active_for_client(data['client_id'])
     if active_model:
@@ -164,9 +148,9 @@ def do_train():
 
         # Get the required transactions and put them into dataframes
         transactions = Transaction.query.filter(Transaction.project_id.in_(client_projects)).filter(Transaction.approved_user_id != None)
-        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))#.filter(Transaction.approved_user_id == None)
+        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))
         data_train = transactions_to_dataframe(train_transactions)
-        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))#.filter(Transaction.approved_user_id != None)
+        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))
         data_valid = transactions_to_dataframe(test_transactions)
 
         # Training =================================
@@ -229,7 +213,6 @@ def do_train():
         </ul>
         """.format(Client.find_by_id(data['client_id']).name,str(e))
         send_mail(current_user.email ,subj, content)
-
         raise Exception("Error occured during model training: " + str(e))
 
     db.session.commit()
@@ -253,7 +236,7 @@ def do_train():
 #===============================================================================
 # Validate the active client model based on input ID.
 @client_models.route('/validate/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def do_validate():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -312,7 +295,7 @@ def do_validate():
 #===============================================================================
 # Compare active and pending models
 @client_models.route('/compare/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def compare_active_and_pending():
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -342,7 +325,7 @@ def compare_active_and_pending():
 #===============================================================================
 # Update the active model for a client
 @client_models.route('/<int:model_id>/set_active', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def set_active_model(model_id):
     response = { 'status': 'ok', 'message': '', 'payload': {} }
@@ -362,7 +345,7 @@ def set_active_model(model_id):
 #===============================================================================
 # Delete a client model
 @client_models.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_client_model(id):

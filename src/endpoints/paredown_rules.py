@@ -17,7 +17,7 @@ paredown_rules = Blueprint('paredown_rules', __name__)
 # GET ALL Paredown rules
 @paredown_rules.route('/', defaults={'id':None}, methods=['GET'])
 @paredown_rules.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_paredown_rules(id):
@@ -43,7 +43,7 @@ def get_paredown_rules(id):
 #===============================================================================
 # Create Paredown rules
 @paredown_rules.route('/', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def create_paredown_rule():
@@ -122,7 +122,7 @@ def create_paredown_rule():
 #===============================================================================
 # Update a Paredown rule
 @paredown_rules.route('/<int:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_paredown_rule(id):
@@ -207,7 +207,7 @@ def update_paredown_rule(id):
 #===============================================================================
 # DELETE A PAREDOWN RULE
 @paredown_rules.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_paredown_rule(id):

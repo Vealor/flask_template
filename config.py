@@ -3,7 +3,7 @@ from azure.storage.file import FileService
 from datetime import timedelta
 
 class Config(object):
-    VERSION = '0.2.0'
+    VERSION = '0.2.1'
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -55,7 +55,7 @@ class DevelopmentConfig(Config):
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
     CAPS_MASTER_LOCATION = 'caps_gen_master'
-    CDM_TABLES = ['BKPF', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
+    CDM_TABLES = ['BKPF', 'BSAK', 'SKAT', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
                   'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
                   'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
                   'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT', 'SKAT']
@@ -74,7 +74,7 @@ class TestingConfig(Config):
         'port': '5432',
     }
 
-    CDM_TABLES = ['BKPF', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
+    CDM_TABLES = ['BKPF', 'SKAT', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
                   'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
                   'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
                   'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT', 'SKAT']

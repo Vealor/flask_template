@@ -17,3 +17,7 @@ class ForbiddenError(Exception):
 # custom 404 Error
 class NotFoundError(Exception):
     pass
+
+# custom 409 Error
+class DataConflictError(Exception):
+    pass

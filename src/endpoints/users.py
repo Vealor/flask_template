@@ -2,9 +2,11 @@
 User Endpoints
 '''
 import json
-import random
+import psycopg2
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from psycopg2.errors import NotNullViolation
+from sqlalchemy.exc import IntegrityError
 from src.errors import *
 from src.models import *
 from src.util import validate_request_data
@@ -15,7 +17,7 @@ users = Blueprint('users', __name__)
 # GET ALL USER
 @users.route('/', defaults={'id':None}, methods=['GET'])
 @users.route('/<int:id>', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_users(id):
@@ -42,7 +44,7 @@ def get_users(id):
 #===============================================================================
 # POST NEW USER
 @users.route('/', methods=['POST'])
-# @jwt_required
+#@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def create_user():
@@ -106,7 +108,7 @@ def create_user():
 #===============================================================================
 # UPDATE A USER information
 @users.route('/<int:id>', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user(id):
@@ -161,7 +163,7 @@ def update_user(id):
 #===============================================================================
 # Check A USER password
 @users.route('/<int:id>/passcheck', methods=['POST'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 def check_password(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
@@ -184,7 +186,7 @@ def check_password(id):
 #===============================================================================
 # UPDATE A USER password
 @users.route('/<int:id>/passchange', methods=['PUT'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def update_user_password(id):
@@ -221,9 +223,55 @@ def update_user_password(id):
     return jsonify(response), 201
 
 #===============================================================================
+# ACTIVATE A USER
+@users.route('/<int:id>/activate', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def activate_user(id):
+    response = { 'status': '', 'message': '', 'payload': [] }
+
+    query = User.query.filter_by(id=id).first()
+    if not query:
+        raise NotFoundError('User ID {} does not exist.'.format(id))
+
+    if query.is_active:
+        response['message'] = 'User id {} is already active'.format(id)
+    else:
+        response['message'] = 'Activated user id {}'.format(id)
+        query.is_active = True
+        db.session.commit()
+    response['payload'] = [query.serialize]
+
+    return jsonify(response), 200
+
+#===============================================================================
+# DEACTIVATE A USER
+@users.route('/<int:id>/deactivate', methods=['PUT'])
+@jwt_required
+@exception_wrapper()
+# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+def deactivate_user(id):
+    response = { 'status': '', 'message': '', 'payload': [] }
+
+    query = User.query.filter_by(id=id).first()
+    if not query:
+        raise NotFoundError('User ID {} does not exist.'.format(id))
+
+    if not query.is_active:
+        response['message'] = 'User id {} is already deactivated'.format(id)
+    else:
+        response['message'] = 'Deactivated user id {}'.format(id)
+        query.is_active = False
+        db.session.commit()
+    response['payload'] = [query.serialize]
+
+    return jsonify(response), 200
+
+#===============================================================================
 # DELETE A USER
-@users.route('/<int:id>', methods=['DELETE'])
-# @jwt_required
+@users.route('/<int:id>/delete', methods=['DELETE'])
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def delete_user(id):
@@ -232,12 +280,15 @@ def delete_user(id):
     query = User.query.filter_by(id=id).first()
     if not query:
         raise NotFoundError('User ID {} does not exist.'.format(id))
+    try:
+        user = query.serialize
+        db.session.delete(query)
+        db.session.commit()
+    except IntegrityError as e:
+        assert isinstance(e.orig, NotNullViolation)
+        raise DataConflictError('User can not be deleted because they have system data tied to their account. Please try deactivating the user instead.')
 
-    user = query.serialize
-    db.session.delete(query)
-
-    db.session.commit()
-    response['message'] = 'Deleted user id {}'.format(user['id'])
+    response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
 
     return jsonify(response), 200

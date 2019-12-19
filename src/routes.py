@@ -125,6 +125,11 @@ def _handle_endpoint_error(e):
 def _handle_endpoint_error(e):
     response = { 'status': 'Error 405', 'payload': [], 'message': e.description}
     return jsonify(response), 405
+# Conflict
+@api.errorhandler(409)
+def _handle_endpoint_error(e):
+    response = { 'status': 'Error 409', 'payload': [], 'message': e.description}
+    return jsonify(response), 409
 # Unprocessable Entity
 @api.errorhandler(422)
 def _handle_endpoint_error(e):

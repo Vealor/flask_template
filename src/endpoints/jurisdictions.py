@@ -13,7 +13,7 @@ jurisdictions = Blueprint('jurisdictions', __name__)
 #===============================================================================
 # GET ALL JURISDICTIONS
 @jurisdictions.route('/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_jurisdictions():
