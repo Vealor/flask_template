@@ -53,7 +53,7 @@ def preprocess_data(df,preprocess_for='training',**kwargs):
 
     # If appropriate, create the code columns
     if preprocess_for in ['training','validation']:
-        code_cols = list(set([x+"_codes" for x in ['gst','hst','qst','pst','apo']]) & set(df.columns))
+        code_cols = list(set([x+"_codes" for x in ['gst_hst','qst','pst','apo']]) & set(df.columns))
         has_recoverable = lambda code_list: True if any((99 < code < 200) for code in code_list) else False
         df_target = pd.DataFrame({'Target':1*df[code_cols].applymap(lambda d: d if isinstance(d, list) else []).applymap(has_recoverable).any(axis=1)})
         df = df.drop(code_cols, axis = 1)
