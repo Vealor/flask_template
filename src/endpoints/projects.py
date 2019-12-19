@@ -11,6 +11,7 @@ import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
 from functools import reduce
+from sqlalchemy.sql import func
 from src.errors import *
 from src.models import *
 from src.offload.apply_paredown import *
@@ -141,6 +142,9 @@ def post_project():
         'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
+    if len(data['name']) < 1 or len(data['name']) > 128:
+        raise InputError('Name must be greater than 1 character and no more than 128')
+
     # scope key checking
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
@@ -149,7 +153,7 @@ def post_project():
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
     scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
     scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
@@ -184,8 +188,7 @@ def post_project():
         lead_partner_user = lead_part,
         lead_manager_user = lead_mana,
 
-        has_ts_gst = data['tax_scope']['has_ts_gst'],
-        has_ts_hst = data['tax_scope']['has_ts_hst'],
+        has_ts_gst_hst = data['tax_scope']['has_ts_gst_hst'],
         has_ts_qst = data['tax_scope']['has_ts_qst'],
         has_ts_pst = data['tax_scope']['has_ts_pst'],
         has_ts_apo = data['tax_scope']['has_ts_apo'],
@@ -354,16 +357,31 @@ def apply_paredown_rules(id):
             # if all conditions succeeded
             if do_paredown == len(rule['conditions']):
                 # print("APPLY PAREDOWN TO TXN")
-                if not txn.gst_signed_off_by_id:
-                    txn.update_gst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.gst_codes] if txn.gst_codes else []))
-                if not txn.hst_signed_off_by_id:
-                    txn.update_hst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.hst_codes] if txn.hst_codes else []))
+                gst_hst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'gst_hst'] if txn.transaction_codes else []
+                qst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'qst'] if txn.transaction_codes else []
+                pst_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'pst'] if txn.transaction_codes else []
+                apo_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'apo'] if txn.transaction_codes else []
+                if not txn.gst_hst_signed_off_by_id:
+                    if rule['code']['code_number'] not in gst_hst_code_list:
+                        txn.is_paredowned = True
+                        txn.modified = func.now()
+                    txn.update_codes([rule['code']['code_number']] + gst_hst_code_list, 'gst_hst')
                 if not txn.qst_signed_off_by_id:
-                    txn.update_qst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.qst_codes] if txn.qst_codes else []))
+                    if rule['code']['code_number'] not in qst_code_list:
+                        txn.is_paredowned = True
+                        txn.modified = func.now()
+                    txn.update_codes([rule['code']['code_number']] + qst_code_list, 'qst')
                 if not txn.pst_signed_off_by_id:
-                    txn.update_pst_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.pst_codes] if txn.pst_codes else []))
+                    if rule['code']['code_number'] not in pst_code_list:
+                        txn.is_paredowned = True
+                        txn.modified = func.now()
+                    txn.update_codes([rule['code']['code_number']] + pst_code_list, 'pst')
                 if not txn.apo_signed_off_by_id:
-                    txn.update_apo_codes([rule['code']['code_number']] + ([c.serialize['code'] for c in txn.apo_codes] if txn.apo_codes else []))
+                    if rule['code']['code_number'] not in apo_code_list:
+                        txn.is_paredowned = True
+                        txn.modified = func.now()
+                    txn.update_codes([rule['code']['code_number']] + apo_code_list, 'apo')
+                db.session.flush()
 
     db.session.commit()
 
@@ -428,6 +446,7 @@ def apply_prediction(id):
     project_transactions.update({Transaction.is_predicted : True})
     for tr,pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
+        tr.modified = func.now()
 
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
@@ -456,6 +475,9 @@ def update_project(id):
         'engagement_scope': ['dict']
     }
     validate_request_data(data, request_types)
+    if len(data['name']) < 1 or len(data['name']) > 128:
+        raise InputError('Name must be greater than 1 character and no more than 128')
+
     # scope key checking
     def scopecheck(typecheck, basedata, keys):
         for key in keys:
@@ -464,7 +486,7 @@ def update_project(id):
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst','has_ts_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
     scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
     scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
     scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
@@ -504,8 +526,7 @@ def update_project(id):
         raise InputError('User id does not exist for engagement manager.'.format(data['lead_manager_id']))
     query.lead_manager_user = lead_mana
 
-    query.has_ts_gst = data['tax_scope']['has_ts_gst']
-    query.has_ts_hst = data['tax_scope']['has_ts_hst']
+    query.has_ts_gst_hst = data['tax_scope']['has_ts_gst_hst']
     query.has_ts_qst = data['tax_scope']['has_ts_qst']
     query.has_ts_pst = data['tax_scope']['has_ts_pst']
     query.has_ts_apo = data['tax_scope']['has_ts_apo']

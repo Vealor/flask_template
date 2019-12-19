@@ -28,8 +28,7 @@ class Project(db.Model):
     project_transactions = db.relationship('Transaction', back_populates='transaction_project', lazy='dynamic', passive_deletes=True)
     project_data_params = db.relationship('DataParam', back_populates='data_param_project', lazy='dynamic', passive_deletes=True)
 
-    has_ts_gst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    has_ts_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
+    has_ts_gst_hst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_qst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_pst = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     has_ts_apo = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
@@ -90,8 +89,7 @@ class Project(db.Model):
             'lead_partner_id': self.lead_partner_id,
             'lead_manager_id': self.lead_manager_id,
             'tax_scope': {
-                'has_ts_gst': self.has_ts_gst,
-                'has_ts_hst': self.has_ts_hst,
+                'has_ts_gst_hst': self.has_ts_gst_hst,
                 'has_ts_qst': self.has_ts_qst,
                 'has_ts_pst': self.has_ts_pst,
                 'has_ts_apo': self.has_ts_apo,
