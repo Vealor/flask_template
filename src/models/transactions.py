@@ -313,16 +313,12 @@ class Transaction(db.Model):
             'codes': {}
         }
         if self.transaction_project.has_ts_gst_hst and self.gst_hst_signed_off_by_id:
-            # output['codes']['gst_hst'] = [c.serialize['code'] for c in self.gst_hst_codes] if self.gst_hst_codes else []
             output['codes']['gst_hst'] = [c.transaction_code_code.code_number for c in self.transaction_codes if c.tax_type.value == 'gst_hst'] if self.transaction_codes else []
         if self.transaction_project.has_ts_qst and self.qst_signed_off_by_id:
-            # output['codes']['qst'] = [c.serialize['code'] for c in self.qst_codes] if self.qst_codes else []
             output['codes']['qst'] = [c.transaction_code_code.code_number for c in self.transaction_codes if c.tax_type.value == 'qst'] if self.transaction_codes else []
         if self.transaction_project.has_ts_pst and self.pst_signed_off_by_id:
-            # output['codes']['pst'] = [c.serialize['code'] for c in self.pst_codes] if self.pst_codes else []
             output['codes']['pst'] = [c.transaction_code_code.code_number for c in self.transaction_codes if c.tax_type.value == 'pst'] if self.transaction_codes else []
         if self.transaction_project.has_ts_apo and self.apo_signed_off_by_id:
-            # output['codes']['apo'] = [c.serialize['code'] for c in self.apo_codes] if self.apo_codes else []
             output['codes']['apo'] = [c.transaction_code_code.code_number for c in self.transaction_codes if c.tax_type.value == 'apo'] if self.transaction_codes else []
         return output
 
