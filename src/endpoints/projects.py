@@ -363,18 +363,22 @@ def apply_paredown_rules(id):
                 apo_code_list = [c.serialize['code'] for c in txn.transaction_codes if c.tax_type.value == 'apo'] if txn.transaction_codes else []
                 if not txn.gst_hst_signed_off_by_id:
                     if rule['code']['code_number'] not in gst_hst_code_list:
+                        txn.is_paredowned = True
                         txn.modified = func.now()
                     txn.update_codes([rule['code']['code_number']] + gst_hst_code_list, 'gst_hst')
                 if not txn.qst_signed_off_by_id:
                     if rule['code']['code_number'] not in qst_code_list:
+                        txn.is_paredowned = True
                         txn.modified = func.now()
                     txn.update_codes([rule['code']['code_number']] + qst_code_list, 'qst')
                 if not txn.pst_signed_off_by_id:
                     if rule['code']['code_number'] not in pst_code_list:
+                        txn.is_paredowned = True
                         txn.modified = func.now()
                     txn.update_codes([rule['code']['code_number']] + pst_code_list, 'pst')
                 if not txn.apo_signed_off_by_id:
                     if rule['code']['code_number'] not in apo_code_list:
+                        txn.is_paredowned = True
                         txn.modified = func.now()
                     txn.update_codes([rule['code']['code_number']] + apo_code_list, 'apo')
                 db.session.flush()

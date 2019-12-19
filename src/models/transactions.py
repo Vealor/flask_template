@@ -335,19 +335,27 @@ class Transaction(db.Model):
         codes = list(set(input_codes))
         used_session = tempsession if tempsession else db.session
         query = used_session.query(TransactionCode).filter_by(transaction_id=self.id).filter_by(tax_type=eval("TaxTypes."+tax_type)).all()
-
-        for txn_codes in query:
-            if txn_codes.transaction_code_code.code_number in codes:
-                codes.remove(txn_codes.transaction_code_code.code_number)
-            else:
-                used_session.delete(txn_codes)
-        for code in codes:
-            code_query = used_session.query(Code).filter_by(code_number=code).first()
-            if not code_query:
-                raise InputError("Code number {} does not exist.".format(code))
-            used_session.add(TransactionCode(
-                transaction_id = self.id,
-                tax_type=eval("TaxTypes."+tax_type),
-                code_id = code_query.id
-            ))
+        query_codes = ([txn.transaction_code_code.code_number for txn in query])
+        codes.sort()
+        query_codes.sort()
+        print(codes)
+        print(query_codes)
+        if not codes == query_codes:
+            for txn_codes in query:
+                if txn_codes.transaction_code_code.code_number in codes:
+                    codes.remove(txn_codes.transaction_code_code.code_number)
+                else:
+                    used_session.delete(txn_codes)
+            for code in codes:
+                code_query = used_session.query(Code).filter_by(code_number=code).first()
+                if not code_query:
+                    raise InputError("Code number {} does not exist.".format(code))
+                used_session.add(TransactionCode(
+                    transaction_id = self.id,
+                    tax_type=eval("TaxTypes."+tax_type),
+                    code_id = code_query.id
+                ))
+            return True
+        else:
+            return False
         used_session.flush()

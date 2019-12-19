@@ -30,7 +30,7 @@ class TransactionCode(db.Model):
         db.UniqueConstraint('tax_type', 'transaction_id', 'code_id', name='transaction_code_unique_constraint')
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    tax_type = db.Column(db.Enum(Activity), unique=False, server_default=Activity.training.value, nullable=False)
+    tax_type = db.Column(db.Enum(TaxTypes), unique=False, nullable=False)
 
     transaction_id = db.Column(db.Integer, nullable=False) # FK
     transaction_code_transaction = db.relationship('Transaction', back_populates='transaction_codes') # FK
