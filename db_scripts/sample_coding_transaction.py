@@ -45,12 +45,12 @@ if __name__ == '__main__':
     for (tr,co,au,ii) in zip(query.all(), trans_codes, approv_user, range(l)):
         tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
         tr.update_codes([co],'gst_hst')
-        tr.gst_signed_off_by_id = 2
+        tr.gst_hst_signed_off_by_id = 2
         tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
 
     proj = Project.find_by_id(1)
-    proj.has_ts_gst = True
+    proj.has_ts_gst_hst = True
     #proj.has_ts_hst = True
 
     db.session.commit()
