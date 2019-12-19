@@ -54,18 +54,29 @@ def create_paredown_rule():
         'approver1_id' : ['int','NoneType'],
         'approver2_id' : ['int','NoneType'],
         'code_id': ['int'],
-        'is_active': ['bool']
+        'is_active': ['bool'],
+        'conditions': ['list'],
+        'comment': ['str']
     }
     validate_request_data(data, request_types)
-
+    if len(data['comment']) > 128:
+        raise InputError('Comment must be greater than 0 characters and no more than 128')
     if len(data['conditions']) == 0:
         raise InputError("Cannot create paredown rule with no conditions.")
+
     request_types_conditions = {
         'field': ['str'],
-        'operator': ['str']
+        'operator': ['str'],
+        'value': ['str']
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
+        if len(data['field']) < 1 or len(data['field']) > 128:
+            raise InputError('Field for condition must be greater than 1 character and no more than 128')
+        if len(data['operator']) < 1 or len(data['operator']) > 128:
+            raise InputError('Operator for condition must be greater than 1 character and no more than 128')
+        if len(data['value']) < 1 or len(data['value']) > 128:
+            raise InputError('Value for condition must be greater than 1 character and no more than 128')
 
     # Make sure valid user ids are used to approve paredown rules
     for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
@@ -129,16 +140,20 @@ def update_paredown_rule(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 
-    # Validate each condition of the new paredown rule
-    if len(data['conditions']) == 0:
-        raise InputError("Cannot update paredown rule with no conditions.")
     request_types = {
         'approver1_id' : ['int','NoneType'],
         'approver2_id' : ['int','NoneType'],
         'code_id': ['int'],
-        'is_active': ['bool']
+        'is_active': ['bool'],
+        'conditions': ['list'],
+        'comment': ['str']
     }
     validate_request_data(data, request_types)
+    if len(data['comment']) > 128:
+        raise InputError('Comment must be greater than 0 characters and no more than 128')
+    if len(data['conditions']) == 0:
+        raise InputError("Cannot create paredown rule with no conditions.")
+
     request_types_conditions = {
         'field': ['str'],
         'operator': ['str'],
@@ -146,6 +161,12 @@ def update_paredown_rule(id):
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
+        if len(data['field']) < 1 or len(data['field']) > 128:
+            raise InputError('Field for condition must be greater than 1 character and no more than 128')
+        if len(data['operator']) < 1 or len(data['operator']) > 128:
+            raise InputError('Operator for condition must be greater than 1 character and no more than 128')
+        if len(data['value']) < 1 or len(data['value']) > 128:
+            raise InputError('Value for condition must be greater than 1 character and no more than 128')
 
     # Make sure valid user ids are used to approve paredown rules
     for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):

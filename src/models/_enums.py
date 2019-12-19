@@ -159,3 +159,9 @@ class Process(enum.Enum):
     aps_to_caps = "APS to CAPS"
     generate_aps = "Generate AP Subledger"
     caps_calculations = "CAPS Calculation fields"
+
+class TaxTypes(enum.Enum):
+    gst_hst = "gst_hst"
+    qst = "qst"
+    pst = "pst"
+    apo = "apo"

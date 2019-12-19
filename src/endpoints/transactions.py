@@ -146,12 +146,9 @@ def approve_transaction(id):
     query = Transaction.find_by_id(id)
     if not query:
         raise NotFoundError('Transaction ID {} does not exist.'.format(id))
-    if query.transaction_project.has_ts_gst:
-        if not query.gst_signed_off_by_id:
-            raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
-    if query.transaction_project.has_ts_hst:
-        if not query.hst_signed_off_by_id:
-            raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+    if query.transaction_project.has_ts_gst_hst:
+        if not query.gst_hst_signed_off_by_id:
+            raise InputError('Transaction ID {} requires sign off on GST_HST codes before being approved.'.format(id))
     if query.transaction_project.has_ts_qst:
         if not query.qst_signed_off_by_id:
             raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
@@ -171,6 +168,7 @@ def approve_transaction(id):
         response['message'] = 'You have already approved this transaction!'
     else:
         query.approved_user_id = current_user.id
+        query.modified = func.now()
         response['message'] = 'Transaction approved.'
 
     db.session.commit()
@@ -196,12 +194,9 @@ def batch_approve_transaction():
         query = Transaction.find_by_id(id)
         if not query:
             raise NotFoundError('Transaction ID {} does not exist.'.format(id))
-        if query.transaction_project.has_ts_gst:
-            if not query.gst_signed_off_by_id:
-                raise InputError('Transaction ID {} requires sign off on GST codes before being approved.'.format(id))
-        if query.transaction_project.has_ts_hst:
-            if not query.hst_signed_off_by_id:
-                raise InputError('Transaction ID {} requires sign off on HST codes before being approved.'.format(id))
+        if query.transaction_project.has_ts_gst_hst:
+            if not query.gst_hst_signed_off_by_id:
+                raise InputError('Transaction ID {} requires sign off on GST_HST codes before being approved.'.format(id))
         if query.transaction_project.has_ts_qst:
             if not query.qst_signed_off_by_id:
                 raise InputError('Transaction ID {} requires sign off on QST codes before being approved.'.format(id))
@@ -216,6 +211,9 @@ def batch_approve_transaction():
             raise InputError('Transaction ID {} is currently locked and not by you!'.format(id))
         if query.locked_user_id == current_user.id:
             raise InputError('Transaction ID {} is currently locked by you! Please unlock before approval.'.format(id))
+
+        query.approved_user_id = current_user.id
+        query.modified = func.now()
         db.session.flush()
 
     response['message'] = 'Transactions approved.'
@@ -248,6 +246,7 @@ def unapprove_transaction(id):
         response['message'] = 'This transaction is already unapproved!'
     else:
         query.approved_user_id = None
+        query.modified = func.now()
         response['message'] = 'Transaction unapproved.'
 
     db.session.commit()
@@ -278,6 +277,7 @@ def batch_unapprove_transaction():
 
         # TODO: check if use can even unapprove the given transaction
         query.approved_user_id = None
+        query.modified = func.now()
         db.session.flush()
 
     response['message'] = 'Transaction unapproved.'
@@ -299,28 +299,18 @@ def update_transaction(id):
 
     # TODO: make sure user has access to the project
     request_types = {
-        'gst_codes': ['list','NoneType'],
-        'gst_notes_internal': ['str','NoneType'],
-        'gst_notes_external': ['str','NoneType'],
-        'gst_recoveries': ['float','NoneType'],
-        'gst_error_type': ['str','NoneType'],
-        'gst_coded_by_id': ['int','NoneType'],
-        'gst_signed_off_by_id': ['int','NoneType'],
-
-        'hst_codes': ['list','NoneType'],
-        'hst_notes_internal': ['str','NoneType'],
-        'hst_notes_external': ['str','NoneType'],
-        'hst_recoveries': ['float','NoneType'],
-        'hst_error_type': ['str','NoneType'],
-        'hst_coded_by_id': ['int','NoneType'],
-        'hst_signed_off_by_id': ['int','NoneType'],
+        'gst_hst_codes': ['list','NoneType'],
+        'gst_hst_notes_internal': ['str','NoneType'],
+        'gst_hst_notes_external': ['str','NoneType'],
+        'gst_hst_recoveries': ['float','NoneType'],
+        'gst_hst_error_type': ['str','NoneType'],
+        'gst_hst_signed_off_by_id': ['int','NoneType'],
 
         'qst_codes': ['list','NoneType'],
         'qst_notes_internal': ['str','NoneType'],
         'qst_notes_external': ['str','NoneType'],
         'qst_recoveries': ['float','NoneType'],
         'qst_error_type': ['str','NoneType'],
-        'qst_coded_by_id': ['int','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
         'pst_codes': ['list','NoneType'],
@@ -328,7 +318,6 @@ def update_transaction(id):
         'pst_notes_external': ['str','NoneType'],
         'pst_recoveries': ['float','NoneType'],
         'pst_error_type': ['str','NoneType'],
-        'pst_coded_by_id': ['int','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
         'apo_codes': ['list','NoneType'],
@@ -336,10 +325,25 @@ def update_transaction(id):
         'apo_notes_external': ['str','NoneType'],
         'apo_recoveries': ['float','NoneType'],
         'apo_error_type': ['str','NoneType'],
-        'apo_coded_by_id': ['int','NoneType'],
         'apo_signed_off_by_id': ['int','NoneType']
     }
     validate_request_data(data, request_types)
+    if data['gst_hst_notes_internal'] and len(data['gst_hst_notes_internal']) > 2048:
+        raise InputError('GST_HST Internal Notes must be greater than 0 characters and no more than 2048')
+    if data['gst_hst_notes_external'] and len(data['gst_hst_notes_external']) > 2048:
+        raise InputError('GST_HST External Notes must be greater than 0 characters and no more than 2048')
+    if data['qst_notes_internal'] and len(data['qst_notes_internal']) > 2048:
+        raise InputError('QST Internal Notes must be greater than 0 characters and no more than 2048')
+    if data['qst_notes_external'] and len(data['qst_notes_external']) > 2048:
+        raise InputError('QST External Notes must be greater than 0 characters and no more than 2048')
+    if data['pst_notes_internal'] and len(data['pst_notes_internal']) > 2048:
+        raise InputError('PST Internal Notes must be greater than 0 characters and no more than 2048')
+    if data['pst_notes_external'] and len(data['pst_notes_external']) > 2048:
+        raise InputError('PST External Notes must be greater than 0 characters and no more than 2048')
+    if data['apo_notes_internal'] and len(data['apo_notes_internal']) > 2048:
+        raise InputError('APO Internal Notes must be greater than 0 characters and no more than 2048')
+    if data['apo_notes_external'] and len(data['apo_notes_external']) > 2048:
+        raise InputError('APO External Notes must be greater than 0 characters and no more than 2048')
 
     # UPDATE user
     query = Transaction.find_by_id(id)
@@ -351,52 +355,53 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
-    ### GST
-    query.update_gst_codes(list(set(data['gst_codes'])))
-    query.gst_notes_internal = data['gst_notes_internal']
-    query.gst_notes_external = data['gst_notes_external']
-    query.gst_recoveries = data['gst_recoveries']
-    query.gst_error_type = data['gst_error_type']
-    query.gst_coded_by_id = data['gst_coded_by_id']
-    query.gst_signed_off_by_id = data['gst_signed_off_by_id']
+    if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
+        or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])
+        or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])
+        or (query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id'])
+    ):
+        raise InputError('You can not code and sign off the same transaction tax type!')
 
-    ### HST
-    query.update_hst_codes(list(set(data['hst_codes'])))
-    query.hst_notes_internal = data['hst_notes_internal']
-    query.hst_notes_external = data['hst_notes_external']
-    query.hst_recoveries = data['hst_recoveries']
-    query.hst_error_type = data['hst_error_type']
-    query.hst_coded_by_id = data['hst_coded_by_id']
-    query.hst_signed_off_by_id = data['hst_signed_off_by_id']
+    ### GST HST
+    if query.update_codes(list(set(data['gst_hst_codes'])), 'gst_hst'):
+        query.gst_hst_coded_by_id = current_user.id
+    query.gst_hst_notes_internal = data['gst_hst_notes_internal']
+    query.gst_hst_notes_external = data['gst_hst_notes_external']
+    query.gst_hst_recoveries = data['gst_hst_recoveries']
+    query.gst_hst_error_type = data['gst_hst_error_type']
+    query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
 
     ### QST
-    query.update_qst_codes(list(set(data['qst_codes'])))
+    if query.update_codes(list(set(data['qst_codes'])), 'qst'):
+        query.qst_coded_by_id = current_user.id
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
-    query.qst_coded_by_id = data['qst_coded_by_id']
     query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     ### PST
-    query.update_pst_codes(list(set(data['pst_codes'])))
+    if query.update_codes(list(set(data['pst_codes'])), 'pst'):
+        query.pst_coded_by_id = current_user.id
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
-    query.pst_coded_by_id = data['pst_coded_by_id']
     query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     ### APO
-    query.update_apo_codes(list(set(data['apo_codes'])))
+    if query.update_codes(list(set(data['apo_codes'])), 'apo'):
+        print("APO")
+        print(current_user.id)
+        query.apo_coded_by_id = current_user.id
+    print(query.apo_coded_by_id)
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
     query.apo_error_type = data['apo_error_type']
-    query.apo_coded_by_id = data['apo_coded_by_id']
     query.apo_signed_off_by_id = data['apo_signed_off_by_id']
 
-    # TODO: ADD MODIFIED DATETIME
+    query.modified = func.now()
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]

@@ -55,6 +55,9 @@ def post_client():
         'client_entities': ['list']
     }
     validate_request_data(data, request_types)
+    if len(data['name']) < 1 or len(data['name']) > 128:
+        raise InputError('Name must be greater than 1 character and no more than 128')
+
     client_entity_types = {
         'company_code': ['str'],
         'lob_sector': ['str'],
@@ -62,6 +65,9 @@ def post_client():
     }
     for entity in data['client_entities']:
         validate_request_data(entity, client_entity_types)
+        if len(entity['company_code']) < 1 or len(entity['company_code']) > 4:
+            raise InputError('Company Code for entity must be greater than 1 character and no more than 4')
+
 
     # check if this name exists
     check = Client.query.filter_by(name=data['name']).first()
