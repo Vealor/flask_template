@@ -29,9 +29,11 @@ PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Inter Pipeline 2019 IndTaxRA 2015-2018', 9, 18, 1);
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Keyera 2019 IndTaxRA 2014-2017', 10, 18, 1);
   insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Pretium 2019 IndTaxRA 2015-2018', 11, 18, 1);
+  insert into projects (name, client_id, lead_partner_id, lead_manager_id) values ('Nexen Energy 2017 IndTaxRA 2011-2012', 1, 18, 1);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
   insert into caps_gen (user_id, project_id, is_completed) values (1, 1, True);
+  insert into caps_gen (user_id, project_id, is_completed) values (1, 15, True);
   insert into fx_rates (date, usdtocad) values ('2010-01-01', 1.56);
   insert into fx_rates (date, usdtocad) values ('2010-01-02', 1.57);
   insert into user_project (user_id, project_id) values (1, 1);
