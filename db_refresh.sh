@@ -41,8 +41,6 @@ FAKE="\n[\e[93mFAKE\e[39m]\t"
 sleep 1 && echo -e "$SYSTEM\tRebuilding Database" && sleep 1
 ./db_scripts/db_rebuild.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
 
-printf "\n" && read -n 1 -s -r -p "START SERVER NOW >> Press any key to continue once started" && printf "\n"
-
 sleep 1 && echo -e "$BASE\tCreating initial users" && sleep 1
 ./db_scripts/create_users.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
 

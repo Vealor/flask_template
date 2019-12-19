@@ -16,7 +16,7 @@ api.register_blueprint(auth, url_prefix='/auth')
 from src.endpoints.caps_gen import caps_gen
 api.register_blueprint(caps_gen, url_prefix='/caps_gen')
 
-# Client Endpoints
+# CDMLabel Endpoints
 from src.endpoints.cdm_labels import cdm_labels
 api.register_blueprint(cdm_labels, url_prefix='/cdm_labels')
 
@@ -32,6 +32,10 @@ api.register_blueprint(client_models, url_prefix='/client_models')
 from src.endpoints.client_vendor_master import client_vendor_master
 api.register_blueprint(client_vendor_master, url_prefix='/client_vendor_master')
 
+# Client Tax GL Extract Endpoint
+from src.endpoints.client_tax_gl_extract import client_tax_gl_extract
+api.register_blueprint(client_tax_gl_extract, url_prefix='/client_tax_gl_extract')
+
 # Code Endpoint
 from src.endpoints.codes import codes
 api.register_blueprint(codes, url_prefix='/codes')
@@ -40,9 +44,13 @@ api.register_blueprint(codes, url_prefix='/codes')
 from src.endpoints.data_mappings import data_mappings
 api.register_blueprint(data_mappings, url_prefix='/data_mappings')
 
-# ClientModel Endpoints
+# DataParam Endpoints
 from src.endpoints.data_params import data_params
 api.register_blueprint(data_params, url_prefix='/data_params')
+
+# ErrorCategory Endpoints
+from src.endpoints.error_categories import error_categories
+api.register_blueprint(error_categories, url_prefix='/error_categories')
 
 # FXrates Endpoints
 from src.endpoints.fx_rates import fx_rates
