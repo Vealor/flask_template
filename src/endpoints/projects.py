@@ -77,47 +77,129 @@ def get_projects(id):
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def get_predictive_calculations(id):
+   
+    # helper function to calculate recovery value and volume for step 1
+    def calculate_tax(province,  prediction_strength_lower=0, prediction_strength_upper=1):
+        engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
+        results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                               COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
+                                COUNT(id)
+                                FROM transactions 
+                                WHERE project_id = {project_id}
+                                AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                                """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        ap_amt_sum, itc_claimed, tx_num = results[0], results[1], results[2]
+        if province == "ab" or province == "nt" or province == "yt" or province  == "nu":
+            total_value = (-1 * ap_amt_sum) * 5 / 105 - itc_claimed
+        elif province == "bc" or province == "sk" or province == "mb":
+            gst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0), 
+                            COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
+                            COALESCE(COUNT(id), 0)
+                            FROM transactions 
+                            WHERE project_id = {project_id}
+                            AND CAST(data->>'pst_sa' AS FLOAT) > 0
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+            ap_amt_sum, pst_sa_sum, none_zero_tx_num = gst_results[0], gst_results[1], gst_results[2]
+            pst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                            COALESCE(COUNT(id), 0)
+                            FROM transactions 
+                            WHERE project_id = {project_id}
+                            AND CAST(data->>'pst_sa' AS FLOAT) = 0
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+            zero_pst_amt_sum, zero_pst_tx_num = pst_results[0], pst_results[1]
+            total_value = (-1 * ap_amt_sum + -1 * zero_pst_amt_sum) * 5 / 112 - itc_claimed + pst_sa_sum + ( -1 *  zero_pst_amt_sum * 7 / 112)
+            tx_num = none_zero_tx_num + zero_pst_tx_num
+        elif province == "qc" :
+            qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0) 
+                            FROM transactions 
+                            WHERE project_id = {project_id}
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                            """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+            qst_claimed =  qst_results[0]
+            gst_value = (-1 * ap_amt_sum) * 5 / 114.975 - itc_claimed
+            qst_value = (-1 * ap_amt_sum) * 9.975 / 114.975 - qst_claimed
+            total_value = gst_value + qst_value
+        elif province == "nb" or province == "ns" or province == "on" or province == "pe" or province == "nl":
+            total_value = (-1 * ap_amt_sum) * 13 / 113 - itc_claimed
+        else:
+            raise ValueError("No matching jurisdiction rule found for:{ }".format(province))
+        return total_value, tx_num
+    
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-
     query = Project.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('Project ID {} does not exist.'.format(id))
-    if 'vendor_num' not in args.keys():
-        raise InputError('Please specify a vendor_num as an argument for the query.')
-
-    green_pst_but_no_qst = None
-    yellow_pst_but_no_qst = None
-
-    average_number = engine.execute("""select AVG(cast(data ->> 'eff_rate' as float))
-                from transactions as R
-                where cast(data ->> 'vend_num' as text) = '{vend_num}'
-                and project_id = {project_id}
-                and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
-                """.format(project_id = project_id, vend_num = vend_num))
-
-    print(average_number)
-
-    engine.execute("""
-    select id, (cast(data ->> 'ap_amt' as float) * {average_number}) - cast(data ->> 'gst_hst' as float) from transactions
-    where data ->> 'ap_amt' is not null and id = {transaction_id};
-    """.format(transaction_id = transaction_id, average_number = average_number))
-
-
-
-    transaction_set = Transaction.query.filter_by(project_id=id)
-    transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
-
-    for txn in transaction_set:
-        # do calculations
-        pass
-
-
+    client_id = query.first().serialize['client_id']
+    jurisdiction = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
+    if len(jurisdiction) == 1:
+        province = jurisdiction[0]['code'].lower()
+        green_total_value, green_tx_num = calculate_tax(province, prediction_strength_lower=0.9)
+        yellow_total_value, yellow_tx_num = calculate_tax(province, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
 
     response['payload'] = {
-        'green_pst_but_no_qst': green_pst_but_no_qst,
-        'yellow_pst_but_no_qst': yellow_pst_but_no_qst,
+        "green_value": green_total_value,
+        "green_volume": green_tx_num,
+        "yellow_value": yellow_total_value,
+        "yellow_volume": yellow_tx_num
     }
+    #  engine.execute("""select data ->> 'ap_amout' as float))
+    #             from transactions as R
+    #             where cast(data ->> 'vend_num' as text) = '{vend_num}'
+    #             and project_id = {project_id}
+    #             and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
+    #             """.format(project_id = project_id, vend_num = vend_num))
+
+    # if len(jurisdiction) == 1:
+    #     province = jurisdiction[0]
+    #     ap_amount = 0
+    #     itc_claimed = 0 
+
+    #     if province == "AB" or province == "NT" or province == "YT" or province  == "NU":
+    #         gst_value = ap_amount * 5/105 - itc_claimed
+    #     elif province == "BC" or province == "SK" or province == "MB":
+    #         psg_value = 
+    #     elif province == "QC" :
+    #     elif province == "NB" or province == "NS", or procince == "ON" or prvince == "PE":
+    #     else:
+    # TODO: for step 2
+    # if 'vendor_num' not in args.keys():
+    #     raise InputError('Please specify a vendor_num as an argument for the query.')
+
+    # green_pst_but_no_qst = None
+    # yellow_pst_but_no_qst = None
+
+    # average_number = engine.execute("""select AVG(cast(data ->> 'eff_rate' as float))
+    #             from transactions as R
+    #             where cast(data ->> 'vend_num' as text) = '{vend_num}'
+    #             and project_id = {project_id}
+    #             and data ->> 'transaction_attributes' NOT LIKE '%NoITC%';
+    #             """.format(project_id = project_id, vend_num = vend_num))
+
+    # print(average_number)
+
+    # engine.execute("""
+    # select id, (cast(data ->> 'ap_amt' as float) * {average_number}) - cast(data ->> 'gst_hst' as float) from transactions
+    # where data ->> 'ap_amt' is not null and id = {transaction_id};
+    # """.format(transaction_id = transaction_id, average_number = average_number))
+
+
+
+    # transaction_set = Transaction.query.filter_by(project_id=id)
+    # transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
+
+    # for txn in transaction_set:
+    #     # do calculations
+    #     pass
+
+
+
+    # response['payload'] = {
+    #     'green_pst_but_no_qst': green_pst_but_no_qst,
+    #     'yellow_pst_but_no_qst': yellow_pst_but_no_qst,
+    # }
 
     return jsonify(response)
 
