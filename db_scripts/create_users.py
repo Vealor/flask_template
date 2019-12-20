@@ -30,6 +30,11 @@ with api.app_context():
         {'username': 'psylvester', 'password': 'test', 'email': 'psylvester@test.test', 'initials': 'PS', 'first_name': 'Pen', 'last_name': 'Sylvester', 'role': 'administrative_assistant'},
         {'username': 'arails', 'password': 'test', 'email': 'arails@test.test', 'initials': 'AR', 'first_name': 'Adam', 'last_name': 'Rails', 'role': 'administrative_assistant'},
         {'username': 'vmaximus', 'password': 'test', 'email': 'vmaximus@test.test', 'initials': 'VM', 'first_name': 'Vance', 'last_name': 'Maximus', 'role': 'tax_practitioner'},
+
+        # UAT USERS
+        {'username': 'tax_master', 'password': 'test', 'email': 'tax_master@test.test', 'initials': 'tm', 'first_name': 'Tax', 'last_name': 'Master', 'role': 'tax_master'},
+        {'username': 'data_master', 'password': 'test', 'email': 'data_master@test.test', 'initials': 'dm', 'first_name': 'Data', 'last_name': 'Master', 'role': 'data_master'},
+
     ]
 
     for data in base_userlist:
@@ -51,6 +56,9 @@ with api.app_context():
         initials = 'lh'.upper(), first_name = 'Lighthouse', last_name = 'GVA',
         role = 'tax_master', is_system_administrator = True, is_superuser = True
     ))
+
+    # LH GVA USER
+
 
     # ITRA USERS
     itra_userlist = [
