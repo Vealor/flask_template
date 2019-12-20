@@ -355,13 +355,6 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
-    if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
-        or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])
-        or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])
-        or (query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id'])
-    ):
-        raise InputError('You can not code and sign off the same transaction tax type!')
-
     ### GST HST
     if query.update_codes(list(set(data['gst_hst_codes'])), 'gst_hst'):
         query.gst_hst_coded_by_id = current_user.id
@@ -391,10 +384,7 @@ def update_transaction(id):
 
     ### APO
     if query.update_codes(list(set(data['apo_codes'])), 'apo'):
-        print("APO")
-        print(current_user.id)
         query.apo_coded_by_id = current_user.id
-    print(query.apo_coded_by_id)
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
@@ -402,6 +392,13 @@ def update_transaction(id):
     query.apo_signed_off_by_id = data['apo_signed_off_by_id']
 
     query.modified = func.now()
+
+    if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
+        or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])
+        or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])
+        or (query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id'])
+    ):
+        raise InputError('You can not code and sign off the same transaction tax type!')
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
