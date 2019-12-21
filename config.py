@@ -14,6 +14,10 @@ class Config(object):
     # Enable protection agains *Cross-site Request Forgery (CSRF)*
     CSRF_ENABLED = True
 
+
+    SENDGRID_API_KEY = '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'
+    OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT
@@ -88,6 +92,7 @@ class TestingConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+    SENDGRID_API_KEY = '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'
     OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
 
     CAPS_BASE_DIR = 'caps-gen-processing'
