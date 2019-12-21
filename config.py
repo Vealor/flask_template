@@ -88,6 +88,7 @@ class TestingConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
     DATABASE_CONNECT_OPTIONS = {}
+    OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
 
     CAPS_BASE_DIR = 'caps-gen-processing'
     CAPS_RAW_LOCATION = 'caps_gen_raw'
