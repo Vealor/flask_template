@@ -8,7 +8,7 @@ DATABASE=itra_db #4
 PASSWORD=LHDEV1234 #5
 PORT=5000 #6
 BACKEND=http://localhost #7
-$2=2
+echo "ID $2 USED"
 # TESTING
 if [[ $1 == *"test"* ]]; then
   echo "TESTING"
@@ -19,7 +19,7 @@ if [[ $1 == *"test"* ]]; then
   PASSWORD=Kpmg1234@ #5
   PORT=443 #6
   BACKEND=https://itra-backend-uat.azurewebsites.net #7
-  $2=3
+  echo "ID $2 USED"
 fi
 
 PGPASSWORD=$PASSWORD psql -h $DB_URL -U $USERNAME $DATABASE -c "
