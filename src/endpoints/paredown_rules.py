@@ -63,7 +63,6 @@ def create_paredown_rule():
         raise InputError('Comment must be greater than 0 characters and no more than 128')
     if len(data['conditions']) == 0:
         raise InputError("Cannot create paredown rule with no conditions.")
-
     request_types_conditions = {
         'field': ['str'],
         'operator': ['str'],
@@ -71,13 +70,12 @@ def create_paredown_rule():
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
-        if len(data['field']) < 1 or len(data['field']) > 128:
+        if len(cond['field']) < 1 or len(cond['field']) > 128:
             raise InputError('Field for condition must be greater than 1 character and no more than 128')
-        if len(data['operator']) < 1 or len(data['operator']) > 128:
+        if len(cond['operator']) < 1 or len(cond['operator']) > 128:
             raise InputError('Operator for condition must be greater than 1 character and no more than 128')
-        if len(data['value']) < 1 or len(data['value']) > 128:
+        if len(cond['value']) < 1 or len(cond['value']) > 128:
             raise InputError('Value for condition must be greater than 1 character and no more than 128')
-
     # Make sure valid user ids are used to approve paredown rules
     for approver_id in filter(None, [data['approver1_id'], data['approver2_id']]):
         user = User.find_by_id(approver_id)
@@ -85,11 +83,9 @@ def create_paredown_rule():
             raise InputError("User ID {} does not exist.".format(approver_id))
         if not (user.role == Roles.tax_master or user.is_superuser):
             raise InputError("User ID {} is not a valid approver for Paredown rules.".format(user.id))
-
     codecheck = Code.find_by_id(data['code_id'])
     if not codecheck:
         raise InputError("Code ID {} does not exist.".format(data['code_id']))
-
     lob_sectors = []
     # Create the new paredown rule
     for lob_sec in data['lob_sectors']:
@@ -97,7 +93,6 @@ def create_paredown_rule():
             raise InputError('Specified lob_sec does not exist.')
         if LineOfBusinessSectors[lob_sec] not in lob_sectors:
             lob_sectors.append(LineOfBusinessSectors[lob_sec])
-
     new_paredown_rule = ParedownRule(
         paredown_rule_approver1_id = data['approver1_id'],
         paredown_rule_approver2_id = data['approver2_id'],
@@ -109,7 +104,6 @@ def create_paredown_rule():
     )
     db.session.add(new_paredown_rule)
     db.session.flush()
-
     # Create the conditions for the paredown rule
     for cond in data['conditions']:
         op_types = ['contains','>','<','==','>=','<=','!=']
@@ -123,7 +117,6 @@ def create_paredown_rule():
         )
         db.session.add(new_paredown_condition)
         db.session.flush()
-
     db.session.commit()
     response['message'] = 'Created Paredown Rule ID with {}.'.format(new_paredown_rule.id)
     response['payload'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
@@ -161,11 +154,11 @@ def update_paredown_rule(id):
     }
     for cond in data['conditions']:
         validate_request_data(cond, request_types_conditions)
-        if len(data['field']) < 1 or len(data['field']) > 128:
+        if len(cond['field']) < 1 or len(cond['field']) > 128:
             raise InputError('Field for condition must be greater than 1 character and no more than 128')
-        if len(data['operator']) < 1 or len(data['operator']) > 128:
+        if len(cond['operator']) < 1 or len(cond['operator']) > 128:
             raise InputError('Operator for condition must be greater than 1 character and no more than 128')
-        if len(data['value']) < 1 or len(data['value']) > 128:
+        if len(cond['value']) < 1 or len(cond['value']) > 128:
             raise InputError('Value for condition must be greater than 1 character and no more than 128')
 
     # Make sure valid user ids are used to approve paredown rules
