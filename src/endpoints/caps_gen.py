@@ -148,13 +148,13 @@ def init_caps_gen():
     db.session.add(caps_gen)
     db.session.flush()
 
-    labels = [i.script_label for i in CDMLabel.query.all() if not i.is_calculated]
-    for label in labels:
-        new_mapping = DataMapping(
-            caps_gen_id = caps_gen.id,
-            cdm_label_script_label = label
-        )
-        db.session.add(new_mapping)
+    # labels = [i.script_label for i in CDMLabel.query.all() if not i.is_calculated]
+    # for label in labels:
+    #     new_mapping = DataMapping(
+    #         caps_gen_id = caps_gen.id,
+    #         cdm_label_script_label = label
+    #     )
+    #     db.session.add(new_mapping)
     db.session.commit()
     print('caps_gen model and data_mappings created')
 
