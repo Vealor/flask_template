@@ -10,6 +10,7 @@ import zipfile
 import requests
 import itertools
 import collections
+import subprocess
 import multiprocessing as mp
 from anytree import Node, RenderTree
 from collections import Counter
@@ -239,7 +240,12 @@ def init_caps_gen():
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
+        
+        res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
+        for line in res.splitlines():
+            print(line)
     except Exception as e:
+        print(str(e))
         ## Remove data from caps_gen_master
         master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
         list(map(os.unlink, (os.path.join(master_tables_path, f) for f in os.listdir(master_tables_path))))
