@@ -230,6 +230,7 @@ def init_caps_gen():
 
         #####
 
+
         db.session.commit()
         ## Remove data from caps_gen_master
         master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
@@ -958,6 +959,7 @@ def view_caps(id):
 #===============================================================================
 # CAPS to Transactions
 # This transforms all approved caps_gen tables to Transactions for the project
+
 @caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
 @jwt_required
 @exception_wrapper()
@@ -982,7 +984,7 @@ def caps_to_transactions(id):
 
 
     # caps_gen.caps_gen_project
-    caps_gen.is_complete = True
+    caps_gen.first().is_completed = True
     db.session.commit()
 
     # create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
