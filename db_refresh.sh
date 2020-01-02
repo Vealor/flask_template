@@ -8,6 +8,7 @@ DATABASE=itra_db #4
 PASSWORD=LHDEV1234 #5
 PORT=5000 #6
 BACKEND=http://localhost #7
+ID=3
 
 # TESTING
 if [[ $1 == *"test"* ]]; then
@@ -19,6 +20,7 @@ if [[ $1 == *"test"* ]]; then
   PASSWORD=Kpmg1234@ #5
   PORT=443 #6
   BACKEND=https://itra-backend-uat.azurewebsites.net #7
+  ID=3
 
 # PRODUCTION
 elif [[ $1 == *"prod"* ]]; then
@@ -30,6 +32,7 @@ elif [[ $1 == *"prod"* ]]; then
   PASSWORD=LHDEV1234 #5
   PORT=5000 #6
   BACKEND=http://localhost #7
+  ID=3
 fi
 
 
@@ -56,7 +59,7 @@ sleep 1 && echo -e "$BASE\tInserting CDM labels" && sleep 1
 ./db_scripts/insert_cdm_labels.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
 
 sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings" && sleep 1
-./db_scripts/_insert_nexen_data_mappings.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
+./db_scripts/_insert_nexen_data_mappings.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND $ID
 
 # sleep 1 && echo -e "$FAKE\tInserting Nexen data mappings - EMPTY CAPSGEN MAPPING" && sleep 1
 # ./db_scripts/_insert_nexen_data_mappings_mk2.sh $DB_URL $FLASK_ENV $USERNAME $DATABASE $PASSWORD $PORT $BACKEND
