@@ -38,8 +38,8 @@ class Transaction(db.Model):
     rbc_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     rbc_recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
-
-
+    #TODO: Make sure transactions dont get deleted if caps gen gets deleted as a failsafe
+    caps_gen_id = db.Column(db.Integer, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
     {
     # transaction_attributes

@@ -241,7 +241,7 @@ def init_caps_gen():
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
-        
+
         res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
         for line in res.splitlines():
             print(line)
@@ -985,7 +985,7 @@ def caps_to_transactions(id):
         print('deleting')
         engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
 
-    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps) row;'.format(project_id=project_id))
+    result = engine.execute('INSERT INTO transactions(data, project_id, caps_gen_id) select row_to_json(row) as data , {project_id} project_id, {caps_gen_id} caps_gen_id from (select * from sap_caps) row;'.format(project_id=project_id, caps_gen_id=id))
     db.session.commit()
 
 
