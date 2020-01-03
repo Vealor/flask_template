@@ -857,7 +857,8 @@ def aps_quality_check(id):
 def aps_to_caps(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-
+    print("caps id")
+    print(id)
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
@@ -981,11 +982,11 @@ def caps_to_transactions(id):
     project_id = (caps_gen.first()).project_id
     print(project_id)
     print('it got here')
-    if Transaction.query.filter_by(project_id=project_id).first():
-        print('deleting')
-        engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
+    # if Transaction.query.filter_by(project_id=project_id).first():
+    #     print('deleting')
+    #     engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
 
-    result = engine.execute('INSERT INTO transactions(data, project_id, caps_gen_id) select row_to_json(row) as data , {project_id} project_id, {caps_gen_id} caps_gen_id from (select * from sap_caps) row;'.format(project_id=project_id, caps_gen_id=id))
+    result = engine.execute('INSERT INTO transactions(data, project_id, caps_gen_id) select row_to_json(row) as data , {project_id} project_id, {caps_gen_id} caps_gen_id from (select * from sap_caps where caps_gen_id={caps_gen_id}) row;'.format(project_id=project_id, caps_gen_id=id))
     db.session.commit()
 
 
