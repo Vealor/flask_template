@@ -504,9 +504,6 @@ def init_caps_gen():
               INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','INCO1',{caps_gen_id},'tinct_inco1_key');
               INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','SPRAS',{caps_gen_id},'tinct_spras_key');
               """.format(caps_gen_id=caps_gen.id))
-            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "test", str(caps_gen.id)])
-            for line in res.splitlines():
-                print(line)
         else:
             res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
             for line in res.splitlines():
