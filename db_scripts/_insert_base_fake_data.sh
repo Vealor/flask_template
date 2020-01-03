@@ -102,5 +102,4 @@ PGPASSWORD=$5 psql -h $1 -U $3 $4 -c "
   insert into user_project (user_id, project_id) values (1, 12);
   insert into user_project (user_id, project_id) values (1, 13);
   insert into user_project (user_id, project_id) values (1, 14);
-  insert into user_project (user_id, project_id) values (1, 15);
 "
