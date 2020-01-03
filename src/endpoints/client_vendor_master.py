@@ -25,7 +25,7 @@ def get_client_vendor_master():
         raise NotFoundError('Project does not exist.')
 
     query = CapsGen.query.order_by(desc(CapsGen.created))
-    query = query.filter_by(project_id=args['project_id'])
+    query = query.filter_by(project_id=args['project_id'], is_completed=True)
 
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)

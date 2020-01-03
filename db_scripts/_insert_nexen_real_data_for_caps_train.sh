@@ -41,7 +41,6 @@ fi
 
 # sed -i 's/|$old_id|/|$new_id|/g' ./../caps_50_final.csv
 PGPASSWORD=$PASSWORD psql -h $DB_URL -U $USERNAME $DATABASE -c "\\copy sap_caps(
-id,
 transaction_attributes,
     even_gst_ind,
     odd_imm,

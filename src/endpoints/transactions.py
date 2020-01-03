@@ -30,8 +30,8 @@ def get_transactions(id):
             raise InputError('Please specify a Transaction ID in the URL or a Project ID as an argument for the transactions query.')
         if 'project_id' in args.keys() and args['project_id'].isdigit() :
             # Get newest caps_gen id
-            caps_gen= CapsGen.query.filter_by(project_id=args['project_id']).order_by(desc(CapsGen.created)).first() 
-            query = query.filter_by(project_id=args['project_id'], caps_gen_id=caps_gen.id) 
+            caps_gen= CapsGen.query.filter_by(project_id=args['project_id'], is_completed=True).order_by(desc(CapsGen.created)).first() 
+            query = query.filter_by(project_id=args['project_id'], caps_gen_id=caps_gen.id)
     else:
         # ID filter
         query = query.filter_by(id=id)
