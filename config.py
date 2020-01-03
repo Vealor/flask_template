@@ -3,7 +3,7 @@ from azure.storage.file import FileService
 from datetime import timedelta
 
 class Config(object):
-    VERSION = '0.2.1'
+    VERSION = '0.2.2'
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle

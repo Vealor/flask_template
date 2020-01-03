@@ -242,9 +242,14 @@ def init_caps_gen():
         response['message'] = 'Data successfully uploaded and CapsGen initialized.'
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
 
-        res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
-        for line in res.splitlines():
-            print(line)
+        if os.environ['FLASK_ENV'] == 'testing':
+            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "test", str(caps_gen.id)])
+            for line in res.splitlines():
+                print(line)
+        else:
+            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
+            for line in res.splitlines():
+                print(line)
     except Exception as e:
         print(str(e))
         ## Remove data from caps_gen_master
