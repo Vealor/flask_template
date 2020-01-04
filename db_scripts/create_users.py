@@ -38,15 +38,27 @@ with api.app_context():
     ]
 
     for data in base_userlist:
-        newuser = User(
-            username = data['username'],
-            password = User.generate_hash(data['password']),
-            email = data['email'],
-            initials = data['initials'].upper(),
-            first_name = data['first_name'],
-            last_name = data['last_name'],
-            role = data['role']
-        )
+        if data['role'] in ['tax_master', 'data_master']:
+            newuser = User(
+                username = data['username'],
+                password = User.generate_hash(data['password']),
+                email = data['email'],
+                initials = data['initials'].upper(),
+                first_name = data['first_name'],
+                last_name = data['last_name'],
+                role = data['role'],
+                is_system_administrator = True
+            )
+        else:
+            newuser = User(
+                username = data['username'],
+                password = User.generate_hash(data['password']),
+                email = data['email'],
+                initials = data['initials'].upper(),
+                first_name = data['first_name'],
+                last_name = data['last_name'],
+                role = data['role']
+            )
         db.session.add(newuser)
 
     # LH GVA USER
