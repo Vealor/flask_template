@@ -14,7 +14,7 @@ from src.prediction import preprocessing as prepr
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.DevelopmentConfig')
+    app.config.from_object('config.TestingConfig')
     db.init_app(app)
     return app
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         tr.approved_user_id = au
         progress(ii, l, 'Updating Transaction data' )
 
-    proj = Project.find_by_id(1)
+    proj = Project.find_by_id(15)
     proj.has_ts_gst_hst = True
     #proj.has_ts_hst = True
 
