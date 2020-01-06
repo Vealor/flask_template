@@ -2,7 +2,7 @@
 # Generates raw account sum, groups largest_debit_half_acct_num_gl and varapkey, sums on dmbtr,
 # wrbtr, pswbt, dmbe2, vardocamt, and varlocamt. retrieves first row num for
 # everything else. order by vartranamount
-def j101():
+def j101(caps_gen_id):
     j101 = """
     DROP TABLE IF EXISTS aps_acct_summ;
     SELECT
@@ -170,6 +170,7 @@ bseg_umskz_key
          DESC) AS roworder
            FROM
               sap_aps
+              where caps_gen_id = {caps_gen_id}
         )
         AS subq
      WHERE
@@ -179,9 +180,7 @@ bseg_umskz_key
     ON l.varapkey = r.varapkey_temp
     AND l.largest_debit_half_acct_num_gl = r.largest_debit_half_acct_num_gl_temp
     order by varlocamt desc
-
-
-    """
+    """.format(caps_gen_id = caps_gen_id)
     return j101
 
 def j102():
@@ -1543,8 +1542,9 @@ def j105():
     """
     return j105
 
-def j106():
+def j106(caps_gen_id):
     j106 = """
+    DELETE FROM sap_caps where caps_gen_id = {caps_gen_id}
     INSERT INTO sap_caps (
     transaction_attributes,
     even_gst_ind,
@@ -1834,5 +1834,5 @@ def j106():
     --vend_phone,
     --vend_person,
     --purch_org_descr_po
-     from caps_with_attributes"""
+     from caps_with_attributes""".format(caps_gen_id = caps_gen_id)
     return j106

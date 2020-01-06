@@ -1131,12 +1131,12 @@ def aps_to_caps(id):
         result = db.session.execute(query)
         db.session.commit()
         return
-    execute(j101())
+    execute(j101(id))
     execute(j102())
     execute(j103())
     execute(j104())
     execute(j105())
-    execute(j106())
+    execute(j106(id))
 
 
 
