@@ -1544,7 +1544,7 @@ def j105():
 
 def j106(caps_gen_id):
     j106 = """
-    DELETE FROM sap_caps where caps_gen_id = {caps_gen_id}
+    DELETE FROM sap_caps where caps_gen_id = {caps_gen_id};
     INSERT INTO sap_caps (
     transaction_attributes,
     even_gst_ind,
