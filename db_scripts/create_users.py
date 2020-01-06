@@ -38,27 +38,15 @@ with api.app_context():
     ]
 
     for data in base_userlist:
-        if data['role'] in ['tax_master', 'data_master']:
-            newuser = User(
-                username = data['username'],
-                password = User.generate_hash(data['password']),
-                email = data['email'],
-                initials = data['initials'].upper(),
-                first_name = data['first_name'],
-                last_name = data['last_name'],
-                role = data['role'],
-                is_system_administrator = True
-            )
-        else:
-            newuser = User(
-                username = data['username'],
-                password = User.generate_hash(data['password']),
-                email = data['email'],
-                initials = data['initials'].upper(),
-                first_name = data['first_name'],
-                last_name = data['last_name'],
-                role = data['role']
-            )
+        newuser = User(
+            username = data['username'],
+            password = User.generate_hash(data['password']),
+            email = data['email'],
+            initials = data['initials'].upper(),
+            first_name = data['first_name'],
+            last_name = data['last_name'],
+            role = data['role']
+        )
         db.session.add(newuser)
 
     # LH GVA USER
@@ -69,11 +57,12 @@ with api.app_context():
         role = 'tax_master', is_system_administrator = True, is_superuser = True
     ))
 
-    # LH GVA USER
 
-
-    # ITRA USERS
     itra_userlist = [
+        # UAT User SysAdmin
+        {'username': 'system_administrator', 'password': 'test', 'email': 'system_administrator@test.test', 'initials': 'sa', 'first_name': 'System', 'last_name': 'Administrator', 'role': 'tax_master'},
+
+        # ITRA USERS
         {'username': 'ejensen', 'password': 'ejensen', 'email': 'ejensen@test.test', 'initials': 'edj', 'first_name': 'Erin', 'last_name': 'Jensen', 'role': 'tax_master'},
         {'username': 'nataliakrizbai', 'password': 'nataliakrizbai', 'email': 'nataliakrizbai@test.test', 'initials': 'nk', 'first_name': 'Natalia', 'last_name': 'Krizbai', 'role': 'tax_master'},
         {'username': 'dcallow', 'password': 'dcallow', 'email': 'dcallow@test.test', 'initials': 'dtc', 'first_name': 'Dylan', 'last_name': 'Callow', 'role': 'tax_master'},

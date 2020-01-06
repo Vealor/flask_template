@@ -111,9 +111,6 @@ def create_user():
     if 'is_system_administrator' in data.keys():
         is_sysadmin = bool(data['is_system_administrator'])
 
-    # TODO: define is system admin
-    if data['role'] in ['tax_master', 'data_master']:
-        is_sysadmin = True
     # INSERT user
     new_user = User(
         username = data['username'],

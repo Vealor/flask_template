@@ -10,7 +10,7 @@ import zipfile
 import requests
 import itertools
 import collections
-import subprocess
+import subprocess # TEMP
 import multiprocessing as mp
 from anytree import Node, RenderTree
 from collections import Counter
@@ -149,6 +149,7 @@ def init_caps_gen():
     db.session.add(caps_gen)
     db.session.flush()
 
+    # TEMP COMMENTED OUT - CREATES MAPPINGS
     # labels = [i.script_label for i in CDMLabel.query.all() if not i.is_calculated]
     # for label in labels:
     #     new_mapping = DataMapping(
@@ -505,9 +506,9 @@ def init_caps_gen():
               INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','SPRAS',{caps_gen_id},'tinct_spras_key');
               """.format(caps_gen_id=caps_gen.id))
         else:
-            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])
-            for line in res.splitlines():
-                print(line)
+            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)]) # TEMP
+            for line in res.splitlines(): # TEMP
+                print(line) # TEMP
     except Exception as e:
         print(str(e))
         ## Remove data from caps_gen_master
@@ -1120,8 +1121,7 @@ def aps_quality_check(id):
 def aps_to_caps(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     args = request.args.to_dict()
-    print("caps id")
-    print(id)
+
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
@@ -1245,11 +1245,11 @@ def caps_to_transactions(id):
     project_id = (caps_gen.first()).project_id
     print(project_id)
     print('it got here')
-    # if Transaction.query.filter_by(project_id=project_id).first():
-    #     print('deleting')
-    #     engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
+    if Transaction.query.filter_by(project_id=project_id).first():
+        print('deleting')
+        engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
 
-    result = engine.execute('INSERT INTO transactions(data, project_id, caps_gen_id) select row_to_json(row) as data , {project_id} project_id, {caps_gen_id} caps_gen_id from (select * from sap_caps where caps_gen_id={caps_gen_id}) row;'.format(project_id=project_id, caps_gen_id=id))
+    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps where caps_gen_id={caps_gen_id}) row;'.format(project_id=project_id, caps_gen_id=id))
     db.session.commit()
 
 
