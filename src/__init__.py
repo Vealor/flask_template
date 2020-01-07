@@ -3,7 +3,7 @@ Main API Server
 '''
 #===============================================================================
 from src.models import db
-from flask import Flask, request, jsonify, current_app
+from flask import Flask, jsonify, current_app
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate

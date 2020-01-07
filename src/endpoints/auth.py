@@ -17,7 +17,7 @@ auth = Blueprint('auth', __name__)
 # sends email with new temp pass
 @auth.route('/reset', methods=['POST'])
 @exception_wrapper()
-def reset():
+def reset():  # pragma: no cover
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
 

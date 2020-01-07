@@ -1,0 +1,30 @@
+
+[run]
+branch = True
+source =
+  src
+  src/caps_gen
+  src/endpoints
+  src/models
+  src/offload
+  src/prediction
+omit =
+  src/__init__\.py
+
+[report]
+show_missing = True
+skip_covered = True
+precision = 2
+sort = Cover
+
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
