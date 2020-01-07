@@ -9,11 +9,10 @@ source =
   src/offload
   src/prediction
 omit =
-  src/__init__.py
+  \src/__init__.py
 
 [report]
 show_missing = True
-skip_covered = True
 precision = 2
 sort = Cover
 

@@ -1,0 +1,5 @@
+[flake8]
+ignore =
+  E265, # block comment should start with '# '
+  E302, # expected 2 blank lines
+  E501, # line too long
