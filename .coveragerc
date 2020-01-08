@@ -9,6 +9,7 @@ source =
   src/offload
   src/prediction
 omit =
+  migrations
   \src/__init__.py
 
 [report]

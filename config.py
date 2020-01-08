@@ -14,7 +14,6 @@ class Config(object):
     # Enable protection agains *Cross-site Request Forgery (CSRF)*
     CSRF_ENABLED = True
 
-
     SENDGRID_API_KEY = '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'
     OUTBOUND_EMAIL = 'noreply@arrt.kpmg.ca'
 
@@ -59,10 +58,10 @@ class DevelopmentConfig(Config):
     CAPS_RAW_LOCATION = 'caps_gen_raw'
     CAPS_UNZIPPING_LOCATION = 'caps_gen_unzipped'
     CAPS_MASTER_LOCATION = 'caps_gen_master'
-    CDM_TABLES = ['BKPF', 'BSAK', 'SKAT', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
-                  'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
-                  'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
-                  'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT', 'SKAT']
+    CDM_TABLES = ['BKPF', 'BSAK', 'SKAT', 'BSEG', 'CEPCT', 'CSKS', 'CSKT', 'SKB1', 'T003T', 'TBSLT', 'TGSBT',
+                  'EKKO', 'EKPO', 'LFA1', 'LFAS', 'LFM1', 'T024E', 'TOA01', 'MAKT', 'MARA', 'MLAN', 'MSEG', 'T001L',
+                  'T006A', 'T023T', 'TSKMT', 'PROJ', 'PRPS', 'PAYR', 'REGUP',
+                  'T005S', 'T007A', 'T007S', 'TTXJT', 'T001', 'T001W', 'T005T', 'TINCT', 'SKAT']
     #CDM_TABLES = ['BKPF', 'BSEG', 'CSKT', 'EKPO', 'LFA1', 'MAKT', 'T007S', 'T001']
     FILE_SERVICE = FileService(account_name='itrauat', account_key='ln5Ioy8hJGzokewjo+9Wu5XlQtWhfGqTT5jw66sF+nLgpLsA+mnsSaxwaBDDkRTfEFtXxNU1MgfMu2I3AlsV6Q==')
 
@@ -78,10 +77,10 @@ class TestingConfig(Config):
         'port': '5432',
     }
 
-    CDM_TABLES = ['BKPF', 'SKAT', 'BSAK', 'BSEG','CEPCT','CSKS','CSKT','SKB1','T003T','TBSLT','TGSBT',\
-                  'EKKO','EKPO','LFA1','LFAS','LFM1','T024E','TOA01','MAKT','MARA','MLAN','MSEG','T001L',\
-                  'T006A','T023T','TSKMT','PROJ','PRPS','PAYR','REGUP',\
-                  'T005S','T007A','T007S','TTXJT','T001','T001W','T005T','TINCT', 'SKAT']
+    CDM_TABLES = ['BKPF', 'SKAT', 'BSAK', 'BSEG', 'CEPCT', 'CSKS', 'CSKT', 'SKB1', 'T003T', 'TBSLT', 'TGSBT',
+                  'EKKO', 'EKPO', 'LFA1', 'LFAS', 'LFM1', 'T024E', 'TOA01', 'MAKT', 'MARA', 'MLAN', 'MSEG', 'T001L',
+                  'T006A', 'T023T', 'TSKMT', 'PROJ', 'PRPS', 'PAYR', 'REGUP',
+                  'T005S', 'T007A', 'T007S', 'TTXJT', 'T001', 'T001W', 'T005T', 'TINCT', 'SKAT']
 
     # Use a secure, unique and absolutely secret key for signing the data.
     CSRF_SESSION_KEY = "testing"
@@ -116,5 +115,5 @@ class ProductionConfig(Config):
         SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
         # DATABASE_CONNECT_OPTIONS = {}
     except Exception as e:
-        print("PRODUCTION CONFIG ENVIRONMENT VARIABLES HAVE ISSUES =>> "+str(e))
-del os
+        print("PRODUCTION CONFIG ENVIRONMENT VARIABLES HAVE ISSUES =>> " + str(e))
+del os  # noqa: E305

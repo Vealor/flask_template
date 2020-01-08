@@ -1,11 +1,10 @@
 # IMPORT INITS
-import os
 import sys
-sys.path[0]+="/.."
+sys.path[0] += "/.."
 
 # FLASK APP
-from src.models import *
-from src import api
+from src.models import db, User  # noqa: E402
+from src import api  # noqa: E402
 
 # INSERTS
 with api.app_context():
@@ -56,7 +55,6 @@ with api.app_context():
         initials = 'lh'.upper(), first_name = 'Lighthouse', last_name = 'GVA',
         role = 'tax_master', is_system_administrator = True, is_superuser = True
     ))
-
 
     itra_userlist = [
         # UAT User SysAdmin

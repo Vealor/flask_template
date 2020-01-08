@@ -1,16 +1,15 @@
-import sys; sys.path.append("..")
+import sys
+sys.path.append("..")
 
 # Set-up the application context"
-import numpy as np
-import pandas as pd
-import pickle
+import datetime  # noqa: E402
+import numpy as np  # noqa: E402
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from src.models import *
-from src.util import *
-from src.prediction import model_client as cpm
-from src.prediction import preprocessing as prepr
+from flask import Flask  # noqa: E402
+from src.models import db, Transaction, Project  # noqa: E402
+# from src.util import *  # noqa: E402
+# from src.prediction import model_client as cpm  # noqa: E402
+# from src.prediction import preprocessing as prepr  # noqa: E402
 
 def create_app():
     app = Flask(__name__)
@@ -37,17 +36,17 @@ if __name__ == '__main__':
 
     negative, positive = 201, 101
     trans_codes = [positive if float(tr.data['ap_amt']) > -10000 and tr.data['ccy'] != 'CAD' else negative for tr in query]
-    l = len(trans_codes)
-    approv_user = [1 if r < 0.8 else None for r in np.random.random(l)]
+    trans_len = len(trans_codes)
+    approv_user = [1 if r < 0.8 else None for r in np.random.random(trans_len)]
 
     # This is very slow, keep a progress bar
     c = 0
-    for (tr,co,au,ii) in zip(query.all(), trans_codes, approv_user, range(l)):
-        tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0*(l - ii)*1000/l))).strftime("%Y-%m-%d_%H:%M:%S"),
-        tr.update_codes([co],'gst_hst')
+    for (tr, co, au, ii) in zip(query.all(), trans_codes, approv_user, range(trans_len)):
+        tr.modified = (datetime.datetime.now() - datetime.timedelta(days=np.round(1.0 * (trans_len - ii) * 1000 / trans_len))).strftime("%Y-%m-%d_%H:%M:%S"),
+        tr.update_codes([co], 'gst_hst')
         tr.gst_hst_signed_off_by_id = 2
         tr.approved_user_id = au
-        progress(ii, l, 'Updating Transaction data' )
+        progress(ii, trans_len, 'Updating Transaction data')
 
     proj = Project.find_by_id(15)
     proj.has_ts_gst_hst = True

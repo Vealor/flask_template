@@ -1,8 +1,19 @@
 [flake8]
 ignore =
+  X100, # superflous per-file-ignores for __
+  E251, # unexpected spaces around keyword / parameter equals
   E265, # block comment should start with '# '
   E302, # expected 2 blank lines
+  E305, # expected 2 blank lines after class or function definition
   E501, # line too long
 per-file-ignores =
   test/functional/*: F401, F811
   test/unit/*: F401, F811
+exclude =
+  .git,
+  __pycache__,
+  docs/source/conf.py,
+  old,
+  build,
+  dist,
+  migrations
