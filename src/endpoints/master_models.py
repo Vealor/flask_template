@@ -287,25 +287,24 @@ def do_validate():
 @exception_wrapper()
 # @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
 def compare_active_and_pending():
+
     response = { 'status': 'ok', 'message': '', 'payload': {} }
-    data = request.get_json()
+    args = request.args.to_dict()
+    response['payload']['can_compare'] = True
+
+    pending_model = MasterModel.find_pending()
+    if not pending_model:
+        raise NotFoundError('There is no pending model to compare to the active model.')
+    response['payload']['pending_metrics'] = MasterModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
     active_model = MasterModel.find_active()
     if not active_model:
-        raise ValueError('No master model has been trained or is active.')
-    pending_model = MasterModel.find_pending()
-    if not pending_model:
-        raise ValueError('There is no pending model to compare to the active model.')
+        response['payload']['can_compare'] = False
+    else:
+        response['payload']['active_metrics'] = MasterModelPerformance.get_most_recent_for_model(active_model.id).serialize
 
-    # Get the performance metrics for the pending and active models
-    active_metrics = MasterModelPerformance.get_most_recent_for_model(active_model.id).serialize
-    pending_metrics = MasterModelPerformance.get_most_recent_for_model(pending_model.id).serialize
-
-    response['payload'] = {'active_metrics': active_metrics, 'pending_metrics': pending_metrics}
     response['message'] = 'Master model comparison complete'
-
     return jsonify(response), 200
-
 
 #===============================================================================
 # Update the active master model
