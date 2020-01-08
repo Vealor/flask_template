@@ -137,8 +137,7 @@ def update_paredown_rule(id):
         'approver2_id' : ['int','NoneType'],
         'code_id': ['int'],
         'is_active': ['bool'],
-        'conditions': ['list'],
-        'comment': ['str']
+        'conditions': ['list']
     }
     validate_request_data(data, request_types)
     if len(data['comment']) > 128:
@@ -199,7 +198,7 @@ def update_paredown_rule(id):
         db.session.flush()
 
     for cond in data['conditions']:
-        op_types = ['contains','>','<','==','>=','<=','!=']
+        op_types = ['contains','>','<','=','>=','<=','!=']
         if cond['operator'] not in op_types:
             raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
