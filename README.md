@@ -38,70 +38,56 @@ Initialize virtual environment
 ```
 
 ### Database Setup
-Enter PSQL
-```
-sudo -i -u postgres psql
-```
-Create Database
-```
-CREATE DATABASE itra_db;
-```
-Create User
-```
-CREATE USER itra LOGIN SUPERUSER ENCRYPTED PASSWORD 'LHDEV1234';
-```
-Grant User Access
-```
-GRANT ALL PRIVILEGES ON DATABASE itra_db TO itra;
-```
-Quit PSQL
-```
-\q
-```
-Apply migrations:
-```
-./db_refresh.sh
-```
+**1.** Enter PSQL => `sudo -i -u postgres psql`
+**2.** Create Database => `CREATE DATABASE itra_db;`
+**3.** Create User => `CREATE USER itra LOGIN SUPERUSER ENCRYPTED PASSWORD 'LHDEV1234';`
+**4.** Grant User Access => `GRANT ALL PRIVILEGES ON DATABASE itra_db TO itra;`
+**5.** Quit PSQL => `\q`
+**6.** Apply migrations => `./db_refresh.sh`
 
+To get back to PSQL for that DB => `psql -h localhost -U itra itra_db`
+
+Diagnostics => `flask db --help`
 ___
-To get back to PSQL for that DB:
-```
-psql -h localhost -U itra itra_db
-```
-
-___
-Diagnostics:
-```
-flask db --help
-```
-
-### Development
+## Development Server
 ```
 ./dev_srv.sh
 ```
 
-Dev with SSL:
-```
-./dev_srv.sh ssl
-```
+Dev with SSL => `./dev_srv.sh ssl`
+___
+## Tests, Linting, Code Coverage
 
-### Utility scripts
-<strong>upgrade_requirements.sh</strong>
+stuff about `./runtests.sh cov lint full`
+
+#### Atom Flake8 Linting
+Install https://atom.io/packages/linter-flake8
+Go into your atom config file from an option in the top menu.
+
+Add:  
+```
+"linter-flake8":
+  executablePath: "$PROJECT/.venv/bin/flake8"
+```
+___
+## Utility scripts
+**upgrade_requirements.sh**
 If new packages are added then run this script to add them using this script.  
 This script ALSO updates all existing packages.
 
-### Updating models and creating a new migration
-```FLASK_ENV='development' flask db migrate```
+**Updating models and creating a new migration**
+`FLASK_ENV='development' flask db migrate`
 
+___
 ### Cloud Credentials
-<strong> VM Playground </strong>
-```ssh lh_admin_tax@40.82.190.135```
-password: Kpmg1234@Kpmg1234@
+**VM Playground**
+bash: `ssh lh_admin_tax@40.82.190.135`
+password: `Kpmg1234@Kpmg1234@``
 
-<strong> Database Server </strong>
-```psql --host=itra-uat-sql.postgres.database.azure.com --port=5432 --username=lh_admin_tax@itra-uat-sql --dbname=itra_db```
-password: Kpmg1234@
+**Database Server**
+bash: `psql --host=itra-uat-sql.postgres.database.azure.com --port=5432 --username=lh_admin_tax@itra-uat-sql --dbname=itra_db`
+password: `Kpmg1234@``
 
-<strong> ITRA Backend </strong>
+**ITRA Backend**
 user = lh-admin-tax
 password: Kpmg1234$

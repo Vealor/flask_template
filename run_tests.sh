@@ -25,7 +25,7 @@ if [[ -v DO_LINT ]]; then
   test_args+=" --flake8"
 fi
 if [[ -v DO_FULL ]]; then
-  test_args+=" --rP"
+  test_args+=" -rP"
 fi
 
 test_args+=" -W ignore::PendingDeprecationWarning"

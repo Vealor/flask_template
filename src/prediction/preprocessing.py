@@ -31,7 +31,7 @@ PREDICTION_VARS = {
 
 # ============================================================================ #
 # Take a sqlalchemy query to the transaction table and return the transactions in a dataframe
-def transactions_to_dataframe(query,**kwargs):
+def transactions_to_dataframe(query, **kwargs):
 
     # Get the 'data' and 'code' field for all transactions in query and merge them into dataframe
     #entries, codes = zip(*[(tr.serialize['data'],(tr.gst_code.code_number if tr.gst_code else -999)) for tr in query])
@@ -40,16 +40,16 @@ def transactions_to_dataframe(query,**kwargs):
     codes = [entry['codes'] for entry in entries]
     df = pd.DataFrame(data)
     codes_df = pd.DataFrame(codes)
-    codes_df.rename(columns={x:x+"_codes" for x in codes_df.columns},inplace=True)
+    codes_df.rename(columns={x: x + "_codes" for x in codes_df.columns}, inplace=True)
 
     return df.join(codes_df)
 
 
 # Define the preprocessing routine here
-def preprocess_data(df,preprocess_for='training',**kwargs):
+def preprocess_data(df, preprocess_for='training', **kwargs):
 
     # Ensure that the preprocess_for variable is set to one of the correct values
-    assert preprocess_for in ['training','validation','prediction']
+    assert preprocess_for in ['training', 'validation', 'prediction']
 
     # If appropriate, create the code columns
     if preprocess_for in ['training','validation']:
