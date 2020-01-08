@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 
 class ClientPredictionModel(BasePredictionModel):
 
-    def __init__(self,model_pickle=None):
+    def __init__(self, model_pickle=None):
         if model_pickle:
             super().__init__(model_pickle)
         else:
@@ -17,17 +17,16 @@ class ClientPredictionModel(BasePredictionModel):
             self.model = GridSearchCV(
                 estimator=ExtraTreesClassifier(**model_params),
                 param_grid={
-                    'max_depth':[3,5],
-                    'n_estimators':[50,100],
-                    'class_weight': [{1:x, 0:1} for x in [1, 2]]
-                    },
+                    'max_depth': [3, 5],
+                    'n_estimators': [50, 100],
+                    'class_weight': [{1: x, 0: 1} for x in [1, 2]]
+                },
                 cv=5,
                 scoring=make_scorer(fbeta_score, beta=5)
-                )
+            )
             self.is_trained = False
 
-
-    def train(self,training_data,predictors,target):
+    def train(self, training_data, predictors, target):
         super().train()
 
         # Check if target variable is also in predictors
@@ -42,13 +41,13 @@ class ClientPredictionModel(BasePredictionModel):
         if y.value_counts().nunique() < 2:
             raise Exception("Error: Only one target class represented in training data.")
 
-        if any([class_count < 0.2*len(y) for class_count in y.value_counts()]):
+        if any([class_count < 0.2 * len(y) for class_count in y.value_counts()]):
             print("Balancing classes...")
             X, y = SMOTE().fit_sample(X, y)
 
         # Train the model here.
         print("Training model. Please wait.")
-        self.model.fit(X,y)
+        self.model.fit(X, y)
         self.model = self.model.best_estimator_
         self.model_params = dict(self.model.get_params())
         self.is_trained = True
