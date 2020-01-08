@@ -3,3 +3,6 @@ ignore =
   E265, # block comment should start with '# '
   E302, # expected 2 blank lines
   E501, # line too long
+per-file-ignores =
+  test/functional/*: F401, F811
+  test/unit/*: F401, F811

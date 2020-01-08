@@ -51,12 +51,11 @@ def create_paredown_rule():
     data = request.get_json()
 
     request_types = {
-        'approver1_id' : ['int','NoneType'],
-        'approver2_id' : ['int','NoneType'],
+        'approver1_id' : ['int', 'NoneType'],
+        'approver2_id' : ['int', 'NoneType'],
         'code_id': ['int'],
         'is_active': ['bool'],
-        'conditions': ['list'],
-        'comment': ['str']
+        'conditions': ['list']
     }
     validate_request_data(data, request_types)
     if len(data['comment']) > 128:
@@ -106,7 +105,7 @@ def create_paredown_rule():
     db.session.flush()
     # Create the conditions for the paredown rule
     for cond in data['conditions']:
-        op_types = ['contains','>','<','==','>=','<=','!=']
+        op_types = ['contains','>','<','=','>=','<=','!=']
         if cond['operator'] not in op_types:
             raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
