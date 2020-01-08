@@ -1,0 +1,206 @@
+[
+  {
+    "code_number": 101,
+    "description": "Missed ITC"
+  },
+  {
+    "code_number": 102,
+    "description": "Missed ITR"
+  },
+  {
+    "code_number": 103,
+    "description": "Missed ITC & ITR"
+  },
+  {
+		"code_number": 104,
+		"description": "Missed ITC/ITR - GST/HST/QST Self Assessed In Error"
+	},
+  {
+		"code_number": 105,
+		"description": "Missed ITC/ITR - Short Paid"
+	},
+  {
+		"code_number": 109,
+		"description": "ITC/ITR recovery identified internally"
+	},
+  {
+		"code_number": 110,
+		"description": "BC Exempt / Consumed Out of Province"
+	},
+  {
+		"code_number": 111,
+		"description": "BC Production Machinery & Equipment"
+	},
+  {
+		"code_number": 112,
+		"description": "BC Self Assessed In Error"
+	},
+  {
+		"code_number": 119,
+		"description": "BC PST recovery identified internally"
+	},
+  {
+		"code_number": 120,
+		"description": "MAN Exempt / Consumed Out of Province"
+	},
+  {
+		"code_number": 121,
+		"description": "MAN Self Assessed In Error"
+	},
+  {
+		"code_number": 129,
+		"description": "MAN PST recovery identified internally"
+	},
+  {
+		"code_number": 130,
+		"description": "SASK Exempt / Consumed Out of Province"
+	},
+  {
+		"code_number": 131,
+		"description": "SASK Self Assessed In Error"
+	},
+  {
+		"code_number": 139,
+		"description": "SASK PST recovery identified internally"
+	},
+  {
+		"code_number": 140,
+		"description": "Other PST Recovery"
+	},
+  {
+		"code_number": 149,
+		"description": "Other PST recovery identified internally"
+	},
+  {
+		"code_number": 150,
+		"description": "Duplicate Payment"
+	},
+  {
+		"code_number": 151,
+		"description": "Overpayment"
+	},
+  {
+		"code_number": 159,
+		"description": "Overpayment recovery identified internally"
+	},
+  {
+		"code_number": 201,
+		"description": "No $ based on invoice review"
+	},
+  {
+		"code_number": 202,
+		"description": "No $ based on vendor testing"
+	},
+  {
+		"code_number": 203,
+		"description": "No $ not material (GST/QST/PST)"
+	},
+  {
+		"code_number": 204,
+		"description": "No $ statute barred (GST/QST/PST)"
+	},
+  {
+		"code_number": 205,
+		"description": "Unlikely recovery based on vendor location"
+	},
+  {
+		"code_number": 206,
+		"description": "Unlikely recovery based on vendor nature"
+	},
+  {
+		"code_number": 207,
+		"description": "No opportunity based on PY review"
+	},
+  {
+		"code_number": 208,
+		"description": "Taxes/Premiums/Royalties"
+	},
+  {
+		"code_number": 209,
+		"description": "Financial Transactions"
+	},
+  {
+		"code_number": 210,
+		"description": "Sponsoship/Donations"
+	},
+  {
+		"code_number": 211,
+		"description": "In and out (reversal) no $"
+	},
+  {
+		"code_number": 212,
+		"description": "No $ - Intercompany Transactions"
+	},
+  {
+		"code_number": 221,
+		"description": "Pare down"
+	},
+  {
+		"code_number": 230,
+		"description": "Scoped out by client"
+	},
+  {
+		"code_number": 250,
+		"description": "Exposures"
+	},
+  {
+		"code_number": 301,
+		"description": "Investigate further"
+	},
+  {
+		"code_number": 302,
+		"description": "No Image/Image issue - investigate further"
+	},
+  {
+		"code_number": 303,
+		"description": "Employee expense report"
+	},
+  {
+		"code_number": 304,
+		"description": "Intercompany transactions"
+	},
+  {
+		"code_number": 305,
+		"description": "Suspense/Clearing/Accruals"
+	},
+  {
+		"code_number": 306,
+		"description": "Statement/Cheque Request Only"
+	},
+  {
+		"code_number": 307,
+		"description": "Pass-through GST/HST/QST included in reimbursement"
+	},
+  {
+		"code_number": 308,
+		"description": "Purchasing Cards"
+	},
+  {
+		"code_number": 309,
+		"description": "Deposit"
+	},
+  {
+		"code_number": 301,
+		"description": "Settlement/Damage/Termination Payments"
+	},
+  {
+		"code_number": 311,
+		"description": "Call vendor"
+	},
+  {
+		"code_number": 312,
+		"description": "Ask Client"
+	},
+  {
+		"code_number": 500,
+		"description": "Priority for pulling"
+	},
+  {
+		"code_number": 501,
+		"description": "Pull second"
+	},
+  {
+		"code_number": 502,
+		"description": "Pull third"
+	}
+]

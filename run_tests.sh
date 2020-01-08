@@ -12,6 +12,9 @@ do
     if [[ "$arg" == *"lint"* ]]; then
         DO_LINT=1
     fi
+    if [[ "$arg" == *"full"* ]]; then
+        DO_FULL=1
+    fi
 done
 
 # add args
@@ -21,8 +24,13 @@ fi
 if [[ -v DO_LINT ]]; then
   test_args+=" --flake8"
 fi
+if [[ -v DO_FULL ]]; then
+  test_args+=" --rP"
+fi
 
-unbuffer py.test ${test_args} --color=yes|\
+test_args+=" -W ignore::PendingDeprecationWarning"
+
+unbuffer py.test -v ${test_args} --color=yes|\
  sed -r 'w /dev/stderr' |\
  sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' > TEST_RESULTS.log
 

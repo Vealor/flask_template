@@ -6,7 +6,9 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
+from src.jwt_helpers import build_jwt_helpers
 from src.models import db
+from src.routes import build_blueprints
 from src.util import bcolours
 #===============================================================================
 # API Creation & Configuration
@@ -26,18 +28,12 @@ def build_api():
     else:
         raise RuntimeError('CONFIGURATION STARTUP ERROR')
 
+    db.init_app(api_build)
+    build_blueprints(api_build)
+    build_jwt_helpers(JWTManager(api_build))
+    Migrate(api_build, db)
+
     api_build.url_map.strict_slashes = False
     return api_build
 
-
 api = build_api()
-
-db.init_app(api)
-migrate = Migrate(api, db)
-jwt = JWTManager(api)
-
-#===============================================================================
-# JWT helpers
-from src import jwt_helpers  # noqa: E402,F401
-# Routing
-from src import routes  # noqa: E402,F401
