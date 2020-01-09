@@ -325,10 +325,9 @@ class Transaction(db.Model):
         return cls.query.filter_by(id = id).first()
 
 
-    def update_codes(self, input_codes, tax_type, tempsession=None):
+    def update_codes(self, input_codes, tax_type):
         codes = list(set(input_codes))
-        used_session = tempsession if tempsession else db.session
-        query = used_session.query(TransactionCode).filter_by(transaction_id=self.id).filter_by(tax_type=eval("TaxTypes."+tax_type)).all()
+        query = db.session.query(TransactionCode).filter_by(transaction_id=self.id).filter_by(tax_type=eval("TaxTypes."+tax_type)).all()
         query_codes = ([txn.transaction_code_code.code_number for txn in query])
         codes.sort()
         query_codes.sort()
@@ -337,12 +336,12 @@ class Transaction(db.Model):
                 if txn_codes.transaction_code_code.code_number in codes:
                     codes.remove(txn_codes.transaction_code_code.code_number)
                 else:
-                    used_session.delete(txn_codes)
+                    db.session.delete(txn_codes)
             for code in codes:
-                code_query = used_session.query(Code).filter_by(code_number=code).first()
+                code_query = db.session.query(Code).filter_by(code_number=code).first()
                 if not code_query:
                     raise InputError("Code number {} does not exist.".format(code))
-                used_session.add(TransactionCode(
+                db.session.add(TransactionCode(
                     transaction_id = self.id,
                     tax_type=eval("TaxTypes."+tax_type),
                     code_id = code_query.id
@@ -350,4 +349,4 @@ class Transaction(db.Model):
             return True
         else:
             return False
-        used_session.flush()
+        db.session.flush()
