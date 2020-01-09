@@ -17,7 +17,7 @@ paredown_rules = Blueprint('paredown_rules', __name__)
 @paredown_rules.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_paredown_rules(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
@@ -43,7 +43,7 @@ def get_paredown_rules(id):
 @paredown_rules.route('/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_paredown_rule():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -125,7 +125,7 @@ def create_paredown_rule():
 @paredown_rules.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_paredown_rule(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -219,7 +219,7 @@ def update_paredown_rule(id):
 @paredown_rules.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_paredown_rule(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
 

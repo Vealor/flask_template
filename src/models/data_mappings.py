@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class DataMapping(db.Model):
     __tablename__ = 'data_mappings'
@@ -11,14 +11,14 @@ class DataMapping(db.Model):
     column_name = db.Column(db.String(256), nullable=True, default='', server_default='')
     table_name = db.Column(db.String(256), nullable=True, default='', server_default='')
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings') # FK)
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    data_mapping_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_data_mappings')  # FK)
 
-    cdm_label_script_label = db.Column(db.String(256), nullable=False) # FK
-    data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings') # FK
+    cdm_label_script_label = db.Column(db.String(256), nullable=False)  # FK
+    data_mapping_cdm_label = db.relationship('CDMLabel', back_populates='cdm_label_data_mappings')  # FK
 
     __table_args__ += (
-        db.Index('caps_gen_mapping_col_table_unique', caps_gen_id, column_name, table_name, unique=True, postgresql_where=(db.and_(column_name!='', table_name!=''))),
+        db.Index('caps_gen_mapping_col_table_unique', caps_gen_id, column_name, table_name, unique=True, postgresql_where=(db.and_(column_name != '', table_name != ''))),
     )
 
     @property

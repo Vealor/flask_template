@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, Roles, sha256
 ################################################################################
 class User(db.Model):
     __tablename__ = 'users'
@@ -85,11 +85,11 @@ class UserProject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     is_favourite = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    user_id = db.Column(db.Integer, nullable=False) # FK
-    user_project_user = db.relationship('User', back_populates='user_projects') # FK
+    user_id = db.Column(db.Integer, nullable=False)  # FK
+    user_project_user = db.relationship('User', back_populates='user_projects')  # FK
 
-    project_id = db.Column(db.Integer, nullable=False) # FK
-    user_project_project = db.relationship('Project', back_populates='project_users') # FK
+    project_id = db.Column(db.Integer, nullable=False)  # FK
+    user_project_project = db.relationship('Project', back_populates='project_users')  # FK
 
     @property
     def serialize(self):

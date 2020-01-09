@@ -1,9 +1,7 @@
-import pandas as pd
-import pickle
 from .model_base import BasePredictionModel
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, fbeta_score, make_scorer
 
 class ClientPredictionModel(BasePredictionModel):
@@ -53,38 +51,35 @@ class ClientPredictionModel(BasePredictionModel):
         self.is_trained = True
         print("Model trained.")
 
-
-    def predict(self,prediction_data,predictors):
+    def predict(self, prediction_data, predictors):
         super().predict()
         xp = prediction_data[predictors]
         return self.model.predict(xp)
 
-
-    def predict_probabilities(self,prediction_data,predictors):
+    def predict_probabilities(self, prediction_data, predictors):
         super().predict()
         xp = prediction_data[predictors]
         return self.model.predict_proba(xp)
 
-
-    def validate(self,validation_data,predictors,target):
+    def validate(self, validation_data, predictors, target):
         super().validate()
         if target in predictors:
             raise Exception("Error: Target cannot also be a predictor")
 
-        xv,yv = validation_data[predictors], validation_data[target]
+        xv, yv = validation_data[predictors], validation_data[target]
 
         if yv.value_counts().nunique() < 2:
             raise Exception("Error: Only one target class represented in validation data.")
 
-        yp = self.predict(xv,predictors)
+        yp = self.predict(xv, predictors)
         n_valid_data = len(yp)
 
-        recall = recall_score(yv,yp)
-        precision = precision_score(yv,yp)
-        accuracy = accuracy_score(yv,yp)
+        recall = recall_score(yv, yp)
+        precision = precision_score(yv, yp)
+        accuracy = accuracy_score(yv, yp)
 
-        yp_prob = [p[1] for p in self.predict_probabilities(xv,predictors)]
-        roc_auc = roc_auc_score(yv,yp_prob)
+        yp_prob = [p[1] for p in self.predict_probabilities(xv, predictors)]
+        roc_auc = roc_auc_score(yv, yp_prob)
 
         return {
             "n_valid_data": n_valid_data,
@@ -92,4 +87,4 @@ class ClientPredictionModel(BasePredictionModel):
             "precision": precision,
             "accuracy": accuracy,
             "roc_auc": roc_auc
-            }
+        }

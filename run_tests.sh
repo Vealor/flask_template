@@ -22,7 +22,7 @@ if [[ -v DO_COVERAGE ]]; then
   test_args+=" --cov"
 fi
 if [[ -v DO_LINT ]]; then
-  test_args+=" --flake8"
+  test_args+=" --flake8 --cache-clear"
 fi
 if [[ -v DO_FULL ]]; then
   test_args+=" -rP"

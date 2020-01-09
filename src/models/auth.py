@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'

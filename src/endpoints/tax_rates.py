@@ -3,9 +3,9 @@ Tax Rate Endpoints
 '''
 from sqlalchemy import desc
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from src.errors import *
-from src.models import *
+from flask_jwt_extended import jwt_required
+from src.errors import InputError, NotFoundError
+from src.models import CapsGen, Project, SapT007s
 from src.wrappers import has_permission, exception_wrapper
 
 tax_rates = Blueprint('tax_rates', __name__)
@@ -14,7 +14,7 @@ tax_rates = Blueprint('tax_rates', __name__)
 @tax_rates.route('/', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_tax_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()

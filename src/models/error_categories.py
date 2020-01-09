@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class ErrorCategory(db.Model):
     __tablename__ = 'error_categories'

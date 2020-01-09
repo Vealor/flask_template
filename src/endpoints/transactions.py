@@ -1,26 +1,24 @@
 '''
 Transaction Endpoints
 '''
-import datetime
-import json
-import random
-from flask import Blueprint, current_app, jsonify, request, abort
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from src.errors import *
-from src.models import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, current_user
+from sqlalchemy.sql import func
+from src.errors import InputError, NotFoundError, UnauthorizedError
+from src.models import db, Transaction, Roles
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 transactions = Blueprint('transactions', __name__)
 #===============================================================================
 # GET ALL TRANSACTION
-@transactions.route('/', defaults={'id':None}, methods=['GET'])
+@transactions.route('/', defaults={'id': None}, methods=['GET'])
 @transactions.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_transactions(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     # TODO: make sure user has access to the project
@@ -48,7 +46,7 @@ def get_transactions(id):
     }
     for i in query.all():
         txn = i.serialize
-        payload['data'].append({**txn[2], **{'id':txn[0]}})
+        payload['data'].append({**txn[2], **{'id': txn[0]}})
         payload['transaction_details'][txn[0]] = txn[1]
 
     response['payload'] = payload
@@ -60,10 +58,9 @@ def get_transactions(id):
 @transactions.route('/<int:id>/is_locked', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def check_transaction_lock(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # TODO: make sure user has access to the project
     query = Transaction.find_by_id(id)
@@ -79,9 +76,9 @@ def check_transaction_lock(id):
 @transactions.route('/<int:id>/lock', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def lock_transaction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # TODO: make sure user has access to the project
     query = Transaction.find_by_id(id)
@@ -108,9 +105,9 @@ def lock_transaction(id):
 @transactions.route('/<int:id>/unlock', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def unlock_transaction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # TODO: make sure user has access to the project
     query = Transaction.find_by_id(id)
@@ -136,9 +133,9 @@ def unlock_transaction(id):
 @transactions.route('/<int:id>/approve', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def approve_transaction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # TODO: make sure user has access to the project
     #       make sure user has permission to approve
@@ -181,9 +178,9 @@ def approve_transaction(id):
 @transactions.route('/batch/approve', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def batch_approve_transaction():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
     if not isinstance(data, list):
         raise InputError("Input batch must be list of IDs")
@@ -228,9 +225,9 @@ def batch_approve_transaction():
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def unapprove_transaction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # TODO: make sure user has access to the project
     #       make sure user has permission to unapprove
@@ -259,9 +256,9 @@ def unapprove_transaction(id):
 @transactions.route('/batch/unapprove', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def batch_unapprove_transaction():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
     if not isinstance(data, list):
         raise InputError("Input batch must be list of IDs")
@@ -292,40 +289,40 @@ def batch_unapprove_transaction():
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master'])
 def update_transaction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # TODO: make sure user has access to the project
     request_types = {
-        'gst_hst_codes': ['list','NoneType'],
-        'gst_hst_notes_internal': ['str','NoneType'],
-        'gst_hst_notes_external': ['str','NoneType'],
-        'gst_hst_recoveries': ['float','NoneType'],
-        'gst_hst_error_type': ['str','NoneType'],
-        'gst_hst_signed_off_by_id': ['int','NoneType'],
+        'gst_hst_codes': ['list', 'NoneType'],
+        'gst_hst_notes_internal': ['str', 'NoneType'],
+        'gst_hst_notes_external': ['str', 'NoneType'],
+        'gst_hst_recoveries': ['float', 'NoneType'],
+        'gst_hst_error_type': ['str', 'NoneType'],
+        'gst_hst_signed_off_by_id': ['int', 'NoneType'],
 
-        'qst_codes': ['list','NoneType'],
-        'qst_notes_internal': ['str','NoneType'],
-        'qst_notes_external': ['str','NoneType'],
-        'qst_recoveries': ['float','NoneType'],
-        'qst_error_type': ['str','NoneType'],
-        'qst_signed_off_by_id': ['int','NoneType'],
+        'qst_codes': ['list', 'NoneType'],
+        'qst_notes_internal': ['str', 'NoneType'],
+        'qst_notes_external': ['str', 'NoneType'],
+        'qst_recoveries': ['float', 'NoneType'],
+        'qst_error_type': ['str', 'NoneType'],
+        'qst_signed_off_by_id': ['int', 'NoneType'],
 
-        'pst_codes': ['list','NoneType'],
-        'pst_notes_internal': ['str','NoneType'],
-        'pst_notes_external': ['str','NoneType'],
-        'pst_recoveries': ['float','NoneType'],
-        'pst_error_type': ['str','NoneType'],
-        'pst_signed_off_by_id': ['int','NoneType'],
+        'pst_codes': ['list', 'NoneType'],
+        'pst_notes_internal': ['str', 'NoneType'],
+        'pst_notes_external': ['str', 'NoneType'],
+        'pst_recoveries': ['float', 'NoneType'],
+        'pst_error_type': ['str', 'NoneType'],
+        'pst_signed_off_by_id': ['int', 'NoneType'],
 
-        'apo_codes': ['list','NoneType'],
-        'apo_notes_internal': ['str','NoneType'],
-        'apo_notes_external': ['str','NoneType'],
-        'apo_recoveries': ['float','NoneType'],
-        'apo_error_type': ['str','NoneType'],
-        'apo_signed_off_by_id': ['int','NoneType']
+        'apo_codes': ['list', 'NoneType'],
+        'apo_notes_internal': ['str', 'NoneType'],
+        'apo_notes_external': ['str', 'NoneType'],
+        'apo_recoveries': ['float', 'NoneType'],
+        'apo_error_type': ['str', 'NoneType'],
+        'apo_signed_off_by_id': ['int', 'NoneType']
     }
     validate_request_data(data, request_types)
     if data['gst_hst_notes_internal'] and len(data['gst_hst_notes_internal']) > 2048:
@@ -358,6 +355,14 @@ def update_transaction(id):
     ### GST HST
     if query.update_codes(list(set(data['gst_hst_codes'])), 'gst_hst'):
         query.gst_hst_coded_by_id = current_user.id
+        query.gst_hst_signed_off_by_id = None
+    else:
+        if data['gst_hst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
     query.gst_hst_notes_internal = data['gst_hst_notes_internal']
     query.gst_hst_notes_external = data['gst_hst_notes_external']
     query.gst_hst_recoveries = data['gst_hst_recoveries']
@@ -367,6 +372,14 @@ def update_transaction(id):
     ### QST
     if query.update_codes(list(set(data['qst_codes'])), 'qst'):
         query.qst_coded_by_id = current_user.id
+        query.qst_signed_off_by_id = None
+    else:
+        if data['qst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.qst_signed_off_by_id = data['qst_signed_off_by_id']
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
@@ -376,6 +389,14 @@ def update_transaction(id):
     ### PST
     if query.update_codes(list(set(data['pst_codes'])), 'pst'):
         query.pst_coded_by_id = current_user.id
+        query.pst_signed_off_by_id = None
+    else:
+        if data['pst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.pst_signed_off_by_id = data['pst_signed_off_by_id']
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
@@ -385,6 +406,14 @@ def update_transaction(id):
     ### APO
     if query.update_codes(list(set(data['apo_codes'])), 'apo'):
         query.apo_coded_by_id = current_user.id
+        query.gst_hst_signed_off_by_id = None
+    else:
+        if data['apo_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.apo_signed_off_by_id = data['apo_signed_off_by_id']
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
@@ -394,10 +423,10 @@ def update_transaction(id):
     query.modified = func.now()
 
     if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
-        or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])
-        or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])
-        or (query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id'])
-    ):
+        or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])  # noqa: W503
+        or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])  # noqa: W503
+        or (query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id'])  # noqa: W503
+       ):
         raise InputError('You can not code and sign off the same transaction tax type!')
 
     db.session.commit()
@@ -407,7 +436,3 @@ def update_transaction(id):
 
 #===============================================================================
 # TODO: add endpoint for images
-
-
-
-#

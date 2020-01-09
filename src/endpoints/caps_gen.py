@@ -1,46 +1,35 @@
 '''
 CapsGen endpoints
 '''
-import csv
-import datetime
-import json
 import os
 import re
-import zipfile
-import requests
 import itertools
-import collections
-import subprocess # TEMP
+import subprocess  # TEMP
 import multiprocessing as mp
-from anytree import Node, RenderTree
-from collections import Counter
-from azure.storage.file import FileService
+from anytree import Node
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from os import path
-from src.models import *
-from config import *
-from sqlalchemy import exists, desc, create_engine
-from sqlalchemy.inspection import inspect
+from flask_jwt_extended import jwt_required, current_user
+from src.models import db, CapsGen, CDMLabel, DataMapping, GstRegistration, SapAps, SapCaps, SapGLNetCheck, SapLfa1, Transaction
+from sqlalchemy import create_engine
 from src.caps_gen.creation import project_path_create, source_data_unzipper
-from src.caps_gen.build_master import *
+from src.caps_gen.build_master import build_master_file, build_master_table, apply_mapping
 from src.caps_gen.data_quality_check import map_regex, recursive_find, recursive_insert
-from src.caps_gen.to_aps import *
-from src.caps_gen.to_caps import *
-from src.errors import *
-from src.util import validate_request_data, create_log
+from src.caps_gen.to_aps import j1, j2, j3, j4, j5, j6, j7, j8, tax_gl_extract, j9, j10, j11, j12, j13
+from src.caps_gen.to_caps import j101, j102, j103, j104, j105, j106
+from src.errors import NotFoundError, InputError
+from src.util import validate_request_data  # , create_log
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
 #===============================================================================
 # GET ALL CAPS GEN
-@caps_gen.route('/', defaults={'id':None}, methods=['GET'])
+@caps_gen.route('/', defaults={'id': None}, methods=['GET'])
 @caps_gen.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_caps_gens(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = CapsGen.query
@@ -68,9 +57,9 @@ def get_caps_gens(id):
 @caps_gen.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_caps_gens(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = CapsGen.query.filter_by(id=id).first()
     if not query:
@@ -94,7 +83,7 @@ def delete_caps_gens(id):
 @caps_gen.route('/project_path_creation', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def project_path_creation():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -114,7 +103,7 @@ def project_path_creation():
 @caps_gen.route('/init', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission([])
+@has_permission([])
 def init_caps_gen():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -128,17 +117,16 @@ def init_caps_gen():
     ### VALIDATE THAT NO CAPSGEN IS RUNNNING
     in_progress = CapsGen.query.filter_by(is_completed=False).first()
     if in_progress:
-        raise InputError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None',in_progress.caps_gen_project.name))
+        raise InputError('Capsgen already in progress by user \'{}\' for project \'{}\''.format(in_progress.caps_gen_user.username if in_progress.caps_gen_user else 'None', in_progress.caps_gen_project.name))
 
     ### DO UNZIPPING
     try:
-        source_data_unzipper(data, response) # pass filename here?
+        source_data_unzipper(data, response)  # pass filename here?
     except Exception as e:
         current_output_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
         list(map(os.unlink, (os.path.join(current_output_path, f) for f in os.listdir(current_output_path))))
         raise Exception(e)
     print('unzipping complete')
-
 
     ### CREATE CapsGen and DataMappings
     # TODO: change for project specific is_completed
@@ -168,10 +156,10 @@ def init_caps_gen():
         print('master files built')
         N = mp.cpu_count()
         with mp.Pool(processes = N) as p:
-           p.map(build_master_file, [ {'table': table, 'data': data} for table in list_tablenames])
+            p.map(build_master_file, [{'table': table, 'data': data} for table in list_tablenames])
         print('build_master_files completed')
         with mp.Pool(processes = N) as p:
-           p.map(build_master_table, [ {'table': table, 'data': data, 'id': caps_gen.id} for table in list_tablenames])
+            p.map(build_master_table, [{'table': table, 'data': data, 'id': caps_gen.id} for table in list_tablenames])
         # engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         # #todo: add table to payload so cio can know which tables to view
         # for table in list_tablenames:
@@ -195,7 +183,6 @@ def init_caps_gen():
         #                 next(fd)
         #                 wfd.write(fd.read().encode())
         #     wfd.close()
-
 
         #     # for file in directory:
         #     #   get first line of file as headers
@@ -232,7 +219,6 @@ def init_caps_gen():
 
         #####
 
-
         db.session.commit()
         ## Remove data from caps_gen_master
         master_tables_path = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'])
@@ -244,6 +230,8 @@ def init_caps_gen():
         response['payload'] = [CapsGen.find_by_id(caps_gen.id).serialize]
 
         if os.environ['FLASK_ENV'] == 'testing':
+            # REPLACE WITH tempsession = db.create_scoped_session()
+            # make sure to close!!!!!
             engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
             engine.execute("""
               INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('BKPF','BELNR',{caps_gen_id},'bkpf_belnr_key');
@@ -506,9 +494,9 @@ def init_caps_gen():
               INSERT INTO data_mappings(table_name,column_name,caps_gen_id,cdm_label_script_label) VALUES ('TINCT','SPRAS',{caps_gen_id},'tinct_spras_key');
               """.format(caps_gen_id=caps_gen.id))
         else:
-            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)]) # TEMP
-            for line in res.splitlines(): # TEMP
-                print(line) # TEMP
+            res = subprocess.check_output(["./db_scripts/_insert_nexen_data_mappings_manual.sh", "local", str(caps_gen.id)])  # TEMP
+            for line in res.splitlines():  # TEMP
+                print(line)  # TEMP
     except Exception as e:
         print(str(e))
         ## Remove data from caps_gen_master
@@ -532,10 +520,9 @@ def init_caps_gen():
 @caps_gen.route('/<int:id>/master_table_headers', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_master_table_headers(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
-    args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
@@ -547,9 +534,9 @@ def get_master_table_headers(id):
     header_data = query.first().get_headers
     for key in header_data.keys():
         header = key.partition('sap')[2].lower()
-        header_set = { header: [] }
+        header_set = {header: []}
         for item in header_data[key]:
-            header_set[header].append({'table_name': header, 'column_name': item })
+            header_set[header].append({'table_name': header, 'column_name': item})
         headers.append(header_set)
 
     # def get_column_name(table, caps_data):
@@ -560,7 +547,6 @@ def get_master_table_headers(id):
         if mapping['table_column_name']:
             for header in headers:
                 header.update({list(header.keys())[0]: [x for x in header[list(header.keys())[0]] if x != mapping['table_column_name'][0]]})
-
 
     response['payload'] = headers
 
@@ -580,23 +566,22 @@ def get_master_table_headers(id):
 @caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
-    data = request.get_json()
 
     # APPLY MAPPINGS
     mappings = [i for i in DataMapping.query.filter_by(caps_gen_id = id).all() if i.serialize['table_column_name']]
     mappables = {}
     for mapping in mappings:
-        table_to_modify = "Sap"+(mapping.table_name).lower().capitalize()
+        table_to_modify = "Sap" + (mapping.table_name).lower().capitalize()
         if table_to_modify not in mappables.keys():
             mappables[table_to_modify] = []
         mappables[table_to_modify].append((mapping.column_name, mapping.cdm_label_script_label))
 
     N = mp.cpu_count()
     with mp.Pool(processes = N) as p:
-        p.map(apply_mapping, [ {'table': key, 'label': value, 'id': id} for key, value in mappables.items()])
+        p.map(apply_mapping, [{'table': key, 'label': value, 'id': id} for key, value in mappables.items()])
     # for key in mappables.keys():
     #     print(key)
     #     limit = 100000
@@ -623,7 +608,7 @@ def apply_mappings_build_gst_registration(id):
     #TODO: V2 check for similary/duplicate projects by comparing attributesh
     gst_data = [i.data for i in SapLfa1.query.filter_by(caps_gen_id=id).all()]
     for vendor in gst_data:
-        if [x for x in ['lfa1_land1_key','lfa1_lifnr_key','vend_city','vend_region'] if x not in vendor.keys()]:
+        if [x for x in ['lfa1_land1_key', 'lfa1_lifnr_key', 'vend_city', 'vend_region'] if x not in vendor.keys()]:
             raise NotFoundError("Err during GST Registration. Lfa1 table not complete.")
         gst_entry = GstRegistration(
             caps_gen_id = id,
@@ -646,10 +631,9 @@ def apply_mappings_build_gst_registration(id):
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_tables(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
@@ -666,9 +650,9 @@ def get_tables(id):
 @caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_tables(id, table):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
@@ -697,10 +681,9 @@ def view_tables(id, table):
 @caps_gen.route('/<int:id>/data_quality_check', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_quality_check(id):
-
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
@@ -715,16 +698,15 @@ def data_quality_check(id):
     if len(mappings) == 0:
         raise InputError('No header mapped can not run data quality check')
 
-    for table_name, group in itertools.groupby(mappings,key=lambda x: x.table_name.lower()):
-
+    for table_name, group in itertools.groupby(mappings, key=lambda x: x.table_name.lower()):
         # For edge case: check if there is any data in table if not pass the table
-        data_query =  eval('Sap' + str(table_name.lower().capitalize())).query.filter_by(caps_gen_id = id)
+        data_query = eval('Sap' + str(table_name.lower().capitalize())).query.filter_by(caps_gen_id = id)
         total_count = data_query.count()
         if total_count == 0:
             continue
 
         # paraparing data for processing
-        mapped_columns = [ mapping.cdm_label_script_label  for mapping in group ]
+        mapped_columns = [mapping.cdm_label_script_label for mapping in group]
         query = CDMLabel.query.filter(CDMLabel.script_label.in_(mapped_columns))
         unique_keys = [row[0] for row in query.with_entities(getattr(CDMLabel, 'script_label')).filter_by(is_unique = True).all()]
         datatypes = {row[0]: map_regex(row[1].name) for row in query.with_entities(getattr(CDMLabel, 'script_label'), getattr(CDMLabel, 'datatype')).all()}
@@ -734,8 +716,8 @@ def data_quality_check(id):
         rep = []
         dup_result = 0
         root = Node('~', count=0)
-        completeness_score = { column_name : 0 for column_name in mapped_columns}
-        datatypes_score = { column_name : 0 for column_name in mapped_columns}
+        completeness_score = {column_name: 0 for column_name in mapped_columns}
+        datatypes_score = {column_name: 0 for column_name in mapped_columns}
 
         def check_quality(limit, offset):
             query = [i for i in data_query.order_by('id').limit(limit).offset(offset).all()]
@@ -752,7 +734,7 @@ def data_quality_check(id):
                                 rep.append(cancated_value)
                         recursive_insert(root, cancated_value)
 
-                     # completeness
+                    # completeness
                     for key, value in row.data.items():
                         if value and key in mapped_columns:
                             completeness_score[key] += 1
@@ -777,7 +759,7 @@ def data_quality_check(id):
         completeness = []
         for key, value in completeness_score.items():
             score = value / total_count * 100
-            completeness.append({"column_name": key, "score": score })
+            completeness.append({"column_name": key, "score": score})
             temp_overall_completeness_score += score
         overall_completeness_score += temp_overall_completeness_score / len(completeness)
 
@@ -785,7 +767,7 @@ def data_quality_check(id):
         for key, value in datatypes_score.items():
             # score = value / completeness_score[key] * 100 if completeness_score[key] else 0
             score = value / total_count * 100
-            datatype.append({"column_name": key, "score": score })
+            datatype.append({"column_name": key, "score": score})
             temp_overall_datatype_score += score
         overall_datatype_score += temp_overall_datatype_score / len(datatype)
 
@@ -793,19 +775,19 @@ def data_quality_check(id):
         overall_uniqueness_score += uniqueness
 
         final_result['scores_per_table'][table_name] = {
-                                            'completeness': completeness,
-                                            'uniqueness': {
-                                                'score': uniqueness,
-                                                'key_names': unique_keys,
-                                                'repetitions': rep
-                                                },
-                                            'datatype': datatype
-                                            }
+            'completeness': completeness,
+            'uniqueness': {
+                'score': uniqueness,
+                'key_names': unique_keys,
+                'repetitions': rep
+            },
+            'datatype': datatype
+        }
     final_result['overalls'] = {
-                        'completeness' : overall_completeness_score / len(final_result['scores_per_table']),
-                        'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
-                        'datatype': overall_datatype_score / len(final_result['scores_per_table'])
-                        }
+        'completeness': overall_completeness_score / len(final_result['scores_per_table']),
+        'uniqueness': overall_uniqueness_score / len(final_result['scores_per_table']),
+        'datatype': overall_datatype_score / len(final_result['scores_per_table'])
+    }
 
     #     # let db does the dirty work
     #     if len(unique_keys) > 0:
@@ -871,7 +853,6 @@ def data_quality_check(id):
     #                         'column_name': column_name,
     #                         'score': float(c[0])
     #                         })
-
 
     #         table_completeness_score += float(c[0])
     #         table_datatype_score += float(d[0])
@@ -974,11 +955,10 @@ def data_quality_check(id):
     #            count_failed_datatype += 1
 
     # print(merged_dicts)
-        #  merge_dicts()
-        # for unique_key in unique_keys:
-        #     if unique_key in row.keys():
-        #         unique_keys[unique_key] += 1
-
+    #  merge_dicts()
+    # for unique_key in unique_keys:
+    #     if unique_key in row.keys():
+    #         unique_keys[unique_key] += 1
 
     # for table in list_tablenames:
     #     data_dictionary_results[table] = {}eval
@@ -1025,21 +1005,19 @@ def data_quality_check(id):
 @caps_gen.route('/<int:id>/data_to_aps', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_to_aps(id):
-    response = { 'status': 'ok', 'message': {}, 'payload': {} }
-    # response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': {}, 'payload': {}}
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).project_id
+    # project_id = (query.first()).project_id
 
     def execute(query):
         result = db.session.execute(query)
         db.session.commit()
-        return
+        return result
     execute(j1(id))
     execute(j2(id))
     execute(j3(id))
@@ -1065,9 +1043,9 @@ def data_to_aps(id):
 @caps_gen.route('/<int:id>/view_aps', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_aps(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
@@ -1094,15 +1072,14 @@ def view_aps(id):
 @caps_gen.route('/<int:id>/aps_quality_check', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_quality_check(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).project_id
+    # project_id = (query.first()).project_id
 
     # TODO: APS QUALITY CHECK AND GL NET CHECK
     query_glnetcheck = SapGLNetCheck.query.filter_by(caps_gen_id=id)
@@ -1117,28 +1094,25 @@ def aps_quality_check(id):
 @caps_gen.route('/<int:id>/aps_to_caps', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_to_caps(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = CapsGen.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
-    project_id = (query.first()).project_id
+    # project_id = (query.first()).project_id
 
     def execute(query):
         result = db.session.execute(query)
         db.session.commit()
-        return
+        return result
     execute(j101(id))
     execute(j102())
     execute(j103())
     execute(j104())
     execute(j105())
     execute(j106(id))
-
-
 
     # execute(j12())
     # execute(j13())
@@ -1204,9 +1178,9 @@ def aps_to_caps(id):
 @caps_gen.route('/<int:id>/view_caps', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_caps(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = CapsGen.query.filter_by(id=id)
@@ -1233,10 +1207,11 @@ def view_caps(id):
 @caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def caps_to_transactions(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    # REPLACE WITH tempsession = db.create_scoped_session()
+    # make sure to close!!!!!
     engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
     caps_gen = CapsGen.query.filter_by(id=id)
     if not caps_gen.first():
@@ -1249,11 +1224,9 @@ def caps_to_transactions(id):
         print('deleting')
         engine.execute('DELETE FROM TRANSACTIONS WHERE project_id = {}'.format(project_id))
 
-    result = engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps where caps_gen_id={caps_gen_id}) row;'.format(project_id=project_id, caps_gen_id=id))
+    engine.execute('INSERT INTO transactions(data, project_id) select row_to_json(row) as data , {project_id} project_id from (select * from sap_caps where caps_gen_id={caps_gen_id}) row;'.format(project_id=project_id, caps_gen_id=id))
     db.session.commit()
 
-
-    # caps_gen.caps_gen_project
     caps_gen.first().is_completed = True
     db.session.commit()
 

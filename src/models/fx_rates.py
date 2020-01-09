@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class FXRates(db.Model):
     __tablename__ = 'fx_rates'

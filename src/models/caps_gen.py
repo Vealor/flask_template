@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, func, postgresql
 ################################################################################
 class CapsGen(db.Model):
     __tablename__ = 'caps_gen'
@@ -10,13 +10,13 @@ class CapsGen(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_completed = db.Column(db.Boolean, unique=False, nullable=False, default=False, server_default='f')
     __table_args__ += (
-        db.Index('caps_gen_unique_completed', is_completed, unique=True, postgresql_where=(is_completed==False)),
+        db.Index('caps_gen_unique_completed', is_completed, unique=True, postgresql_where=(is_completed == False)),  # noqa: E712
     )
 
-    user_id = db.Column(db.Integer, nullable=True) #FK
+    user_id = db.Column(db.Integer, nullable=True)  # FK
     caps_gen_user = db.relationship('User', back_populates='user_caps_gen')
 
-    project_id = db.Column(db.Integer, nullable=False) # FK
+    project_id = db.Column(db.Integer, nullable=False)  # FK
     caps_gen_project = db.relationship('Project', back_populates='project_caps_gen')
 
     caps_gen_data_mappings = db.relationship('DataMapping', back_populates='data_mapping_caps_gen', lazy='dynamic', passive_deletes=True)
@@ -78,23 +78,23 @@ class CapsGen(db.Model):
     caps_gen_gst_registration = db.relationship('GstRegistration', back_populates='gst_registration_caps_gen', lazy='dynamic', passive_deletes=True)
 
     table_list = [
-        'caps_gen_sapaufk','caps_gen_sapbkpf','caps_gen_sapbsak',
-        'caps_gen_sapbseg','caps_gen_sapcepc','caps_gen_sapcepct',
-        'caps_gen_sapcsks','caps_gen_sapcskt','caps_gen_sapekko',
-        'caps_gen_sapekpo','caps_gen_sapiflot','caps_gen_sapiloa',
-        'caps_gen_saplfa1','caps_gen_sapmakt','caps_gen_sapmara',
-        'caps_gen_sappayr','caps_gen_sapproj','caps_gen_sapprps',
-        'caps_gen_sapregup','caps_gen_sapt042zt','caps_gen_sapj_1atodct',
-        'caps_gen_sapskat','caps_gen_sapt001','caps_gen_sapt007s',
-        'caps_gen_sapskb1','caps_gen_sapt003t','caps_gen_saptbslt',
-        'caps_gen_saptcurt','caps_gen_saptgsbt','caps_gen_saplfas',
-        'caps_gen_saplfm1','caps_gen_saptoa01','caps_gen_sapt024',
-        'caps_gen_sapt024e','caps_gen_sapmlan','caps_gen_sapmseg',
-        'caps_gen_sapt001l','caps_gen_sapt006a','caps_gen_saptmkm1t',
-        'caps_gen_saptntpb','caps_gen_sapt023t','caps_gen_saptskmt',
-        'caps_gen_saptvegrt','caps_gen_saptvtyt','caps_gen_sapt005s',
-        'caps_gen_sapt007a','caps_gen_sapttxjt','caps_gen_sapt001w',
-        'caps_gen_sapt005t','caps_gen_saptinct'
+        'caps_gen_sapaufk', 'caps_gen_sapbkpf', 'caps_gen_sapbsak',
+        'caps_gen_sapbseg', 'caps_gen_sapcepc', 'caps_gen_sapcepct',
+        'caps_gen_sapcsks', 'caps_gen_sapcskt', 'caps_gen_sapekko',
+        'caps_gen_sapekpo', 'caps_gen_sapiflot', 'caps_gen_sapiloa',
+        'caps_gen_saplfa1', 'caps_gen_sapmakt', 'caps_gen_sapmara',
+        'caps_gen_sappayr', 'caps_gen_sapproj', 'caps_gen_sapprps',
+        'caps_gen_sapregup', 'caps_gen_sapt042zt', 'caps_gen_sapj_1atodct',
+        'caps_gen_sapskat', 'caps_gen_sapt001', 'caps_gen_sapt007s',
+        'caps_gen_sapskb1', 'caps_gen_sapt003t', 'caps_gen_saptbslt',
+        'caps_gen_saptcurt', 'caps_gen_saptgsbt', 'caps_gen_saplfas',
+        'caps_gen_saplfm1', 'caps_gen_saptoa01', 'caps_gen_sapt024',
+        'caps_gen_sapt024e', 'caps_gen_sapmlan', 'caps_gen_sapmseg',
+        'caps_gen_sapt001l', 'caps_gen_sapt006a', 'caps_gen_saptmkm1t',
+        'caps_gen_saptntpb', 'caps_gen_sapt023t', 'caps_gen_saptskmt',
+        'caps_gen_saptvegrt', 'caps_gen_saptvtyt', 'caps_gen_sapt005s',
+        'caps_gen_sapt007a', 'caps_gen_sapttxjt', 'caps_gen_sapt001w',
+        'caps_gen_sapt005t', 'caps_gen_saptinct'
     ]
 
     @property
@@ -105,7 +105,7 @@ class CapsGen(db.Model):
     def get_headers(self):
         output = {}
         for table in self.table_list:
-            output[table] = list(eval('self.'+table).first().data.keys()) if eval('self.'+table).first() else []
+            output[table] = list(eval('self.' + table).first().data.keys()) if eval('self.' + table).first() else []
         return output
 
     @property
@@ -279,8 +279,8 @@ class SapCaps(db.Model):
     vend_phone = db.Column(db.String(256), nullable=True)
     vend_person = db.Column(db.String(256), nullable=True)
     purch_org_descr_po = db.Column(db.String(256), nullable=True)
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapcaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcaps')  # FK
 
     @property
     def serialize(self):
@@ -509,8 +509,8 @@ class SapAps(db.Model):
     skat_spras_key = db.Column(db.String(256), nullable=True)
     lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl = db.Column(db.String(256), nullable=True)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaps') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapaps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaps')  # FK
 
     @property
     def serialize(self):
@@ -598,8 +598,8 @@ class SapTaxGLExtract(db.Model):
     varlocamt = db.Column(db.String(256), nullable=True)
     vardocamt = db.Column(db.String(256), nullable=True)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sap_taxglextract_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_taxglextract') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sap_taxglextract_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_taxglextract')  # FK
 
     @property
     def serialize(self):
@@ -618,8 +618,8 @@ class SapGLNetCheck(db.Model):
     varlocamt = db.Column(db.Float, nullable=True)
     vardocamt = db.Column(db.Float, nullable=True)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sap_glnetcheck_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_glnetcheck') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sap_glnetcheck_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sap_glnetcheck')  # FK
 
     @property
     def serialize(self):
@@ -636,8 +636,8 @@ class SapBseg(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapbseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbseg') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapbseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbseg')  # FK
 
 class SapAufk(db.Model):
     __tablename__ = 'sap_aufk'
@@ -647,8 +647,8 @@ class SapAufk(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapaufk_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaufk') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapaufk_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapaufk')  # FK
 
 class SapBkpf(db.Model):
     __tablename__ = 'sap_bkpf'
@@ -658,8 +658,8 @@ class SapBkpf(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapbkpf_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbkpf') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapbkpf_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbkpf')  # FK
 
 class SapRegup(db.Model):
     __tablename__ = 'sap_regup'
@@ -669,8 +669,8 @@ class SapRegup(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapregup_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapregup') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapregup_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapregup')  # FK
 
 class SapT042zt(db.Model):
     __tablename__ = 'sap_t042zt'
@@ -680,8 +680,8 @@ class SapT042zt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapt042zt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt042zt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt042zt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt042zt')  # FK
 
 class SapJ_1atodct(db.Model):
     __tablename__ = 'sap_j_1atodct'
@@ -691,8 +691,8 @@ class SapJ_1atodct(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapj_1atodct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapj_1atodct') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapj_1atodct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapj_1atodct')  # FK
 
 class SapCepc(db.Model):
     __tablename__ = 'sap_cepc'
@@ -702,8 +702,8 @@ class SapCepc(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapcepc_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepc') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapcepc_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepc')  # FK
 
 class SapCepct(db.Model):
     __tablename__ = 'sap_cepct'
@@ -713,8 +713,8 @@ class SapCepct(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapcepct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepct') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapcepct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcepct')  # FK
 
 class SapCskt(db.Model):
     __tablename__ = 'sap_cskt'
@@ -724,8 +724,8 @@ class SapCskt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapcskt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcskt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapcskt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcskt')  # FK
 
 class SapEkpo(db.Model):
     __tablename__ = 'sap_ekpo'
@@ -735,8 +735,8 @@ class SapEkpo(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapekpo_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekpo') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapekpo_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekpo')  # FK
 
 class SapPayr(db.Model):
     __tablename__ = 'sap_payr'
@@ -746,8 +746,8 @@ class SapPayr(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sappayr_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sappayr') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sappayr_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sappayr')  # FK
 
 class SapBsak(db.Model):
     __tablename__ = 'sap_bsak'
@@ -757,8 +757,8 @@ class SapBsak(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapbsak_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbsak') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapbsak_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapbsak')  # FK
 
 class SapCsks(db.Model):
     __tablename__ = 'sap_csks'
@@ -768,8 +768,8 @@ class SapCsks(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapcsks_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcsks') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapcsks_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapcsks')  # FK
 
 class SapEkko(db.Model):
     __tablename__ = 'sap_ekko'
@@ -779,8 +779,8 @@ class SapEkko(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapekko_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekko') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapekko_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapekko')  # FK
 
 class SapIflot(db.Model):
     __tablename__ = 'sap_iflot'
@@ -790,8 +790,8 @@ class SapIflot(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapiflot_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiflot') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapiflot_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiflot')  # FK
 
 class SapIloa(db.Model):
     __tablename__ = 'sap_iloa'
@@ -801,8 +801,8 @@ class SapIloa(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapiloa_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiloa') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapiloa_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapiloa')  # FK
 
 class SapSkat(db.Model):
     __tablename__ = 'sap_skat'
@@ -812,8 +812,8 @@ class SapSkat(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    sapskat_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskat') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapskat_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskat')  # FK
 
 class SapLfa1(db.Model):
     __tablename__ = 'sap_lfa1'
@@ -823,8 +823,8 @@ class SapLfa1(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    saplfa1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfa1') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saplfa1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfa1')  # FK
 
 class SapMakt(db.Model):
     __tablename__ = 'sap_makt'
@@ -834,8 +834,8 @@ class SapMakt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapmakt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmakt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapmakt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmakt')  # FK
 
 class SapMara(db.Model):
     __tablename__ = 'sap_mara'
@@ -845,8 +845,8 @@ class SapMara(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapmara_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmara') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapmara_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmara')  # FK
 
 class SapProj(db.Model):
     __tablename____ = 'sap_proj'
@@ -856,8 +856,8 @@ class SapProj(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapproj_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapproj') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapproj_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapproj')  # FK
 
 class SapPrps(db.Model):
     __tablename____ = 'sap_prps'
@@ -867,8 +867,8 @@ class SapPrps(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapprps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapprps') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapprps_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapprps')  # FK
 
 class SapT001(db.Model):
     __tablename____ = 'sap_t001'
@@ -878,8 +878,8 @@ class SapT001(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt001_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt001_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001')  # FK
 
 class SapT007s(db.Model):
     __tablename____ = 'sap_t007s'
@@ -889,8 +889,8 @@ class SapT007s(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt007s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007s') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt007s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007s')  # FK
 
 
 class SapSka1(db.Model):
@@ -901,7 +901,7 @@ class SapSka1(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False)
+    caps_gen_id = db.Column(db.Integer, nullable=False)
     sapska1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapska1')
 
 
@@ -913,8 +913,8 @@ class SapSkb1(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapskb1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskb1') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapskb1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapskb1')  # FK
 
 class SapT003t(db.Model):
     __tablename____ = 'sap_t003t'
@@ -924,8 +924,8 @@ class SapT003t(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt003t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt003t') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt003t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt003t')  # FK
 
 class SapTbslt(db.Model):
     __tablename____ = 'sap_tbslt'
@@ -935,8 +935,8 @@ class SapTbslt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptbslt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptbslt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptbslt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptbslt')  # FK
 
 class SapTcurt(db.Model):
     __tablename____ = 'sap_tcurt'
@@ -946,8 +946,8 @@ class SapTcurt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptcurt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptcurt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptcurt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptcurt')  # FK
 
 class SapTgsbt(db.Model):
     __tablename____ = 'sap_tbslt'
@@ -957,8 +957,8 @@ class SapTgsbt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptgsbt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptgsbt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptgsbt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptgsbt')  # FK
 
 class SapLfas(db.Model):
     __tablename____ = 'sap_lfas'
@@ -968,8 +968,8 @@ class SapLfas(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saplfas_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfas') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saplfas_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfas')  # FK
 
 class SapLfm1(db.Model):
     __tablename____ = 'sap_lfm1'
@@ -979,8 +979,8 @@ class SapLfm1(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saplfm1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfm1') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saplfm1_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saplfm1')  # FK
 
 class SapT024(db.Model):
     __tablename____ = 'sap_t024'
@@ -990,8 +990,8 @@ class SapT024(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt024_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt024_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024')  # FK
 
 class SapT024e(db.Model):
     __tablename____ = 'sap_t024e'
@@ -1001,8 +1001,8 @@ class SapT024e(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt024e_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024e') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt024e_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt024e')  # FK
 
 class SapToa01(db.Model):
     __tablename____ = 'sap_toa01'
@@ -1012,8 +1012,8 @@ class SapToa01(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptoa01_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptoa01') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptoa01_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptoa01')  # FK
 
 class SapMlan(db.Model):
     __tablename____ = 'sap_mlan'
@@ -1023,8 +1023,8 @@ class SapMlan(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapmlan_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmlan') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapmlan_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmlan')  # FK
 
 class SapMseg(db.Model):
     __tablename____ = 'sap_mseg'
@@ -1034,8 +1034,8 @@ class SapMseg(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapmseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmseg') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapmseg_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapmseg')  # FK
 
 class SapT001l(db.Model):
     __tablename____ = 'sap_t001l'
@@ -1045,8 +1045,8 @@ class SapT001l(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt001l_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001l') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt001l_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001l')  # FK
 
 class SapT006a(db.Model):
     __tablename____ = 'sap_t006a'
@@ -1056,8 +1056,8 @@ class SapT006a(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt006a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt006a') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt006a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt006a')  # FK
 
 class SapTmkm1t(db.Model):
     __tablename____ = 'sap_tmkm1t'
@@ -1067,8 +1067,8 @@ class SapTmkm1t(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptmkm1t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptmkm1t') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptmkm1t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptmkm1t')  # FK
 
 class SapTntpb(db.Model):
     __tablename____ = 'sap_tntpb'
@@ -1078,8 +1078,8 @@ class SapTntpb(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptntpb_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptntpb') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptntpb_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptntpb')  # FK
 
 class SapT023t(db.Model):
     __tablename____ = 'sap_t023t'
@@ -1089,8 +1089,8 @@ class SapT023t(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt023t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt023t') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt023t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt023t')  # FK
 
 class SapTskmt(db.Model):
     __tablename____ = 'sap_tskmt'
@@ -1100,8 +1100,8 @@ class SapTskmt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptskmt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptskmt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptskmt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptskmt')  # FK
 
 class SapTvegrt(db.Model):
     __tablename____ = 'sap_tvegrt'
@@ -1111,8 +1111,8 @@ class SapTvegrt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptvegrt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvegrt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptvegrt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvegrt')  # FK
 
 class SapTvtyt(db.Model):
     __tablename____ = 'sap_tvtyt'
@@ -1122,8 +1122,8 @@ class SapTvtyt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptvtyt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvtyt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptvtyt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptvtyt')  # FK
 
 class SapT005s(db.Model):
     __tablename____ = 'sap_t005s'
@@ -1133,8 +1133,8 @@ class SapT005s(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt005s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005s') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt005s_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005s')  # FK
 
 class SapT007a(db.Model):
     __tablename____ = 'sap_t007a'
@@ -1144,8 +1144,8 @@ class SapT007a(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt007a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007a') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt007a_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt007a')  # FK
 
 class SapTtxjt(db.Model):
     __tablename____ = 'sap_ttxjt'
@@ -1155,8 +1155,8 @@ class SapTtxjt(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapttxjt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapttxjt') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapttxjt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapttxjt')  # FK
 
 class SapT001w(db.Model):
     __tablename____ = 'sap_t001w'
@@ -1166,8 +1166,8 @@ class SapT001w(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt001w_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001w') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt001w_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt001w')  # FK
 
 class SapT005t(db.Model):
     __tablename____ = 'sap_t005t'
@@ -1177,8 +1177,8 @@ class SapT005t(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    sapt005t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005t') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    sapt005t_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_sapt005t')  # FK
 
 class SapTinct(db.Model):
     __tablename____ = 'sap_tinct'
@@ -1188,5 +1188,5 @@ class SapTinct(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     data = db.Column(postgresql.JSON, nullable=False)
 
-    caps_gen_id = db.Column(db.Integer,  nullable=False) # FK
-    saptinct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptinct') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    saptinct_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptinct')  # FK

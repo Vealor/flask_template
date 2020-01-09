@@ -1,16 +1,12 @@
 '''
 Master Model Endpoints
 '''
-import datetime
-import json
-import pandas as pd
 import pickle
-import random
 import src.prediction.model_master as mm
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user
-from src.errors import *
-from src.models import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, current_user
+from src.errors import InputError, NotFoundError
+from src.models import db, Activity, MasterModel, MasterModelPerformance, Transaction
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import get_date_obj_from_str, validate_request_data, send_mail
 from src.wrappers import has_permission, exception_wrapper
@@ -18,13 +14,13 @@ from src.wrappers import has_permission, exception_wrapper
 master_models = Blueprint('master_models', __name__)
 #===============================================================================
 # Get all master models
-@master_models.route('/', defaults={'id':None}, methods=['GET'])
+@master_models.route('/', defaults={'id': None}, methods=['GET'])
 @master_models.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_master_models(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = MasterModel.query
@@ -40,7 +36,6 @@ def get_master_models(id):
     # Set OFFSET
     query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
 
-
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response), 200
@@ -51,8 +46,8 @@ def get_master_models(id):
 @jwt_required
 @exception_wrapper()
 def has_pending():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    response['payload'] = { 'is_pending' : (MasterModel.find_pending() != None) }
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    response['payload'] = {'is_pending': (MasterModel.find_pending() is not None)}
     return jsonify(response), 200
 
 
@@ -62,8 +57,8 @@ def has_pending():
 @jwt_required
 @exception_wrapper()
 def is_training():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    response['payload'] = { 'is_training' : (MasterModel.find_training() != None) }
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    response['payload'] = {'is_training': (MasterModel.find_training() is not None)}
     return jsonify(response), 200
 
 #===============================================================================
@@ -71,9 +66,9 @@ def is_training():
 @master_models.route('/train/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def do_train():
-    response = { 'status': 'ok', 'message': '', 'payload': {} }
+    response = {'status': 'ok', 'message': '', 'payload': {}}
     data = request.get_json()
 
     # validate input
@@ -136,19 +131,19 @@ def do_train():
         model_id = entry.id
 
         # Get the required transactions and put them into dataframes
-        transactions = Transaction.query.filter(Transaction.approved_user_id != None)
-        train_transactions = transactions.filter(Transaction.modified.between(train_start,train_end))
+        transactions = Transaction.query.filter(Transaction.approved_user_id is not None)
+        train_transactions = transactions.filter(Transaction.modified.between(train_start, train_end))
         data_train = transactions_to_dataframe(train_transactions)
-        test_transactions = transactions.filter(Transaction.modified.between(test_start,test_end))
+        test_transactions = transactions.filter(Transaction.modified.between(test_start, test_end))
         data_valid = transactions_to_dataframe(test_transactions)
 
         # Training =================================
-        data_train = preprocess_data(data_train,preprocess_for='training')
+        data_train = preprocess_data(data_train, preprocess_for='training')
         target = "Target"
         predictors = list(set(data_train.columns) - set([target]))
 
         lh_model = mm.MasterPredictionModel()
-        lh_model.train(data_train,predictors,target)
+        lh_model.train(data_train, predictors, target)
 
         # Update the model entry with the hyperparameters and pickle
         entry.pickle = lh_model.as_pickle()
@@ -202,7 +197,7 @@ def do_train():
         <li>Error: {}</li>
         </ul>
         """.format(str(e))
-        send_mail(current_user.email ,subj, content)
+        send_mail(current_user.email, subj, content)
 
         raise Exception("Error occured during model training: " + str(e))
 
@@ -219,7 +214,7 @@ def do_train():
     <li>Model Name: {}</li>
     </ul>
     """.format(MasterModel.find_by_id(model_id).serialize['name'])
-    send_mail(current_user.email ,subj, content)
+    send_mail(current_user.email, subj, content)
 
     return jsonify(response), 201
 
@@ -228,9 +223,9 @@ def do_train():
 @master_models.route('/validate/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def do_validate():
-    response = { 'status': 'ok', 'message': '', 'payload': {} }
+    response = {'status': 'ok', 'message': '', 'payload': {}}
     data = request.get_json()
 
     active_model = MasterModel.find_active()
@@ -255,14 +250,14 @@ def do_validate():
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
 
     # Pull the transaction data into a dataframe
-    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start,test_end)).filter(Transaction.approved_user_id != None)
+    test_transactions = Transaction.query.filter(Transaction.modified.between(test_start, test_end)).filter(Transaction.approved_user_id is not None)
     if test_transactions.count() == 0:
         raise ValueError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
-    data_valid = preprocess_data(data_valid,preprocess_for='validation',predictors=predictors)
+    data_valid = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
 
     # Evaluate the performance metrics
-    performance_metrics_old = lh_model_old.validate(data_valid,predictors,target)
+    performance_metrics_old = lh_model_old.validate(data_valid, predictors, target)
     model_performance_dict_old = {
         'master_model_id': active_model.id,
         'accuracy': performance_metrics_old['accuracy'],
@@ -285,10 +280,9 @@ def do_validate():
 @master_models.route('/compare/', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def compare_active_and_pending():
-    response = { 'status': 'ok', 'message': '', 'payload': {} }
-    data = request.get_json()
+    response = {'status': 'ok', 'message': '', 'payload': {}}
 
     active_model = MasterModel.find_active()
     if not active_model:
@@ -306,15 +300,14 @@ def compare_active_and_pending():
 
     return jsonify(response), 200
 
-
 #===============================================================================
 # Update the active master model
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def set_active_model(model_id):
-    response = { 'status': 'ok', 'message': '', 'payload': {} }
+    response = {'status': 'ok', 'message': '', 'payload': {}}
 
     pending_model = MasterModel.find_by_id(model_id)
     if not pending_model:
@@ -325,15 +318,14 @@ def set_active_model(model_id):
 
     return jsonify(response), 200
 
-
 #===============================================================================
 # Delete a master model
 @master_models.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_master_model(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = MasterModel.find_by_id(id)
     if not query:
