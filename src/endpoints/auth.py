@@ -80,7 +80,6 @@ def login():
 @exception_wrapper()
 def refresh():
     user = get_jwt_identity()
-    print(user)
     response = {'status': 'ok', 'message': '', 'payload': []}
     response['access_token'] = create_access_token(identity = user)
     return jsonify(response), 201

@@ -15,7 +15,7 @@ client_tax_gl_extract = Blueprint('client_tax_gl_extract', __name__)
 @jwt_required
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
-def get_client_vendor_master():
+def get_client_tax_gl_extract():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
