@@ -305,7 +305,7 @@ def compare_active_and_pending():
 
     pending_model = ClientModel.find_pending_for_client(client_id)
     if not pending_model:
-        raise ValueError('There is no pending model to compare to the active model.')
+        raise NotFoundError('There is no pending model to compare to the active model.')
     else:
         response['payload']['pending_metrics'] = ClientModelPerformance.get_most_recent_for_model(pending_model.id).serialize
 
