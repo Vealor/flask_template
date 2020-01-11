@@ -7,4 +7,6 @@ class TestLogsGet():
         response = get_req('/logs', client, token)
 
         assert response.status_code == 200
-        assert len(response.get_json()) > 0
+        data = response.get_json()
+        assert data['status'] == 'ok'
+        assert len(data['payload']) > 0

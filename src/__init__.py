@@ -15,6 +15,7 @@ from src.util import bcolours
 def build_api():
     api_build = Flask(__name__)
     CORS(api_build, supports_credentials=True)
+    api_build.url_map.strict_slashes = False  # critical to come before build_blueprints
 
     if api_build.config['ENV'] == 'development':
         print(bcolours.OKGREEN + "\n %% DEV %% \n" + bcolours.ENDC)
@@ -32,8 +33,6 @@ def build_api():
     build_blueprints(api_build)
     build_jwt_helpers(JWTManager(api_build))
     Migrate(api_build, db)
-
-    api_build.url_map.strict_slashes = False
     return api_build
 
 api = build_api()

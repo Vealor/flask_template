@@ -258,7 +258,7 @@ class Transaction(db.Model):
             'client_model_id': self.client_model_id,
             'master_model_id': self.master_model_id,
 
-            'gst_hst_codes': [c.serialize['code'] for c in self.transaction_codes if c.tax_type.value == 'gst'] if self.transaction_codes else [],
+            'gst_hst_codes': [c.serialize['code'] for c in self.transaction_codes if c.tax_type.value == 'gst_hst'] if self.transaction_codes else [],
             'gst_hst_notes_internal': self.gst_hst_notes_internal,
             'gst_hst_notes_external': self.gst_hst_notes_external,
             'gst_hst_recoveries': self.gst_hst_recoveries,

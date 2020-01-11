@@ -21,11 +21,39 @@ def login(client, username, password):
 
 #===============================================================================
 def get_req(url, client, token=None):
-    headers = {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + token
-    }
+    headers = {'Accept': 'application/json'}
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
     response = client.get(url,
                           headers = headers,
                           follow_redirects = True)
+    return response
+
+def post_req(url, client, payload={}, token=None):
+    headers = {'Accept': 'application/json'}
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
+    response = client.post(url,
+                           json = payload,
+                           headers = headers,
+                           follow_redirects = True)
+    return response
+
+def put_req(url, client, payload={}, token=None):
+    headers = {'Accept': 'application/json'}
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
+    response = client.put(url,
+                          json = payload,
+                          headers = headers,
+                          follow_redirects = True)
+    return response
+
+def delete_req(url, client, token=None):
+    headers = {'Accept': 'application/json'}
+    if token:
+        headers['Authorization'] = 'Bearer ' + token
+    response = client.delete(url,
+                             headers = headers,
+                             follow_redirects = True)
     return response
