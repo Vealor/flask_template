@@ -2,7 +2,7 @@ import pytest
 # from ._helpers import seed_db_data
 from src import build_api, db
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def api():
     api = build_api()
     with api.app_context():
