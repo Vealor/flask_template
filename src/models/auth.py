@@ -1,13 +1,9 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class BlacklistToken(db.Model):
     __tablename__ = 'blacklisted_tokens'
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(120))
-
-    def add(self):
-        db.session.add(self)
-        db.session.commit()
 
     @classmethod
     def is_blacklisted(cls, jti):

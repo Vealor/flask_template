@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, Datatype, Category, Caps_Interface
 ################################################################################
 class CDMLabel(db.Model):
     __tablename__ = 'cdm_labels'
@@ -32,6 +32,7 @@ class CDMLabel(db.Model):
             'precision': self.precision,
             'caps_interface': self.caps_interface.value if self.caps_interface else None,
         }
+
     @property
     def paredown_columns_serialize(self):
         return {

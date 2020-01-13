@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, postgresql, Process, Operator, re
 ################################################################################
 class DataParam(db.Model):
     __tablename__ = 'data_params'
@@ -12,7 +12,7 @@ class DataParam(db.Model):
     value = db.Column(postgresql.ARRAY(db.String), nullable=True)
     is_many = db.Column(db.Boolean, nullable=False)
 
-    project_id = db.Column(db.Integer, nullable=False, unique=True) # FK
+    project_id = db.Column(db.Integer, nullable=False, unique=True)  # FK
     data_param_project = db.relationship('Project', back_populates='project_data_params')
 
     @property
@@ -22,7 +22,7 @@ class DataParam(db.Model):
             'process': self.process.value,
             'param': self.param,
             'operator': self.operator.value,
-            'value': [float(x) if re.match('^\d+(?:\.\d+)?$', x) else x for x in self.value],
+            'value': [float(x) if re.match(r'^\d+(?:\.\d+)?$', x) else x for x in self.value], # noqa
             'is_many': self.is_many,
             'project_id': self.project_id
         }

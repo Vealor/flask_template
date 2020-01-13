@@ -1,6 +1,6 @@
-from .__model_imports import *
-from .codes import *
-from src.errors import *
+from .__model_imports import func, postgresql, db, ErrorTypes
+from .codes import Code, TransactionCode, TaxTypes  # noqa: F401
+from src.errors import InputError
 ################################################################################
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -40,204 +40,202 @@ class Transaction(db.Model):
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
     {
-    # transaction_attributes
-    # even_gst_ind
-    # odd_imm
-    # prov_ap_amt
-    # pme_imm
-    # gst_imm
-    # gst_count
-    # cn_flag_ind
-    # cn_rep2_ind
-    # prov_ap
-    # even_gst_rate
-    # even_hst13_rate
-    # even_hst14_rate
-    # even_hst15_rate
-    # even_gst_bc_rate
-    # even_gst_mb_rate
-    # even_gst_sask_rate
-    # even_gst_qst_rate
-    # pme_mat
-    # gst_mat
-    # flag_cn
-    # odd_ind
-    # pme_general
-    # prov_tax_ind
-    # eff_rate
-    # rate_ind
-    # new_vend_name
-    # net_value
-    # top_inv_amt
-    # amount_local_ccy
-    # ap_ar_amt_doc_ccy
-    # vardocamt
-    # vartranamount
-    # varlocamt
-    # ap_amt
-    # gst_hst
-    # pst
-    # pst_sa
-    # qst
-    # taxes_other
-    # varapkey
-    # doc_type_gl
-    # inv_date
-    # post_date_gl
-    # fx_rate
-    # fiscal_period_gl
-    # trnx_code_gl
-    # ccy
-    # inv_num
-    # main_asset_num
-    # asset_sub_num
-    # gl_doc_num
-    # post_key_gl
-    # gl_doc_status
-    # co_code_gl
-    # po_doc_num
-    # func_area_gl
-    # fiscal_year_gl
-    # bus_area_dept_num_gl
-    # control_area_gl
-    # cost_ctr_num_gl
-    # cx_num
-    # vend_num
-    # material_num_gl
-    # tax_type_gl
-    # po_tax_code_gl
-    # gst_hst_qst_pst_local_ccy
-    # profit_ctr_num
-    # wbs_gl
-    # item_descr_gl
-    # reverse_doc_num
-    # reverse_reason_gl
-    # tax_jur_gl
-    # sales_doc_num_gl
-    # billing_doc_num
-    # gst_hst_pst_qst_doc_ccy
-    # vend_name
-    # vend_city
-    # vend_region
-    # vend_tax_num_1
-    # vend_tax_num_2
-    # vend_tax_num_3
-    # vend_tax_num_4
-    # vend_tax_num_5
-    # vend_tax_num_type
-    # vend_reg_num
-    # lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl
-    # post_key_descr
-    # co_name
-    # proj_loc_proj
-    # proj_type_proj
-    # wbs_elem_descr_proj
-    # wbs_elem_id_proj
-    # wbs_cntrl_area_proj
-    # wbs_bus_area_proj
-    # jv_obj_type_proj
-    # object_num_proj
-    # proj_descr_proj
-    # proj_defin_proj
-    # proj_internal_proj
-    # proj_tx_jur_proj
-    # proj_mngr_name_proj
-    # proj_mngr_num_proj
-    # bus_area_proj
-    # plant_proj
-    # tx_jur_descr_tx
-    # plant_name_plant
-    # plant_tx_jur_plant
-    # tx_name_tx
-    # largest_debit_half_acct_num_gl
-    # pymt_doc_num_pmt
-    # payee_code_pmt
-    # cx_num_pmt
-    # co_code_pmt
-    # incoterms1
-    # incoterms2
-    # cntry_name
-    # ean_upc_num_mat
-    # mat_orig_ctry_mat
-    # ean_categ_mat
-    # mat_tx_class_mat
-    # mat_tx_class_descr_mat
-    # mat_group_descr_mat
-    # mat_descr_mat
-    # mat_dept_ctry_mat
-    # mat_tx_ind_mat
-    # wbs_po
-    # po_tx_code_po
-    # plant_num
-    # po_tx_jur
-    # po_item_descr
-    # stor_loc_desc_mat
-    # stor_loc_mat
-    # stor_plant_mat
-    # mat_doc_num_mat
-    # mat_plnt_mat
-    # punch_grp_po
-    # punch_org_po
-    # handover_loc_po
-    # vend_phone
-    # vend_person
-    # purch_org_descr_po
+        # transaction_attributes
+        # even_gst_ind
+        # odd_imm
+        # prov_ap_amt
+        # pme_imm
+        # gst_imm
+        # gst_count
+        # cn_flag_ind
+        # cn_rep2_ind
+        # prov_ap
+        # even_gst_rate
+        # even_hst13_rate
+        # even_hst14_rate
+        # even_hst15_rate
+        # even_gst_bc_rate
+        # even_gst_mb_rate
+        # even_gst_sask_rate
+        # even_gst_qst_rate
+        # pme_mat
+        # gst_mat
+        # flag_cn
+        # odd_ind
+        # pme_general
+        # prov_tax_ind
+        # eff_rate
+        # rate_ind
+        # new_vend_name
+        # net_value
+        # top_inv_amt
+        # amount_local_ccy
+        # ap_ar_amt_doc_ccy
+        # vardocamt
+        # vartranamount
+        # varlocamt
+        # ap_amt
+        # gst_hst
+        # pst
+        # pst_sa
+        # qst
+        # taxes_other
+        # varapkey
+        # doc_type_gl
+        # inv_date
+        # post_date_gl
+        # fx_rate
+        # fiscal_period_gl
+        # trnx_code_gl
+        # ccy
+        # inv_num
+        # main_asset_num
+        # asset_sub_num
+        # gl_doc_num
+        # post_key_gl
+        # gl_doc_status
+        # co_code_gl
+        # po_doc_num
+        # func_area_gl
+        # fiscal_year_gl
+        # bus_area_dept_num_gl
+        # control_area_gl
+        # cost_ctr_num_gl
+        # cx_num
+        # vend_num
+        # material_num_gl
+        # tax_type_gl
+        # po_tax_code_gl
+        # gst_hst_qst_pst_local_ccy
+        # profit_ctr_num
+        # wbs_gl
+        # item_descr_gl
+        # reverse_doc_num
+        # reverse_reason_gl
+        # tax_jur_gl
+        # sales_doc_num_gl
+        # billing_doc_num
+        # gst_hst_pst_qst_doc_ccy
+        # vend_name
+        # vend_city
+        # vend_region
+        # vend_tax_num_1
+        # vend_tax_num_2
+        # vend_tax_num_3
+        # vend_tax_num_4
+        # vend_tax_num_5
+        # vend_tax_num_type
+        # vend_reg_num
+        # lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl
+        # post_key_descr
+        # co_name
+        # proj_loc_proj
+        # proj_type_proj
+        # wbs_elem_descr_proj
+        # wbs_elem_id_proj
+        # wbs_cntrl_area_proj
+        # wbs_bus_area_proj
+        # jv_obj_type_proj
+        # object_num_proj
+        # proj_descr_proj
+        # proj_defin_proj
+        # proj_internal_proj
+        # proj_tx_jur_proj
+        # proj_mngr_name_proj
+        # proj_mngr_num_proj
+        # bus_area_proj
+        # plant_proj
+        # tx_jur_descr_tx
+        # plant_name_plant
+        # plant_tx_jur_plant
+        # tx_name_tx
+        # largest_debit_half_acct_num_gl
+        # pymt_doc_num_pmt
+        # payee_code_pmt
+        # cx_num_pmt
+        # co_code_pmt
+        # incoterms1
+        # incoterms2
+        # cntry_name
+        # ean_upc_num_mat
+        # mat_orig_ctry_mat
+        # ean_categ_mat
+        # mat_tx_class_mat
+        # mat_tx_class_descr_mat
+        # mat_group_descr_mat
+        # mat_descr_mat
+        # mat_dept_ctry_mat
+        # mat_tx_ind_mat
+        # wbs_po
+        # po_tx_code_po
+        # plant_num
+        # po_tx_jur
+        # po_item_descr
+        # stor_loc_desc_mat
+        # stor_loc_mat
+        # stor_plant_mat
+        # mat_doc_num_mat
+        # mat_plnt_mat
+        # punch_grp_po
+        # punch_org_po
+        # handover_loc_po
+        # vend_phone
+        # vend_person
+        # purch_org_descr_po
     }
 
-
-
-    transaction_codes = db.relationship('TransactionCode', back_populates='transaction_code_transaction', cascade="save-update", lazy='dynamic', passive_deletes=True) #FK
+    transaction_codes = db.relationship('TransactionCode', back_populates='transaction_code_transaction', cascade="save-update", lazy='dynamic', passive_deletes=True)  # FK
 
     gst_hst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     gst_hst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     gst_hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
     gst_hst_error_type = db.Column(db.Enum(ErrorTypes), server_default=None, nullable=True)
-    gst_hst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
-    gst_hst_coded_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_coded_by_id') # FK
-    gst_hst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    gst_hst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_signed_off_by_id') # FK
+    gst_hst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    gst_hst_coded_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_coded_by_id')  # FK
+    gst_hst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    gst_hst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_signed_off_by_id')  # FK
 
     qst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     qst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     qst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    qst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
-    qst_coded_by_user = db.relationship('User', foreign_keys='Transaction.qst_coded_by_id') # FK
-    qst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id') # FK
+    qst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    qst_coded_by_user = db.relationship('User', foreign_keys='Transaction.qst_coded_by_id')  # FK
+    qst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    qst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.qst_signed_off_by_id')  # FK
 
     pst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     pst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     pst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    pst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
-    pst_coded_by_user = db.relationship('User', foreign_keys='Transaction.pst_coded_by_id') # FK
-    pst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id') # FK
+    pst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    pst_coded_by_user = db.relationship('User', foreign_keys='Transaction.pst_coded_by_id')  # FK
+    pst_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    pst_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.pst_signed_off_by_id')  # FK
 
     apo_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     apo_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
     apo_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
     apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
-    apo_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True) #FK
-    apo_coded_by_user = db.relationship('User', foreign_keys='Transaction.apo_coded_by_id') # FK
-    apo_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    apo_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.apo_signed_off_by_id') # FK
+    apo_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    apo_coded_by_user = db.relationship('User', foreign_keys='Transaction.apo_coded_by_id')  # FK
+    apo_signed_off_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    apo_signed_off_by_user = db.relationship('User', foreign_keys='Transaction.apo_signed_off_by_id')  # FK
 
-    locked_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id') # FK
+    locked_user_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    locked_transaction_user = db.relationship('User', foreign_keys='Transaction.locked_user_id')  # FK
 
-    approved_user_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    approved_transaction_user = db.relationship('User', foreign_keys='Transaction.approved_user_id') # FK
+    approved_user_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    approved_transaction_user = db.relationship('User', foreign_keys='Transaction.approved_user_id')  # FK
 
-    project_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_project = db.relationship('Project', back_populates='project_transactions') # FK
+    project_id = db.Column(db.Integer, nullable=False)  # FK
+    transaction_project = db.relationship('Project', back_populates='project_transactions')  # FK
 
-    client_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions') # FK
+    client_model_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    transaction_client_model = db.relationship('ClientModel', back_populates='client_model_transactions')  # FK
 
-    master_model_id = db.Column(db.Integer, server_default=None, nullable=True) # FK
-    transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions') # FK
+    master_model_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
+    transaction_master_model = db.relationship('MasterModel', back_populates='master_model_transactions')  # FK
 
     @property
     def serialize(self):
@@ -324,10 +322,9 @@ class Transaction(db.Model):
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
 
-
     def update_codes(self, input_codes, tax_type):
         codes = list(set(input_codes))
-        query = db.session.query(TransactionCode).filter_by(transaction_id=self.id).filter_by(tax_type=eval("TaxTypes."+tax_type)).all()
+        query = db.session.query(TransactionCode).filter_by(transaction_id=self.id).filter_by(tax_type=eval("TaxTypes." + tax_type)).all()
         query_codes = ([txn.transaction_code_code.code_number for txn in query])
         codes.sort()
         query_codes.sort()
@@ -343,10 +340,9 @@ class Transaction(db.Model):
                     raise InputError("Code number {} does not exist.".format(code))
                 db.session.add(TransactionCode(
                     transaction_id = self.id,
-                    tax_type=eval("TaxTypes."+tax_type),
+                    tax_type=eval("TaxTypes." + tax_type),
                     code_id = code_query.id
                 ))
             return True
         else:
             return False
-        db.session.flush()

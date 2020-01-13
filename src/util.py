@@ -3,8 +3,8 @@ import datetime
 import re
 import sendgrid
 from flask import current_app
-from src.errors import *
-from src.models import *
+from src.errors import InputError
+from src.models import db, Actions, Log
 
 #==============================================================================
 # prints text with specific colours if adding to print statements
@@ -29,7 +29,7 @@ def create_log(user, action, affected_entity, details):
         raise Exception('Affected Entity for log has too long of string. Keep under 256.')
     db.session.add(Log(
         user_id = user.id,
-        action = eval("Actions."+action),
+        action = eval("Actions." + action),
         affected_entity = affected_entity,
         details = details
     ))
@@ -43,7 +43,7 @@ def create_log(user, action, affected_entity, details):
 def get_date_obj_from_str(date_str):
     try:
         date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-    except:
+    except Exception:
         raise InputError("Incorrect data format, should be YYYY-MM-DD")
     return date_obj
 
@@ -53,7 +53,7 @@ def validate_request_data(data, validation):
     if not isinstance(data, dict):
         raise InputError('Input payload for endpoint must be a dictionary.')
     # Ensures keys in validation are all in data. Data can have excess keys.
-    missing_vars = [x for x in validation.keys() if not x in data.keys()]
+    missing_vars = [x for x in validation.keys() if x not in data.keys()]
     if missing_vars:
         raise InputError('Request is missing required keys: {}'.format(missing_vars))
 
@@ -64,7 +64,7 @@ def validate_request_data(data, validation):
         valid = False
         for datatype in validation[key]:
             if datatype == 'NoneType':
-                if isinstance(data[key],(str, type(None))):
+                if isinstance(data[key], (str, type(None))):
                     valid = True
             elif datatype == '':
                 if data[key] == '':
@@ -77,7 +77,7 @@ def validate_request_data(data, validation):
     # ensures strings are not empty unless specified
     for key in validation.keys():
         if 'str' in validation[key] and not ("" in validation[key] or 'NoneType' in validation[key]):
-            if "".join(e for e in data[key] if e.isalnum() or e in ['<','>','=']) == '':
+            if "".join(e for e in data[key] if e.isalnum() or e in ['<', '>', '=']) == '':
                 raise InputError('Request cannot contain empty or only non-alphanumeric string for columns.')
 
 #===============================================================================
@@ -86,11 +86,11 @@ def send_mail(user_email, subject, content):
     try:
         to_email = sendgrid.helpers.mail.To(email=user_email)
         from_email = sendgrid.helpers.mail.Email(email=current_app.config['OUTBOUND_EMAIL'])
-        subject = '[ARRT] '+ subject
+        subject = '[ARRT] ' + subject
         content = sendgrid.helpers.mail.Content(
             'text/html',
             '''<html><body>
-                '''+str(content)+'''
+                ''' + str(content) + '''
             </body></html>'''
         )
 
@@ -98,7 +98,7 @@ def send_mail(user_email, subject, content):
         mail = sendgrid.helpers.mail.Mail(from_email, to_email, subject, content)
         response_mail = sg.client.mail.send.post(request_body=mail.get())
         if not re.search('^2(00|02)$', str(response_mail.status_code)):
-            raise 'ERROR '+str(response_mail.status_code)
+            raise 'ERROR ' + str(response_mail.status_code)
         return True
     except Exception as e:
         raise e

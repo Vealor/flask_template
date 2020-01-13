@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, LineOfBusinessSectors, ArrayOfEnum, postgresql
 ################################################################################
 class ParedownRule(db.Model):
     __tablename__ = 'paredown_rules'
@@ -17,14 +17,14 @@ class ParedownRule(db.Model):
 
     lob_sectors = db.Column(ArrayOfEnum(postgresql.ENUM(LineOfBusinessSectors)), nullable=True)
 
-    code_id = db.Column(db.Integer, nullable=False) # FK
+    code_id = db.Column(db.Integer, nullable=False)  # FK
     paredown_rule_code = db.relationship('Code', back_populates='code_paredown_rules')
-    paredown_rule_approver1_id = db.Column(db.Integer, nullable=True) # FK
-    paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id') # FK
-    paredown_rule_approver2_id = db.Column(db.Integer, nullable=True) # FK
-    paredown_rule_approver2_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver2_id') # FK
+    paredown_rule_approver1_id = db.Column(db.Integer, nullable=True)  # FK
+    paredown_rule_approver1_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver1_id')  # FK
+    paredown_rule_approver2_id = db.Column(db.Integer, nullable=True)  # FK
+    paredown_rule_approver2_user = db.relationship('User', foreign_keys='ParedownRule.paredown_rule_approver2_id')  # FK
 
-    paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True) # FK
+    paredown_rule_conditions = db.relationship('ParedownRuleCondition', back_populates='paredown_rule_condition_paredown_rule', lazy='dynamic', passive_deletes=True)  # FK
 
     @property
     def serialize(self):
@@ -57,8 +57,8 @@ class ParedownRuleCondition(db.Model):
     operator = db.Column(db.String(128), nullable=False)
     value = db.Column(db.String(128), nullable=False)
 
-    paredown_rule_id = db.Column(db.Integer, nullable=False) # FK
-    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions') #FK
+    paredown_rule_id = db.Column(db.Integer, nullable=False)  # FK
+    paredown_rule_condition_paredown_rule = db.relationship('ParedownRule', back_populates='paredown_rule_conditions')  # FK
 
     @property
     def serialize(self):

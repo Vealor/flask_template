@@ -21,3 +21,7 @@ class NotFoundError(Exception):
 # custom 409 Error
 class DataConflictError(Exception):
     pass
+
+# custom 422 Error
+class UnprocessableEntityError(Exception):
+    pass

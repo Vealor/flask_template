@@ -36,137 +36,137 @@ def j101(caps_gen_id):
             varapkey as varapkey_temp,
             Trim(largest_debit_half_acct_num_gl) AS largest_debit_half_acct_num_gl_temp,
         bkpf_belnr_key,
-doc_type_gl,
-inv_date,
-post_date_gl,
-bkpf_bukrs_key,
-bkpf_gjahr_key,
-fx_rate,
-bkpf_kzwrs_key,
-fiscal_period_gl,
-trnx_code_gl,
-ccy,
-inv_num,
-main_asset_num,
-asset_sub_num,
-gl_doc_num,
-post_key_gl,
-gl_doc_status,
-bseg_budat_key,
-co_code_gl,
-bseg_buzei_key,
-po_doc_num,
-bseg_ebelp_key,
-func_area_gl,
-fiscal_year_gl,
-bus_area_dept_num_gl,
-control_area_gl,
-cost_ctr_num_gl,
-cx_num,
-vend_num,
-material_num_gl,
-tax_type_gl,
-bseg_mwsk3_key,
-po_tax_code_gl,
-gst_hst_qst_pst_local_ccy,
-bseg_pargb_key,
-profit_ctr_num,
-wbs_gl,
-item_descr_gl,
-reverse_doc_num,
-reverse_reason_gl,
-tax_jur_gl,
-sales_doc_num_gl,
-billing_doc_num,
-gst_hst_pst_qst_doc_ccy,
-lfa1_land1_key,
-lfa1_lifnr_key,
-vend_name,
-vend_city,
-vend_region,
-vend_tax_num_1,
-vend_tax_num_2,
-vend_tax_num_3,
-vend_tax_num_4,
-vend_tax_num_5,
-vend_tax_num_type,
-vend_reg_num,
-skat_ktopl_key,
-skat_saknr_key,
-skat_spras_key,
-lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
-caps_gen_id,
-bkpf_ktopl_key,
-bseg_shkzg_key,
-bseg_umskz_key,
+    doc_type_gl,
+    inv_date,
+    post_date_gl,
+    bkpf_bukrs_key,
+    bkpf_gjahr_key,
+    fx_rate,
+    bkpf_kzwrs_key,
+    fiscal_period_gl,
+    trnx_code_gl,
+    ccy,
+    inv_num,
+    main_asset_num,
+    asset_sub_num,
+    gl_doc_num,
+    post_key_gl,
+    gl_doc_status,
+    bseg_budat_key,
+    co_code_gl,
+    bseg_buzei_key,
+    po_doc_num,
+    bseg_ebelp_key,
+    func_area_gl,
+    fiscal_year_gl,
+    bus_area_dept_num_gl,
+    control_area_gl,
+    cost_ctr_num_gl,
+    cx_num,
+    vend_num,
+    material_num_gl,
+    tax_type_gl,
+    bseg_mwsk3_key,
+    po_tax_code_gl,
+    gst_hst_qst_pst_local_ccy,
+    bseg_pargb_key,
+    profit_ctr_num,
+    wbs_gl,
+    item_descr_gl,
+    reverse_doc_num,
+    reverse_reason_gl,
+    tax_jur_gl,
+    sales_doc_num_gl,
+    billing_doc_num,
+    gst_hst_pst_qst_doc_ccy,
+    lfa1_land1_key,
+    lfa1_lifnr_key,
+    vend_name,
+    vend_city,
+    vend_region,
+    vend_tax_num_1,
+    vend_tax_num_2,
+    vend_tax_num_3,
+    vend_tax_num_4,
+    vend_tax_num_5,
+    vend_tax_num_type,
+    vend_reg_num,
+    skat_ktopl_key,
+    skat_saknr_key,
+    skat_spras_key,
+    lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+    caps_gen_id,
+    bkpf_ktopl_key,
+    bseg_shkzg_key,
+    bseg_umskz_key,
 
         Row_number() OVER( partition BY varapkey, Trim(largest_debit_half_acct_num_gl)
         ORDER BY
 
-bkpf_belnr_key,
-doc_type_gl,
-inv_date,
-post_date_gl,
-bkpf_bukrs_key,
-bkpf_gjahr_key,
-fx_rate,
-bkpf_kzwrs_key,
-fiscal_period_gl,
-trnx_code_gl,
-ccy,
-inv_num,
-main_asset_num,
-asset_sub_num,
-gl_doc_num,
-post_key_gl,
-gl_doc_status,
-bseg_budat_key,
-co_code_gl,
-bseg_buzei_key,
-po_doc_num,
-bseg_ebelp_key,
-func_area_gl,
-fiscal_year_gl,
-bus_area_dept_num_gl,
-control_area_gl,
-cost_ctr_num_gl,
-cx_num,
-vend_num,
-material_num_gl,
-tax_type_gl,
-bseg_mwsk3_key,
-po_tax_code_gl,
-gst_hst_qst_pst_local_ccy,
-bseg_pargb_key,
-profit_ctr_num,
-wbs_gl,
-item_descr_gl,
-reverse_doc_num,
-reverse_reason_gl,
-tax_jur_gl,
-sales_doc_num_gl,
-billing_doc_num,
-gst_hst_pst_qst_doc_ccy,
-lfa1_land1_key,
-lfa1_lifnr_key,
-vend_name,
-vend_city,
-vend_region,
-vend_tax_num_1,
-vend_tax_num_2,
-vend_tax_num_3,
-vend_tax_num_4,
-vend_tax_num_5,
-vend_tax_num_type,
-vend_reg_num,
-skat_ktopl_key,
-skat_saknr_key,
-skat_spras_key,
-lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
-caps_gen_id,
-bkpf_ktopl_key,
-bseg_shkzg_key,
-bseg_umskz_key
+    bkpf_belnr_key,
+    doc_type_gl,
+    inv_date,
+    post_date_gl,
+    bkpf_bukrs_key,
+    bkpf_gjahr_key,
+    fx_rate,
+    bkpf_kzwrs_key,
+    fiscal_period_gl,
+    trnx_code_gl,
+    ccy,
+    inv_num,
+    main_asset_num,
+    asset_sub_num,
+    gl_doc_num,
+    post_key_gl,
+    gl_doc_status,
+    bseg_budat_key,
+    co_code_gl,
+    bseg_buzei_key,
+    po_doc_num,
+    bseg_ebelp_key,
+    func_area_gl,
+    fiscal_year_gl,
+    bus_area_dept_num_gl,
+    control_area_gl,
+    cost_ctr_num_gl,
+    cx_num,
+    vend_num,
+    material_num_gl,
+    tax_type_gl,
+    bseg_mwsk3_key,
+    po_tax_code_gl,
+    gst_hst_qst_pst_local_ccy,
+    bseg_pargb_key,
+    profit_ctr_num,
+    wbs_gl,
+    item_descr_gl,
+    reverse_doc_num,
+    reverse_reason_gl,
+    tax_jur_gl,
+    sales_doc_num_gl,
+    billing_doc_num,
+    gst_hst_pst_qst_doc_ccy,
+    lfa1_land1_key,
+    lfa1_lifnr_key,
+    vend_name,
+    vend_city,
+    vend_region,
+    vend_tax_num_1,
+    vend_tax_num_2,
+    vend_tax_num_3,
+    vend_tax_num_4,
+    vend_tax_num_5,
+    vend_tax_num_type,
+    vend_reg_num,
+    skat_ktopl_key,
+    skat_saknr_key,
+    skat_spras_key,
+    lrg_deb_1_acct_num_gl_lrg_deb_2_acct_num_gl,
+    caps_gen_id,
+    bkpf_ktopl_key,
+    bseg_shkzg_key,
+    bseg_umskz_key
          DESC) AS roworder
            FROM
               sap_aps
@@ -231,15 +231,15 @@ def j103():
              Sum(Cast(ap_ar_amt_doc_ccy AS FLOAT)) AS ap_ar_amt_doc_ccy,
              Sum(Cast(bseg_pswbt_key AS FLOAT)) AS bseg_pswbt_key,
              Sum(Cast(bseg_dmbe2_key AS FLOAT)) AS bseg_dmbe2_key,
-    	   SUM(vardocamt) as vardocamt,
-    	   SUM(varlocamt) as vartranamount,
-    	   SUM(varlocamt) as varlocamt,
-    	   sum(AP_AMT) as AP_AMT,
-    	   sum(GST_HST) as GST_HST,
-    	   sum(PST) as PST,
-    	   sum(PST_SA) as PST_SA,
-    	   sum(QST) as QST,
-    	   sum(TAXES_OTHER) as TAXES_OTHER,
+             SUM(vardocamt) as vardocamt,
+             SUM(varlocamt) as vartranamount,
+             SUM(varlocamt) as varlocamt,
+             sum(AP_AMT) as AP_AMT,
+             sum(GST_HST) as GST_HST,
+             sum(PST) as PST,
+             sum(PST_SA) as PST_SA,
+             sum(QST) as QST,
+             sum(TAXES_OTHER) as TAXES_OTHER,
              varapkey
           FROM
              aps_tax_calc
@@ -321,10 +321,10 @@ def j103():
     bseg_shkzg_key,
     bseg_umskz_key,
 
-        				      Row_number() OVER( partition BY varapkey
+                              Row_number() OVER( partition BY varapkey
                        ORDER BY
                         largest_debit_half_acct_num_gl,
-        				bkpf_belnr_key,
+                        bkpf_belnr_key,
     doc_type_gl,
     inv_date,
     post_date_gl,
@@ -390,7 +390,7 @@ def j103():
     bseg_umskz_key
 
                        DESC) AS roworder
-    									   FROM
+                                           FROM
                       aps_tax_calc
                 )
                 AS subq
@@ -399,43 +399,43 @@ def j103():
           )
           AS r
           ON l.varapkey = r.varapkey_temp
-    	  order by varlocamt desc
+          order by varlocamt desc
   """
     return j103
 
 # Join TBSLT
-def j15():
-    j15 = """
-    drop table if exists caps_1;
-
-    select   L.*,
-    R.data ->> 'tbslt_bschl_key' as tbslt_bschl_key,
-    R.data ->> 'post_key_descr' as post_key_descr,
-    R.data ->> 'tbslt_umskz_key' as tbslt_umskz_key,
-    R.data ->> 'tbslt_spras_key' as tbslt_spras_key
-    into caps_1
-    from aps_summ as L
-    left join (select * from sap_tbslt where caps_gen_id = {caps_gen_id}) as R
-    on L.post_key_gl = R.data ->> 'tbslt_bschl_key'
-    and L.bseg_umskz_key = R.data ->> 'tbslt_umskz_key'
-    """.format(caps_gen_id = caps_gen_id)
-    return j15
+# def j15():
+#     j15 = """
+#     drop table if exists caps_1;
+#
+#     select   L.*,
+#     R.data ->> 'tbslt_bschl_key' as tbslt_bschl_key,
+#     R.data ->> 'post_key_descr' as post_key_descr,
+#     R.data ->> 'tbslt_umskz_key' as tbslt_umskz_key,
+#     R.data ->> 'tbslt_spras_key' as tbslt_spras_key
+#     into caps_1
+#     from aps_summ as L
+#     left join (select * from sap_tbslt where caps_gen_id = {caps_gen_id}) as R
+#     on L.post_key_gl = R.data ->> 'tbslt_bschl_key'
+#     and L.bseg_umskz_key = R.data ->> 'tbslt_umskz_key'
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j15
 
 # Join T001
-def j16():
-    j16 = """
-    drop table if exists caps_2;
-
-    select  distinct on (L.varapkey) L.*,
-    first_value(R.data ->> 'co_name') OVER (order by R.data ->> 'co_name' is null) as co_name,
-    first_value(R.data ->> 't001_land1_key') OVER (order by R.data ->> 't001_land1_key' is null) as t001_land1_key,
-    first_value(R.data ->> 't001_bukrs_key') OVER (order by R.data ->> 't001_bukrs_key' is null) as t001_bukrs_key
-    into caps_2
-    from caps_1 as L
-    left join (select * from sap_T001 where caps_gen_id = 3) as R
-    on L.co_code_gl = R.data ->> 't001_bukrs_key'
-    """.format(caps_gen_id = caps_gen_id)
-    return j16
+# def j16():
+#     j16 = """
+#     drop table if exists caps_2;
+#
+#     select  distinct on (L.varapkey) L.*,
+#     first_value(R.data ->> 'co_name') OVER (order by R.data ->> 'co_name' is null) as co_name,
+#     first_value(R.data ->> 't001_land1_key') OVER (order by R.data ->> 't001_land1_key' is null) as t001_land1_key,
+#     first_value(R.data ->> 't001_bukrs_key') OVER (order by R.data ->> 't001_bukrs_key' is null) as t001_bukrs_key
+#     into caps_2
+#     from caps_1 as L
+#     left join (select * from sap_T001 where caps_gen_id = 3) as R
+#     on L.co_code_gl = R.data ->> 't001_bukrs_key'
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j16
 
 # Join T005S: GRIRG does not exist
 # def j17():
@@ -454,40 +454,40 @@ def j16():
 #     return j17
 
 # Join CSKS to CSKT
-def j18():
-    j18 = """
-    drop table if exists j1_csks_cskt;
-
-    select L.data ->> 'csks_kokrs_key' as csks_kokrs_key,
-    L.data ->> 'csks_kostl_key' as csks_kostl_key,
-    L.data ->> 'csks_datbi_key' as csks_datbi_key,
-    L.data ->> 'cost_ctr_tx_jur' as cost_ctr_tx_jur,
-    R.data ->> 'cskt_spras_key' as cskt_spras_key,
-    R.data ->> 'cskt_kokrs_key' as cskt_kokrs_key,
-    R.data ->> 'cskt_datbi_key' as cskt_datbi_key,
-    R.data ->> 'cskt_kostl_key' as cskt_kostl_key,
-    R.data ->> 'cost_ctr_name' as cost_ctr_name,
-    R.data ->> 'cost_ctr_descr' as cost_ctr_descr
-    into j1_csks_cskt
-    from (select * from sap_csks where caps_gen_id = {caps_gen_id}) as L
-    left join (select * from sap_cskt where caps_gen_id = {caps_gen_id}) as R
-    on L.data ->> 'csks_kokrs_key' = R.data ->> 'cskt_kokrs_key'
-    and L.data ->> 'csks_kostl_key' = R.data ->> 'cskt_kostl_key'
-    """.format(caps_gen_id = caps_gen_id)
-    return j18
+# def j18():
+#     j18 = """
+#     drop table if exists j1_csks_cskt;
+#
+#     select L.data ->> 'csks_kokrs_key' as csks_kokrs_key,
+#     L.data ->> 'csks_kostl_key' as csks_kostl_key,
+#     L.data ->> 'csks_datbi_key' as csks_datbi_key,
+#     L.data ->> 'cost_ctr_tx_jur' as cost_ctr_tx_jur,
+#     R.data ->> 'cskt_spras_key' as cskt_spras_key,
+#     R.data ->> 'cskt_kokrs_key' as cskt_kokrs_key,
+#     R.data ->> 'cskt_datbi_key' as cskt_datbi_key,
+#     R.data ->> 'cskt_kostl_key' as cskt_kostl_key,
+#     R.data ->> 'cost_ctr_name' as cost_ctr_name,
+#     R.data ->> 'cost_ctr_descr' as cost_ctr_descr
+#     into j1_csks_cskt
+#     from (select * from sap_csks where caps_gen_id = {caps_gen_id}) as L
+#     left join (select * from sap_cskt where caps_gen_id = {caps_gen_id}) as R
+#     on L.data ->> 'csks_kokrs_key' = R.data ->> 'cskt_kokrs_key'
+#     and L.data ->> 'csks_kostl_key' = R.data ->> 'cskt_kostl_key'
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j18
 
 # join CAPS to CSKS CSKT #control_area_gl does not exist
-def j19():
-    j19 = """
-    drop table if exists caps_4;
-    select distinct on (L.control_area_gl) L.*,
-    R.*
-    into caps_4
-    from (select * from caps_3) as L
-    left join (select * from j1_csks_cskt) as R
-    on L.control_area_gl = R.csks_kokrs_key
-    """
-    return j19
+# def j19():
+#     j19 = """
+#     drop table if exists caps_4;
+#     select distinct on (L.control_area_gl) L.*,
+#     R.*
+#     into caps_4
+#     from (select * from caps_3) as L
+#     left join (select * from j1_csks_cskt) as R
+#     on L.control_area_gl = R.csks_kokrs_key
+#     """
+#     return j19
 
 # join CEPC and CEPCT
 # def j20():
@@ -526,63 +526,63 @@ def j19():
 #     """
 #     return j20
 
-def j21():
-    j21 = """
-    drop table if exists j1_PRPS_PROJ;
-    select
-	L.data ->> 'prps_pspnr_key' as prps_pspnr_key,
-	L.data ->> 'prps_psphi_key' as prps_psphi_key,
-	L.data ->> 'proj_loc_proj' as proj_loc_proj,
-	L.data ->> 'proj_type_proj' as proj_type_proj,
-	L.data ->> 'wbs_elem_descr_proj' as wbs_elem_descr_proj,
-	L.data ->> 'wbs_elem_id_proj' as wbs_elem_id_proj,
-	L.data ->> 'wbs_cntrl_area_proj' as wbs_cntrl_area_proj,
-	L.data ->> 'wbs_bus_area_proj' as wbs_bus_area_proj,
-	L.data ->> 'jv_obj_type_proj' as jv_obj_type_proj,
-	L.data ->> 'object_num_proj' as object_num_proj,
-	R.data ->> 'proj_descr_proj' as proj_descr_proj,
-	R.data ->> 'proj_defin_proj' as proj_defin_proj,
-	R.data ->> 'proj_internal_proj' as proj_internal_proj,
-	R.data ->> 'proj_tx_jur_proj' as proj_tx_jur_proj,
-	R.data ->> 'proj_mngr_name_proj' as proj_mngr_name_proj,
-	R.data ->> 'proj_mngr_num_proj' as proj_mngr_num_proj,
-	R.data ->> 'bus_area_proj' as bus_area_proj,
-	R.data ->> 'plant_proj' as plant_proj
-    into j1_PRPS_PROJ
-    from (select * from sap_prps where caps_gen_id = {caps_gen_id}) as L
-    left join (select * from sap_proj where caps_gen_id = {caps_gen_id}) as R
-    on L.data ->> 'prps_psphi_key' = R.data ->> 'proj_internal_proj'
-    """
+# def j21():
+#     j21 = """
+#     drop table if exists j1_PRPS_PROJ;
+#     select
+#     L.data ->> 'prps_pspnr_key' as prps_pspnr_key,
+#     L.data ->> 'prps_psphi_key' as prps_psphi_key,
+#     L.data ->> 'proj_loc_proj' as proj_loc_proj,
+#     L.data ->> 'proj_type_proj' as proj_type_proj,
+#     L.data ->> 'wbs_elem_descr_proj' as wbs_elem_descr_proj,
+#     L.data ->> 'wbs_elem_id_proj' as wbs_elem_id_proj,
+#     L.data ->> 'wbs_cntrl_area_proj' as wbs_cntrl_area_proj,
+#     L.data ->> 'wbs_bus_area_proj' as wbs_bus_area_proj,
+#     L.data ->> 'jv_obj_type_proj' as jv_obj_type_proj,
+#     L.data ->> 'object_num_proj' as object_num_proj,
+#     R.data ->> 'proj_descr_proj' as proj_descr_proj,
+#     R.data ->> 'proj_defin_proj' as proj_defin_proj,
+#     R.data ->> 'proj_internal_proj' as proj_internal_proj,
+#     R.data ->> 'proj_tx_jur_proj' as proj_tx_jur_proj,
+#     R.data ->> 'proj_mngr_name_proj' as proj_mngr_name_proj,
+#     R.data ->> 'proj_mngr_num_proj' as proj_mngr_num_proj,
+#     R.data ->> 'bus_area_proj' as bus_area_proj,
+#     R.data ->> 'plant_proj' as plant_proj
+#     into j1_PRPS_PROJ
+#     from (select * from sap_prps where caps_gen_id = {caps_gen_id}) as L
+#     left join (select * from sap_proj where caps_gen_id = {caps_gen_id}) as R
+#     on L.data ->> 'prps_psphi_key' = R.data ->> 'proj_internal_proj'
+#     """
 
 
-def j22():
-    j22 = """
-    drop table if exists j2_PRPS_PROJ_TTXJT;
-    select L.*,
-    R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key,
-    R.data ->> 'ttxjt_kalsm_key' as ttxjt_kalsm_key,
-    R.data ->> 'tx_jur_descr_tx' as tx_jur_descr_tx,
-    R.data ->> 'ttxjt_txjcd_key' as ttxjt_txjcd_key
-    into j2_PRPS_PROJ_TTXJT
-    from j1_PRPS_PROJ as L
-    left join (select * from sap_ttxjt where caps_gen_id = {caps_gen_id}) as R
-    on L.proj_tx_jur_proj = R.data ->> 'ttxjt_txjcd_key'
-    """.format(caps_gen_id = caps_gen_id)
-    return j22
+# def j22():
+#     j22 = """
+#     drop table if exists j2_PRPS_PROJ_TTXJT;
+#     select L.*,
+#     R.data ->> 'ttxjt_spras_key' as ttxjt_spras_key,
+#     R.data ->> 'ttxjt_kalsm_key' as ttxjt_kalsm_key,
+#     R.data ->> 'tx_jur_descr_tx' as tx_jur_descr_tx,
+#     R.data ->> 'ttxjt_txjcd_key' as ttxjt_txjcd_key
+#     into j2_PRPS_PROJ_TTXJT
+#     from j1_PRPS_PROJ as L
+#     left join (select * from sap_ttxjt where caps_gen_id = {caps_gen_id}) as R
+#     on L.proj_tx_jur_proj = R.data ->> 'ttxjt_txjcd_key'
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j22
 
-def j24():
-    j24 = """
-    drop table if exists j3_PRPS_PROJ_TTXJT_T001W;
-    select L.*,
-    R.data ->> 'plant_name_plant' as plant_name_plant,
-    R.data ->> 'plant_tx_jur_plant' as plant_tx_jur_plant,
-    R.data ->> 't001w_werks_key' as t001w_werks_key
-    into j3_PRPS_PROJ_TTXJT_T001W
-    from j2_PRPS_PROJ_TTXJT as L
-    left join (select * from sap_t001w where caps_gen_id = {caps_gen_id}) as R
-    on L.plant_proj = R.data ->> 't001w_werks_key'
-    """.format(caps_gen_id = caps_gen_id)
-    return j24
+# def j24():
+#     j24 = """
+#     drop table if exists j3_PRPS_PROJ_TTXJT_T001W;
+#     select L.*,
+#     R.data ->> 'plant_name_plant' as plant_name_plant,
+#     R.data ->> 'plant_tx_jur_plant' as plant_tx_jur_plant,
+#     R.data ->> 't001w_werks_key' as t001w_werks_key
+#     into j3_PRPS_PROJ_TTXJT_T001W
+#     from j2_PRPS_PROJ_TTXJT as L
+#     left join (select * from sap_t001w where caps_gen_id = {caps_gen_id}) as R
+#     on L.plant_proj = R.data ->> 't001w_werks_key'
+#     """.format(caps_gen_id = caps_gen_id)
+#     return j24
 
 def j25():
     j25 = """
@@ -831,7 +831,7 @@ def j39(caps_gen_id):
 
 # Join CAPS to SKB1 REGUP + tables, remove t001 table b/c duplicate
 def j40():
-    j39 = """
+    j40 = """
     drop table if exists caps_5;
     select L.*,
     R.*
@@ -1253,7 +1253,7 @@ def j62():
     from caps_7 as L
     left join J3_EKPO_T001L_TTXJT_MSEG_T001W_EKKO_T024E as R
     on L.bseg_ebelp_key = R.ekpo_ebelp_key
-	and L.po_doc_num = R.ekpo_ebeln_key
+    and L.po_doc_num = R.ekpo_ebeln_key
     """
     return j62
 
@@ -1274,32 +1274,32 @@ DROP TABLE IF EXISTS caps_no_attributes;
 select
     case when
     AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST13_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST14_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST15_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_MB_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
-	when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST13_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST14_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_HST15_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_BC_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_MB_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_SASK_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
+    when AP_AMT <> 0 and SUBSTRING(split_part(cast(EVEN_GST_QST_RATE as text), '.', 2), 3, 8) = '00000000'  then 'Y'
     else 'F'
     end
     EVEN_GST_IND,
-	case when PME_IMM = 'Y' and GST_IMM = 'Y' then 'Y' else 'N' end ODD_IMM,
-	--case when GST_COUNT = COUNT_TRANS_VEN then 'Y' else '' end FLAG_CN what is count_trans_ven?
-	case when abs(PROV_AP) >= 5000 then 'Y' else 'N' end PROV_AP_AMT,
+    case when PME_IMM = 'Y' and GST_IMM = 'Y' then 'Y' else 'N' end ODD_IMM,
+    --case when GST_COUNT = COUNT_TRANS_VEN then 'Y' else '' end FLAG_CN what is count_trans_ven?
+    case when abs(PROV_AP) >= 5000 then 'Y' else 'N' end PROV_AP_AMT,
     *
-	into caps_no_attributes
-	from (
-	select
-	case when abs(PME_MAT) > 350.00 then 'N' else 'Y' end PME_IMM,
-	case when abs(GST_MAT) > 250.00
-	--and TOTAL_GST_HST <> 0.00 TOTAL_GST_HST DOESN'T EXIST
-	then 'N'
-	when abs(GST_MAT) > 250.00
-	--and TOTAL_GST_HST = 0.00  TOTAL_GST_HST DOESN'T EXIST
-	then 'N'
-	else 'Y' end GST_IMM,
-	* from (
+    into caps_no_attributes
+    from (
+    select
+    case when abs(PME_MAT) > 350.00 then 'N' else 'Y' end PME_IMM,
+    case when abs(GST_MAT) > 250.00
+    --and TOTAL_GST_HST <> 0.00 TOTAL_GST_HST DOESN'T EXIST
+    then 'N'
+    when abs(GST_MAT) > 250.00
+    --and TOTAL_GST_HST = 0.00  TOTAL_GST_HST DOESN'T EXIST
+    then 'N'
+    else 'Y' end GST_IMM,
+    * from (
     select
 
     --calculation for prov tax ind PROV_TAX_IND <> '         '  'F'
@@ -1313,38 +1313,38 @@ select
     case when EFF_RATE >= 14.980000 and EFF_RATE <= 15.950000 then 'F'
     else 'T' end CN_REP2_IND,
     case when PME_GENERAL <> '' and PME_GENERAL <> 'QC' and PME_GENERAL <> 'QST as GST' then AP_AMT
-	else 0.00 end PROV_AP,
+    else 0.00 end PROV_AP,
     case when
     (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*5.0000000000)/105.0000000000
     else 0.5555555555 end EVEN_GST_RATE,
-	case when
+    case when
     (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*13.0000000000)/113.0000000000
     else 0.5555555555 end EVEN_HST13_RATE,
-	case when
+    case when
     (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*14.0000000000)/114.0000000000
     else 0.5555555555 end EVEN_HST14_RATE,
-	case when
+    case when
     (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0 then ABS(AP_AMT*15.0000000000)/115.0000000000
     else 0.5555555555 end EVEN_HST15_RATE,
-	case when
+    case when
     ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'BC' then ABS(AP_AMT*5.0000000000)/112.0000000000
     else 0.5555555555 end EVEN_GST_BC_RATE,
-	case when
+    case when
     ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'MB' then ABS(AP_AMT*5.0000000000)/113.0000000000
     else 0.5555555555 end EVEN_GST_MB_RATE,
-	case when
+    case when
     ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'SK5' then ABS(AP_AMT*5.0000000000)/110.0000000000
-	when ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'SK6' then ABS(AP_AMT*5.0000000000)/111.0000000000
+    when ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'SK6' then ABS(AP_AMT*5.0000000000)/111.0000000000
     else 0.5555555555 end EVEN_GST_SASK_RATE,
-	case when
+    case when
     ((Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and PME_GENERAL = '' and GST_HST = 0)  or PME_GENERAL = 'QC' then ABS(AP_AMT*5.0000000000)/114.97500000000
     else 0.5555555555 end EVEN_GST_QST_RATE,
-	case when
+    case when
     (Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') and ODD_IND = 'T' then ABS(AP_AMT) - ABS(GST_HST)/0.0500000000
     else 0.0 end PME_MAT,
     case when
     Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E' then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST))
-	when Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E' and GST_HST < 0 then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
+    when Rate_ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E' and GST_HST < 0 then (((abs(AP_AMT)-abs(PST)) * (5.0000000000/105.0000000000)) - abs(GST_HST)) * -1
     else 0.00
     end GST_MAT,
     case when
@@ -1362,24 +1362,24 @@ select
     BROKER_PCT,
      *
     from
-		(
-		select
+        (
+        select
 CASE WHEN
-	EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (Rate_Ind = 'B'  or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
+    EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (Rate_Ind = 'B'  or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
     when EFF_RATE >= 14.9800000 and  EFF_RATE <= 15.099999 and (Rate_Ind = 'B'  or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
     when EFF_RATE >= 13.9800000 and  EFF_RATE <= 14.099999  and (Rate_Ind = 'B' or Rate_Ind = 'C') then 'F'
     when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and (Rate_Ind = 'B' or Rate_Ind = 'C' or Rate_Ind = 'D' or Rate_Ind = 'E') then 'F'
     when EFF_RATE >= 11.9800000 and  EFF_RATE <= 12.099999  and Rate_Ind = 'D' then 'F'
     when EFF_RATE >= 12.9800000 and  EFF_RATE <= 13.099999  and Rate_Ind = 'D' then 'F'
     when EFF_RATE = 0.000000000 then 'F'
-	when PME_GENERAL <> '' then 'F'
+    when PME_GENERAL <> '' then 'F'
     else 'T' end ODD_IND,
-			*
-		from
+            *
+        from
     (
     select
 
-		CASE WHEN
+        CASE WHEN
     EFF_RATE >= 4.6713972  and EFF_RATE <= 4.6743972 and Rate_Ind = 'A' then 'F'
     when EFF_RATE >= 5.9800000  and  EFF_RATE <= 6.0999999 and Rate_Ind = 'B' then 'F'
     when EFF_RATE >= 4.9800000  and  EFF_RATE <= 5.0999999 and (Rate_Ind = 'C' or Rate_Ind = 'D') then 'F'
@@ -1425,7 +1425,7 @@ CASE WHEN
     Rate_Ind,
     upper(trim(vend_name)) as New_Vend_Name,
     abs(AP_AMT) - abs(GST_HST) - abs(PST) as Net_Value,
-	 ap_amt as TOP_INV_AMT,
+     ap_amt as TOP_INV_AMT,
     *
     from aps_summ) subq) subq1 ) subq2 ) subq3 ) subq4 ) subq5
     """
@@ -1434,7 +1434,7 @@ CASE WHEN
 def j105():
     j105 = """
         DROP TABLE IF EXISTS caps_with_attributes;
-	select rtrim(concat(noitc_var,
+    select rtrim(concat(noitc_var,
                 itc_var,
                 noitr_var,
                 Even_var,
@@ -1532,7 +1532,7 @@ def j105():
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'Y') then 'ODD_GST_IMM' else null end ODD_GST_IMM,
     --case when ODD_IND = 'T' and (PST_IMM ='N' or GST_IMM = 'N') then 'ODD' else null end ODD,
     case when AP_AMT = 0.00 and GST_HST <> 0.00 then 'GSTSeperate, ' else null end GSTSeperate_var,
-	--case when (cast(pymt_dt_pmt as date) - cast(inv_date as date)) <= 30 then 'EPD, ' else null end EPD,
+    --case when (cast(pymt_dt_pmt as date) - cast(inv_date as date)) <= 30 then 'EPD, ' else null end EPD,
      -- Broker, GST, QST, NoGST, NoQST remaining
                     varapkey
     from

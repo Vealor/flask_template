@@ -1,28 +1,26 @@
 '''
 User Endpoints
 '''
-import json
-import psycopg2
 import re
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from psycopg2.errors import NotNullViolation
 from sqlalchemy.exc import IntegrityError
-from src.errors import *
-from src.models import *
+from src.errors import DataConflictError, InputError, NotFoundError, UnauthorizedError
+from src.models import db, Roles, User
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 users = Blueprint('users', __name__)
 #===============================================================================
 # GET ALL USER
-@users.route('/', defaults={'id':None}, methods=['GET'])
+@users.route('/', defaults={'id': None}, methods=['GET'])
 @users.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_users(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = User.query
@@ -47,9 +45,9 @@ def get_users(id):
 @users.route('/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_user():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -136,9 +134,9 @@ def create_user():
 @users.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -148,7 +146,7 @@ def update_user(id):
         'initials': ['str'],
         'first_name': ['str'],
         'last_name': ['str'],
-        'role': ['str'] # TODO: if user does not have correct role, do not do this
+        'role': ['str']  # TODO: if user does not have correct role, do not do this
     }
     validate_request_data(data, request_types)
 
@@ -205,7 +203,7 @@ def update_user(id):
 @jwt_required
 @exception_wrapper()
 def check_password(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -227,9 +225,9 @@ def check_password(id):
 @users.route('/<int:id>/passchange', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user_password(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = {'status': '', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -266,9 +264,9 @@ def update_user_password(id):
 @users.route('/<int:id>/activate', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def activate_user(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = {'status': '', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -289,9 +287,9 @@ def activate_user(id):
 @users.route('/<int:id>/deactivate', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def deactivate_user(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = {'status': '', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -312,9 +310,9 @@ def deactivate_user(id):
 @users.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_user(id):
-    response = { 'status': '', 'message': '', 'payload': [] }
+    response = {'status': '', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:

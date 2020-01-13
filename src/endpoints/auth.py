@@ -1,15 +1,14 @@
 '''
 Auth Endpoints
 '''
-import json
 import random
 import string
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from src.errors import *
-from src.models import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, current_user
+from src.errors import UnauthorizedError
+from src.models import db, User
 from src.util import send_mail, validate_request_data, create_log
-from src.wrappers import has_permission, exception_wrapper
+from src.wrappers import exception_wrapper
 
 auth = Blueprint('auth', __name__)
 #===============================================================================
@@ -17,8 +16,8 @@ auth = Blueprint('auth', __name__)
 # sends email with new temp pass
 @auth.route('/reset', methods=['POST'])
 @exception_wrapper()
-def reset():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+def reset():  # pragma: no cover
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
@@ -38,8 +37,8 @@ def reset():
 
         mailbody = '''
         <h2>Password reset information</h2>
-        <strong>username: </strong>'''+data['username']+'''<br>
-        <strong>new pass: </strong>'''+newpass+'''
+        <strong>username: </strong>''' + data['username'] + '''<br>
+        <strong>new pass: </strong>''' + newpass + '''
         '''
         send_mail(data['email'], 'Password Reset', mailbody)
         create_log(current_user, 'modify', 'User requested password reset', 'E-mail sent')
@@ -53,7 +52,7 @@ def reset():
 @auth.route('/login', methods=['POST'])
 @exception_wrapper()
 def login():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
@@ -81,7 +80,7 @@ def login():
 @exception_wrapper()
 def refresh():
     user = get_jwt_identity()
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     response['access_token'] = create_access_token(identity = user)
     return jsonify(response), 201
 
@@ -91,8 +90,8 @@ def refresh():
 @jwt_required
 @exception_wrapper()
 def verify_tokens():
-    user_identity = get_jwt_identity()
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    get_jwt_identity()
+    response = {'status': 'ok', 'message': '', 'payload': []}
     return jsonify(response), 200
 
 #===============================================================================
@@ -101,7 +100,7 @@ def verify_tokens():
 @jwt_required
 @exception_wrapper()
 def get_user_details():
-    response = { 'status': 'ok', 'message': '', 'payload': current_user.serialize }
+    response = {'status': 'ok', 'message': '', 'payload': current_user.serialize}
     return jsonify(response), 200
 
 #===============================================================================
@@ -110,5 +109,5 @@ def get_user_details():
 @jwt_required
 @exception_wrapper()
 def get_user_details_with_projects():
-    response = { 'status': 'ok', 'message': '', 'payload': current_user.serialize_user_proj }
+    response = {'status': 'ok', 'message': '', 'payload': current_user.serialize_user_proj}
     return jsonify(response), 200

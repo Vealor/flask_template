@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, postgresql, Activity, func
 from sqlalchemy import desc
 ###############################################################################
 class MasterModel(db.Model):
@@ -18,9 +18,9 @@ class MasterModel(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
+            'created': self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
-            'name': "master-model_{}_{}".format(self.created.strftime("%Y-%m-%d"),self.id),
+            'name': "master-model_{}_{}".format(self.created.strftime("%Y-%m-%d"), self.id),
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
@@ -37,7 +37,6 @@ class MasterModel(db.Model):
     @classmethod
     def find_pending(cls):
         return cls.query.filter_by(status = Activity.pending.value).first()
-
 
     @classmethod
     def find_training(cls):
@@ -61,10 +60,10 @@ class MasterModelPerformance(db.Model):
     accuracy = db.Column(db.Float, nullable=False)
     recall = db.Column(db.Float, nullable=False)
     test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
-    test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
+    test_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    master_model_id = db.Column(db.Integer, nullable=False) # FK
-    performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances') # FK
+    master_model_id = db.Column(db.Integer, nullable=False)  # FK
+    performance_master_model = db.relationship('MasterModel', back_populates='master_model_model_performances')  # FK
 
     @property
     def serialize(self):
@@ -72,7 +71,7 @@ class MasterModelPerformance(db.Model):
             'id': self.id,
             'master_model_id': self.master_model_id,
             'model_name': self.performance_master_model.serialize['name'],
-            'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
+            'created': self.created.strftime("%Y/%m/%d_%H:%M:%S"),
             'accuracy': self.accuracy,
             'precision': self.precision,
             'recall': self.recall,

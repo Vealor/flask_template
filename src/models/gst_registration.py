@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db
 ################################################################################
 class GstRegistration(db.Model):
     __tablename__ = 'gst_registration'
@@ -11,8 +11,8 @@ class GstRegistration(db.Model):
     vendor_city = db.Column(db.String(256), nullable=True)
     vendor_region = db.Column(db.String(256), nullable=True)
 
-    caps_gen_id = db.Column(db.Integer, nullable=False) # FK
-    gst_registration_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_gst_registration') # FK
+    caps_gen_id = db.Column(db.Integer, nullable=False)  # FK
+    gst_registration_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_gst_registration')  # FK
 
     @property
     def serialize(self):

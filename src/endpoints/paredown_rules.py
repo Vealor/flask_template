@@ -1,27 +1,25 @@
 '''
 Paredown Endpoints
 '''
-import json
-import random
 import sqlalchemy
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from sqlalchemy.dialects import postgresql
-from src.errors import *
-from src.models import *
+from src.errors import InputError, NotFoundError
+from src.models import db, Code, LineOfBusinessSectors, ParedownRule, ParedownRuleCondition, Roles, User
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 paredown_rules = Blueprint('paredown_rules', __name__)
 #===============================================================================
 # GET ALL Paredown rules
-@paredown_rules.route('/', defaults={'id':None}, methods=['GET'])
+@paredown_rules.route('/', defaults={'id': None}, methods=['GET'])
 @paredown_rules.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_paredown_rules(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = ParedownRule.query
@@ -45,14 +43,14 @@ def get_paredown_rules(id):
 @paredown_rules.route('/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_paredown_rule():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
-        'approver1_id' : ['int','NoneType'],
-        'approver2_id' : ['int','NoneType'],
+        'approver1_id': ['int', 'NoneType'],
+        'approver2_id': ['int', 'NoneType'],
         'code_id': ['int'],
         'is_active': ['bool'],
         'conditions': ['list']
@@ -95,7 +93,7 @@ def create_paredown_rule():
     new_paredown_rule = ParedownRule(
         paredown_rule_approver1_id = data['approver1_id'],
         paredown_rule_approver2_id = data['approver2_id'],
-        code_id = data['code_id'],
+        code_id=data['code_id'],
         is_core = data['is_core'],
         is_active = data['is_active'],
         comment = data['comment'],
@@ -105,9 +103,9 @@ def create_paredown_rule():
     db.session.flush()
     # Create the conditions for the paredown rule
     for cond in data['conditions']:
-        op_types = ['contains','>','<','=','>=','<=','!=']
+        op_types = ['contains', '>', '<', '=', '>=', '<=', '!=']
         if cond['operator'] not in op_types:
-            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
+            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'], ','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
             field = cond['field'],
             operator = cond['operator'],
@@ -127,14 +125,14 @@ def create_paredown_rule():
 @paredown_rules.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_paredown_rule(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
-        'approver1_id' : ['int','NoneType'],
-        'approver2_id' : ['int','NoneType'],
+        'approver1_id': ['int', 'NoneType'],
+        'approver2_id': ['int', 'NoneType'],
         'code_id': ['int'],
         'is_active': ['bool'],
         'conditions': ['list']
@@ -198,9 +196,9 @@ def update_paredown_rule(id):
         db.session.flush()
 
     for cond in data['conditions']:
-        op_types = ['contains','>','<','=','>=','<=','!=']
+        op_types = ['contains', '>', '<', '=', '>=', '<=', '!=']
         if cond['operator'] not in op_types:
-            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'],','.join(op_types)))
+            raise InputError('Condition Operator {} is not of allowable types: {}'.format(cond['operator'], ','.join(op_types)))
         new_paredown_condition = ParedownRuleCondition(
             field = cond['field'],
             operator = cond['operator'],
@@ -221,9 +219,9 @@ def update_paredown_rule(id):
 @paredown_rules.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_paredown_rule(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = ParedownRule.find_by_id(id)
     if not query:

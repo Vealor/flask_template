@@ -1,17 +1,12 @@
 '''
 General Endpoints
 '''
-import json
-import random
 import datetime
-import json
 import requests
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from sqlalchemy import desc, exc
-from src.errors import *
-from src.models import *
-from src.util import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
+from sqlalchemy import desc
+from src.models import db, FXRates
 from src.wrappers import has_permission, exception_wrapper
 
 fx_rates = Blueprint('fx_rates', __name__)
@@ -20,7 +15,7 @@ fx_rates = Blueprint('fx_rates', __name__)
 @fx_rates.route('/', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_fx_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
@@ -28,7 +23,7 @@ def get_fx_rates():
     query = FXRates.query.order_by(desc(FXRates.date)).first().get_dates
 
     if query['datetime'] < datetime.datetime.now().date():
-        params = {'start_date' : str(query['datetime']), 'end_date' : str(datetime.datetime.now().date())}
+        params = {'start_date': str(query['datetime']), 'end_date': str(datetime.datetime.now().date())}
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD', params=params).json()
         database_insert = [{'date': dict['d'], 'usdtocad': dict['FXCADUSD']['v']} for dict in results['observations'] if dict['d'] > str(query['datetime'])]
         db.session.bulk_insert_mappings(FXRates, database_insert)

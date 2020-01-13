@@ -1,14 +1,8 @@
 
 import os
 import re
-import json
-import requests
-import multiprocessing as mp
-from config import *
-from flask import Blueprint, current_app, jsonify, request
-from os import path
-from src.models import *
-from sqlalchemy import exists, desc, create_engine
+from flask import current_app
+from sqlalchemy import create_engine
 from sqlalchemy.sql.expression import bindparam
 
 def build_master_file(args):
@@ -18,13 +12,13 @@ def build_master_file(args):
     #Search for all files that match table
     for file in os.listdir(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])):
         if re.search(table, file):
-            if re.match(("^((?<!_[A-Z]{4}).)*" + re.escape(table) + "_\d{4}"), file):
+            if re.match((r"^((?<!_[A-Z]{4}).)*" + re.escape(table) + r"_\d{4}"), file):
                 table_files.append(file)
     #Load & union files into one master table in memory
     wfd = open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_MASTER_LOCATION'], '{}_MASTER.txt'.format(table)), 'wb')
     for index, file in enumerate(table_files):
         if index == 0:
-            with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r' ,encoding='utf-8-sig') as fd:
+            with open(os.path.join(current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'], file), 'r', encoding='utf-8-sig') as fd:
                 wfd.write(fd.read().encode())
         else:
             # for all future files
@@ -74,19 +68,19 @@ def apply_mapping(args):
     offset = 0
     referenceclass = eval(table)
     engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
-    # print(table)
+
     def map_data(limit, offset):
         query_string = '''
         SELECT * from sap_{table} WHERE caps_gen_id={id} ORDER BY id LIMIT {limit} OFFSET {offset};
-        '''.format(table = table_name, limit = limit, offset = offset, id = id )
+        '''.format(table = table_name, limit = limit, offset = offset, id = id)
 
         result = engine.execute(query_string)
         stmt = referenceclass.__table__.update().\
-                where(referenceclass.id == bindparam('_id')).\
-                values({
-                    'data': bindparam('data'),
-                    'caps_gen_id': bindparam('caps_gen_id'),
-                })
+            where(referenceclass.id == bindparam('_id')).\
+            values({
+                'data': bindparam('data'),
+                'caps_gen_id': bindparam('caps_gen_id'),
+            })
 
         columns = [i for i in result]
         list_to_inset = []
@@ -100,12 +94,12 @@ def apply_mapping(args):
                     newdata[map[1]] = newdata.pop(map[0])
                 # print("yay")
                 # row.data = newdata
-            insert_data = {'_id':row.id, 'data':newdata, 'caps_gen_id':id}
+            insert_data = {'_id': row.id, 'data': newdata, 'caps_gen_id': id}
             list_to_inset.append(insert_data)
 
         # print('insert')
         # print(list_to_inset)
-        if len(list_to_inset)>0:
+        if len(list_to_inset) > 0:
             engine.execute(stmt, list_to_inset)
         # db.session.commit()
         return len(columns)
