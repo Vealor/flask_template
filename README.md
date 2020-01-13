@@ -1,31 +1,4 @@
 # ITRA - API Backend
-<!-- <strong>Engagement Code:</strong> xxxxx
-<strong>Data Connection:</strong> xxxx:xxxx
-___
-
-#### High level description of the project
-(Include the purpose of the project)
-
-#### Client Information
-(Include client name and background information)
-
-#### Project Value
-(What kind of value the project brings)
-
-___
-#### Scope
-(Include detailed information or reference for the scope of the project)
-
-#### Success Criteria
-(Define exact success criteria for the project)
-
-#### Deliverable
-(Describe the client's expected deliverable for the project)
-
-___
-#### Client Contact Information
-(How to contact client and their information) -->
-
 
 ___
 ## Application Setup
@@ -48,6 +21,7 @@ Initialize virtual environment
 To get back to PSQL for that DB => `psql -h localhost -U itra itra_db`
 
 Diagnostics => `flask db --help`
+
 ___
 ## Development Server
 ```
@@ -55,10 +29,20 @@ ___
 ```
 
 Dev with SSL => `./dev_srv.sh ssl`
+
 ___
 ## Tests, Linting, Code Coverage
 
-stuff about `./runtests.sh cov lint full`
+The main testing script is `./runtests.sh`.
+
+It has further capabilities to give output on linting, code coverage reports, and a more verbose output.
+
+Add the following to the end of `./runtests.sh` to get further output:  
+`cov` => code coverage  
+`lint` => linting with flake8
+`full` => more verbose output for tests
+
+An example running all is: `./runtests.sh cov lint full`
 
 #### Atom Flake8 Linting
 Install https://atom.io/packages/linter-flake8
