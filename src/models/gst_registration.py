@@ -17,11 +17,9 @@ class GstRegistration(db.Model):
     @property
     def serialize(self):
         return {
-            'id': self.id,
             'vendor_country': self.vendor_country,
             'vendor_number': self.vendor_number,
             'vendor_city': self.vendor_city,
             'vendor_region': self.vendor_region,
-            'caps_gen_id': self.caps_gen_id,
             'project_id': self.gst_registration_caps_gen.project_id
         }

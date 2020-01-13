@@ -604,6 +604,30 @@ class SapTaxGLExtract(db.Model):
     @property
     def serialize(self):
         return {
+            'co_code_gl': self.co_code_gl,
+            'gl_doc_num': self.gl_doc_num,
+            'fiscal_year_gl': self.fiscal_year_gl,
+            'bseg_buzei_key': self.bseg_buzei_key,
+            'fiscal_period_gl': self.fiscal_period_gl,
+            'doc_type_gl': self.doc_type_gl,
+            'trnx_code_gl': self.trnx_code_gl,
+            'post_key_gl': self.post_key_gl,
+            'bseg_shkzg_key': self.bseg_shkzg_key,
+            'bus_area_dept_num_gl': self.bus_area_dept_num_gl,
+            'po_tax_code_gl': self.po_tax_code_gl,
+            'item_descr_gl': self.item_descr_gl,
+            'cost_ctr_num_gl': self.cost_ctr_num_gl,
+            'largest_debit_half_acct_num_gl': self.largest_debit_half_acct_num_gl,
+            'vend_num': self.vend_num,
+            'vend_name': self.vend_name,
+            'inv_num': self.inv_num,
+            'inv_date': self.inv_date,
+            'po_doc_num': self.po_doc_num,
+            'bseg_ebelp_key': self.bseg_ebelp_key,
+            'profit_ctr_num': self.profit_ctr_num,
+            'tax_jur_gl': self.tax_jur_gl,
+            'wbs_gl': self.wbs_gl,
+            'varapkey': self.varapkey,
             'varlocamt': self.varlocamt,
             'vardocamt': self.vardocamt
         }

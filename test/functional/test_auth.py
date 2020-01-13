@@ -79,7 +79,6 @@ class TestAuthLogin():
         assert new_user.status_code == 201
         new_user_id = (new_user.get_json())['payload'][0]['id']
         deactivate = put_req('/users/' + str(new_user_id) + '/deactivate', client, token=helper_token)
-        print(deactivate.get_json())
         assert deactivate.status_code == 200
         login_response = post_req('/auth/login', client, {
             'username': 'authresettest',

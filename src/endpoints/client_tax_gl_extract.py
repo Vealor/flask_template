@@ -35,6 +35,6 @@ def get_client_tax_gl_extract():
     if not caps_gen:
         raise NotFoundError('There is no CapsGen for this project.')
     rows = SapTaxGLExtract.query.filter_by(caps_gen_id=caps_gen.id).all()
-    response['payload'] = [row.data for row in rows]
+    response['payload'] = [row.serialize for row in rows]
 
     return jsonify(response), 200

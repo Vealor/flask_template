@@ -370,7 +370,6 @@ def update_transaction(id):
     query.gst_hst_notes_external = data['gst_hst_notes_external']
     query.gst_hst_recoveries = data['gst_hst_recoveries']
     query.gst_hst_error_type = data['gst_hst_error_type']
-    query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
 
     ### QST
     if query.update_codes(list(set(data['qst_codes'])), 'qst'):
@@ -387,7 +386,6 @@ def update_transaction(id):
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
-    query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     ### PST
     if query.update_codes(list(set(data['pst_codes'])), 'pst'):
@@ -404,12 +402,11 @@ def update_transaction(id):
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
-    query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     ### APO
     if query.update_codes(list(set(data['apo_codes'])), 'apo'):
         query.apo_coded_by_id = current_user.id
-        query.gst_hst_signed_off_by_id = None
+        query.apo_signed_off_by_id = None
     else:
         if data['apo_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
             raise UnauthorizedError('You do not have permission to sign off on transactions.')
@@ -421,10 +418,8 @@ def update_transaction(id):
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
     query.apo_error_type = data['apo_error_type']
-    query.apo_signed_off_by_id = data['apo_signed_off_by_id']
 
     query.modified = func.now()
-
     if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
         or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])  # noqa: W503
         or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])  # noqa: W503
