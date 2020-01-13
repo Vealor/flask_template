@@ -306,7 +306,6 @@ def compare_active_and_pending():
     response['message'] = 'Master model comparison complete'
     return jsonify(response), 200
 
-
 #===============================================================================
 # Update the active master model
 @master_models.route('/<int:model_id>/set_active', methods=['PUT'])

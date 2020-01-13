@@ -292,7 +292,7 @@ def batch_unapprove_transaction():
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner','tax_approver','tax_master'])
 def update_transaction(id):
     response = { 'status': 'ok', 'message': '', 'payload': [] }
     data = request.get_json()
@@ -302,28 +302,28 @@ def update_transaction(id):
         'gst_hst_codes': ['list','NoneType'],
         'gst_hst_notes_internal': ['str','NoneType'],
         'gst_hst_notes_external': ['str','NoneType'],
-        'gst_hst_recoveries': ['float','NoneType'],
+        'gst_hst_recoveries': ['float', 'int','NoneType'],
         'gst_hst_error_type': ['str','NoneType'],
         'gst_hst_signed_off_by_id': ['int','NoneType'],
 
         'qst_codes': ['list','NoneType'],
         'qst_notes_internal': ['str','NoneType'],
         'qst_notes_external': ['str','NoneType'],
-        'qst_recoveries': ['float','NoneType'],
+        'qst_recoveries': ['float', 'int','NoneType'],
         'qst_error_type': ['str','NoneType'],
         'qst_signed_off_by_id': ['int','NoneType'],
 
         'pst_codes': ['list','NoneType'],
         'pst_notes_internal': ['str','NoneType'],
         'pst_notes_external': ['str','NoneType'],
-        'pst_recoveries': ['float','NoneType'],
+        'pst_recoveries': ['float', 'int','NoneType'],
         'pst_error_type': ['str','NoneType'],
         'pst_signed_off_by_id': ['int','NoneType'],
 
         'apo_codes': ['list','NoneType'],
         'apo_notes_internal': ['str','NoneType'],
         'apo_notes_external': ['str','NoneType'],
-        'apo_recoveries': ['float','NoneType'],
+        'apo_recoveries': ['float', 'int','NoneType'],
         'apo_error_type': ['str','NoneType'],
         'apo_signed_off_by_id': ['int','NoneType']
     }
@@ -355,44 +355,73 @@ def update_transaction(id):
     if not query.locked_user_id:
         raise InputError('Please lock transaction ID {} before updating!'.format(id))
 
+
+
     ### GST HST
     if query.update_codes(list(set(data['gst_hst_codes'])), 'gst_hst'):
         query.gst_hst_coded_by_id = current_user.id
+        query.gst_hst_signed_off_by_id = None
+    else:
+        if data['gst_hst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
     query.gst_hst_notes_internal = data['gst_hst_notes_internal']
     query.gst_hst_notes_external = data['gst_hst_notes_external']
     query.gst_hst_recoveries = data['gst_hst_recoveries']
     query.gst_hst_error_type = data['gst_hst_error_type']
-    query.gst_hst_signed_off_by_id = data['gst_hst_signed_off_by_id']
 
     ### QST
     if query.update_codes(list(set(data['qst_codes'])), 'qst'):
         query.qst_coded_by_id = current_user.id
+        query.qst_signed_off_by_id = None
+    else:
+        if data['qst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.qst_signed_off_by_id = data['qst_signed_off_by_id']
     query.qst_notes_internal = data['qst_notes_internal']
     query.qst_notes_external = data['qst_notes_external']
     query.qst_recoveries = data['qst_recoveries']
     query.qst_error_type = data['qst_error_type']
-    query.qst_signed_off_by_id = data['qst_signed_off_by_id']
 
     ### PST
     if query.update_codes(list(set(data['pst_codes'])), 'pst'):
         query.pst_coded_by_id = current_user.id
+        query.pst_signed_off_by_id = None
+    else:
+        if data['pst_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.pst_signed_off_by_id = data['pst_signed_off_by_id']
     query.pst_notes_internal = data['pst_notes_internal']
     query.pst_notes_external = data['pst_notes_external']
     query.pst_recoveries = data['pst_recoveries']
     query.pst_error_type = data['pst_error_type']
-    query.pst_signed_off_by_id = data['pst_signed_off_by_id']
 
     ### APO
     if query.update_codes(list(set(data['apo_codes'])), 'apo'):
         query.apo_coded_by_id = current_user.id
+        query.apo_signed_off_by_id = None
+    else:
+        if data['apo_signed_off_by_id'] and current_user.role == Roles.tax_practitioner:
+            raise UnauthorizedError('You do not have permission to sign off on transactions.')
+        elif query.apo_coded_by_id and query.apo_coded_by_id == data['apo_signed_off_by_id']:
+            raise InputError('You can not code and sign off the same transaction tax type!')
+        else:
+            query.apo_signed_off_by_id = data['apo_signed_off_by_id']
     query.apo_notes_internal = data['apo_notes_internal']
     query.apo_notes_external = data['apo_notes_external']
     query.apo_recoveries = data['apo_recoveries']
     query.apo_error_type = data['apo_error_type']
-    query.apo_signed_off_by_id = data['apo_signed_off_by_id']
 
     query.modified = func.now()
-
     if ((query.gst_hst_coded_by_id and query.gst_hst_coded_by_id == data['gst_hst_signed_off_by_id'])
         or (query.qst_coded_by_id and query.qst_coded_by_id == data['qst_signed_off_by_id'])
         or (query.pst_coded_by_id and query.pst_coded_by_id == data['pst_signed_off_by_id'])

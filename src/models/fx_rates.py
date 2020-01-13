@@ -17,7 +17,6 @@ class FXRates(db.Model):
     @property
     def serialize(self):
         return {
-            'id': self.id,
             'date': str(self.date),
             'usdtocad': self.usdtocad
         }
