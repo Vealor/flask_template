@@ -1,25 +1,23 @@
 '''
 Client Endpoints
 '''
-import json
-import random
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
-from src.errors import *
-from src.models import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
+from src.errors import InputError, NotFoundError
+from src.models import db, Client, ClientEntity, ClientEntityJurisdiction, Jurisdiction, LineOfBusinessSectors
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 clients = Blueprint('clients', __name__)
 #===============================================================================
 # GET ALL CLIENT
-@clients.route('/', defaults={'id':None}, methods=['GET'])
+@clients.route('/', defaults={'id': None}, methods=['GET'])
 @clients.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_clients(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = Client.query
@@ -44,9 +42,9 @@ def get_clients(id):
 @clients.route('/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_client():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -67,7 +65,6 @@ def post_client():
         validate_request_data(entity, client_entity_types)
         if len(entity['company_code']) < 1 or len(entity['company_code']) > 4:
             raise InputError('Company Code for entity must be greater than 1 character and no more than 4')
-
 
     # check if this name exists
     check = Client.query.filter_by(name=data['name']).first()
@@ -119,9 +116,9 @@ def post_client():
 @clients.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_client(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -233,17 +230,17 @@ def update_client(id):
 @clients.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_client(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = Client.query.filter_by(id=id).first()
     if not query:
         raise NotFoundError('Client ID {} does not exist.'.format(id))
 
     # fail delete if has projects, models, or classification_rules
-    if query.client_projects.all() or query.client_client_models.all():
     # if query.client_projects.all() or query.client_classification_rules.all() or query.client_client_models.all():
+    if query.client_projects.all() or query.client_client_models.all():
         raise InputError('Client not deleted. Client has active projects, models, or classification rules.')
 
     client = query.serialize

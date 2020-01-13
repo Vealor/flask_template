@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, func, Activity, LineOfBusinessSectors, Jurisdiction
 ################################################################################
 class Client(db.Model):
     __tablename__ = 'clients'
@@ -21,7 +21,7 @@ class Client(db.Model):
             'name': self.name,
             'created': self.created,
             'client_entities': [i.serialize for i in self.client_client_entities],
-            'client_projects': [{'id':i.id, 'name':i.name} for i in self.client_projects],
+            'client_projects': [{'id': i.id, 'name': i.name} for i in self.client_projects],
             'client_inactive_models': [m.serialize for m in self.client_client_models if m.status.value == Activity.inactive.value],
             'client_pending_model': pending_model[0].serialize if pending_model else None,
             'client_active_model': active_model[0].serialize if active_model else None
@@ -41,8 +41,8 @@ class ClientEntity(db.Model):
     company_code = db.Column(db.String(4), nullable=False)
     lob_sector = db.Column(db.Enum(LineOfBusinessSectors), nullable=False)
 
-    client_id = db.Column(db.Integer, nullable=False) # FK
-    client_entity_client = db.relationship('Client', back_populates='client_client_entities') # FK
+    client_id = db.Column(db.Integer, nullable=False)  # FK
+    client_entity_client = db.relationship('Client', back_populates='client_client_entities')  # FK
 
     client_entity_jurisdictions = db.relationship('ClientEntityJurisdiction', back_populates='jurisdiction_client_entity', cascade="save-update", lazy='dynamic', passive_deletes=True)
 
@@ -70,7 +70,7 @@ class ClientEntityJurisdiction(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     jurisdiction = db.Column(db.Enum(Jurisdiction), nullable=False)
 
-    client_entity_id = db.Column(db.Integer, nullable=False) # FK
+    client_entity_id = db.Column(db.Integer, nullable=False)  # FK
     jurisdiction_client_entity = db.relationship('ClientEntity', back_populates='client_entity_jurisdictions')
 
     @property

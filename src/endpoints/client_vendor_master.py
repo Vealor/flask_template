@@ -3,9 +3,9 @@ Client Vendor Mater Endpoints
 '''
 from sqlalchemy import desc
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from src.errors import *
-from src.models import *
+from flask_jwt_extended import jwt_required
+from src.errors import InputError, NotFoundError
+from src.models import CapsGen, Project, SapLfa1
 from src.wrappers import has_permission, exception_wrapper
 
 client_vendor_master = Blueprint('client_vendor_master', __name__)
@@ -14,9 +14,9 @@ client_vendor_master = Blueprint('client_vendor_master', __name__)
 @client_vendor_master.route('/', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_client_vendor_master():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     if 'project_id' not in args.keys():

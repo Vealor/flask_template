@@ -2,8 +2,7 @@ import functools
 import pickle
 
 class BasePredictionModel():
-
-    def __init__(self,model_pickle=None):
+    def __init__(self, model_pickle=None):
         if model_pickle:
             self.is_trained = True
             self.model = pickle.loads(model_pickle)
@@ -14,20 +13,20 @@ class BasePredictionModel():
     # Decorator to check if model exists.
     def check_model_exists(func):
         @functools.wraps(func)
-        def wrapper(self,*args,**kwargs):
+        def wrapper(self, *args, **kwargs):
             if self.model is None:
                 raise Exception("ERROR: No model specified.")
-            value = func(self,*args,**kwargs)
+            value = func(self, *args, **kwargs)
             return value
         return wrapper
 
     # Decorator to check if model has been trained.
     def check_model_trained(func):
         @functools.wraps(func)
-        def wrapper(self,*args,**kwargs):
+        def wrapper(self, *args, **kwargs):
             if not self.is_trained:
                 raise Exception("ERROR: Model not trained yet.")
-            value = func(self,*args,**kwargs)
+            value = func(self, *args, **kwargs)
             return value
         return wrapper
 
@@ -57,5 +56,5 @@ class BasePredictionModel():
     # Save the model as a pickle, if it exists and has been trained.
     @check_model_exists
     @check_model_trained
-    def save_as_pickle(self,filename):
-        pickle.dump(self.model,open(filename,'wb'))
+    def save_as_pickle(self, filename):
+        pickle.dump(self.model, open(filename, 'wb'))

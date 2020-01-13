@@ -1,25 +1,23 @@
 '''
 DataMapping Endpoints
 '''
-import json
-import random
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
-from src.errors import *
-from src.models import *
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
+from src.errors import InputError, NotFoundError
+from src.models import db, DataMapping
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
 
 data_mappings = Blueprint('data_mappings', __name__)
 #===============================================================================
 # GET ALL DATA MAPPINGS
-@data_mappings.route('/', defaults={'id':None}, methods=['GET'])
+@data_mappings.route('/', defaults={'id': None}, methods=['GET'])
 @data_mappings.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_data_mappings(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = DataMapping.query
@@ -53,14 +51,14 @@ def get_data_mappings(id):
 @data_mappings.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_data_mapping(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
-        'table_name': ['str',''],
-        'column_name': ['str','']
+        'table_name': ['str', ''],
+        'column_name': ['str', '']
     }
     validate_request_data(data, request_types)
 

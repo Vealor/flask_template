@@ -21,13 +21,13 @@ def source_data_unzipper(data, response):
         return
 
     if os.environ['FLASK_ENV'] == 'development' or os.environ['FLASK_ENV'] == 'testing':
-        indir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'],  str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
+        indir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_RAW_LOCATION'])
         outdir = os.path.join(os.getcwd(), current_app.config['CAPS_BASE_DIR'], str(data['project_id']), current_app.config['CAPS_UNZIPPING_LOCATION'])
 
         if data['file_name'].lower().endswith('.zip'):
-            queue = [i for i in os.listdir(os.path.join(indir)) if os.path.isfile(os.path.join(indir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
+            queue = [i for i in os.listdir(os.path.join(indir)) if os.path.isfile(os.path.join(indir, i)) and re.match(r'.*\.[zZ][iI][pP]$', i)]
             for file in queue:
-                shutil.copyfile(os.path.join(indir,file), os.path.join(outdir,file))
+                shutil.copyfile(os.path.join(indir, file), os.path.join(outdir, file))
             print(queue)
             type = 'zip'
             while len(queue) > 0:
@@ -35,12 +35,12 @@ def source_data_unzipper(data, response):
                 print(type)
                 if type == 'folder':
                     for folder in queue:
-                        pull_out_of_folder(outdir,folder)
+                        pull_out_of_folder(outdir, folder)
                 if type == 'zip':
                     for zip in queue:
-                        unzip_file(outdir,zip)
-                folders = [f for f in os.listdir(outdir) if os.path.isdir(os.path.join(outdir,f))]
-                zips = [i for i in os.listdir(outdir) if os.path.isfile(os.path.join(outdir,i)) and re.match('.*\.[zZ][iI][pP]$',i)]
+                        unzip_file(outdir, zip)
+                folders = [f for f in os.listdir(outdir) if os.path.isdir(os.path.join(outdir, f))]
+                zips = [i for i in os.listdir(outdir) if os.path.isfile(os.path.join(outdir, i)) and re.match(r'.*\.[zZ][iI][pP]$', i)]
                 if folders:
                     type = 'folder'
                     queue = folders
@@ -50,7 +50,7 @@ def source_data_unzipper(data, response):
                 else:
                     queue = []
 
-            os.remove(os.path.join(indir,file))
+            os.remove(os.path.join(indir, file))
         else:
             raise Exception('Filename ' + str(data['file_name']) + ' does not end with .zip')
     elif os.environ['FLASK_ENV'] == 'production':

@@ -1,0 +1,4080 @@
+[
+  {
+    "is_core": "t",
+    "paredown_rule_code": 210,
+    "conditions":[
+      {
+        "field": "Acct_Desc",
+        "operator": "contains",
+        "value": "Donation"
+      }
+    ]
+  },
+  {
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Donation",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Donation",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Sponsorship",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Sponsorship",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Sponsorship",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Charity",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Charity",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 210,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Charity",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Insurance",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Insurance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Insurance",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Insurance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Insurance",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Insurance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Health",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Health",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Health",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Dental",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Dental",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Dental",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Disability",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Disability",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Disability",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "LTD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "LTD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "LTD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "STD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "STD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "STD",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Medical",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Medical",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Medical",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Medical Services Plan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Medical Services Plan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Payroll",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Payroll",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Payroll",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Salary",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Salary",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Salary",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Salaries",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Salaries",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Salaries",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Severance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Severance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Severance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Employment insurance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Employment insurance",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Employer Health Tax",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Employer Health Tax",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "EHT",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "EHT",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "EHT",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Garnish",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Garnish",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Garnish",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Share purchase",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Share purchase",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "LTIP ",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "LTIP ",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "LTIP ",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "RRSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "RRSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "RRSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Work Safety",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Work Safety",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Workers Comp",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Workers Comp",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "workers compensation board",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "workers compensation board",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Worksafe BC",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Worksafe BC",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "WorksafeBC",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "WorksafeBC",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "BCMSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "BCMSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "BCMSP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "WSIB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "WSIB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "WSIB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Workplace Safety & Insurance Board",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Workplace Safety & Insurance Board",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Canada Pension Plan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Canada Pension Plan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "WCB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "WCB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "WCB",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Union due",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Union due",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Pension",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Pension",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Pension",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Dividends",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Dividends",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Dividends",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "EI ",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "EI ",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CPP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CPP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Payroll / Benefits",
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CPP",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Loan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Loan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Loan",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Debt",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Debt",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Debt",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Interest",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Interest",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 209,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "Interest",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Tolls",
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "Toll",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 221,
+		"comment": "Tolls",
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "Toll",
+			},
+  		{
+				"field": "VEND_EFF_RATE_N",
+				"operator": "<",
+				"value": "1",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Receiver General ",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Ministry",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "CRA",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Revenue",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Canada Customs",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "tax",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "MFT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "PST ",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "CT",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "GST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "INVOICE_NUM",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			},
+  		{
+				"field": "Item_Text",
+				"operator": "contains",
+				"value": "QST",
+			},
+  		{
+				"field": "SUPPLIER_NAME",
+				"operator": "contains",
+				"value": "Revenue Quebec",
+			}
+		]
+	},
+	{
+		"is_core": "t",
+		"paredown_rule_code": 208,
+		"conditions":[
+  		{
+				"field": "Acct_Desc",
+				"operator": "contains",
+				"value": "AP amount",
+			}
+    ]
+  }
+]

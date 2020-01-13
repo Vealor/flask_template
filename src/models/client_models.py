@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, postgresql, func, Activity
 from sqlalchemy import desc
 ################################################################################
 class ClientModel(db.Model):
@@ -15,8 +15,8 @@ class ClientModel(db.Model):
     train_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
     train_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    client_id = db.Column(db.Integer, nullable=False) # FK
-    client_model_client = db.relationship('Client', back_populates='client_client_models') # FK
+    client_id = db.Column(db.Integer, nullable=False)  # FK
+    client_model_client = db.relationship('Client', back_populates='client_client_models')  # FK
 
     client_model_transactions = db.relationship('Transaction', back_populates='transaction_client_model', lazy='dynamic')
     client_model_model_performances = db.relationship('ClientModelPerformance', back_populates='performance_client_model', lazy='dynamic', passive_deletes=True)
@@ -26,9 +26,9 @@ class ClientModel(db.Model):
         return {
             'id': self.id,
             'client_id': self.client_id,
-            'created':self.created.strftime("%Y-%m-%d_%H:%M:%S"),
+            'created': self.created.strftime("%Y-%m-%d_%H:%M:%S"),
             'hyper_p': self.hyper_p,
-            'name': "{}_{}_{}".format(self.client_model_client.name,self.created.strftime("%Y-%m-%d"),self.id),
+            'name': "{}_{}_{}".format(self.client_model_client.name, self.created.strftime("%Y-%m-%d"), self.id),
             'status': self.status.value,
             'train_data_start': self.train_data_start.strftime('%Y/%m/%d'),
             'train_data_end': self.train_data_end.strftime('%Y/%m/%d')
@@ -68,10 +68,10 @@ class ClientModelPerformance(db.Model):
     accuracy = db.Column(db.Float, nullable=False)
     recall = db.Column(db.Float, nullable=False)
     test_data_start = db.Column(db.DateTime(timezone=True), nullable=False)
-    test_data_end =  db.Column(db.DateTime(timezone=True), nullable=False)
+    test_data_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    client_model_id = db.Column(db.Integer, nullable=False) # FK
-    performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances') # FK
+    client_model_id = db.Column(db.Integer, nullable=False)  # FK
+    performance_client_model = db.relationship('ClientModel', back_populates='client_model_model_performances')  # FK
 
     @property
     def serialize(self):
@@ -79,7 +79,7 @@ class ClientModelPerformance(db.Model):
             'id': self.id,
             'client_model_id': self.client_model_id,
             'model_name': self.performance_client_model.serialize['name'],
-            'created':self.created.strftime("%Y/%m/%d_%H:%M:%S"),
+            'created': self.created.strftime("%Y/%m/%d_%H:%M:%S"),
             'accuracy': self.accuracy,
             'precision': self.precision,
             'recall': self.recall,

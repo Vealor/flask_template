@@ -1,5 +1,4 @@
-from .__model_imports import *
-from sqlalchemy import desc
+from .__model_imports import db
 ################################################################################
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -14,14 +13,14 @@ class Project(db.Model):
     is_paredown_locked = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_completed = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
 
-    client_id = db.Column(db.Integer, nullable=False) # FK
-    project_client = db.relationship('Client', back_populates='client_projects') # FK
+    client_id = db.Column(db.Integer, nullable=False)  # FK
+    project_client = db.relationship('Client', back_populates='client_projects')  # FK
 
-    lead_partner_id = db.Column(db.Integer, nullable=False) # FK
-    lead_partner_user = db.relationship('User', foreign_keys='Project.lead_partner_id') # FK
+    lead_partner_id = db.Column(db.Integer, nullable=False)  # FK
+    lead_partner_user = db.relationship('User', foreign_keys='Project.lead_partner_id')  # FK
 
-    lead_manager_id = db.Column(db.Integer, nullable=False) # FK
-    lead_manager_user = db.relationship('User', foreign_keys='Project.lead_manager_id') # FK
+    lead_manager_id = db.Column(db.Integer, nullable=False)  # FK
+    lead_manager_user = db.relationship('User', foreign_keys='Project.lead_manager_id')  # FK
 
     project_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_project', cascade="save-update", lazy='dynamic', passive_deletes=True)
     project_users = db.relationship('UserProject', back_populates='user_project_project', lazy='dynamic', passive_deletes=True)
@@ -84,7 +83,7 @@ class Project(db.Model):
             'project_client': self.project_client.serialize,
             'is_paredown_locked': self.is_paredown_locked,
             'is_completed': self.is_completed,
-            'project_users': [{'user_id':i.user_id,'username':i.user_project_user.username} for i in self.project_users],
+            'project_users': [{'user_id': i.user_id, 'username': i.user_project_user.username} for i in self.project_users],
             'transaction_count': self.project_transactions.count(),
             'lead_partner_id': self.lead_partner_id,
             'lead_manager_id': self.lead_manager_id,
@@ -143,8 +142,8 @@ class Project(db.Model):
                     'has_es_trt': self.has_es_trt,
                     'has_es_daf': self.has_es_daf
                 },
-                'caps_multicolor_calculations' : {
-                    'pst_but_no_qst' : self.pst_but_no_qst
+                'caps_multicolor_calculations': {
+                    'pst_but_no_qst': self.pst_but_no_qst
                 }
             }
         }

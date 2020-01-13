@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, TaxTypes
 ################################################################################
 class Code(db.Model):
     __tablename__ = 'codes'
@@ -18,6 +18,7 @@ class Code(db.Model):
             'code_number': self.code_number,
             'description': self.description
         }
+
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()
@@ -32,11 +33,11 @@ class TransactionCode(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     tax_type = db.Column(db.Enum(TaxTypes), unique=False, nullable=False)
 
-    transaction_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_code_transaction = db.relationship('Transaction', back_populates='transaction_codes') # FK
+    transaction_id = db.Column(db.Integer, nullable=False)  # FK
+    transaction_code_transaction = db.relationship('Transaction', back_populates='transaction_codes')  # FK
 
-    code_id = db.Column(db.Integer, nullable=False) # FK
-    transaction_code_code = db.relationship('Code', back_populates='code_transactions') # FK
+    code_id = db.Column(db.Integer, nullable=False)  # FK
+    transaction_code_code = db.relationship('Code', back_populates='code_transactions')  # FK
 
     @property
     def serialize(self):
@@ -45,6 +46,7 @@ class TransactionCode(db.Model):
             'tax_type': self.tax_type.value,
             'code': self.transaction_code_code.code_number
         }
+
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id = id).first()

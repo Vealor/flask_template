@@ -1,0 +1,76 @@
+[
+  {
+    "username": "lh-admin",
+    "password": "Kpmg1234%",
+    "email": "ca-fmgvalhrhadmin@kpmg.ca",
+    "initials": "LH",
+    "first_name": "Lighthouse",
+    "last_name": "GVA",
+    "role": "tax_master",
+    "is_system_administrator": true,
+    "is_superuser": true
+  }
+  {
+    "username": "ejensen",
+    "password": "ejensen",
+    "email": "ejensen@test.test",
+    "initials": "edj",
+    "first_name": "Erin",
+    "last_name": "Jensen",
+    "role": "tax_master"
+  },
+  {
+    "username": "nataliakrizbai",
+    "password": "nataliakrizbai",
+    "email": "nataliakrizbai@test.test",
+    "initials": "nk",
+    "first_name": "Natalia",
+    "last_name": "Krizbai",
+    "role": "tax_master"
+  },
+  {
+    "username": "dcallow",
+    "password": "dcallow",
+    "email": "dcallow@test.test",
+    "initials": "dtc",
+    "first_name": "Dylan",
+    "last_name": "Callow",
+    "role": "tax_master"
+  },
+  {
+    "username": "ryansen",
+    "password": "ryansen",
+    "email": "ryansen@test.test",
+    "initials": "rjs",
+    "first_name": "Ryan",
+    "last_name": "Sen",
+    "role": "tax_master"
+  },
+  {
+    "username": "karinadewi",
+    "password": "karinadewi",
+    "email": "karinadewi@test.test",
+    "initials": "kd",
+    "first_name": "Karina",
+    "last_name": "Dewi",
+    "role": "tax_master"
+  },
+  {
+    "username": "jasonclee",
+    "password": "jasonclee",
+    "email": "jasonclee@test.test",
+    "initials": "jcl",
+    "first_name": "Jason",
+    "last_name": "Lee",
+    "role": "tax_master"
+  },
+  {
+    "username": "andylee1",
+    "password": "andylee1",
+    "email": "andylee1@test.test",
+    "initials": "al",
+    "first_name": "Andy",
+    "last_name": "Lee",
+    "role": "tax_master"
+  },
+]

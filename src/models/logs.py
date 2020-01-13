@@ -1,4 +1,4 @@
-from .__model_imports import *
+from .__model_imports import db, func, Actions
 ################################################################################
 class Log(db.Model):
     __tablename__ = 'logs'
@@ -12,8 +12,8 @@ class Log(db.Model):
     affected_entity = db.Column(db.String(256), nullable=False)
     details = db.Column(db.Text(), nullable=False)
 
-    user_id = db.Column(db.Integer, nullable=False) # FK
-    log_user = db.relationship('User', back_populates='user_logs') # FK
+    user_id = db.Column(db.Integer, nullable=False)  # FK
+    log_user = db.relationship('User', back_populates='user_logs')  # FK
 
     @property
     def serialize(self):

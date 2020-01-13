@@ -1,13 +1,10 @@
 '''
 Error Categories Endpoints
 '''
-import json
-import random
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt)
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from sqlalchemy import desc
-from src.errors import *
-from src.models import *
+from src.models import ErrorCategory
 from src.wrappers import has_permission, exception_wrapper
 
 error_categories = Blueprint('error_categories', __name__)
@@ -16,9 +13,9 @@ error_categories = Blueprint('error_categories', __name__)
 @error_categories.route('/', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_error_categories():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = ErrorCategory.query

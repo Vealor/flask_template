@@ -1,20 +1,15 @@
 '''
 Project Endpoints
 '''
-import json
-import multiprocessing as mp
-import pandas as pd
-import random
 import re
 import src.prediction.model_client as cm
 import src.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import (jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt, current_user)
-from functools import reduce
+from flask_jwt_extended import jwt_required, current_user
+from sqlalchemy import create_engine
 from sqlalchemy.sql import func
-from src.errors import *
-from src.models import *
-from src.offload.apply_paredown import *
+from src.errors import InputError, NotFoundError
+from src.models import db, Client, ClientEntity, ClientModel, DataParam, MasterModel, Operator, ParedownRule, Project, Transaction, User, UserProject
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data
 from src.wrappers import has_permission, exception_wrapper
@@ -25,9 +20,9 @@ projects = Blueprint('projects', __name__)
 @projects.route('/<int:id>/toggle_favourite', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def toggle_favourite(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = UserProject.query.filter_by(user_id=current_user.id)
     query = query.filter_by(project_id=id).first()
@@ -40,13 +35,13 @@ def toggle_favourite(id):
 
 #===============================================================================
 # GET ALL PROJECT
-@projects.route('/', defaults={'id':None}, methods=['GET'])
+@projects.route('/', defaults={'id': None}, methods=['GET'])
 @projects.route('/<int:id>', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_projects(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
 
     query = Project.query
@@ -75,49 +70,48 @@ def get_projects(id):
 @projects.route('/<int:id>/predictive_calculations', methods=['GET'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_predictive_calculations(id):
-   
     # helper function to calculate recovery value and volume for step 1
-    def calculate_tax(province,  prediction_strength_lower=0, prediction_strength_upper=1):
+    def calculate_tax(province, prediction_strength_lower=0, prediction_strength_upper=1):
         engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                                COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
                                 COUNT(id)
-                                FROM transactions 
+                                FROM transactions
                                 WHERE project_id = {project_id}
                                 AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                                 """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
         ap_amt_sum, itc_claimed, tx_num = results[0], results[1], results[2]
-        if province == "ab" or province == "nt" or province == "yt" or province  == "nu":
+        if province == "ab" or province == "nt" or province == "yt" or province == "nu":
             total_value = (-1 * ap_amt_sum) * 5 / 105 - itc_claimed
         elif province == "bc" or province == "sk" or province == "mb":
-            gst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0), 
+            gst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                             COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
                             COALESCE(COUNT(id), 0)
-                            FROM transactions 
+                            FROM transactions
                             WHERE project_id = {project_id}
                             AND CAST(data->>'pst_sa' AS FLOAT) > 0
-                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
             ap_amt_sum, pst_sa_sum, none_zero_tx_num = gst_results[0], gst_results[1], gst_results[2]
             pst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                             COALESCE(COUNT(id), 0)
-                            FROM transactions 
+                            FROM transactions
                             WHERE project_id = {project_id}
                             AND CAST(data->>'pst_sa' AS FLOAT) = 0
-                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit}; 
+                            AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
             zero_pst_amt_sum, zero_pst_tx_num = pst_results[0], pst_results[1]
-            total_value = (-1 * ap_amt_sum + -1 * zero_pst_amt_sum) * 5 / 112 - itc_claimed + pst_sa_sum + ( -1 *  zero_pst_amt_sum * 7 / 112)
+            total_value = (-1 * ap_amt_sum + -1 * zero_pst_amt_sum) * 5 / 112 - itc_claimed + pst_sa_sum + (-1 * zero_pst_amt_sum * 7 / 112)
             tx_num = none_zero_tx_num + zero_pst_tx_num
-        elif province == "qc" :
-            qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0) 
-                            FROM transactions 
+        elif province == "qc":
+            qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0)
+                            FROM transactions
                             WHERE project_id = {project_id}
                             AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
-            qst_claimed =  qst_results[0]
+            qst_claimed = qst_results[0]
             gst_value = (-1 * ap_amt_sum) * 5 / 114.975 - itc_claimed
             qst_value = (-1 * ap_amt_sum) * 9.975 / 114.975 - qst_claimed
             total_value = gst_value + qst_value
@@ -126,9 +120,8 @@ def get_predictive_calculations(id):
         else:
             raise ValueError("No matching jurisdiction rule found for:{ }".format(province))
         return total_value, tx_num
-    
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
-    args = request.args.to_dict()
+
+    response = {'status': 'ok', 'message': '', 'payload': []}
     query = Project.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('Project ID {} does not exist.'.format(id))
@@ -155,12 +148,12 @@ def get_predictive_calculations(id):
     # if len(jurisdiction) == 1:
     #     province = jurisdiction[0]
     #     ap_amount = 0
-    #     itc_claimed = 0 
+    #     itc_claimed = 0
 
     #     if province == "AB" or province == "NT" or province == "YT" or province  == "NU":
     #         gst_value = ap_amount * 5/105 - itc_claimed
     #     elif province == "BC" or province == "SK" or province == "MB":
-    #         psg_value = 
+    #         psg_value =
     #     elif province == "QC" :
     #     elif province == "NB" or province == "NS", or procince == "ON" or prvince == "PE":
     #     else:
@@ -185,16 +178,12 @@ def get_predictive_calculations(id):
     # where data ->> 'ap_amt' is not null and id = {transaction_id};
     # """.format(transaction_id = transaction_id, average_number = average_number))
 
-
-
     # transaction_set = Transaction.query.filter_by(project_id=id)
     # transaction_set = transaction_set.filter(Transaction.data['vend_num'].astext == args['vendor_num']).all()
 
     # for txn in transaction_set:
     #     # do calculations
     #     pass
-
-
 
     # response['payload'] = {
     #     'green_pst_but_no_qst': green_pst_but_no_qst,
@@ -208,9 +197,9 @@ def get_predictive_calculations(id):
 @projects.route('/', methods=['POST'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_project():
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -235,13 +224,13 @@ def post_project():
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
-    scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
-    scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
-    scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
-    scopecheck(True, data['engagement_scope']['customs'], ['has_es_firmanalysis','has_es_brokeranalysis'])
-    scopecheck(True, data['engagement_scope']['royalties'], ['has_es_crowngca','has_es_crownalloc','has_es_crownincent','has_es_lornri','has_es_lorsliding','has_es_lordeduct','has_es_lorunder','has_es_lormissed'])
-    scopecheck(True, data['engagement_scope']['data'], ['has_es_gstreg','has_es_cvm','has_es_taxgl','has_es_aps','has_es_ars','has_es_fxrates','has_es_trt','has_es_daf'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst', 'has_ts_qst', 'has_ts_pst', 'has_ts_vat', 'has_ts_mft', 'has_ts_ct', 'has_ts_excise', 'has_ts_customs', 'has_ts_crown', 'has_ts_freehold'])
+    scopecheck(False, data['engagement_scope'], ['indirect_tax', 'accounts_payable', 'customs', 'royalties', 'data'])
+    scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps', 'has_es_taxreturn', 'has_es_flowthrough', 'has_es_employeeexpense', 'has_es_pccards', 'has_es_coupons', 'has_es_creditnotes', 'has_es_edi', 'has_es_cars'])
+    scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay', 'has_es_unapplcredit', 'has_es_missedearly', 'has_es_otheroverpay'])
+    scopecheck(True, data['engagement_scope']['customs'], ['has_es_firmanalysis', 'has_es_brokeranalysis'])
+    scopecheck(True, data['engagement_scope']['royalties'], ['has_es_crowngca', 'has_es_crownalloc', 'has_es_crownincent', 'has_es_lornri', 'has_es_lorsliding', 'has_es_lordeduct', 'has_es_lorunder', 'has_es_lormissed'])
+    scopecheck(True, data['engagement_scope']['data'], ['has_es_gstreg', 'has_es_cvm', 'has_es_taxgl', 'has_es_aps', 'has_es_ars', 'has_es_fxrates', 'has_es_trt', 'has_es_daf'])
 
     # CHECK CONSTRAINTS: name
     check = Project.query.filter_by(name=data['name']).first()
@@ -359,9 +348,9 @@ def post_project():
 @projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_paredown_rules(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     # GET BASE QUERY if exists
     query = Project.find_by_id(id)
@@ -403,34 +392,33 @@ def apply_paredown_rules(id):
 
                     if condition['operator'] == 'contains':
                         # print("\tCONTAINS")
-                        print('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower())
-                        if re.search('(?<!\S)'+condition['value'].lower()+'(?!\S)', txn.data[condition['field']].lower()):
-                            do_paredown +=1
+                        print(r'(?<!\S)' + condition['value'].lower() + r'(?!\S)', txn.data[condition['field']].lower())
+                        if re.search(r'(?<!\S)' + condition['value'].lower() + r'(?!\S)', txn.data[condition['field']].lower()):
+                            do_paredown += 1
 
-                    elif condition['operator'] in ['>','<','==','>=','<=','!=']:
+                    elif condition['operator'] in ['>', '<', '==', '>=', '<=', '!=']:
                         # print("\tLOGICAL OPERATOR")
                         proceed_operator = True
 
                         try:
                             value = float(condition['value'])
                             field = float(txn.data[condition['field']])
-                        except ValueError as e:
-                            # failed +=1
+                        except ValueError:
                             proceed_operator = False
 
                         if proceed_operator:
                             if condition['operator'] == '>' and field > value:
-                                do_paredown +=1
+                                do_paredown += 1
                             elif condition['operator'] == '<' and field < value:
-                                do_paredown +=1
+                                do_paredown += 1
                             elif condition['operator'] == '==' and field == value:
-                                do_paredown +=1
+                                do_paredown += 1
                             elif condition['operator'] == '>=' and field >= value:
-                                do_paredown +=1
+                                do_paredown += 1
                             elif condition['operator'] == '<=' and field <= value:
-                                do_paredown +=1
+                                do_paredown += 1
                             elif condition['operator'] == '!=' and field != value:
-                                do_paredown +=1
+                                do_paredown += 1
                         else:
                             print("Condition value or Transaction data field not fit for operator comparison.")
                     else:
@@ -477,9 +465,9 @@ def apply_paredown_rules(id):
 @projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-#@has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+#@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_prediction(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     request_types = {
@@ -491,7 +479,7 @@ def apply_prediction(id):
     project = Project.find_by_id(id)
     if not project:
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
-    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id == None)
+    project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id is None)
     if project_transactions.count() == 0:
         raise ValueError('Project has no transactions to predict.')
 
@@ -502,31 +490,30 @@ def apply_prediction(id):
         if not active_model:
             raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.master_model_id : None})
-        project_transactions.update({Transaction.client_model_id :active_model.id})
+        project_transactions.update({Transaction.master_model_id: None})
+        project_transactions.update({Transaction.client_model_id: active_model.id})
     else:
         active_model = MasterModel.find_active()
         if not active_model:
             raise ValueError('No master model has been trained or is active.')
         lh_model = mm.MasterPredictionModel(active_model.pickle)
-        project_transactions.update({Transaction.client_model_id : None})
-        project_transactions.update({Transaction.master_model_id :active_model.id})
+        project_transactions.update({Transaction.client_model_id: None})
+        project_transactions.update({Transaction.master_model_id: active_model.id})
 
     predictors = active_model.hyper_p['predictors']
-
 
     # TODO: fix separation of data so that prediction happens on transactions with IDs
     # Can't assume that final zip lines up arrays properly
     print("Pull transactions to df.")
     df_predict = transactions_to_dataframe(project_transactions)
     print("Preprocessing...")
-    df_predict = preprocess_data(df_predict, preprocess_for='prediction',predictors=predictors)
+    df_predict = preprocess_data(df_predict, preprocess_for='prediction', predictors=predictors)
 
     # Get probability of each transaction being class '1'
     probability_recoverable = [x[1] for x in lh_model.predict_probabilities(df_predict, predictors)]
 
-    project_transactions.update({Transaction.is_predicted : True})
-    for tr,pr in zip(project_transactions, probability_recoverable):
+    project_transactions.update({Transaction.is_predicted: True})
+    for tr, pr in zip(project_transactions, probability_recoverable):
         tr.recovery_probability = pr
         tr.modified = func.now()
 
@@ -539,9 +526,9 @@ def apply_prediction(id):
 @projects.route('/<int:id>', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_project(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -568,13 +555,13 @@ def update_project(id):
             if typecheck and not isinstance(basedata[key], bool):
                 raise InputError('Scope with key {} has wrong data type.'.format(key))
     scopecheck(False, data, ['tax_scope', 'engagement_scope'])
-    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst','has_ts_qst','has_ts_pst','has_ts_vat','has_ts_mft','has_ts_ct','has_ts_excise','has_ts_customs','has_ts_crown','has_ts_freehold'])
-    scopecheck(False, data['engagement_scope'], ['indirect_tax','accounts_payable','customs','royalties','data'])
-    scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps','has_es_taxreturn','has_es_flowthrough','has_es_employeeexpense','has_es_pccards','has_es_coupons','has_es_creditnotes','has_es_edi','has_es_cars'])
-    scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay','has_es_unapplcredit','has_es_missedearly','has_es_otheroverpay'])
-    scopecheck(True, data['engagement_scope']['customs'], ['has_es_firmanalysis','has_es_brokeranalysis'])
-    scopecheck(True, data['engagement_scope']['royalties'], ['has_es_crowngca','has_es_crownalloc','has_es_crownincent','has_es_lornri','has_es_lorsliding','has_es_lordeduct','has_es_lorunder','has_es_lormissed'])
-    scopecheck(True, data['engagement_scope']['data'], ['has_es_gstreg','has_es_cvm','has_es_taxgl','has_es_aps','has_es_ars','has_es_fxrates','has_es_trt','has_es_daf'])
+    scopecheck(True, data['tax_scope'], ['has_ts_gst_hst', 'has_ts_qst', 'has_ts_pst', 'has_ts_vat', 'has_ts_mft', 'has_ts_ct', 'has_ts_excise', 'has_ts_customs', 'has_ts_crown', 'has_ts_freehold'])
+    scopecheck(False, data['engagement_scope'], ['indirect_tax', 'accounts_payable', 'customs', 'royalties', 'data'])
+    scopecheck(True, data['engagement_scope']['indirect_tax'], ['has_es_caps', 'has_es_taxreturn', 'has_es_flowthrough', 'has_es_employeeexpense', 'has_es_pccards', 'has_es_coupons', 'has_es_creditnotes', 'has_es_edi', 'has_es_cars'])
+    scopecheck(True, data['engagement_scope']['accounts_payable'], ['has_es_duplpay', 'has_es_unapplcredit', 'has_es_missedearly', 'has_es_otheroverpay'])
+    scopecheck(True, data['engagement_scope']['customs'], ['has_es_firmanalysis', 'has_es_brokeranalysis'])
+    scopecheck(True, data['engagement_scope']['royalties'], ['has_es_crowngca', 'has_es_crownalloc', 'has_es_crownincent', 'has_es_lornri', 'has_es_lorsliding', 'has_es_lordeduct', 'has_es_lorunder', 'has_es_lormissed'])
+    scopecheck(True, data['engagement_scope']['data'], ['has_es_gstreg', 'has_es_cvm', 'has_es_taxgl', 'has_es_aps', 'has_es_ars', 'has_es_fxrates', 'has_es_trt', 'has_es_daf'])
 
     # GET BASE QUERY if exists
     query = Project.find_by_id(id)
@@ -685,9 +672,9 @@ def update_project(id):
 @projects.route('/<int:id>', methods=['DELETE'])
 @jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner','tax_approver','tax_master','data_master','administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_project(id):
-    response = { 'status': 'ok', 'message': '', 'payload': [] }
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = Project.query.filter_by(id=id).first()
     if not query:
