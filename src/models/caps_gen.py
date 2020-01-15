@@ -974,7 +974,7 @@ class SapTcurt(db.Model):
     saptcurt_caps_gen = db.relationship('CapsGen', back_populates='caps_gen_saptcurt')  # FK
 
 class SapTgsbt(db.Model):
-    __tablename__ = 'sap_tbslt'
+    __tablename__ = 'sap_tgsbt'
     __table_args__ = (
         db.ForeignKeyConstraint(['caps_gen_id'], ['caps_gen.id'], ondelete='CASCADE'),
     )
