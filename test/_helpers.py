@@ -1,8 +1,7 @@
+from seed._seed_data import do_seed
 
-def seed_db_data(db):
-    # pull in each of jsons from seed folder and run scripts to import stuff
-    print('SEEDING')
-    pass
+def seed_db_data():
+    do_seed()
 
 #===============================================================================
 def login(client, username, password):
