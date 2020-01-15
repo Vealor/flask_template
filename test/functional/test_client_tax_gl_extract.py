@@ -1,14 +1,16 @@
+import pytest
 from test._helpers import login, get_req
 from test import api, client
 
+@pytest.mark.client_tax_gl_extract
 class TestClientTaxGLExtractGet():
-    def test_get_client_tax_gl_extract_success(self, api, client):
-        token = login(client, 'lh-admin', 'Kpmg1234%')
-        response = get_req('/client_tax_gl_extract?project_id=1', client, token)
-
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['status'] == 'ok'
+    # def test_get_client_tax_gl_extract_success(self, api, client):
+    #     token = login(client, 'lh-admin', 'Kpmg1234%')
+    #     response = get_req('/client_tax_gl_extract?project_id=1', client, token)
+    #
+    #     assert response.status_code == 200
+    #     data = response.get_json()
+    #     assert data['status'] == 'ok'
 
     def test_get_client_tax_gl_extract_no_project_id(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')

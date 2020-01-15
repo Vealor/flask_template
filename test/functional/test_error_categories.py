@@ -1,6 +1,8 @@
+import pytest
 from test._helpers import login, get_req
 from test import api, client
 
+@pytest.mark.error_categories
 class TestErrorCategoriesGet():
     def test_list_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')

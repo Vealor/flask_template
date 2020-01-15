@@ -23,7 +23,7 @@ class Config(object):
     PROPAGATE_EXCEPTIONS = True
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=8)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=6)
     JWT_ERROR_MESSAGE_KEY = 'message'
 

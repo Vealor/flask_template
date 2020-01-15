@@ -1,17 +1,19 @@
+import pytest
 from test._helpers import login, get_req
 from test import api, client
 
+@pytest.mark.tax_rates
 class TestTaxRatesGet():
-    def test_list_success(self, api, client):
-        token = login(client, 'lh-admin', 'Kpmg1234%')
-        # TODO: create project
-        # TODO: create capsgen for new project
-        response = get_req('/tax_rates?project_id=1', client, token)
-        # TODO: delete project
-
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['status'] == 'ok'
+    # def test_list_success(self, api, client):
+    #     token = login(client, 'lh-admin', 'Kpmg1234%')
+    #     # TODO: create project
+    #     # TODO: create capsgen for new project
+    #     response = get_req('/tax_rates?project_id=1', client, token)
+    #     # TODO: delete project
+    #
+    #     assert response.status_code == 200
+    #     data = response.get_json()
+    #     assert data['status'] == 'ok'
 
     def test_list_fail(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')

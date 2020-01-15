@@ -1,6 +1,8 @@
+import pytest
 from test._helpers import login, get_req
 from test import api, client
 
+@pytest.mark.client_vendor_master
 class TestClientVendorMasterGet():
     def test_get_client_vendor_master_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')

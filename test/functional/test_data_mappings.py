@@ -1,6 +1,8 @@
+import pytest
 from test._helpers import login, get_req
 from test import api, client
 
+@pytest.mark.data_mappings
 class TestDataMappingsGet():
     # def test_list_caps_gen_success(self, api, client):
     #     token = login(client, 'lh-admin', 'Kpmg1234%')
