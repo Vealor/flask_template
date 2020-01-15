@@ -9,7 +9,7 @@ modules=(
   caps_gen
   cdm_labels
   client_models
-  client_tax_gl_etract
+  client_tax_gl_extract
   client_vendor_master
   clients
   codes

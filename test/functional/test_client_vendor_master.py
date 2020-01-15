@@ -4,13 +4,13 @@ from test import api, client
 
 @pytest.mark.client_vendor_master
 class TestClientVendorMasterGet():
-    def test_get_client_vendor_master_success(self, api, client):
-        token = login(client, 'lh-admin', 'Kpmg1234%')
-        response = get_req('/client_vendor_master?project_id=1', client, token)
-
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['status'] == 'ok'
+    # def test_get_client_vendor_master_success(self, api, client):
+    #     token = login(client, 'lh-admin', 'Kpmg1234%')
+    #     response = get_req('/client_vendor_master?project_id=1', client, token)
+    #
+    #     assert response.status_code == 200
+    #     data = response.get_json()
+    #     assert data['status'] == 'ok'
 
     def test_get_client_vendor_master_no_project_id(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
