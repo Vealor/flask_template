@@ -13,9 +13,9 @@ fx_rates = Blueprint('fx_rates', __name__)
 #===============================================================================
 # GET AND UPDATE FXRATES
 @fx_rates.route('/', methods=['GET'])
-# @jwt_required
+@jwt_required
 @exception_wrapper()
-# @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_fx_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
