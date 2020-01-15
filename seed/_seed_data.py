@@ -1,7 +1,7 @@
 import json
 import os
-# import sys
-# sys.path[0] += "/.."
+import sys
+sys.path.append(sys.path[0] + "/..")
 
 # FLASK APP
 from src.models import db, CDMLabel, Code, ParedownRule, ParedownRuleCondition, User  # noqa: E402
