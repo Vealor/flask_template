@@ -22,7 +22,6 @@ def get_fx_rates():
 
     last_date = FXRate.query.order_by(desc(FXRate.date)).first()
     last_date = last_date.get_dates if last_date else last_date
-    print(last_date)
 
     if not last_date or last_date['datetime'] < datetime.datetime.now().date():
         results = requests.get('http://bankofcanada.ca/valet/observations/FXCADUSD').json()

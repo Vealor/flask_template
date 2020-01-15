@@ -9,7 +9,6 @@ class TestFXRatesGet():
     def test_get_full_fresh_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
         response = get_req('/fx_rates', client, token)
-        print(response.get_json())
 
         assert response.status_code == 201
         data = response.get_json()
@@ -22,7 +21,6 @@ class TestFXRatesGet():
         db.session.delete(rate)
         db.session.commit()
         response = get_req('/fx_rates', client, token)
-        print(response.get_json())
 
         assert response.status_code == 201
         data = response.get_json()
