@@ -3,9 +3,10 @@ from .__model_imports import db, TaxTypes
 class Code(db.Model):
     __tablename__ = 'codes'
     __table_args__ = (
+
     )
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    code_number = db.Column(db.Integer, nullable=False)
+    code_number = db.Column(db.Integer, unique=True, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
 
     code_transactions = db.relationship('TransactionCode', back_populates='transaction_code_code', lazy='dynamic')

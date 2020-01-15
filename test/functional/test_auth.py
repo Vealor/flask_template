@@ -1,6 +1,8 @@
+import pytest
 from test._helpers import login, get_req, post_req, put_req, delete_req
 from test import api, client
 
+@pytest.mark.auth
 class TestAuthReset():
     def test_reset_success(self, api, client):
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
@@ -38,6 +40,8 @@ class TestAuthReset():
         assert data['status'] == 'ok'
         assert len(data['message']) > 0
 
+
+@pytest.mark.auth
 class TestAuthLogin():
     def test_login_success(self, api, client):
         login_response = post_req('/auth/login', client, {
@@ -94,6 +98,7 @@ class TestAuthLogin():
         assert 'access_token' not in data.keys()
         assert 'refresh_token' not in data.keys()
 
+@pytest.mark.auth
 class TestAuthRefresh():
     def test_refresh_success(self, api, client):
         login_response = post_req('/auth/login', client, {
@@ -109,6 +114,7 @@ class TestAuthRefresh():
         assert 'access_token' in data.keys()
         assert len(data['access_token']) > 0
 
+@pytest.mark.auth
 class TestAuthVerify():
     def test_verify_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
@@ -117,6 +123,7 @@ class TestAuthVerify():
         data = verify.get_json()
         assert data['status'] == 'ok'
 
+@pytest.mark.auth
 class TestAuthUserDetails():
     def test_user_details_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
@@ -126,6 +133,7 @@ class TestAuthUserDetails():
         assert data['status'] == 'ok'
         assert 'id' in data['payload'].keys()
 
+@pytest.mark.auth
 class TestAuthUserDetailsWithProjects():
     def test_user_details_with_projects_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
