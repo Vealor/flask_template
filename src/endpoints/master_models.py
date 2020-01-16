@@ -230,7 +230,7 @@ def do_validate():
 
     active_model = MasterModel.find_active()
     if not active_model:
-        raise ValueError('No master model has been trained or is active.')
+        raise NotFoundError('No master model has been trained or is active.')
 
     request_types = {
         'test_data_start_date': ['str'],
@@ -242,9 +242,9 @@ def do_validate():
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Cannot validate model on data it was trained on.')
+        raise InputError('Cannot validate model on data it was trained on.')
 
     lh_model_old = mm.MasterPredictionModel(active_model.pickle)
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -252,7 +252,7 @@ def do_validate():
     # Pull the transaction data into a dataframe
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start, test_end)).filter(Transaction.approved_user_id is not None)
     if test_transactions.count() == 0:
-        raise ValueError('No transactions to validate in given date range.')
+        raise InputError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
     data_valid = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
 
@@ -310,7 +310,7 @@ def set_active_model(model_id):
 
     pending_model = MasterModel.find_by_id(model_id)
     if not pending_model:
-        raise ValueError('There is no pending model to set as active.')
+        raise NotFoundError('There is no pending model to set as active.')
     MasterModel.set_active(model_id)
     db.session.commit()
     response['message'] = 'Active Master model set to model {}'.format(model_id)

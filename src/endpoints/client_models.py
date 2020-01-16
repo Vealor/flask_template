@@ -248,16 +248,16 @@ def do_validate():
 
     active_model = ClientModel.find_active_for_client(data['client_id'])
     if not active_model:
-        raise ValueError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
+        raise NotFoundError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
 
     train_start = active_model.train_data_start.date()
     train_end = active_model.train_data_end.date()
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Cannot validate model on data it was trained on.')
+        raise InputError('Cannot validate model on data it was trained on.')
 
     lh_model_old = cm.ClientPredictionModel(active_model.pickle)
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -265,7 +265,7 @@ def do_validate():
     # Pull the transaction data into a dataframe
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start, test_end)).filter(Transaction.approved_user_id is not None)
     if test_transactions.count() == 0:
-        raise ValueError('No transactions to validate in given date range.')
+        raise InputError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
     data_valid = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
 
@@ -331,7 +331,7 @@ def set_active_model(model_id):
     if not Client.find_by_id(client_id):
         raise NotFoundError("Client ID {} does not exist.".format(client_id))
     if not pending_model:
-        raise ValueError('There is no pending model to compare to the active model.')
+        raise NotFoundError('There is no pending model to compare to the active model.')
     ClientModel.set_active_for_client(model_id, client_id)
     db.session.commit()
     response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
