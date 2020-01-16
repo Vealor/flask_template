@@ -98,7 +98,7 @@ def send_mail(user_email, subject, content):
         mail = sendgrid.helpers.mail.Mail(from_email, to_email, subject, content)
         response_mail = sg.client.mail.send.post(request_body=mail.get())
         if not re.search('^2(00|02)$', str(response_mail.status_code)):
-            raise 'ERROR ' + str(response_mail.status_code)
+            raise Exception('ERROR ' + str(response_mail.status_code))
         return True
     except Exception as e:
-        raise e
+        raise Exception(e)
