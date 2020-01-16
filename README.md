@@ -11,12 +11,12 @@ Initialize virtual environment
 ```
 
 ### Database Setup
-**1.** Enter PSQL => `sudo -i -u postgres psql`
-**2.** Create Database => `CREATE DATABASE itra_db;`
-**3.** Create User => `CREATE USER itra LOGIN SUPERUSER ENCRYPTED PASSWORD 'LHDEV1234';`
-**4.** Grant User Access => `GRANT ALL PRIVILEGES ON DATABASE itra_db TO itra;`
-**5.** Quit PSQL => `\q`
-**6.** Apply migrations => `./db_refresh.sh`
+**1.** Enter PSQL => `sudo -i -u postgres psql`  
+**2.** Create Database => `CREATE DATABASE itra_db;`  
+**3.** Create User => `CREATE USER itra LOGIN SUPERUSER ENCRYPTED PASSWORD 'LHDEV1234';`  
+**4.** Grant User Access => `GRANT ALL PRIVILEGES ON DATABASE itra_db TO itra;`  
+**5.** Quit PSQL => `\q`  
+**6.** Apply migrations => `./db_refresh.sh`  
 
 To get back to PSQL for that DB => `psql -h localhost -U itra itra_db`
 
