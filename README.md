@@ -46,7 +46,7 @@ To prevent this, use the command `nodb` at the end of `./run_tests.sh`.  It is g
 
 - Add the following to the end of `./run_tests.sh` to get further output:  
 `cov` => code coverage  
-`lint` => linting with flake8
+`lint` => linting with flake8  
 `full` => more verbose output for tests
 
 An example running all is: `./run_tests.sh cov lint full`
