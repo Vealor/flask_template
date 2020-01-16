@@ -118,7 +118,7 @@ def get_predictive_calculations(id):
         elif province == "nb" or province == "ns" or province == "on" or province == "pe" or province == "nl":
             total_value = (-1 * ap_amt_sum) * 13 / 113 - itc_claimed
         else:
-            raise ValueError("No matching jurisdiction rule found for:{ }".format(province))
+            raise InputError("No matching jurisdiction rule found for:{ }".format(province))
         return total_value, tx_num
 
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -481,21 +481,21 @@ def apply_prediction(id):
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
     project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id is None)
     if project_transactions.count() == 0:
-        raise ValueError('Project has no transactions to predict.')
+        raise NotFoundError('Project has no transactions to predict.')
 
     print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
         if not active_model:
-            raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
+            raise NotFoundError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
         project_transactions.update({Transaction.master_model_id: None})
         project_transactions.update({Transaction.client_model_id: active_model.id})
     else:
         active_model = MasterModel.find_active()
         if not active_model:
-            raise ValueError('No master model has been trained or is active.')
+            raise NotFoundError('No master model has been trained or is active.')
         lh_model = mm.MasterPredictionModel(active_model.pickle)
         project_transactions.update({Transaction.client_model_id: None})
         project_transactions.update({Transaction.master_model_id: active_model.id})
