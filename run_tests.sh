@@ -23,7 +23,7 @@ modules=(
   lob_sectors
   logs
   master_models
-  paredown_ruls
+  paredown_rules
   projects
   roles
   tax_rates
