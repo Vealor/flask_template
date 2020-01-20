@@ -41,8 +41,8 @@ def reset():  # pragma: no cover
         <strong>new pass: </strong>''' + newpass + '''
         '''
         send_mail(data['email'], 'Password Reset', mailbody)
+        db.session.commit()
         create_log(current_user, 'modify', 'User requested password reset', 'E-mail sent')
-    db.session.commit()
     response['message'] = 'Password for {} sent to {} if credentials were correct. Check your email for instructions.'.format(data['username'], data['email'])
 
     return jsonify(response), 201

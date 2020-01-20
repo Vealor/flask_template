@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, Activity, MasterModel, MasterModelPerformance, Transaction
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import get_date_obj_from_str, validate_request_data, send_mail
+from src.util import get_date_obj_from_str, validate_request_data, send_mail, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 master_models = Blueprint('master_models', __name__)
@@ -215,6 +215,7 @@ def do_train():
     </ul>
     """.format(MasterModel.find_by_id(model_id).serialize['name'])
     send_mail(current_user.email, subj, content)
+    create_log(current_user, 'create', 'User trained a new Master Model', '')
 
     return jsonify(response), 201
 
@@ -272,6 +273,7 @@ def do_validate():
     response['message'] = 'Model validation complete.'
     response['payload']['model_id'] = active_model.id
     response['payload']['performance_metrics'] = performance_metrics_old
+    create_log(current_user, 'create', 'User performed validation on the current active Master Model', '')
 
     return jsonify(response), 201
 
@@ -301,19 +303,20 @@ def compare_active_and_pending():
 
 #===============================================================================
 # Update the active master model
-@master_models.route('/<int:model_id>/set_active', methods=['PUT'])
+@master_models.route('/<int:id>/set_active', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
-def set_active_model(model_id):
+def set_active_model(id):
     response = {'status': 'ok', 'message': '', 'payload': {}}
 
-    pending_model = MasterModel.find_by_id(model_id)
+    pending_model = MasterModel.find_by_id(id)
     if not pending_model:
         raise NotFoundError('There is no pending model to set as active.')
-    MasterModel.set_active(model_id)
+    MasterModel.set_active(id)
     db.session.commit()
-    response['message'] = 'Active Master model set to model {}'.format(model_id)
+    response['message'] = 'Active Master model set to model {}'.format(id)
+    create_log(current_user, 'modify', 'User set Master Model to active.', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -338,5 +341,6 @@ def delete_master_model(id):
 
     response['message'] = 'Deleted Master model ID {}'.format(model['id'])
     response['payload'] = [model]
+    create_log(current_user, 'delete', 'User deleted a Master Model', 'ID: ' + str(id))
 
     return jsonify(response), 200

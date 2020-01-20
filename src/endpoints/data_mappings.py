@@ -73,6 +73,8 @@ def update_data_mapping(id):
     db.session.commit()
     response['message'] = 'Updated data_mapping with id {}'.format(id)
     response['payload'] = [DataMapping.find_by_id(id).serialize]
+    # no logging required
+
     return jsonify(response)
 
 #===============================================================================

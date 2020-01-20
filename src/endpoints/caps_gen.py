@@ -17,7 +17,7 @@ from src.caps_gen.data_quality_check import map_regex, recursive_find, recursive
 from src.caps_gen.to_aps import j1, j2, j3, j4, j5, j6, j7, j8, tax_gl_extract, j9, j10, j11, j12, j13
 from src.caps_gen.to_caps import j101, j102, j103, j104, j105, j106
 from src.errors import NotFoundError, InputError
-from src.util import validate_request_data  # , create_log
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -69,7 +69,7 @@ def delete_caps_gens(id):
     caps_gen = query.serialize
     db.session.delete(query)
     db.session.commit()
-    # create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
     response['message'] = 'Deleted caps_gen id {}.'.format(caps_gen['id'])
     response['payload'] = [caps_gen]
     return jsonify(response), 200
@@ -94,7 +94,7 @@ def project_path_creation():
     validate_request_data(data, request_types)
     # TODO: If project path creation fails, we need to create rollback code.
     response = project_path_create(data, response)
-    # create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
+    create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -510,7 +510,7 @@ def init_caps_gen():
         db.session.commit()
         raise Exception(e)
 
-    # create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
+    create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
 
     return jsonify(response), 200
 
@@ -620,7 +620,7 @@ def apply_mappings_build_gst_registration(id):
         db.session.add(gst_entry)
     db.session.commit()
 
-    # create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
     response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
 
     return jsonify(response), 200
@@ -995,7 +995,7 @@ def data_quality_check(id):
     #         data_dictionary_results[table][column] = {
     #             'completeness': completeness_check(query)}
 
-    # create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
     response['payload'] = final_result
     return jsonify(response), 200
 
@@ -1034,7 +1034,7 @@ def data_to_aps(id):
     execute(j13(id))
     print('all joins executed')
 
-    # create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -1084,7 +1084,7 @@ def aps_quality_check(id):
     # TODO: APS QUALITY CHECK AND GL NET CHECK
     query_glnetcheck = SapGLNetCheck.query.filter_by(caps_gen_id=id)
     response['payload'] = [i.serialize for i in query_glnetcheck.all()]
-    # create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -1170,7 +1170,7 @@ def aps_to_caps(id):
     # execute(j64())
     # execute(j65())
 
-    # create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -1230,5 +1230,5 @@ def caps_to_transactions(id):
     caps_gen.first().is_completed = True
     db.session.commit()
 
-    # create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200

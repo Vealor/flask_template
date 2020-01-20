@@ -3,11 +3,11 @@ Paredown Endpoints
 '''
 import sqlalchemy
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.dialects import postgresql
 from src.errors import InputError, NotFoundError
 from src.models import db, Code, LineOfBusinessSectors, ParedownRule, ParedownRuleCondition, Roles, User
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 paredown_rules = Blueprint('paredown_rules', __name__)
@@ -117,6 +117,7 @@ def create_paredown_rule():
     db.session.commit()
     response['message'] = 'Created Paredown Rule ID with {}.'.format(new_paredown_rule.id)
     response['payload'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
+    create_log(current_user, 'create', 'User created a paredown rule', 'ID: ' + str(new_paredown_rule.id))
 
     return jsonify(response), 201
 
