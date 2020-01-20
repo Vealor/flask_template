@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, Activity, Client, ClientModel, ClientModelPerformance, Project, Transaction
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import get_date_obj_from_str, validate_request_data, send_mail
+from src.util import get_date_obj_from_str, validate_request_data, send_mail, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 client_models = Blueprint('client_models', __name__)
@@ -36,7 +36,7 @@ def get_client_models(id):
 
 #===============================================================================
 # Check if a pending model exists
-@client_models.route('/has_pending/', methods=['GET'])
+@client_models.route('/has_pending', methods=['GET'])
 @jwt_required
 @exception_wrapper()
 def has_pending():
@@ -51,7 +51,7 @@ def has_pending():
 
 #===============================================================================
 # Check if a model is being trained for the client
-@client_models.route('/is_training/', methods=['GET'])
+@client_models.route('/is_training', methods=['GET'])
 @jwt_required
 @exception_wrapper()
 def is_training():
@@ -67,7 +67,7 @@ def is_training():
 
 #===============================================================================
 # Train a new client model.
-@client_models.route('/train/', methods=['POST'])
+@client_models.route('/train', methods=['POST'])
 @jwt_required
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
@@ -227,12 +227,13 @@ def do_train():
     </ul>
     """.format(ClientModel.find_by_id(model_id).serialize['name'])
     send_mail(current_user.email, subj, content)
+    create_log(current_user, 'create', 'User trained new Client Model for Client', 'Client ID: ' + str(data['client_id']))
 
     return jsonify(response), 201
 
 #===============================================================================
 # Validate the active client model based on input ID.
-@client_models.route('/validate/', methods=['POST'])
+@client_models.route('/validate', methods=['POST'])
 @jwt_required
 @exception_wrapper()
 def do_validate():
@@ -285,13 +286,14 @@ def do_validate():
     response['message'] = 'Model validation complete.'
     response['payload']['model_id'] = active_model.id
     response['payload']['performance_metrics'] = performance_metrics_old
+    create_log(current_user, 'modify', 'User vaidated Client Model for Client', 'Client ID: ' + str(data['client_id']))
 
     return jsonify(response), 201
 
 
 #===============================================================================
 # Compare active and pending models
-@client_models.route('/compare/', methods=['GET'])
+@client_models.route('/compare', methods=['GET'])
 @jwt_required
 @exception_wrapper()
 def compare_active_and_pending():
@@ -321,20 +323,21 @@ def compare_active_and_pending():
 
 #===============================================================================
 # Update the active model for a client
-@client_models.route('/<int:model_id>/set_active', methods=['PUT'])
+@client_models.route('/<int:id>/set_active', methods=['PUT'])
 @jwt_required
 @exception_wrapper()
-def set_active_model(model_id):
+def set_active_model(id):
     response = {'status': 'ok', 'message': '', 'payload': {}}
-    pending_model = ClientModel.find_by_id(model_id)
+    pending_model = ClientModel.find_by_id(id)
     client_id = pending_model.client_id
     if not Client.find_by_id(client_id):
         raise NotFoundError("Client ID {} does not exist.".format(client_id))
     if not pending_model:
         raise NotFoundError('There is no pending model to compare to the active model.')
-    ClientModel.set_active_for_client(model_id, client_id)
+    ClientModel.set_active_for_client(id, client_id)
     db.session.commit()
-    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
+    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, id)
+    create_log(current_user, 'modify', 'User set Client Model to active', 'ID: ' + str(id))
     return jsonify(response), 200
 
 
@@ -353,11 +356,11 @@ def delete_client_model(id):
     if query.status == Activity.active:
         raise InputError('Client model ID {} is currently active. Cannot delete.'.format(id))
 
-    model = query.serialize
     db.session.delete(query)
     db.session.commit()
 
-    response['message'] = 'Deleted Client model ID {}'.format(model['id'])
-    response['payload'] = [model]
+    response['message'] = 'Deleted Client model ID {}'.format(id)
+    response['payload'] = [query.serialize]
+    create_log(current_user, 'delete', 'User deleted Client Model', 'ID: ' + str(id))
 
     return jsonify(response), 200
