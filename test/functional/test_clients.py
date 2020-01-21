@@ -48,6 +48,24 @@ class TestClientGet():
         db.session.delete(Client.find_by_id(new_client_id2))
         db.session.commit()
 
+    def test_client_get_one_does_not_exist(self, api, client):
+
+        # Test set-up
+        db.session.add(Client(name = "Client A"))
+        db.session.commit()
+        new_client_id = Client.query.filter_by(name = "Client A").first().id
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = get_req('/clients/' + str(new_client_id + 1), client, helper_token)
+        assert response.status_code == 404  # NotFoundError
+        data = response.get_json()
+        assert data['payload'] == []
+
+        # Test clean up
+        db.session.delete(Client.find_by_id(new_client_id))
+        db.session.commit()
+
 @pytest.mark.clients
 class TestClientCreate():
 
@@ -67,6 +85,50 @@ class TestClientCreate():
 
         # Test clean up
         db.session.delete(Client.query.filter_by(name = "Client One").first())
+        db.session.commit()
+
+    def test_client_create_name_too_long(self, api, client):
+
+        # Test set-up
+        initial_count = Client.query.count()
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = post_req('/clients', client, {
+            'name': "Thisclientnameismuchtoolongforthedatabasetohandleallthecharactersinvolvedinitselfbutfirstoffwhywouldtheymakesuchastupidlylongnametobeginwith",
+            'client_entities': []
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError: Name too long
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.count() == initial_count  # Make sure no added entry in db
+
+    def test_client_create_already_exists(self, api, client):
+
+        # Test set-up
+        new_client = Client(name = "Client B")
+        db.session.add(new_client)
+        db.session.commit()
+        new_client_id = Client.query.filter_by(name = "Client B").first().id
+        initial_count = Client.query.count()
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = post_req('/clients', client, {
+            'name': "Client B",
+            'client_entities': []
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError: Already exists
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.count() == initial_count  # Make sure no added entry in db
+
+        # Test clean up
+        db.session.delete(Client.find_by_id(new_client_id))
         db.session.commit()
 
     def test_client_create_valid_entity(self, api, client):
@@ -90,10 +152,78 @@ class TestClientCreate():
     def test_client_create_invalid_entity(self, api, client):
 
         # Test body
+        # code is too long
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         response = post_req('/clients', client, {
             'name': "Bad Client",
             'client_entities': [{'company_code': 'CODE_IS_TOO_LONG', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab', 'bc']}]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+        # not recognized lob sector
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [{'company_code': 'CODE', 'lob_sector': 'floral_industry_toilet_brushes', 'jurisdictions': ['on']}]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+        # no jurisdiction
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [{'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': []}]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+        # same company code
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [
+                {'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['bc']},
+                {'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab']}
+            ]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+        # bad jurisdiction
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [
+                {'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['tx']}
+            ]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+        #duplicate jurisdiction
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [
+                {'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab', 'ab']}
+            ]
         }, helper_token)
 
         assert response.status_code == 400  # InputError
@@ -131,6 +261,34 @@ class TestClientUpdate():
         db.session.delete(new_client)
         db.session.commit()
 
+    def test_client_update_name_already_exists(self, api, client):
+
+        # Test set-up
+        new_client1 = Client(name = "Client One")
+        new_client2 = Client(name = "Client Two")
+        db.session.add(new_client1)
+        db.session.add(new_client2)
+        db.session.commit()
+        new_client_id2 = Client.query.filter_by(name = "Client Two").first().id
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = put_req('/clients/' + str(new_client_id2), client, {
+            'name': "Client One",
+            'client_entities': []
+        }, helper_token)
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Client One").count() == 1
+        assert Client.query.filter_by(name = "Client Two").count() == 1
+
+        # Test clean up
+        db.session.delete(new_client1)
+        db.session.delete(new_client2)
+        db.session.commit()
 
 @pytest.mark.clients
 class TestClientDelete():
