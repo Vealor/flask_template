@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from src.errors import InputError, NotFoundError
 from src.models import db, Client, ClientEntity, ClientModel, DataParam, MasterModel, Operator, ParedownRule, Project, Transaction, User, UserProject
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 projects = Blueprint('projects', __name__)
@@ -340,6 +340,7 @@ def post_project():
     db.session.commit()
     response['message'] = 'Created project {}'.format(data['name'])
     response['payload'] = [Project.find_by_id(new_project.id).serialize]
+    create_log(current_user, 'create', 'User created Project', 'Name: ' + str(data['name']))
 
     return jsonify(response), 201
 
@@ -457,6 +458,7 @@ def apply_paredown_rules(id):
 
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
     response['payload'] = []
+    create_log(current_user, 'modify', 'User pared down Project', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -519,6 +521,8 @@ def apply_prediction(id):
 
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
+    create_log(current_user, 'modify', 'User applied prediction to Project', 'ID: ' + str(id))
+
     return jsonify(response), 201
 
 #===============================================================================
@@ -664,6 +668,7 @@ def update_project(id):
     db.session.commit()
     response['message'] = 'Updated project with id {}'.format(id)
     response['payload'] = [Project.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Project', 'ID: ' + str(id))
 
     return jsonify(response)
 
@@ -686,5 +691,6 @@ def delete_project(id):
     db.session.commit()
     response['message'] = 'Deleted project id {}'.format(deletedproject['id'])
     response['payload'] = [deletedproject]
+    create_log(current_user, 'delete', 'User deleted Project', 'ID: ' + str(id))
 
     return jsonify(response)

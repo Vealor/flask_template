@@ -3,12 +3,12 @@ User Endpoints
 '''
 import re
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from psycopg2.errors import NotNullViolation
 from sqlalchemy.exc import IntegrityError
 from src.errors import DataConflictError, InputError, NotFoundError, UnauthorizedError
 from src.models import db, Roles, User
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 users = Blueprint('users', __name__)
@@ -126,6 +126,7 @@ def create_user():
     db.session.commit()
     response['message'] = 'Created user {}'.format(data['username'])
     response['payload'] = [User.find_by_id(new_user.id).serialize]
+    create_log(current_user, 'modify', 'User created a new User', 'New Username: ' + str(data['username']))
 
     return jsonify(response), 201
 
@@ -194,6 +195,7 @@ def update_user(id):
     db.session.commit()
     response['message'] = 'Updated user with id {}'.format(id)
     response['payload'] = [User.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated a User', 'Updated Username: ' + str(data['username']))
 
     return jsonify(response), 201
 
@@ -256,6 +258,7 @@ def update_user_password(id):
 
     db.session.commit()
     response['message'] = 'Password changed'
+    create_log(current_user, 'modify', 'User changed password for User', 'ID: ' + str(id))
 
     return jsonify(response), 201
 
@@ -279,6 +282,7 @@ def activate_user(id):
         query.is_active = True
         db.session.commit()
     response['payload'] = [query.serialize]
+    create_log(current_user, 'modify', 'User activated a User', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -302,6 +306,7 @@ def deactivate_user(id):
         query.is_active = False
         db.session.commit()
     response['payload'] = [query.serialize]
+    create_log(current_user, 'modify', 'User deactivated a User', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -327,5 +332,6 @@ def delete_user(id):
 
     response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
+    create_log(current_user, 'modify', 'User deleted a User', 'Username: ' + str(user['username']))
 
     return jsonify(response), 200

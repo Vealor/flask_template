@@ -2,10 +2,10 @@
 DataParam Endpoints
 '''
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, DataParam
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 data_params = Blueprint('data_params', __name__)
@@ -73,5 +73,6 @@ def update_data_params(id):
 
     db.session.commit()
     response['payload'] = [DataParam.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Data Parameeter', 'ID: ' + str(id))
 
     return jsonify(response), 200

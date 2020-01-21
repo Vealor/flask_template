@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.sql import func
 from src.errors import InputError, NotFoundError, UnauthorizedError
 from src.models import db, Transaction, Roles
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 transactions = Blueprint('transactions', __name__)
@@ -170,6 +170,7 @@ def approve_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User approved Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -217,6 +218,7 @@ def batch_approve_transaction():
 
     db.session.commit()
     response['payload'] = []
+    create_log(current_user, 'modify', 'User approved batch of Transactions', '')
 
     return jsonify(response), 200
 
@@ -248,6 +250,7 @@ def unapprove_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User unapproved Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -281,6 +284,7 @@ def batch_unapprove_transaction():
 
     db.session.commit()
     response['payload'] = []
+    create_log(current_user, 'modify', 'User unapproved batch of Transactions', '')
 
     return jsonify(response), 200
 
@@ -429,6 +433,7 @@ def update_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
