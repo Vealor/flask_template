@@ -69,6 +69,40 @@ class TestClientCreate():
         db.session.delete(Client.query.filter_by(name = "Client One").first())
         db.session.commit()
 
+    def test_client_create_valid_entity(self, api, client):
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = post_req('/clients', client, {
+            'name': "Client One",
+            'client_entities': [{'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab', 'bc']}]
+        }, helper_token)
+
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['status'] == 'ok'
+        assert len(data['payload']) > 0
+
+        # Test clean up
+        db.session.delete(Client.query.filter_by(name = "Client One").first())
+        db.session.commit()
+
+    def test_client_create_invalid_entity(self, api, client):
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+        response = post_req('/clients', client, {
+            'name': "Bad Client",
+            'client_entities': [{'company_code': 'CODE_IS_TOO_LONG', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab', 'bc']}]
+        }, helper_token)
+
+        assert response.status_code == 400  # InputError
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+        assert data['payload'] == []
+        assert Client.query.filter_by(name = "Bad Client").count() == 0  # Make sure no entry in db
+
+
 @pytest.mark.clients
 class TestClientUpdate():
 
