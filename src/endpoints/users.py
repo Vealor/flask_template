@@ -295,6 +295,9 @@ def activate_user(id):
 def deactivate_user(id):
     response = {'status': '', 'message': '', 'payload': []}
 
+    if id == current_user.id:
+        raise DataConflictError('You can not deactivate yourself.')
+
     query = User.query.filter_by(id=id).first()
     if not query:
         raise NotFoundError('User ID {} does not exist.'.format(id))
@@ -318,6 +321,9 @@ def deactivate_user(id):
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_user(id):
     response = {'status': '', 'message': '', 'payload': []}
+
+    if id == current_user.id:
+        raise DataConflictError('You can not delete yourself.')
 
     query = User.query.filter_by(id=id).first()
     if not query:
