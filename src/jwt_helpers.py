@@ -1,16 +1,21 @@
 ### JWT HELPERS
 
 from flask import jsonify
+from src.errors import UnauthorizedError
 from src.models import BlacklistToken, User
+from src.wrappers import exception_wrapper
 
 #===============================================================================
 ### JWT Helpers
 def build_jwt_helpers(jwt):
     @jwt.user_loader_callback_loader
+    @exception_wrapper()
     def user_loader_callback(identity):
         user = User.find_by_username(identity)
         if not user:
             return None
+        if not user.is_active:
+            raise UnauthorizedError("This account is deactivated")
         return user
 
     @jwt.user_loader_error_loader
