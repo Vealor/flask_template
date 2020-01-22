@@ -3,8 +3,8 @@
 import functools
 from flask import abort
 from flask_jwt_extended import (verify_jwt_in_request, get_current_user)
+from src.core.models import db
 from src.errors import InputError, UnauthorizedError, ForbiddenError, NotFoundError, DataConflictError, UnprocessableEntityError
-from src.models import db
 
 #===============================================================================
 ### Exception Wrapper

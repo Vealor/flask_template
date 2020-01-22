@@ -1,7 +1,7 @@
 ### JWT HELPERS
 
 from flask import jsonify
-from src.models import BlacklistToken, User
+from src.core.models import BlacklistToken, User
 
 #===============================================================================
 ### JWT Helpers

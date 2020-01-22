@@ -4,7 +4,8 @@ import sys
 sys.path.append(sys.path[0] + "/..")
 
 # FLASK APP
-from src.models import db, CDMLabel, Code, ParedownRule, ParedownRuleCondition, User  # noqa: E402
+from src.core.models import db, CDMLabel, User  # noqa: E402
+from src.itra.models import Code, ParedownRule, ParedownRuleCondition  # noqa: E402
 from src import api  # noqa: E402
 
 # ==============================================================================
