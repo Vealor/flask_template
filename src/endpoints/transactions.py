@@ -306,28 +306,28 @@ def update_transaction(id):
         'gst_hst_codes': ['list', 'NoneType'],
         'gst_hst_notes_internal': ['str', 'NoneType'],
         'gst_hst_notes_external': ['str', 'NoneType'],
-        'gst_hst_recoveries': ['float', 'int', 'NoneType'],
+        'gst_hst_recoveries': ['str', 'NoneType'],
         'gst_hst_error_type': ['str', 'NoneType'],
         'gst_hst_signed_off_by_id': ['int', 'NoneType'],
 
         'qst_codes': ['list', 'NoneType'],
         'qst_notes_internal': ['str', 'NoneType'],
         'qst_notes_external': ['str', 'NoneType'],
-        'qst_recoveries': ['float', 'int', 'NoneType'],
+        'qst_recoveries': ['str', 'NoneType'],
         'qst_error_type': ['str', 'NoneType'],
         'qst_signed_off_by_id': ['int', 'NoneType'],
 
         'pst_codes': ['list', 'NoneType'],
         'pst_notes_internal': ['str', 'NoneType'],
         'pst_notes_external': ['str', 'NoneType'],
-        'pst_recoveries': ['float', 'int', 'NoneType'],
+        'pst_recoveries': ['str', 'NoneType'],
         'pst_error_type': ['str', 'NoneType'],
         'pst_signed_off_by_id': ['int', 'NoneType'],
 
         'apo_codes': ['list', 'NoneType'],
         'apo_notes_internal': ['str', 'NoneType'],
         'apo_notes_external': ['str', 'NoneType'],
-        'apo_recoveries': ['float', 'int', 'NoneType'],
+        'apo_recoveries': ['str', 'NoneType'],
         'apo_error_type': ['str', 'NoneType'],
         'apo_signed_off_by_id': ['int', 'NoneType']
     }
