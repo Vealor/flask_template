@@ -14,7 +14,7 @@ clients = Blueprint('clients', __name__)
 @clients.route('/', defaults={'id': None}, methods=['GET'])
 @clients.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_clients(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -41,7 +41,7 @@ def get_clients(id):
 # POST NEW CLIENT
 @clients.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_client():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -116,7 +116,7 @@ def post_client():
 # UPDATE A CLIENT
 @clients.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_client(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -231,7 +231,7 @@ def update_client(id):
 # DELETE A CLIENT
 @clients.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_client(id):
     response = {'status': 'ok', 'message': '', 'payload': []}

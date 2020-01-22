@@ -19,7 +19,7 @@ projects = Blueprint('projects', __name__)
 # Toggle Favourite for User
 @projects.route('/<int:id>/toggle_favourite', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def toggle_favourite(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -38,7 +38,7 @@ def toggle_favourite(id):
 @projects.route('/', defaults={'id': None}, methods=['GET'])
 @projects.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_projects(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -69,7 +69,7 @@ def get_projects(id):
 # GET ALL Predictive Calculations
 @projects.route('/<int:id>/predictive_calculations', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_predictive_calculations(id):
     # helper function to calculate recovery value and volume for step 1
@@ -196,7 +196,7 @@ def get_predictive_calculations(id):
 # POST NEW PROJECT
 @projects.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_project():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -348,7 +348,7 @@ def post_project():
 # APPLY PAREDOWN RULES TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
 @projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_paredown_rules(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -466,7 +466,7 @@ def apply_paredown_rules(id):
 # APPLY PREDICTION MODEL TO A PROJECT
 @projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 #@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_prediction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -529,7 +529,7 @@ def apply_prediction(id):
 # UPDATE A PROJECT
 @projects.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_project(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -676,7 +676,7 @@ def update_project(id):
 # DELETE A PROJECT
 @projects.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_project(id):
     response = {'status': 'ok', 'message': '', 'payload': []}

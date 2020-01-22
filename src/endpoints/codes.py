@@ -11,7 +11,7 @@ codes = Blueprint('codes', __name__)
 # GET ALL CODES
 @codes.route('/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_codes():
     response = {'status': 'ok', 'message': '', 'payload': []}

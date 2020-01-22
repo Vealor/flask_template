@@ -8,7 +8,7 @@ general = Blueprint('general', __name__)
 #===============================================================================
 # General
 @general.route('/', methods=['GET'])
-@exception_wrapper()
+@exception_wrapper
 def default():
     response = {'status': 'ok', 'message': '', 'payload': []}
 

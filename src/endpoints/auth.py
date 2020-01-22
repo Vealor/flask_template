@@ -15,7 +15,7 @@ auth = Blueprint('auth', __name__)
 # resets user's password given username and e-mail
 # sends email with new temp pass
 @auth.route('/reset', methods=['POST'])
-@exception_wrapper()
+@exception_wrapper
 def reset():  # pragma: no cover
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -50,7 +50,7 @@ def reset():  # pragma: no cover
 #===============================================================================
 # login
 @auth.route('/login', methods=['POST'])
-@exception_wrapper()
+@exception_wrapper
 def login():
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -77,7 +77,7 @@ def login():
 # refresh access_token with refresh_token
 @auth.route('/refresh', methods=['GET'])
 @jwt_refresh_token_required
-@exception_wrapper()
+@exception_wrapper
 def refresh():
     user = get_jwt_identity()
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -88,7 +88,7 @@ def refresh():
 # Verify that access_token is valid
 @auth.route('/verify', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def verify_tokens():
     get_jwt_identity()
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -98,7 +98,7 @@ def verify_tokens():
 # Get user details (including credentials)
 @auth.route('/user_details', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def get_user_details():
     response = {'status': 'ok', 'message': '', 'payload': current_user.serialize}
     return jsonify(response), 200
@@ -107,7 +107,7 @@ def get_user_details():
 # Get user details (including credentials)
 @auth.route('/user_details_with_projects', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def get_user_details_with_projects():
     response = {'status': 'ok', 'message': '', 'payload': current_user.serialize_user_proj}
     return jsonify(response), 200

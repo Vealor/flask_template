@@ -26,7 +26,7 @@ caps_gen = Blueprint('caps_gen', __name__)
 @caps_gen.route('/', defaults={'id': None}, methods=['GET'])
 @caps_gen.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_caps_gens(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -56,7 +56,7 @@ def get_caps_gens(id):
 # DELETE A CAPS GEN
 @caps_gen.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_caps_gens(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -82,7 +82,7 @@ def delete_caps_gens(id):
 # creates project path in local file hierarchy for server
 @caps_gen.route('/project_path_creation', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def project_path_creation():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -102,7 +102,7 @@ def project_path_creation():
 # unzips, creates CapsGen, creates DataMappings, builds master tables
 @caps_gen.route('/init', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission([])
 def init_caps_gen():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -519,7 +519,7 @@ def init_caps_gen():
 # get master table data from caps_gen tables
 @caps_gen.route('/<int:id>/master_table_headers', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_master_table_headers(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -565,7 +565,7 @@ def get_master_table_headers(id):
 # will not be written in.
 @caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -630,7 +630,7 @@ def apply_mappings_build_gst_registration(id):
 # Get table names for View Tables Page
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_tables(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -649,7 +649,7 @@ def get_tables(id):
 # View Tables Page
 @caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_tables(id, table):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -680,7 +680,7 @@ def view_tables(id, table):
 # dictionary)
 @caps_gen.route('/<int:id>/data_quality_check', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_quality_check(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1004,7 +1004,7 @@ def data_quality_check(id):
 # j1 to j10 joins to create APS j1_j10
 @caps_gen.route('/<int:id>/data_to_aps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_to_aps(id):
     response = {'status': 'ok', 'message': {}, 'payload': {}}
@@ -1042,7 +1042,7 @@ def data_to_aps(id):
 # View APS Page
 @caps_gen.route('/<int:id>/view_aps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_aps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1071,7 +1071,7 @@ def view_aps(id):
 # net to 0. This is referring to GL netting to 0. Ask Andy for more details.
 @caps_gen.route('/<int:id>/aps_quality_check', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_quality_check(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1093,7 +1093,7 @@ def aps_quality_check(id):
 # see feature branch 72-aps_to_caps for more info
 @caps_gen.route('/<int:id>/aps_to_caps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_to_caps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1177,7 +1177,7 @@ def aps_to_caps(id):
 # View CAPS Page
 @caps_gen.route('/<int:id>/view_caps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_caps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1206,7 +1206,7 @@ def view_caps(id):
 
 @caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def caps_to_transactions(id):
     response = {'status': 'ok', 'message': '', 'payload': []}

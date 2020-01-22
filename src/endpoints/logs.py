@@ -13,7 +13,7 @@ logs = Blueprint('logs', __name__)
 @logs.route('/', methods=['GET'])
 @jwt_required
 # PERMISSION IT ADMIN
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_logs():
     response = {'status': 'ok', 'message': '', 'payload': []}

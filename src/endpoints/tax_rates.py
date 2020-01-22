@@ -13,7 +13,7 @@ tax_rates = Blueprint('tax_rates', __name__)
 # Get Tax Rates
 @tax_rates.route('/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_tax_rates():
     response = {'status': 'ok', 'message': '', 'payload': []}

@@ -17,7 +17,7 @@ users = Blueprint('users', __name__)
 @users.route('/', defaults={'id': None}, methods=['GET'])
 @users.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_users(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -44,7 +44,7 @@ def get_users(id):
 # POST NEW USER
 @users.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_user():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -134,7 +134,7 @@ def create_user():
 # UPDATE A USER information
 @users.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -203,7 +203,7 @@ def update_user(id):
 # Check A USER password
 @users.route('/<int:id>/passcheck', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def check_password(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -226,7 +226,7 @@ def check_password(id):
 # UPDATE A USER password
 @users.route('/<int:id>/passchange', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user_password(id):
     response = {'status': '', 'message': '', 'payload': []}
@@ -266,7 +266,7 @@ def update_user_password(id):
 # ACTIVATE A USER
 @users.route('/<int:id>/activate', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def activate_user(id):
     response = {'status': '', 'message': '', 'payload': []}
@@ -290,7 +290,7 @@ def activate_user(id):
 # DEACTIVATE A USER
 @users.route('/<int:id>/deactivate', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def deactivate_user(id):
     response = {'status': '', 'message': '', 'payload': []}
@@ -314,7 +314,7 @@ def deactivate_user(id):
 # DELETE A USER
 @users.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_user(id):
     response = {'status': '', 'message': '', 'payload': []}
