@@ -3,8 +3,8 @@ import datetime
 import re
 import sendgrid
 from flask import current_app
+from src.core.models import db, Actions, Log
 from src.errors import InputError
-from src.models import db, Actions, Log
 
 #==============================================================================
 # prints text with specific colours if adding to print statements

@@ -7,7 +7,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from src.jwt_helpers import build_jwt_helpers
-from src.models import db
+from src.core.models import db
 from src.routes import build_blueprints
 from src.util import bcolours
 #===============================================================================
