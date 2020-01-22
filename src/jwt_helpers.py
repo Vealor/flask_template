@@ -9,7 +9,7 @@ from src.wrappers import exception_wrapper
 ### JWT Helpers
 def build_jwt_helpers(jwt):
     @jwt.user_loader_callback_loader
-    @exception_wrapper()
+    @exception_wrapper
     def user_loader_callback(identity):
         user = User.find_by_username(identity)
         if not user:
