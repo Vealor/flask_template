@@ -2,15 +2,15 @@
 Project Endpoints
 '''
 import re
-import src.itra.prediction.model_client as cm
-import src.itra.prediction.model_master as mm
+import src.ind_tax.prediction.model_client as cm
+import src.ind_tax.prediction.model_master as mm
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from src.core.models import db, Client, ClientEntity, DataParam, Project, User, UserProject
-from src.itra.models import Operator, ParedownRule, Transaction, ClientModel, MasterModel
-from src.itra.prediction.preprocessing import preprocess_data, transactions_to_dataframe
+from src.ind_tax.models import Operator, ParedownRule, Transaction, ClientModel, MasterModel
+from src.ind_tax.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.errors import InputError, NotFoundError
 from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper

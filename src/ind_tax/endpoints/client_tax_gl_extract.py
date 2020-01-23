@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.core.models import Project
 from src.errors import InputError, NotFoundError
-from src.itra.models import CapsGen, SapTaxGLExtract
+from src.ind_tax.models import CapsGen, SapTaxGLExtract
 from src.wrappers import has_permission, exception_wrapper
 
 client_tax_gl_extract = Blueprint('client_tax_gl_extract', __name__)

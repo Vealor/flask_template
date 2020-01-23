@@ -8,7 +8,7 @@ class TestClientModelsGet():
         token = login(client, 'lh-admin', 'Kpmg1234%')
         # TODO: insert client
         # TODO: insert client_model
-        response = get_req('/itra/client_models', client, token)
+        response = get_req('/ind_tax/client_models', client, token)
         # TODO: delete client - hopefully cascades client_model
 
         assert response.status_code == 200

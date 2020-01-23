@@ -59,52 +59,52 @@ def build_blueprints(api):
     # ITRA
 
     # CapsGen Endpoints
-    from src.itra.endpoints.caps_gen import caps_gen  # noqa: E402
-    api.register_blueprint(caps_gen, url_prefix='/itra/caps_gen')
+    from src.ind_tax.endpoints.caps_gen import caps_gen  # noqa: E402
+    api.register_blueprint(caps_gen, url_prefix='/ind_tax/caps_gen')
 
     # ClientModel Endpoints
-    from src.itra.endpoints.client_models import client_models  # noqa: E402
-    api.register_blueprint(client_models, url_prefix='/itra/client_models')
+    from src.ind_tax.endpoints.client_models import client_models  # noqa: E402
+    api.register_blueprint(client_models, url_prefix='/ind_tax/client_models')
 
     # Client Vendor Master Endpoint
-    from src.itra.endpoints.client_vendor_master import client_vendor_master  # noqa: E402
-    api.register_blueprint(client_vendor_master, url_prefix='/itra/client_vendor_master')
+    from src.ind_tax.endpoints.client_vendor_master import client_vendor_master  # noqa: E402
+    api.register_blueprint(client_vendor_master, url_prefix='/ind_tax/client_vendor_master')
 
     # Client Tax GL Extract Endpoint
-    from src.itra.endpoints.client_tax_gl_extract import client_tax_gl_extract  # noqa: E402
-    api.register_blueprint(client_tax_gl_extract, url_prefix='/itra/client_tax_gl_extract')
+    from src.ind_tax.endpoints.client_tax_gl_extract import client_tax_gl_extract  # noqa: E402
+    api.register_blueprint(client_tax_gl_extract, url_prefix='/ind_tax/client_tax_gl_extract')
 
     # Code Endpoint
-    from src.itra.endpoints.codes import codes  # noqa: E402
-    api.register_blueprint(codes, url_prefix='/itra/codes')
+    from src.ind_tax.endpoints.codes import codes  # noqa: E402
+    api.register_blueprint(codes, url_prefix='/ind_tax/codes')
 
     # ErrorCategory Endpoints
-    from src.itra.endpoints.error_categories import error_categories  # noqa: E402
-    api.register_blueprint(error_categories, url_prefix='/itra/error_categories')
+    from src.ind_tax.endpoints.error_categories import error_categories  # noqa: E402
+    api.register_blueprint(error_categories, url_prefix='/ind_tax/error_categories')
 
     # FXrates Endpoints
-    from src.itra.endpoints.fx_rates import fx_rates  # noqa: E402
-    api.register_blueprint(fx_rates, url_prefix='/itra/fx_rates')
+    from src.ind_tax.endpoints.fx_rates import fx_rates  # noqa: E402
+    api.register_blueprint(fx_rates, url_prefix='/ind_tax/fx_rates')
 
     # Gst Registration Endpoint
-    from src.itra.endpoints.gst_registration import gst_registration  # noqa: E402
-    api.register_blueprint(gst_registration, url_prefix='/itra/gst_registration')
+    from src.ind_tax.endpoints.gst_registration import gst_registration  # noqa: E402
+    api.register_blueprint(gst_registration, url_prefix='/ind_tax/gst_registration')
 
     # MasterModel Endpoints
-    from src.itra.endpoints.master_models import master_models  # noqa: E402
-    api.register_blueprint(master_models, url_prefix='/itra/master_models')
+    from src.ind_tax.endpoints.master_models import master_models  # noqa: E402
+    api.register_blueprint(master_models, url_prefix='/ind_tax/master_models')
 
     # ParedownRule Endpoints
-    from src.itra.endpoints.paredown_rules import paredown_rules  # noqa: E402
-    api.register_blueprint(paredown_rules, url_prefix='/itra/paredown_rules')
+    from src.ind_tax.endpoints.paredown_rules import paredown_rules  # noqa: E402
+    api.register_blueprint(paredown_rules, url_prefix='/ind_tax/paredown_rules')
 
     # Tax Rate Endpoint
-    from src.itra.endpoints.tax_rates import tax_rates  # noqa: E402
-    api.register_blueprint(tax_rates, url_prefix='/itra/tax_rates')
+    from src.ind_tax.endpoints.tax_rates import tax_rates  # noqa: E402
+    api.register_blueprint(tax_rates, url_prefix='/ind_tax/tax_rates')
 
     # Transaction Endpoints
-    from src.itra.endpoints.transactions import transactions  # noqa: E402
-    api.register_blueprint(transactions, url_prefix='/itra/transactions')
+    from src.ind_tax.endpoints.transactions import transactions  # noqa: E402
+    api.register_blueprint(transactions, url_prefix='/ind_tax/transactions')
 
     # ==========================================================================
     # ROYALTIES

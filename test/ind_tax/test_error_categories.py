@@ -6,7 +6,7 @@ from test import api, client
 class TestErrorCategoriesGet():
     def test_list_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
-        response = get_req('/itra/error_categories', client, token)
+        response = get_req('/ind_tax/error_categories', client, token)
 
         assert response.status_code == 200
         data = response.get_json()

@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.errors import InputError, NotFoundError
 from src.core.models import Project
-from src.itra.models import CapsGen, SapLfa1
+from src.ind_tax.models import CapsGen, SapLfa1
 from src.wrappers import has_permission, exception_wrapper
 
 client_vendor_master = Blueprint('client_vendor_master', __name__)

@@ -1,7 +1,7 @@
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import func
 from src.core.models import db
-from src.itra.models import ErrorTypes, Code, TransactionCode, TaxTypes  # noqa: F401
+from src.ind_tax.models import ErrorTypes, Code, TransactionCode, TaxTypes  # noqa: F401
 from src.errors import InputError
 ################################################################################
 class Transaction(db.Model):

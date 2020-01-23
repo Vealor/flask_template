@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.dialects import postgresql
 from src.core.models import db, LineOfBusinessSectors, Roles, User
 from src.errors import InputError, NotFoundError
-from src.itra.models import Code, ParedownRule, ParedownRuleCondition
+from src.ind_tax.models import Code, ParedownRule, ParedownRuleCondition
 from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 

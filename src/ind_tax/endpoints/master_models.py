@@ -2,12 +2,12 @@
 Master Model Endpoints
 '''
 import pickle
-import src.itra.prediction.model_master as mm
+import src.ind_tax.prediction.model_master as mm
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, current_user
 from src.core.models import db
-from src.itra.models import Activity, Transaction, MasterModel, MasterModelPerformance
-from src.itra.prediction.preprocessing import preprocess_data, transactions_to_dataframe
+from src.ind_tax.models import Activity, Transaction, MasterModel, MasterModelPerformance
+from src.ind_tax.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.errors import InputError, NotFoundError
 from src.util import get_date_obj_from_str, validate_request_data, send_mail, create_log
 from src.wrappers import has_permission, exception_wrapper

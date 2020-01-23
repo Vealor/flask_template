@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.core.models import Project
 from src.errors import InputError, NotFoundError
-from src.itra.models import CapsGen, SapT007s
+from src.ind_tax.models import CapsGen, SapT007s
 from src.wrappers import has_permission, exception_wrapper
 
 tax_rates = Blueprint('tax_rates', __name__)

@@ -1,5 +1,5 @@
 from src.core.models import db
-from src.itra.models import Category, Caps_Interface, Datatype
+from src.ind_tax.models import Category, Caps_Interface, Datatype
 ################################################################################
 class CDMLabel(db.Model):
     __tablename__ = 'cdm_labels'

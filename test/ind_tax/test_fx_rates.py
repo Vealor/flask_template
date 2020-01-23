@@ -1,6 +1,6 @@
 import pytest
 from src import db
-from src.itra.models import FXRate
+from src.ind_tax.models import FXRate
 from test._helpers import login, get_req
 from test import api, client
 
@@ -8,7 +8,7 @@ from test import api, client
 class TestFXRatesGet():
     def test_get_full_fresh_success(self, api, client):
         token = login(client, 'lh-admin', 'Kpmg1234%')
-        response = get_req('/itra/fx_rates', client, token)
+        response = get_req('/ind_tax/fx_rates', client, token)
 
         assert response.status_code == 201
         data = response.get_json()
@@ -21,7 +21,7 @@ class TestFXRatesGet():
         rate = FXRate.query.order_by(FXRate.id.desc()).first()
         db.session.delete(rate)
         db.session.commit()
-        response = get_req('/itra/fx_rates', client, token)
+        response = get_req('/ind_tax/fx_rates', client, token)
 
         assert response.status_code == 201
         data = response.get_json()

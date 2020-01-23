@@ -12,12 +12,12 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy import create_engine
 from src.core.models import db, CDMLabel, DataMapping
 from src.errors import NotFoundError, InputError
-from src.itra.models import CapsGen, GstRegistration, SapAps, SapCaps, SapGLNetCheck, SapLfa1, Transaction
-from src.itra.caps_gen.creation import project_path_create, source_data_unzipper
-from src.itra.caps_gen.build_master import build_master_file, build_master_table, apply_mapping
-from src.itra.caps_gen.data_quality_check import map_regex, recursive_find, recursive_insert
-from src.itra.caps_gen.to_aps import j1, j2, j3, j4, j5, j6, j7, j8, tax_gl_extract, j9, j10, j11, j12, j13
-from src.itra.caps_gen.to_caps import j101, j102, j103, j104, j105, j106
+from src.ind_tax.models import CapsGen, GstRegistration, SapAps, SapCaps, SapGLNetCheck, SapLfa1, Transaction
+from src.ind_tax.caps_gen.creation import project_path_create, source_data_unzipper
+from src.ind_tax.caps_gen.build_master import build_master_file, build_master_table, apply_mapping
+from src.ind_tax.caps_gen.data_quality_check import map_regex, recursive_find, recursive_insert
+from src.ind_tax.caps_gen.to_aps import j1, j2, j3, j4, j5, j6, j7, j8, tax_gl_extract, j9, j10, j11, j12, j13
+from src.ind_tax.caps_gen.to_caps import j101, j102, j103, j104, j105, j106
 from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 

@@ -1,6 +1,6 @@
 from sqlalchemy.sql import func
 from src.core.models import db, LineOfBusinessSectors, Jurisdiction
-from src.itra.models import Activity
+from src.ind_tax.models import Activity
 ################################################################################
 class Client(db.Model):
     __tablename__ = 'clients'

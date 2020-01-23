@@ -1,7 +1,7 @@
 import re
 from sqlalchemy.dialects import postgresql
 from src.core.models import db
-from src.itra.models import Process, Operator
+from src.ind_tax.models import Process, Operator
 ################################################################################
 class DataParam(db.Model):
     __tablename__ = 'data_params'

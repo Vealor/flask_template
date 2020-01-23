@@ -1,5 +1,5 @@
 from src.core.models import db
-from src.itra.models import TaxTypes
+from src.ind_tax.models import TaxTypes
 ################################################################################
 class Code(db.Model):
     __tablename__ = 'codes'

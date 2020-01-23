@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy import desc
 from src.core.models import db
-from src.itra.models import FXRate
+from src.ind_tax.models import FXRate
 from src.wrappers import has_permission, exception_wrapper
 
 fx_rates = Blueprint('fx_rates', __name__)

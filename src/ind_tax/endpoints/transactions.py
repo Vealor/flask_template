@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.sql import func
 from src.core.models import db, Roles
 from src.errors import InputError, NotFoundError, UnauthorizedError
-from src.itra.models import Transaction
+from src.ind_tax.models import Transaction
 from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
