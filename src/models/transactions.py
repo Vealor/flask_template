@@ -188,7 +188,7 @@ class Transaction(db.Model):
 
     gst_hst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     gst_hst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
-    gst_hst_recoveries = db.Column(db.Float, nullable=True, default=0.0)
+    gst_hst_recoveries = db.Column(db.String, server_default="", nullable=True, default="")
     gst_hst_error_type = db.Column(db.Enum(ErrorTypes), server_default=None, nullable=True)
     gst_hst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
     gst_hst_coded_by_user = db.relationship('User', foreign_keys='Transaction.gst_hst_coded_by_id')  # FK
@@ -197,7 +197,7 @@ class Transaction(db.Model):
 
     qst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     qst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
-    qst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
+    qst_recoveries = db.Column(db.String, server_default="", nullable=True, default="")
     qst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     qst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
     qst_coded_by_user = db.relationship('User', foreign_keys='Transaction.qst_coded_by_id')  # FK
@@ -206,7 +206,7 @@ class Transaction(db.Model):
 
     pst_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     pst_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
-    pst_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
+    pst_recoveries = db.Column(db.String, server_default="", nullable=True, default="")
     pst_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     pst_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
     pst_coded_by_user = db.relationship('User', foreign_keys='Transaction.pst_coded_by_id')  # FK
@@ -215,7 +215,7 @@ class Transaction(db.Model):
 
     apo_notes_internal = db.Column(db.String(2048), server_default=None, nullable=True)
     apo_notes_external = db.Column(db.String(2048), server_default=None, nullable=True)
-    apo_recoveries = db.Column(db.Float, server_default=None, nullable=True, default=0.0)
+    apo_recoveries = db.Column(db.String, server_default="", nullable=True, default="")
     apo_error_type = db.Column(db.Enum(ErrorTypes), nullable=True)
     apo_coded_by_id = db.Column(db.Integer, server_default=None, nullable=True)  # FK
     apo_coded_by_user = db.relationship('User', foreign_keys='Transaction.apo_coded_by_id')  # FK
