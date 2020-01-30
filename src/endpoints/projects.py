@@ -26,6 +26,7 @@ def toggle_favourite(id):
 
     query = UserProject.query.filter_by(user_id=current_user.id)
     query = query.filter_by(project_id=id).first()
+    response['count'] = len(query.all())
     if not query:
         raise NotFoundError("This project can not be toggled as a favourite or does not exist.")
     query.is_favourite = not query.is_favourite
