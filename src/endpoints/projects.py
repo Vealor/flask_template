@@ -74,6 +74,14 @@ def get_projects(id):
 def get_predictive_calculations(id):
     # helper function to calculate recovery value and volume for step 1
     def calculate_tax(province, prediction_strength_lower=0, prediction_strength_upper=1):
+        jurisdiction_dict = {
+            'gst': ['ab', 'nt', 'yt', 'nu'],
+            'gst_pst': ['bc', 'sk','mb'],
+            'gst_qst': ['qc'],
+            'hst': ['nb', 'ns', 'on', 'nl', 'pe']
+        }
+        # TODO: only calculate for exceptions
+        #  if province in jurisdiction_dict['gst'] ]  or in jurisdiction_dict['gst_pst'] for provinces in jurisdictions 
         engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                                COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
@@ -83,9 +91,9 @@ def get_predictive_calculations(id):
                                 AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                                 """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
         ap_amt_sum, itc_claimed, tx_num = results[0], results[1], results[2]
-        if province == "ab" or province == "nt" or province == "yt" or province == "nu":
+        if province in jurisdiction_dict['gst']:
             total_value = (-1 * ap_amt_sum) * 5 / 105 - itc_claimed
-        elif province == "bc" or province == "sk" or province == "mb":
+        elif province in jurisdiction_dict['gst_pst']:
             gst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                             COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
                             COALESCE(COUNT(id), 0)
@@ -105,7 +113,7 @@ def get_predictive_calculations(id):
             zero_pst_amt_sum, zero_pst_tx_num = pst_results[0], pst_results[1]
             total_value = (-1 * ap_amt_sum + -1 * zero_pst_amt_sum) * 5 / 112 - itc_claimed + pst_sa_sum + (-1 * zero_pst_amt_sum * 7 / 112)
             tx_num = none_zero_tx_num + zero_pst_tx_num
-        elif province == "qc":
+        elif province in jurisdiction_dict['gst_qst']:
             qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0)
                             FROM transactions
                             WHERE project_id = {project_id}
@@ -115,23 +123,155 @@ def get_predictive_calculations(id):
             gst_value = (-1 * ap_amt_sum) * 5 / 114.975 - itc_claimed
             qst_value = (-1 * ap_amt_sum) * 9.975 / 114.975 - qst_claimed
             total_value = gst_value + qst_value
-        elif province == "nb" or province == "ns" or province == "on" or province == "pe" or province == "nl":
+        elif province  in jurisdiction_dict['hst']:
             total_value = (-1 * ap_amt_sum) * 13 / 113 - itc_claimed
         else:
             raise InputError("No matching jurisdiction rule found for:{ }".format(province))
         return total_value, tx_num
 
+    def  check_tax_scope(jurisdictions):
+        scopes_dict = {
+            'ab': 'gst',
+            'nt': 'gst',
+            'yt': 'gst',
+            'nu': 'gst',
+            'bc': 'gst_pst',
+            'sk': 'gst_pst',
+            'mb': 'gst_pst',
+            'qc': 'gst_qst',
+            'nb': 'hst',
+            'ns': 'hst',
+            'on': 'hst',
+            'nl': 'hst',
+            'pe': 'hst'
+        }
+        seen_jurisdiction = set()
+        for jurisdiction in jurisdictions:
+            seen_jurisdiction.add(scopes_dict[jurisdiction])
+        # pst but no qst
+        if ('gst' in seen_jurisdiction or 'hst' in seen_jurisdiction) and 'gst_pst' in seen_jurisdiction:
+            return 1 
+        # qst but no pst
+        elif ('gst' in seen_jurisdiction or 'hst' in seen_jurisdiction) and 'gst_qst' in seen_jurisdiction:
+            return 2
+        # qst and pst
+        elif ('gst' in seen_jurisdiction or 'hst' in seen_jurisdiction) and 'gst_qst' in seen_jurisdiction and 'gst_pst' in seen_jurisdiction:
+            return 3
+        else:
+            raise ValueError("Can not find matching tax scope based on jurisdictions provided")
+
+    # TODO: error handling
+    def calc_gst_hst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
+        temp_session = db.create_scoped_session()
+        query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                        COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
+                        COUNT(id)
+                        FROM transactions
+                        WHERE project_id = {project_id}
+                        AND query_reference_num IS NOT NULL
+                        AND cast(data ->> 'vend_num' as text) = '{vend_num}'
+                        AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                        """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        ap_amount, gst_hst_claimed, num_of_txn = query_result[0], query_result[1], query_result[2]
+        query_result = temp_session.execute("""SELECT COALESCE(AVG(CAST(data->>'eff_rate' AS FLOAT)), 0)
+                        FROM transactions
+                        WHERE project_id = {project_id}
+                        AND query_reference_num = {query_num}
+                        AND cast(data ->> 'vend_num' as text) = '{vend_num}';
+                        """.format(project_id=id, query_num=query_num, vend_num=vend_num)).first()
+        avg_eff_rate = query_result[0]
+        calc_result = (-1 * ap_amount) * avg_eff_rate - gst_hst_claimed
+        temp_session.close()
+        return calc_result, num_of_txn
+          
+    # TODO: error handling
+    def calc_qst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
+        temp_session = db.create_scoped_session()
+        query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                    COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0),
+                    COUNT(id)
+                    FROM transactions
+                    WHERE project_id = {project_id}
+                    AND query_reference_num = {query_num}
+                    AND cast(data ->> 'vend_num' as text) = '{vend_num}'
+                    AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                    """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        ap_amount, qst_claimed, num_of_txn = query_result[0], query_result[1], query_result[2]
+        calc_result = ( -1 * ap_amount) * (9.975 / 114.975) - qst_claimed
+        temp_session.close()
+        return calc_result, num_of_txn
+            
+    # TODO: error handling
+    def calc_pst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
+        temp_session = db.create_scoped_session()
+        query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
+                    COUNT(id)
+                    FROM transactions
+                    WHERE project_id = {project_id}
+                    AND query_reference_num = {query_num}
+                    AND cast(data ->> 'vend_num' as text) = '{vend_num}'
+                    AND CAST(data->>'pst_sa' AS FLOAT) = 0
+                    AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                    """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        ap_amount, pst_claimed, num_of_txn = query_result[0], query_result[1], query_result[2]
+        calc_result = ( -1 * ap_amount) * (7 / 112) 
+        query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
+                COUNT(id)
+                FROM transactions
+                WHERE project_id = {project_id}
+                AND query_reference_num = {query_num}
+                AND cast(data ->> 'vend_num' as text) = '{vend_num}'
+                AND CAST(data->>'pst_sa' AS FLOAT) > 0
+                AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
+                """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
+        pst_sa_sum, num_of_non_zero_pst_sa_txn = query_result[0], query_result[1]
+        calc_result += pst_sa_sum
+        num_of_txn += num_of_non_zero_pst_sa_txn
+        temp_session.close()
+        return calc_result, num_of_txn
+
+    def multiple_jurisdiction_calc(jurisdictions, vend_num, prediction_strength_lower, prediction_strength_upper):
+        tax_scope = check_tax_scope(jurisdictions)
+        total_value, total_volume = 0
+        # pst but no qst
+        if tax_scope == 1:
+            gst_hst_value, gst_hst_volume = calc_gst_hst_mat(vend_num,  prediction_strength_lower, prediction_strength_upper)
+            pst_value, pst_volume =  calc_pst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            total_value = gst_hst_value + pst_value
+            total_volume = gst_hst_volume + pst_volume
+        # qst but no pst
+        elif tax_scope == 2:
+            gst_hst_value, gst_hst_volume = calc_gst_hst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            qst_value, qst_volume =  calc_qst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            total_value = gst_hst_value + qst_value
+            total_volume = gst_hst_volume + qst_volume
+        # qst and pst
+        elif tax_scope == 3:
+            gst_hst_value, gst_hst_volume = calc_gst_hst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            pst_value, pst_volume =  calc_pst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            qst_value, qst_volume  =  calc_qst_mat(vend_num, prediction_strength_lower, prediction_strength_upper)
+            total_value = gst_hst_value + qst_value + pst_value
+            total_volume = gst_hst_volume + qst_volume + pst_volume
+        return total_value, total_volume
+
     response = {'status': 'ok', 'message': '', 'payload': []}
     query = Project.query.filter_by(id=id)
     if not query.first():
         raise NotFoundError('Project ID {} does not exist.'.format(id))
+    if 'vendor_num' not in args.keys():
+        raise InputError('Please specify a vendor_num as an argument for the query.')
+
     client_id = query.first().serialize['client_id']
-    jurisdiction = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
-    if len(jurisdiction) == 1:
-        province = jurisdiction[0]['code'].lower()
+    jurisdictions = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
+    if len(jurisdictions) == 1:
+        province = jurisdictions[0]['code'].lower()
         green_total_value, green_tx_num = calculate_tax(province, prediction_strength_lower=0.9)
         yellow_total_value, yellow_tx_num = calculate_tax(province, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
-
+    else:
+        provinces =[ jurisdiction['code'].lower() for jurisdiction in jurisdictions ]
+        green_total_value, green_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.9)
+        yellow_total_value, yellow_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
+   
     response['payload'] = {
         "green_value": green_total_value,
         "green_volume": green_tx_num,
