@@ -227,7 +227,7 @@ def check_password(id):
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user_password(id):
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
     # input validation
@@ -266,7 +266,7 @@ def update_user_password(id):
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def activate_user(id):
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -289,7 +289,7 @@ def activate_user(id):
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def deactivate_user(id):
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -312,7 +312,7 @@ def deactivate_user(id):
 @exception_wrapper()
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_user(id):
-    response = {'status': '', 'message': '', 'payload': []}
+    response = {'status': 'ok', 'message': '', 'payload': []}
 
     query = User.query.filter_by(id=id).first()
     if not query:
