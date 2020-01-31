@@ -59,10 +59,10 @@ class TestClientPost():
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         user_dict = {
-            'username': 'my_username',
+            'username': 'my_username_z',
             'password': '1@cceptablePassword',
-            'email': '123fakestreet@hotmail.com',
-            'initials': 'MR',
+            'email': '123zfakestreet@hotmail.com',
+            'initials': 'MRz',
             'first_name': "My",
             'last_name': "Realname",
             'role': "tax_practitioner"
@@ -86,10 +86,10 @@ class TestClientPost():
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         user_dict = {
-            'username': 'my_username',
+            'username': 'my_username_y',
             'password': '2short',
-            'email': '123fakestreet@hotmail.com',
-            'initials': 'MR',
+            'email': '123yfakestreet@hotmail.com',
+            'initials': 'MRy',
             'first_name': "My",
             'last_name': "Realname",
             'role': "tax_practitioner"
@@ -109,9 +109,9 @@ class TestClientPost():
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         user_dict = {
-            'username': 'my_username',
-            'password': '2short',
-            'email': '123fakestreet@hotmail.com',
+            'username': 'my_username_w',
+            'password': User.generate_hash('2short'),
+            'email': '123wfakestreet@hotmail.com',
             'initials': 'MR',
             'first_name': "My",
             'last_name': "Realname",
@@ -160,8 +160,6 @@ class TestClientPost():
         db.session.delete(User.find_by_id(new_user_id))
         db.session.commit()
 
-
-
 @pytest.mark.users
 class TestUserUpdate():
 
@@ -169,10 +167,10 @@ class TestUserUpdate():
 
         # Test set-up
         user_dict = {
-            'username': 'my_username',
-            'password': '1Other@cceptablePassword',
-            'email': '123fakestreet@hotmail.com',
-            'initials': 'MR',
+            'username': 'my_username_a',
+            'password': User.generate_hash('1Other@cceptablePassword'),
+            'email': '123afakestreet@hotmail.com',
+            'initials': 'MRa',
             'first_name': "My",
             'last_name': "Realname",
             'role': "tax_practitioner"
@@ -186,15 +184,15 @@ class TestUserUpdate():
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         user_dict2 = {
-            'username': 'my_username',
-            'password': '1Other@cceptablePassword',
+            'username': 'my_username_b',
+            'password': User.generate_hash('1Other@cceptablePassword'),
             'email': '321fakestreet@hotmail.com',
             'initials': 'MB',
             'first_name': "Myron",
             'last_name': "Bettername",
             'role': "tax_practitioner"
         }
-        response = put_req('/users/'+str(new_user_id), client, user_dict2, helper_token)
+        response = put_req('/users/' + str(new_user_id), client, user_dict2, helper_token)
         assert response.status_code == 201
         data = response.get_json()
         assert data['status'] == 'ok'
