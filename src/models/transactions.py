@@ -35,8 +35,6 @@ class Transaction(db.Model):
     is_paredowned = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     is_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
     recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
-    rbc_predicted = db.Column(db.Boolean, unique=False, default=False, server_default='f', nullable=False)
-    rbc_recovery_probability = db.Column(db.Float, server_default=None, nullable=True)
     image = db.Column(db.LargeBinary, server_default=None, nullable=True)
     data = db.Column(postgresql.JSON, nullable=False)
     {
@@ -246,8 +244,6 @@ class Transaction(db.Model):
             'is_predicted': self.is_predicted,
             'recovery_probability': self.recovery_probability,
             'has_recoverable': self.recovery_probability >= 0.5 if self.recovery_probability else None,
-            'rbc_predicted': self.rbc_predicted,
-            'rbc_recovery_probability': self.rbc_recovery_probability,
             # 'data': self.data if self.data else {},
             'project_id': self.project_id,
             'locked_user_id': self.locked_user_id,
