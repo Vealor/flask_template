@@ -5,7 +5,7 @@ from test._helpers import login, get_req, post_req, put_req, delete_req
 from test import api, client
 
 @pytest.mark.users
-class TestClientGet():
+class TestUserGet():
 
     def test_users_get_one(self, api, client):
 
@@ -49,7 +49,7 @@ class TestClientGet():
 
 
 @pytest.mark.users
-class TestClientPost():
+class TestUserPost():
 
     def test_users_create_new_success(self, api, client):
 
@@ -201,4 +201,46 @@ class TestUserUpdate():
 
         # Test cleanup
         db.session.delete(User.find_by_id(int(data['payload'][0]['id'])))
+        db.session.commit()
+
+    def test_users_passchange(self, api, client):
+
+        # Test set-up
+        user_dict = {
+            'username': 'user_passcheck',
+            'password': User.generate_hash('1OldPassword'),
+            'email': '123fake_users_passcheck@hotmail.com',
+            'initials': 'MRxxx',
+            'first_name': "My",
+            'last_name': "Realname",
+            'role': "tax_practitioner"
+        }
+        new_user = User(**user_dict)
+        db.session.add(new_user)
+        db.session.commit()
+        new_user_id = new_user.id
+
+        # Test body
+        helper_token = login(client, 'lh-admin', 'Kpmg1234%')
+
+        response = put_req('/users/' + str(new_user_id) + '/passchange/', client, {'password': '1OldPassword', 'newpassword': 'invalidnewpass'}, helper_token)
+        print(response.get_json()['message'])
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['status'] == 'Error 400'
+
+        response = put_req('/users/' + str(new_user_id) + '/passchange/', client, {'password': '1WrongOldPassword', 'newpassword': '1NewPassword'}, helper_token)
+        print(response.get_json()['message'])
+        assert response.status_code == 401
+        data = response.get_json()
+        assert data['status'] == 'Error 401'
+
+        response = put_req('/users/' + str(new_user_id) + '/passchange/', client, {'password': '1OldPassword', 'newpassword': '1NewPassword'}, helper_token)
+        print(response.get_json())
+        assert response.status_code == 201
+        data = response.get_json()
+        #assert data['status'] == 'ok'
+
+        # Test cleanup
+        db.session.delete(User.find_by_id(new_user_id))
         db.session.commit()
