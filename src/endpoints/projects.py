@@ -72,6 +72,8 @@ def get_projects(id):
 @exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_predictive_calculations(id):
+    print('Checkpoint 1.0')
+    args = request.args.to_dict()
     # helper function to calculate recovery value and volume for step 1
     def calculate_tax(province, prediction_strength_lower=0, prediction_strength_upper=1):
         jurisdiction_dict = {
@@ -81,7 +83,7 @@ def get_predictive_calculations(id):
             'hst': ['nb', 'ns', 'on', 'nl', 'pe']
         }
         # TODO: only calculate for exceptions
-        #  if province in jurisdiction_dict['gst'] ]  or in jurisdiction_dict['gst_pst'] for provinces in jurisdictions 
+        #  if province in jurisdiction_dict['gst'] ]  or in jurisdiction_dict['gst_pst'] for provinces in jurisdictions
         engine = create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('%', '%%'))
         results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
                                COALESCE(SUM(CAST(data->>'gst_hst' AS FLOAT)), 0),
@@ -150,7 +152,7 @@ def get_predictive_calculations(id):
             seen_jurisdiction.add(scopes_dict[jurisdiction])
         # pst but no qst
         if ('gst' in seen_jurisdiction or 'hst' in seen_jurisdiction) and 'gst_pst' in seen_jurisdiction:
-            return 1 
+            return 1
         # qst but no pst
         elif ('gst' in seen_jurisdiction or 'hst' in seen_jurisdiction) and 'gst_qst' in seen_jurisdiction:
             return 2
@@ -183,7 +185,7 @@ def get_predictive_calculations(id):
         calc_result = (-1 * ap_amount) * avg_eff_rate - gst_hst_claimed
         temp_session.close()
         return calc_result, num_of_txn
-          
+
     # TODO: error handling
     def calc_qst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
         temp_session = db.create_scoped_session()
@@ -200,7 +202,7 @@ def get_predictive_calculations(id):
         calc_result = ( -1 * ap_amount) * (9.975 / 114.975) - qst_claimed
         temp_session.close()
         return calc_result, num_of_txn
-            
+
     # TODO: error handling
     def calc_pst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
         temp_session = db.create_scoped_session()
@@ -214,7 +216,7 @@ def get_predictive_calculations(id):
                     AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                     """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
         ap_amount, pst_claimed, num_of_txn = query_result[0], query_result[1], query_result[2]
-        calc_result = ( -1 * ap_amount) * (7 / 112) 
+        calc_result = ( -1 * ap_amount) * (7 / 112)
         query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'pst_sa' AS FLOAT)), 0),
                 COUNT(id)
                 FROM transactions
@@ -253,30 +255,33 @@ def get_predictive_calculations(id):
             total_value = gst_hst_value + qst_value + pst_value
             total_volume = gst_hst_volume + qst_volume + pst_volume
         return total_value, total_volume
-
+    print('Checkpoint 2.0')
     response = {'status': 'ok', 'message': '', 'payload': []}
     query = Project.query.filter_by(id=id)
+    print(args.keys())
     if not query.first():
         raise NotFoundError('Project ID {} does not exist.'.format(id))
-    if 'vendor_num' not in args.keys():
-        raise InputError('Please specify a vendor_num as an argument for the query.')
-
+    if 'vend_num' not in args.keys():
+        raise InputError('Please specify a vend_num as an argument for the query.')
+    print('Checkpoint 3.0')
     client_id = query.first().serialize['client_id']
     jurisdictions = ClientEntity.query.filter_by(client_id=client_id).first().serialize["jurisdictions"]
     if len(jurisdictions) == 1:
         province = jurisdictions[0]['code'].lower()
-        green_total_value, green_tx_num = calculate_tax(province, prediction_strength_lower=0.9)
-        yellow_total_value, yellow_tx_num = calculate_tax(province, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
+        recoveries_total_value, recoveries_tx_num = calculate_tax(province, prediction_strength_lower=0.9)
+        uncategorized_total_value, uncategorized_tx_num = calculate_tax(province, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
+        print('Checkpoint 3.1')
     else:
         provinces =[ jurisdiction['code'].lower() for jurisdiction in jurisdictions ]
-        green_total_value, green_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.9)
-        yellow_total_value, yellow_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
-   
+        recoveries_total_value, recoveries_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.9)
+        uncategorized_total_value, uncategorized_tx_num = multiple_jurisdiction_calc(provinces, vendor_num, prediction_strength_lower=0.7, prediction_strength_upper=0.8999)
+        print('Checkpoint 3.2')
+    print('Checkpoint 4.0')
     response['payload'] = {
-        "green_value": green_total_value,
-        "green_volume": green_tx_num,
-        "yellow_value": yellow_total_value,
-        "yellow_volume": yellow_tx_num
+        "recoveries_value": recoveries_total_value,
+        "recoveries_volume": recoveries_tx_num,
+        "uncategorized_value": uncategorized_total_value,
+        "uncategorized_volume": uncategorized_tx_num
     }
     #  engine.execute("""select data ->> 'ap_amout' as float))
     #             from transactions as R
