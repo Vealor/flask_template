@@ -2,10 +2,10 @@
 Client Endpoints
 '''
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, Client, ClientEntity, ClientEntityJurisdiction, Jurisdiction, LineOfBusinessSectors
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 clients = Blueprint('clients', __name__)
@@ -14,7 +14,7 @@ clients = Blueprint('clients', __name__)
 @clients.route('/', defaults={'id': None}, methods=['GET'])
 @clients.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_clients(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -41,7 +41,7 @@ def get_clients(id):
 # POST NEW CLIENT
 @clients.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_client():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -108,6 +108,7 @@ def post_client():
     db.session.commit()
     response['message'] = 'Created client {}'.format(data['name'])
     response['payload'] = [Client.find_by_id(new_client.id).serialize]
+    create_log(current_user, 'create', 'User created new Client', 'Client ID & name: ' + str(new_client.id) + " " + str(data['name']))
 
     return jsonify(response), 201
 
@@ -115,7 +116,7 @@ def post_client():
 # UPDATE A CLIENT
 @clients.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_client(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -222,6 +223,7 @@ def update_client(id):
     db.session.commit()
     response['message'] = 'Updated client with id {}'.format(id)
     response['payload'] = [Client.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Client', 'Client ID & name: ' + str(id) + " " + str(data['name']))
 
     return jsonify(response), 200
 
@@ -229,7 +231,7 @@ def update_client(id):
 # DELETE A CLIENT
 @clients.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_client(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -248,5 +250,6 @@ def delete_client(id):
     db.session.commit()
     response['message'] = 'Deleted client id {}'.format(client['id'])
     response['payload'] = [client]
+    create_log(current_user, 'delete', 'User deleted Client', 'Client ID: ' + str(id))
 
     return jsonify(response), 200

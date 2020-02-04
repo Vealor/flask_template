@@ -17,7 +17,7 @@ from src.caps_gen.data_quality_check import map_regex, recursive_find, recursive
 from src.caps_gen.to_aps import j1, j2, j3, j4, j5, j6, j7, j8, tax_gl_extract, j9, j10, j11, j12, j13
 from src.caps_gen.to_caps import j101, j102, j103, j104, j105, j106
 from src.errors import NotFoundError, InputError
-from src.util import validate_request_data  # , create_log
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 caps_gen = Blueprint('caps_gen', __name__)
@@ -26,7 +26,7 @@ caps_gen = Blueprint('caps_gen', __name__)
 @caps_gen.route('/', defaults={'id': None}, methods=['GET'])
 @caps_gen.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_caps_gens(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -56,7 +56,7 @@ def get_caps_gens(id):
 # DELETE A CAPS GEN
 @caps_gen.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_caps_gens(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -69,7 +69,7 @@ def delete_caps_gens(id):
     caps_gen = query.serialize
     db.session.delete(query)
     db.session.commit()
-    # create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'delete', 'CapsGen with id {}'.format(id), '')
     response['message'] = 'Deleted caps_gen id {}.'.format(caps_gen['id'])
     response['payload'] = [caps_gen]
     return jsonify(response), 200
@@ -82,7 +82,7 @@ def delete_caps_gens(id):
 # creates project path in local file hierarchy for server
 @caps_gen.route('/project_path_creation', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def project_path_creation():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -94,7 +94,7 @@ def project_path_creation():
     validate_request_data(data, request_types)
     # TODO: If project path creation fails, we need to create rollback code.
     response = project_path_create(data, response)
-    # create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
+    create_log(current_user, 'create', 'Project path for CapsGen with project id {}'.format(data['project_id']), '')
     return jsonify(response), 200
 
 #===============================================================================
@@ -102,7 +102,7 @@ def project_path_creation():
 # unzips, creates CapsGen, creates DataMappings, builds master tables
 @caps_gen.route('/init', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission([])
 def init_caps_gen():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -510,7 +510,7 @@ def init_caps_gen():
         db.session.commit()
         raise Exception(e)
 
-    # create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
+    create_log(current_user, 'create', 'Init for CapsGen with project id {}'.format(data['project_id']), '')
 
     return jsonify(response), 200
 
@@ -519,7 +519,7 @@ def init_caps_gen():
 # get master table data from caps_gen tables
 @caps_gen.route('/<int:id>/master_table_headers', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_master_table_headers(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -565,7 +565,7 @@ def get_master_table_headers(id):
 # will not be written in.
 @caps_gen.route('/<int:id>/apply_mappings_build_gst_registration', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_mappings_build_gst_registration(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -620,7 +620,7 @@ def apply_mappings_build_gst_registration(id):
         db.session.add(gst_entry)
     db.session.commit()
 
-    # create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Applied Data Mappings and built GST Registration for CapsGen with id {}'.format(id), '')
     response['message'] = 'Successfully applied mappings and added vendors to GST Registration table.'
 
     return jsonify(response), 200
@@ -630,7 +630,7 @@ def apply_mappings_build_gst_registration(id):
 # Get table names for View Tables Page
 @caps_gen.route('/<int:id>/get_tables', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_tables(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -649,7 +649,7 @@ def get_tables(id):
 # View Tables Page
 @caps_gen.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_tables(id, table):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -680,7 +680,7 @@ def view_tables(id, table):
 # dictionary)
 @caps_gen.route('/<int:id>/data_quality_check', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_quality_check(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -995,7 +995,7 @@ def data_quality_check(id):
     #         data_dictionary_results[table][column] = {
     #             'completeness': completeness_check(query)}
 
-    # create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Ran Data Quality Check for CapsGen with id {}'.format(id), '')
     response['payload'] = final_result
     return jsonify(response), 200
 
@@ -1004,7 +1004,7 @@ def data_quality_check(id):
 # j1 to j10 joins to create APS j1_j10
 @caps_gen.route('/<int:id>/data_to_aps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def data_to_aps(id):
     response = {'status': 'ok', 'message': {}, 'payload': {}}
@@ -1034,7 +1034,7 @@ def data_to_aps(id):
     execute(j13(id))
     print('all joins executed')
 
-    # create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Ran Data To Aps for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -1042,7 +1042,7 @@ def data_to_aps(id):
 # View APS Page
 @caps_gen.route('/<int:id>/view_aps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_aps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1071,7 +1071,7 @@ def view_aps(id):
 # net to 0. This is referring to GL netting to 0. Ask Andy for more details.
 @caps_gen.route('/<int:id>/aps_quality_check', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_quality_check(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1084,7 +1084,7 @@ def aps_quality_check(id):
     # TODO: APS QUALITY CHECK AND GL NET CHECK
     query_glnetcheck = SapGLNetCheck.query.filter_by(caps_gen_id=id)
     response['payload'] = [i.serialize for i in query_glnetcheck.all()]
-    # create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Ran APS Quality Check for CapsGen with id {}'.format(id), '')
 
     return jsonify(response), 200
 
@@ -1093,7 +1093,7 @@ def aps_quality_check(id):
 # see feature branch 72-aps_to_caps for more info
 @caps_gen.route('/<int:id>/aps_to_caps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def aps_to_caps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1170,14 +1170,14 @@ def aps_to_caps(id):
     # execute(j64())
     # execute(j65())
 
-    # create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'modify', 'Ran APS to Caps for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200
 
 #===============================================================================
 # View CAPS Page
 @caps_gen.route('/<int:id>/view_caps', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def view_caps(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1206,7 +1206,7 @@ def view_caps(id):
 
 @caps_gen.route('/<int:id>/caps_to_transactions', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def caps_to_transactions(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -1230,5 +1230,5 @@ def caps_to_transactions(id):
     caps_gen.first().is_completed = True
     db.session.commit()
 
-    # create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
+    create_log(current_user, 'create', 'Built transactions for CapsGen with id {}'.format(id), '')
     return jsonify(response), 200

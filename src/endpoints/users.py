@@ -3,12 +3,12 @@ User Endpoints
 '''
 import re
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from psycopg2.errors import NotNullViolation
 from sqlalchemy.exc import IntegrityError
 from src.errors import DataConflictError, InputError, NotFoundError, UnauthorizedError
 from src.models import db, Roles, User
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 users = Blueprint('users', __name__)
@@ -17,7 +17,7 @@ users = Blueprint('users', __name__)
 @users.route('/', defaults={'id': None}, methods=['GET'])
 @users.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_users(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -44,7 +44,7 @@ def get_users(id):
 # POST NEW USER
 @users.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_user():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -126,6 +126,7 @@ def create_user():
     db.session.commit()
     response['message'] = 'Created user {}'.format(data['username'])
     response['payload'] = [User.find_by_id(new_user.id).serialize]
+    create_log(current_user, 'modify', 'User created a new User', 'New Username: ' + str(data['username']))
 
     return jsonify(response), 201
 
@@ -133,7 +134,7 @@ def create_user():
 # UPDATE A USER information
 @users.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -194,6 +195,7 @@ def update_user(id):
     db.session.commit()
     response['message'] = 'Updated user with id {}'.format(id)
     response['payload'] = [User.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated a User', 'Updated Username: ' + str(data['username']))
 
     return jsonify(response), 201
 
@@ -201,7 +203,7 @@ def update_user(id):
 # Check A USER password
 @users.route('/<int:id>/passcheck', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def check_password(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
@@ -224,7 +226,7 @@ def check_password(id):
 # UPDATE A USER password
 @users.route('/<int:id>/passchange', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_user_password(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -256,6 +258,7 @@ def update_user_password(id):
 
     db.session.commit()
     response['message'] = 'Password changed'
+    create_log(current_user, 'modify', 'User changed password for User', 'ID: ' + str(id))
 
     return jsonify(response), 201
 
@@ -263,7 +266,7 @@ def update_user_password(id):
 # ACTIVATE A USER
 @users.route('/<int:id>/activate', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def activate_user(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -279,6 +282,7 @@ def activate_user(id):
         query.is_active = True
         db.session.commit()
     response['payload'] = [query.serialize]
+    create_log(current_user, 'modify', 'User activated a User', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -286,10 +290,13 @@ def activate_user(id):
 # DEACTIVATE A USER
 @users.route('/<int:id>/deactivate', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def deactivate_user(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
+
+    if id == current_user.id:
+        raise DataConflictError('You can not deactivate yourself.')
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -302,6 +309,7 @@ def deactivate_user(id):
         query.is_active = False
         db.session.commit()
     response['payload'] = [query.serialize]
+    create_log(current_user, 'modify', 'User deactivated a User', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -309,10 +317,13 @@ def deactivate_user(id):
 # DELETE A USER
 @users.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_user(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
+
+    if id == current_user.id:
+        raise DataConflictError('You can not delete yourself.')
 
     query = User.query.filter_by(id=id).first()
     if not query:
@@ -327,5 +338,6 @@ def delete_user(id):
 
     response['message'] = 'Deleted user id {}'.format(id)
     response['payload'] = [user]
+    create_log(current_user, 'modify', 'User deleted a User', 'Username: ' + str(user['username']))
 
     return jsonify(response), 200

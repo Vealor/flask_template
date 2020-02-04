@@ -12,7 +12,7 @@ error_categories = Blueprint('error_categories', __name__)
 # GET ALL Error Categories
 @error_categories.route('/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_error_categories():
     response = {'status': 'ok', 'message': '', 'payload': []}

@@ -3,11 +3,11 @@ Paredown Endpoints
 '''
 import sqlalchemy
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.dialects import postgresql
 from src.errors import InputError, NotFoundError
 from src.models import db, Code, LineOfBusinessSectors, ParedownRule, ParedownRuleCondition, Roles, User
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 paredown_rules = Blueprint('paredown_rules', __name__)
@@ -16,7 +16,7 @@ paredown_rules = Blueprint('paredown_rules', __name__)
 @paredown_rules.route('/', defaults={'id': None}, methods=['GET'])
 @paredown_rules.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_paredown_rules(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -42,7 +42,7 @@ def get_paredown_rules(id):
 # Create Paredown rules
 @paredown_rules.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def create_paredown_rule():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -117,6 +117,7 @@ def create_paredown_rule():
     db.session.commit()
     response['message'] = 'Created Paredown Rule ID with {}.'.format(new_paredown_rule.id)
     response['payload'] = [ParedownRule.find_by_id(new_paredown_rule.id).serialize]
+    create_log(current_user, 'create', 'User created a paredown rule', 'ID: ' + str(new_paredown_rule.id))
 
     return jsonify(response), 201
 
@@ -124,7 +125,7 @@ def create_paredown_rule():
 # Update a Paredown rule
 @paredown_rules.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_paredown_rule(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -218,7 +219,7 @@ def update_paredown_rule(id):
 # DELETE A PAREDOWN RULE
 @paredown_rules.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_paredown_rule(id):
     response = {'status': 'ok', 'message': '', 'payload': []}

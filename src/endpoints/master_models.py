@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, Activity, MasterModel, MasterModelPerformance, Transaction
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import get_date_obj_from_str, validate_request_data, send_mail
+from src.util import get_date_obj_from_str, validate_request_data, send_mail, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 master_models = Blueprint('master_models', __name__)
@@ -17,7 +17,7 @@ master_models = Blueprint('master_models', __name__)
 @master_models.route('/', defaults={'id': None}, methods=['GET'])
 @master_models.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_master_models(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -44,7 +44,7 @@ def get_master_models(id):
 # Check if master models has a model in pending status
 @master_models.route('/has_pending/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def has_pending():
     response = {'status': 'ok', 'message': '', 'payload': []}
     response['payload'] = {'is_pending': (MasterModel.find_pending() is not None)}
@@ -55,7 +55,7 @@ def has_pending():
 # Check if master models has a model in pending status
 @master_models.route('/is_training/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def is_training():
     response = {'status': 'ok', 'message': '', 'payload': []}
     response['payload'] = {'is_training': (MasterModel.find_training() is not None)}
@@ -65,7 +65,7 @@ def is_training():
 # Train a new master model.
 @master_models.route('/train/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def do_train():
     response = {'status': 'ok', 'message': '', 'payload': {}}
@@ -215,6 +215,7 @@ def do_train():
     </ul>
     """.format(MasterModel.find_by_id(model_id).serialize['name'])
     send_mail(current_user.email, subj, content)
+    create_log(current_user, 'create', 'User trained a new Master Model', '')
 
     return jsonify(response), 201
 
@@ -222,7 +223,7 @@ def do_train():
 # Validate the active master model.
 @master_models.route('/validate/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def do_validate():
     response = {'status': 'ok', 'message': '', 'payload': {}}
@@ -230,7 +231,7 @@ def do_validate():
 
     active_model = MasterModel.find_active()
     if not active_model:
-        raise ValueError('No master model has been trained or is active.')
+        raise NotFoundError('No master model has been trained or is active.')
 
     request_types = {
         'test_data_start_date': ['str'],
@@ -242,9 +243,9 @@ def do_validate():
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Cannot validate model on data it was trained on.')
+        raise InputError('Cannot validate model on data it was trained on.')
 
     lh_model_old = mm.MasterPredictionModel(active_model.pickle)
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -252,7 +253,7 @@ def do_validate():
     # Pull the transaction data into a dataframe
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start, test_end)).filter(Transaction.approved_user_id is not None)
     if test_transactions.count() == 0:
-        raise ValueError('No transactions to validate in given date range.')
+        raise InputError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
     data_valid = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
 
@@ -272,6 +273,7 @@ def do_validate():
     response['message'] = 'Model validation complete.'
     response['payload']['model_id'] = active_model.id
     response['payload']['performance_metrics'] = performance_metrics_old
+    create_log(current_user, 'create', 'User performed validation on the current active Master Model', '')
 
     return jsonify(response), 201
 
@@ -279,7 +281,7 @@ def do_validate():
 # Compare active and pending models
 @master_models.route('/compare/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def compare_active_and_pending():
     response = {'status': 'ok', 'message': '', 'payload': {}}
@@ -301,19 +303,20 @@ def compare_active_and_pending():
 
 #===============================================================================
 # Update the active master model
-@master_models.route('/<int:model_id>/set_active', methods=['PUT'])
+@master_models.route('/<int:id>/set_active', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
-def set_active_model(model_id):
+def set_active_model(id):
     response = {'status': 'ok', 'message': '', 'payload': {}}
 
-    pending_model = MasterModel.find_by_id(model_id)
+    pending_model = MasterModel.find_by_id(id)
     if not pending_model:
-        raise ValueError('There is no pending model to set as active.')
-    MasterModel.set_active(model_id)
+        raise NotFoundError('There is no pending model to set as active.')
+    MasterModel.set_active(id)
     db.session.commit()
-    response['message'] = 'Active Master model set to model {}'.format(model_id)
+    response['message'] = 'Active Master model set to model {}'.format(id)
+    create_log(current_user, 'modify', 'User set Master Model to active.', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -321,7 +324,7 @@ def set_active_model(model_id):
 # Delete a master model
 @master_models.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_master_model(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -338,5 +341,6 @@ def delete_master_model(id):
 
     response['message'] = 'Deleted Master model ID {}'.format(model['id'])
     response['payload'] = [model]
+    create_log(current_user, 'delete', 'User deleted a Master Model', 'ID: ' + str(id))
 
     return jsonify(response), 200

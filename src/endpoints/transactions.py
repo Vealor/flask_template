@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy.sql import func
 from src.errors import InputError, NotFoundError, UnauthorizedError
 from src.models import db, Transaction, Roles
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 transactions = Blueprint('transactions', __name__)
@@ -15,7 +15,7 @@ transactions = Blueprint('transactions', __name__)
 @transactions.route('/', defaults={'id': None}, methods=['GET'])
 @transactions.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_transactions(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -57,7 +57,7 @@ def get_transactions(id):
 # Check if transaction locked
 @transactions.route('/<int:id>/is_locked', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def check_transaction_lock(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -75,7 +75,7 @@ def check_transaction_lock(id):
 # Lock Transaction
 @transactions.route('/<int:id>/lock', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def lock_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -104,7 +104,7 @@ def lock_transaction(id):
 # Unlock Transaction
 @transactions.route('/<int:id>/unlock', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def unlock_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -132,7 +132,7 @@ def unlock_transaction(id):
 # Approve Transaction
 @transactions.route('/<int:id>/approve', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def approve_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -170,6 +170,7 @@ def approve_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User approved Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -177,7 +178,7 @@ def approve_transaction(id):
 # BATCH Approve Transaction
 @transactions.route('/batch/approve', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def batch_approve_transaction():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -217,6 +218,7 @@ def batch_approve_transaction():
 
     db.session.commit()
     response['payload'] = []
+    create_log(current_user, 'modify', 'User approved batch of Transactions', '')
 
     return jsonify(response), 200
 
@@ -224,7 +226,7 @@ def batch_approve_transaction():
 # UnApprove Transaction
 @transactions.route('/<int:id>/unapprove', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def unapprove_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -248,6 +250,7 @@ def unapprove_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User unapproved Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -255,7 +258,7 @@ def unapprove_transaction(id):
 # BATCH UnApprove Transaction
 @transactions.route('/batch/unapprove', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def batch_unapprove_transaction():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -281,6 +284,7 @@ def batch_unapprove_transaction():
 
     db.session.commit()
     response['payload'] = []
+    create_log(current_user, 'modify', 'User unapproved batch of Transactions', '')
 
     return jsonify(response), 200
 
@@ -288,7 +292,7 @@ def batch_unapprove_transaction():
 # UPDATE A TRANSACTION information
 @transactions.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master'])
 def update_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -302,28 +306,28 @@ def update_transaction(id):
         'gst_hst_codes': ['list', 'NoneType'],
         'gst_hst_notes_internal': ['str', 'NoneType'],
         'gst_hst_notes_external': ['str', 'NoneType'],
-        'gst_hst_recoveries': ['float', 'int', 'NoneType'],
+        'gst_hst_recoveries': ['str', 'NoneType'],
         'gst_hst_error_type': ['str', 'NoneType'],
         'gst_hst_signed_off_by_id': ['int', 'NoneType'],
 
         'qst_codes': ['list', 'NoneType'],
         'qst_notes_internal': ['str', 'NoneType'],
         'qst_notes_external': ['str', 'NoneType'],
-        'qst_recoveries': ['float', 'int', 'NoneType'],
+        'qst_recoveries': ['str', 'NoneType'],
         'qst_error_type': ['str', 'NoneType'],
         'qst_signed_off_by_id': ['int', 'NoneType'],
 
         'pst_codes': ['list', 'NoneType'],
         'pst_notes_internal': ['str', 'NoneType'],
         'pst_notes_external': ['str', 'NoneType'],
-        'pst_recoveries': ['float', 'int', 'NoneType'],
+        'pst_recoveries': ['str', 'NoneType'],
         'pst_error_type': ['str', 'NoneType'],
         'pst_signed_off_by_id': ['int', 'NoneType'],
 
         'apo_codes': ['list', 'NoneType'],
         'apo_notes_internal': ['str', 'NoneType'],
         'apo_notes_external': ['str', 'NoneType'],
-        'apo_recoveries': ['float', 'int', 'NoneType'],
+        'apo_recoveries': ['str', 'NoneType'],
         'apo_error_type': ['str', 'NoneType'],
         'apo_signed_off_by_id': ['int', 'NoneType']
     }
@@ -429,6 +433,7 @@ def update_transaction(id):
 
     db.session.commit()
     response['payload'] = [Transaction.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Transaction', 'ID: ' + str(id))
 
     return jsonify(response), 200
 

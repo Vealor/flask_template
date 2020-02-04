@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required, current_user
 from src.errors import InputError, NotFoundError
 from src.models import db, Activity, Client, ClientModel, ClientModelPerformance, Project, Transaction
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import get_date_obj_from_str, validate_request_data, send_mail
+from src.util import get_date_obj_from_str, validate_request_data, send_mail, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 client_models = Blueprint('client_models', __name__)
@@ -17,7 +17,7 @@ client_models = Blueprint('client_models', __name__)
 @client_models.route('/', defaults={'id': None}, methods=['GET'])
 @client_models.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_client_models(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -36,9 +36,9 @@ def get_client_models(id):
 
 #===============================================================================
 # Check if a pending model exists
-@client_models.route('/has_pending/', methods=['GET'])
+@client_models.route('/has_pending', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def has_pending():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
@@ -51,9 +51,9 @@ def has_pending():
 
 #===============================================================================
 # Check if a model is being trained for the client
-@client_models.route('/is_training/', methods=['GET'])
+@client_models.route('/is_training', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def is_training():
     response = {'status': 'ok', 'message': '', 'payload': []}
     args = request.args.to_dict()
@@ -67,9 +67,9 @@ def is_training():
 
 #===============================================================================
 # Train a new client model.
-@client_models.route('/train/', methods=['POST'])
+@client_models.route('/train', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def do_train():
     response = {'status': 'ok', 'message': '', 'payload': {}}
@@ -227,14 +227,15 @@ def do_train():
     </ul>
     """.format(ClientModel.find_by_id(model_id).serialize['name'])
     send_mail(current_user.email, subj, content)
+    create_log(current_user, 'create', 'User trained new Client Model for Client', 'Client ID: ' + str(data['client_id']))
 
     return jsonify(response), 201
 
 #===============================================================================
 # Validate the active client model based on input ID.
-@client_models.route('/validate/', methods=['POST'])
+@client_models.route('/validate', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def do_validate():
     response = {'status': 'ok', 'message': '', 'payload': {}}
     data = request.get_json()
@@ -248,16 +249,16 @@ def do_validate():
 
     active_model = ClientModel.find_active_for_client(data['client_id'])
     if not active_model:
-        raise ValueError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
+        raise NotFoundError('No client model has been trained or is active for Client ID {}'.format(data['client_id']))
 
     train_start = active_model.train_data_start.date()
     train_end = active_model.train_data_end.date()
     test_start = get_date_obj_from_str(data['test_data_start_date'])
     test_end = get_date_obj_from_str(data['test_data_end_date'])
     if test_start >= test_end:
-        raise ValueError('Invalid Test Data date range.')
+        raise InputError('Invalid Test Data date range.')
     if not (train_end < test_start or test_end < train_start):
-        raise ValueError('Cannot validate model on data it was trained on.')
+        raise InputError('Cannot validate model on data it was trained on.')
 
     lh_model_old = cm.ClientPredictionModel(active_model.pickle)
     predictors, target = active_model.hyper_p['predictors'], active_model.hyper_p['target']
@@ -265,7 +266,7 @@ def do_validate():
     # Pull the transaction data into a dataframe
     test_transactions = Transaction.query.filter(Transaction.modified.between(test_start, test_end)).filter(Transaction.approved_user_id is not None)
     if test_transactions.count() == 0:
-        raise ValueError('No transactions to validate in given date range.')
+        raise InputError('No transactions to validate in given date range.')
     data_valid = transactions_to_dataframe(test_transactions)
     data_valid = preprocess_data(data_valid, preprocess_for='validation', predictors=predictors)
 
@@ -285,15 +286,16 @@ def do_validate():
     response['message'] = 'Model validation complete.'
     response['payload']['model_id'] = active_model.id
     response['payload']['performance_metrics'] = performance_metrics_old
+    create_log(current_user, 'modify', 'User vaidated Client Model for Client', 'Client ID: ' + str(data['client_id']))
 
     return jsonify(response), 201
 
 
 #===============================================================================
 # Compare active and pending models
-@client_models.route('/compare/', methods=['GET'])
+@client_models.route('/compare', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 def compare_active_and_pending():
     response = {'status': 'ok', 'message': '', 'payload': {}}
     args = request.args.to_dict()
@@ -321,20 +323,21 @@ def compare_active_and_pending():
 
 #===============================================================================
 # Update the active model for a client
-@client_models.route('/<int:model_id>/set_active', methods=['PUT'])
+@client_models.route('/<int:id>/set_active', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
-def set_active_model(model_id):
+@exception_wrapper
+def set_active_model(id):
     response = {'status': 'ok', 'message': '', 'payload': {}}
-    pending_model = ClientModel.find_by_id(model_id)
+    pending_model = ClientModel.find_by_id(id)
     client_id = pending_model.client_id
     if not Client.find_by_id(client_id):
         raise NotFoundError("Client ID {} does not exist.".format(client_id))
     if not pending_model:
-        raise ValueError('There is no pending model to compare to the active model.')
-    ClientModel.set_active_for_client(model_id, client_id)
+        raise NotFoundError('There is no pending model to compare to the active model.')
+    ClientModel.set_active_for_client(id, client_id)
     db.session.commit()
-    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, model_id)
+    response['message'] = 'Active model for Client ID {} set to model {}'.format(client_id, id)
+    create_log(current_user, 'modify', 'User set Client Model to active', 'ID: ' + str(id))
     return jsonify(response), 200
 
 
@@ -342,7 +345,7 @@ def set_active_model(model_id):
 # Delete a client model
 @client_models.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_client_model(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -353,11 +356,11 @@ def delete_client_model(id):
     if query.status == Activity.active:
         raise InputError('Client model ID {} is currently active. Cannot delete.'.format(id))
 
-    model = query.serialize
     db.session.delete(query)
     db.session.commit()
 
-    response['message'] = 'Deleted Client model ID {}'.format(model['id'])
-    response['payload'] = [model]
+    response['message'] = 'Deleted Client model ID {}'.format(id)
+    response['payload'] = [query.serialize]
+    create_log(current_user, 'delete', 'User deleted Client Model', 'ID: ' + str(id))
 
     return jsonify(response), 200

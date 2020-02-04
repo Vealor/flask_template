@@ -16,6 +16,7 @@ class TestFXRatesGet():
         assert len(data['payload']) > 0
 
     def test_get_update_success(self, api, client):
+        # fix this
         token = login(client, 'lh-admin', 'Kpmg1234%')
         rate = FXRate.query.order_by(FXRate.id.desc()).first()
         db.session.delete(rate)

@@ -13,7 +13,7 @@ client_tax_gl_extract = Blueprint('client_tax_gl_extract', __name__)
 # Get Client_tax_gl_extract information for project
 @client_tax_gl_extract.route('/', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_client_tax_gl_extract():
     response = {'status': 'ok', 'message': '', 'payload': []}

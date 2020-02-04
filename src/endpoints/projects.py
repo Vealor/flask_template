@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from src.errors import InputError, NotFoundError
 from src.models import db, Client, ClientEntity, ClientModel, DataParam, MasterModel, Operator, ParedownRule, Project, Transaction, User, UserProject
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
-from src.util import validate_request_data
+from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
 
 projects = Blueprint('projects', __name__)
@@ -19,7 +19,7 @@ projects = Blueprint('projects', __name__)
 # Toggle Favourite for User
 @projects.route('/<int:id>/toggle_favourite', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def toggle_favourite(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -38,7 +38,7 @@ def toggle_favourite(id):
 @projects.route('/', defaults={'id': None}, methods=['GET'])
 @projects.route('/<int:id>', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_projects(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -69,7 +69,7 @@ def get_projects(id):
 # GET ALL Predictive Calculations
 @projects.route('/<int:id>/predictive_calculations', methods=['GET'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def get_predictive_calculations(id):
     # helper function to calculate recovery value and volume for step 1
@@ -118,7 +118,7 @@ def get_predictive_calculations(id):
         elif province == "nb" or province == "ns" or province == "on" or province == "pe" or province == "nl":
             total_value = (-1 * ap_amt_sum) * 13 / 113 - itc_claimed
         else:
-            raise ValueError("No matching jurisdiction rule found for:{ }".format(province))
+            raise InputError("No matching jurisdiction rule found for:{ }".format(province))
         return total_value, tx_num
 
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -196,7 +196,7 @@ def get_predictive_calculations(id):
 # POST NEW PROJECT
 @projects.route('/', methods=['POST'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def post_project():
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -340,6 +340,7 @@ def post_project():
     db.session.commit()
     response['message'] = 'Created project {}'.format(data['name'])
     response['payload'] = [Project.find_by_id(new_project.id).serialize]
+    create_log(current_user, 'create', 'User created Project', 'Name: ' + str(data['name']))
 
     return jsonify(response), 201
 
@@ -347,7 +348,7 @@ def post_project():
 # APPLY PAREDOWN RULES TO A PROJECT (NOTE: INCOMPLETE; REQUIRES TRANS. DATA)
 @projects.route('/<int:id>/apply_paredown/', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_paredown_rules(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -457,6 +458,7 @@ def apply_paredown_rules(id):
 
     response['message'] = 'Applied paredown for Transactions in Project with id {}'.format(id)
     response['payload'] = []
+    create_log(current_user, 'modify', 'User pared down Project', 'ID: ' + str(id))
 
     return jsonify(response), 200
 
@@ -464,7 +466,7 @@ def apply_paredown_rules(id):
 # APPLY PREDICTION MODEL TO A PROJECT
 @projects.route('/<int:id>/apply_prediction/', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 #@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def apply_prediction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -481,21 +483,21 @@ def apply_prediction(id):
         raise NotFoundError('Project with ID {} does not exist.'.format(id))
     project_transactions = Transaction.query.filter_by(project_id = id).filter(Transaction.approved_user_id is None)
     if project_transactions.count() == 0:
-        raise ValueError('Project has no transactions to predict.')
+        raise NotFoundError('Project has no transactions to predict.')
 
     print("Create model.")
     # Get the appropriate active model, create the model object and alter transcation flags
     if data['use_client_model']:
         active_model = ClientModel.find_active_for_client(project.client_id)
         if not active_model:
-            raise ValueError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
+            raise NotFoundError('No client model has been trained or is active for client ID {}.'.format(project.client_id))
         lh_model = cm.ClientPredictionModel(active_model.pickle)
         project_transactions.update({Transaction.master_model_id: None})
         project_transactions.update({Transaction.client_model_id: active_model.id})
     else:
         active_model = MasterModel.find_active()
         if not active_model:
-            raise ValueError('No master model has been trained or is active.')
+            raise NotFoundError('No master model has been trained or is active.')
         lh_model = mm.MasterPredictionModel(active_model.pickle)
         project_transactions.update({Transaction.client_model_id: None})
         project_transactions.update({Transaction.master_model_id: active_model.id})
@@ -519,13 +521,15 @@ def apply_prediction(id):
 
     db.session.commit()
     response['message'] = 'Prediction successful. Transactions have been marked.'
+    create_log(current_user, 'modify', 'User applied prediction to Project', 'ID: ' + str(id))
+
     return jsonify(response), 201
 
 #===============================================================================
 # UPDATE A PROJECT
 @projects.route('/<int:id>', methods=['PUT'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def update_project(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -664,6 +668,7 @@ def update_project(id):
     db.session.commit()
     response['message'] = 'Updated project with id {}'.format(id)
     response['payload'] = [Project.find_by_id(id).serialize]
+    create_log(current_user, 'modify', 'User updated Project', 'ID: ' + str(id))
 
     return jsonify(response)
 
@@ -671,7 +676,7 @@ def update_project(id):
 # DELETE A PROJECT
 @projects.route('/<int:id>', methods=['DELETE'])
 @jwt_required
-@exception_wrapper()
+@exception_wrapper
 @has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
 def delete_project(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
@@ -686,5 +691,6 @@ def delete_project(id):
     db.session.commit()
     response['message'] = 'Deleted project id {}'.format(deletedproject['id'])
     response['payload'] = [deletedproject]
+    create_log(current_user, 'delete', 'User deleted Project', 'ID: ' + str(id))
 
     return jsonify(response)
