@@ -1,6 +1,6 @@
 import pytest
 from src import db
-from src.models import Client, Project
+from src.models import Client, Project, ClientEntity
 from test._helpers import login, get_req, post_req, put_req, delete_req
 from test import api, client
 
@@ -244,11 +244,15 @@ class TestClientUpdate():
         db.session.commit()
         new_client_id = Client.query.filter_by(name = "Client Two").first().id
 
+        new_client_entity = ClientEntity(client_id = new_client_id, company_code = 'XKCD', lob_sector = 'business_services_business_services')
+        db.session.add(new_client_entity)
+        db.session.commit()
+
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
         response = put_req('/clients/' + str(new_client_id), client, {
             'name': "Updated Client Two",
-            'client_entities': [{'company_code': 'CODE', 'lob_sector': 'business_services_business_services', 'jurisdictions': ['ab']}]
+            'client_entities': [{'company_code': 'CODE', 'lob_sector': 'consumer_retail_consumer_goods', 'jurisdictions': ['ab']}]
         }, helper_token)
 
         assert response.status_code == 200
@@ -433,8 +437,10 @@ class TestClientDelete():
         assert data['status'] == 'Error 400'
         assert len(data['payload']) == 0
 
+        # Test cleanup
         db.session.delete(new_project)
         db.session.delete(new_client)
+        db.session.commit()
 
     def test_client_delete_fail_client_dne(self, api, client):
 
