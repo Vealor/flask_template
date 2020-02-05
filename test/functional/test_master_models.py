@@ -25,7 +25,6 @@ class TestMasterModelsGet():
         db.session.add(mm2)
         db.session.commit()
         mm1_id = mm1.id
-        mm2_id = mm2.id
 
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
@@ -55,8 +54,6 @@ class TestMasterModelsGet():
         db.session.add(mm1)
         db.session.add(mm2)
         db.session.commit()
-        mm1_id = mm1.id
-        mm2_id = mm2.id
 
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
@@ -93,13 +90,12 @@ class TestMasterModelsGet():
         assert response.status_code == 200
         data = response.get_json()
         assert data['status'] == 'ok'
-        assert data['payload']['is_training'] == True
+        assert data['payload']['is_training'] is True
 
         # Test clean-up
         db.session.delete(mm1)
         db.session.commit()
         assert MasterModel.query.count() == 0
-
 
     def test_master_model_get_status_pending(self, api, client):
 
