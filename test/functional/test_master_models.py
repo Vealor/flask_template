@@ -148,7 +148,7 @@ class TestMasterModelsGet():
 
         # Test body
         helper_token = login(client, 'lh-admin', 'Kpmg1234%')
-        response = put_req('/master_models/' + str(mm1_id) + '/set_active/', client, helper_token)
+        response = put_req('/master_models/' + str(mm1_id) + '/set_active/', client, {}, helper_token)
         print(response.get_json())
         assert response.status_code == 400
         data = response.get_json()
@@ -158,7 +158,7 @@ class TestMasterModelsGet():
         db.session.add(mm1)
         db.session.commit()
 
-        response2 = put_req('/master_models/' + str(mm1_id) + '/set_active/', client, helper_token)
+        response2 = put_req('/master_models/' + str(mm1_id) + '/set_active/', client, {}, helper_token)
         assert response2.status_code == 200
         data = response2.get_json()
         assert data['status'] == 'ok'
