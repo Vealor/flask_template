@@ -298,9 +298,6 @@ def update_transaction(id):
     response = {'status': 'ok', 'message': '', 'payload': []}
     data = request.get_json()
 
-    from src.errors import UnprocessableEntityError
-    raise UnprocessableEntityError('potato')
-
     # TODO: make sure user has access to the project
     request_types = {
         'gst_hst_codes': ['list', 'NoneType'],
