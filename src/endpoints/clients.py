@@ -28,6 +28,7 @@ def get_clients(id):
             raise NotFoundError('ID {} does not exist.'.format(id))
     # Set ORDER
     query = query.order_by('name')
+    response['count'] = len(query.all())
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET

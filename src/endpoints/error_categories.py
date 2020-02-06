@@ -21,6 +21,7 @@ def get_error_categories():
     query = ErrorCategory.query
     # Set ORDER
     query = query.order_by(desc('id'))
+    response['count'] = len(query.all())
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
     # Set OFFSET

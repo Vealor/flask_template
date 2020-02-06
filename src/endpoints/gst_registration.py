@@ -23,6 +23,7 @@ def get_gst_registration():
     caps_gens = db.session.query(func.max(CapsGen.id)).group_by(CapsGen.project_id)
 
     query = GstRegistration.query.filter(CapsGen.id.in_(caps_gens))
+    response['count'] = len(query.all())
 
     # Set LIMIT
     query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
