@@ -31,6 +31,7 @@ def get_client_models(id):
 
     # If client_id is specified, then return all models for that client
     query = query.filter_by(client_id=int(args['client_id'])) if 'client_id' in args.keys() and args['client_id'].isdigit() else query
+    response['count'] = len(query.all())
     response['payload'] = [i.serialize for i in query.all()]
     return jsonify(response), 200
 
