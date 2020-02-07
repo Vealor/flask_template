@@ -162,7 +162,7 @@ def update_client(id):
     # update and add client entities
     for entity in data['client_entities']:
 
-        # valdate LoB for entity
+        # validate LoB for entity
         if entity['lob_sector'] not in LineOfBusinessSectors.__members__:
             raise InputError('Specified line of business sector does not exists')
 
