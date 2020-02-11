@@ -90,6 +90,7 @@ def get_predictive_calculations(id):
                                 COUNT(id)
                                 FROM transactions
                                 WHERE project_id = {project_id}
+                                AND MOD(tax_scope, 2) = 0
                                 AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                                 """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
         ap_amt_sum, itc_claimed, tx_num = results[0], results[1], results[2]
@@ -101,6 +102,7 @@ def get_predictive_calculations(id):
                             COALESCE(COUNT(id), 0)
                             FROM transactions
                             WHERE project_id = {project_id}
+                            AND MOD(tax_scope, 2) = 0
                             AND CAST(data->>'pst_sa' AS FLOAT) > 0
                             AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
@@ -109,6 +111,7 @@ def get_predictive_calculations(id):
                             COALESCE(COUNT(id), 0)
                             FROM transactions
                             WHERE project_id = {project_id}
+                            AND MOD(tax_scope, 7) = 0
                             AND CAST(data->>'pst_sa' AS FLOAT) = 0
                             AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
@@ -119,6 +122,7 @@ def get_predictive_calculations(id):
             qst_results = engine.execute("""SELECT COALESCE(SUM(CAST(data->>'qst' AS FLOAT)), 0)
                             FROM transactions
                             WHERE project_id = {project_id}
+                            AND MOD(tax_scope, 3) = 0
                             AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                             """.format(project_id=id, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
             qst_claimed = qst_results[0]
@@ -170,7 +174,8 @@ def get_predictive_calculations(id):
                         COUNT(id)
                         FROM transactions
                         WHERE project_id = {project_id}
-                        AND query_reference_num IS NOT NULL
+                        AND MOD(tax_scope, 2) = 0
+                        OR MOD(tax_scope, 5) = 0
                         AND cast(data ->> 'vend_num' as text) = '{vend_num}'
                         AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                         """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
@@ -187,6 +192,7 @@ def get_predictive_calculations(id):
         return calc_result, num_of_txn
 
     # TODO: error handling
+    # design databaes tax type column as gst ->2 qst->3  hst->5 pst->7 time together if more than one apply
     def calc_qst_mat(vend_num, prediction_strength_lower, prediction_strength_upper):
         temp_session = db.create_scoped_session()
         query_result = temp_session.execute("""SELECT COALESCE(SUM(CAST(data->>'ap_amt' AS FLOAT)), 0),
@@ -194,7 +200,7 @@ def get_predictive_calculations(id):
                     COUNT(id)
                     FROM transactions
                     WHERE project_id = {project_id}
-                    AND query_reference_num = {query_num}
+                    AND MOD(tax_scope, 3) = 0
                     AND cast(data ->> 'vend_num' as text) = '{vend_num}'
                     AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
                     """.format(project_id=id, vend_num=vend_num, lower_limit=prediction_strength_lower, upper_limit=prediction_strength_upper)).first()
@@ -210,7 +216,7 @@ def get_predictive_calculations(id):
                     COUNT(id)
                     FROM transactions
                     WHERE project_id = {project_id}
-                    AND query_reference_num = {query_num}
+                    AND MOD(tax_scope, 7) = 0
                     AND cast(data ->> 'vend_num' as text) = '{vend_num}'
                     AND CAST(data->>'pst_sa' AS FLOAT) = 0
                     AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
@@ -221,7 +227,7 @@ def get_predictive_calculations(id):
                 COUNT(id)
                 FROM transactions
                 WHERE project_id = {project_id}
-                AND query_reference_num = {query_num}
+                AND MOD(tax_scope, 7) = 0
                 AND cast(data ->> 'vend_num' as text) = '{vend_num}'
                 AND CAST(data->>'pst_sa' AS FLOAT) > 0
                 AND recovery_probability BETWEEN {lower_limit} AND {upper_limit};
@@ -231,7 +237,7 @@ def get_predictive_calculations(id):
         num_of_txn += num_of_non_zero_pst_sa_txn
         temp_session.close()
         return calc_result, num_of_txn
-
+    # design databaes tax type column as gst ->2 qst->3  hst->5 pst->7 time together if more than one apply
     def multiple_jurisdiction_calc(jurisdictions, vend_num, prediction_strength_lower, prediction_strength_upper):
         tax_scope = check_tax_scope(jurisdictions)
         total_value, total_volume = 0
