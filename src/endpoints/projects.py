@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required, current_user
 from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from src.errors import InputError, NotFoundError
-from src.models import db, Client, ClientEntity, ClientModel, DataParam, MasterModel, Operator, ParedownRule, Project, Transaction, User, UserProject
+from src.models import *
 from src.prediction.preprocessing import preprocess_data, transactions_to_dataframe
 from src.util import validate_request_data, create_log
 from src.wrappers import has_permission, exception_wrapper
@@ -65,6 +65,56 @@ def get_projects(id):
     response['payload'] = [i.serialize for i in query.all()]
 
     return jsonify(response)
+
+#===============================================================================
+# GET table names for View Tables Page
+
+@projects.route('/<int:id>/get_tables', methods=['GET'])
+@jwt_required
+@exception_wrapper
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
+def get_tables(id):
+    response = {'status': 'ok', 'message': '', 'payload': []}
+
+    query = (CapsGen.query.filter_by(project_id=id).order_by(desc(CapsGen.created)))
+    if not query.first():
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
+
+    tables = query.first().get_tables
+
+    response['payload'] = tables
+
+    return jsonify(response), 200
+
+
+#===============================================================================
+# GET Master Tables
+
+@projects.route('/<int:id>/view_tables/<path:table>', methods=['GET'])
+@jwt_required
+@exception_wrapper
+@has_permission(['tax_practitioner', 'tax_approver', 'tax_master', 'data_master', 'administrative_assistant'])
+def view_tables(id, table):
+    response = {'status': 'ok', 'message': '', 'payload': []}
+    args = request.args.to_dict()
+    # query = CapsGen.query.filter_by(id=id)
+    query = (CapsGen.query.filter_by(project_id=id).order_by(desc(CapsGen.created)))
+    if not query.first():
+        raise NotFoundError('CapsGen ID {} does not exist.'.format(id))
+
+    #table filter
+    tableclass = eval('Sap' + str(table.lower().capitalize()))
+    query = tableclass.query.filter_by(caps_gen_id=query.first().id)
+    response['count'] = len(query.all())
+
+    # Set LIMIT
+    query = query.limit(args['limit']) if 'limit' in args.keys() and args['limit'].isdigit() else query.limit(1000)
+    # Set OFFSET
+    query = query.offset(args['offset']) if 'offset' in args.keys() and args['offset'].isdigit() else query.offset(0)
+
+    response['payload'] = [i.data for i in query.all()]
+
+    return jsonify(response), 200
 
 #===============================================================================
 # GET ALL Predictive Calculations

@@ -9,7 +9,7 @@ import multiprocessing as mp
 from anytree import Node
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required, current_user
-from src.models import db, CapsGen, CDMLabel, DataMapping, GstRegistration, SapAps, SapCaps, SapGLNetCheck, SapLfa1, Transaction
+from src.models import *
 from sqlalchemy import create_engine
 from src.caps_gen.creation import project_path_create, source_data_unzipper
 from src.caps_gen.build_master import build_master_file, build_master_table, apply_mapping
