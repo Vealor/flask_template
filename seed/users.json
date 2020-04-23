@@ -1,0 +1,13 @@
+[
+  {
+    "username": "base-admin",
+    "password": "base-admin_pass%",
+    "email": "base-admin@test.test.fail_nosend",
+    "initials": "ADM",
+    "first_name": "Base",
+    "last_name": "Admin",
+    "role": "admin",
+    "is_system_administrator": true,
+    "is_superuser": true
+  }
+]
